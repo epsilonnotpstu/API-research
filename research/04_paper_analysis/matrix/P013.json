@@ -1,0 +1,19 @@
+{
+ "paper_id": "P013",
+ "research_problem": "Mobile apps implement input validation client-side while backend web APIs fail to replicate it, enabling 'Web API Hijacking' (parameter tampering) attacks",
+ "technical_approach": "WARDroid: FlowDroid backward (inverted) taint slicing from HTTP points of interest, augmented PDG with UI constraints and EdgeMiner callbacks, path constraints in Z3/Z3-Str, request templates; NoTamper-style per-disjunct negation to craft invalid requests; edit-distance response comparison against sanitized valid responses",
+ "primary_contribution": "First systematic approach and framework for detecting mobile-to-web API validation inconsistencies; definition of Web API Hijacking",
+ "dataset_benchmark": "10,000 popular free Google Play apps (AndroZoo, top 10 categories); 1,000 flagged apps tested",
+ "evaluation_metrics": "Flagged and verified app counts, unencrypted traffic counts, estimated victim population, single-app template count vs manual MITM",
+ "baselines": "Manual MITM trace on one app only",
+ "key_findings": "4,562 of 10,000 apps flagged; 884/1,000 single invalid requests accepted (88.4%), 926/1,000 after more samples; 1,743 apps unencrypted; >6.47M potential victims; real exploits incl. zero-dollar checkout SDK, XSS via news comments, SQLi in money-transfer app, bank transfers to unconnected accounts",
+ "author_limitations": "No obfuscated/native code, no state/token reasoning, no WebView JS, authentication needs manual credentials, false negatives not evaluated, response classifier only 'decent'",
+ "analyst_limitations": "No measured precision; 'verified' means inconsistency not exploitability; server-at-least-as-strict assumption questionable; efficacy shown on one app; download sums as victims; no artifact; 2018 ecosystem; ethics of probing production servers without IRB",
+ "reproducibility": "Low: no tool or app list released",
+ "suggested_extensions": "Client-code-derived OpenAPI inference; three-way client/spec/server consistency checking; LLM-based analysis of obfuscated or WebView code; stateful authenticated hijacking with BOLA; learned acceptance oracle; post-2020 replication",
+ "evidence_location": "Rules p.3; architecture p.5-8; response evaluation p.9; results p.9-10; case studies p.11-12; limitations p.12",
+ "confidence": "Medium",
+ "cluster": "T3",
+ "secondary_clusters": ["T4"],
+ "integrity": "Two-column order heavily scrambled; Tables I-III and Algorithm 1 partly lost; figures missing"
+}

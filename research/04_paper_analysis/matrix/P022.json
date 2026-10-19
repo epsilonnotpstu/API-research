@@ -1,0 +1,19 @@
+{
+ "paper_id": "P022",
+ "research_problem": "LLM tool learning assumes static APIs; when deployed APIs change (names, parameters, response formats) LLMs keep invoking outdated APIs and fail",
+ "technical_approach": "ToolEVO: MCTS-based active exploration of a dynamic tool environment with self-reflection on invocation errors and a tool-update action that rewrites API usage in the prompt after deprecation errors; successful trajectories (~30k) used for SFT of Llama3-8B/Qwen2-7B; ToolQA-D benchmark built by GPT-4-modified ToolQA APIs (in-domain and OOD variants)",
+ "primary_contribution": "First framework and benchmark (ToolQA-D) for LLM adaptation to tool/API variability",
+ "dataset_benchmark": "ToolQA-D: 7 ToolQA domains, Easy/Hard, ~6k training samples each, 700/730 test; three API sets (Pc, Ps_in, Ps_OOD)",
+ "evaluation_metrics": "Task success rate per domain and difficulty",
+ "baselines": "GPT-3.5/4/4o/4o-mini, Claude-3.5-Sonnet, Llama3 and Qwen2 series (incl. 70B/72B), Static-SFT",
+ "key_findings": "Tool variability degrades all models, Static-SFT most (repeats deprecated calls); ToolEVO 7-8B matches Static-SFT in static setting and beats Static-SFT and 72B models in dynamic and OOD settings (best proprietary OOD average 60.2 easy / 32.1 hard); parameter changes hurt more than name changes, response format changes least; self-reflection ablation causes largest drop",
+ "author_limitations": "ToolEVO still makes invocation errors with new tools and misreads responses; SFT only, no preference learning; preliminary exploration",
+ "analyst_limitations": "Synthetic semantic-preserving renames do not reflect real breaking/behavioral API changes; deprecation messages name the replacement API (unrealistically helpful); small synthetic ToolQA domains not real web APIs; no documentation-retrieval baseline; single greedy run without statistics; no threats section",
+ "reproducibility": "Code on GitHub; GPT-4-generated modifications; open base models",
+ "suggested_extensions": "Benchmark from real OpenAPI/library evolution histories incl. behavioral changes and uninformative errors; spec-diff/changelog-aware agents vs MCTS; MCP tool schema evolution robustness; machine-readable deprecation governance for agent consumers; preference/continual learning",
+ "evidence_location": "Problem p.1-3; method p.3-5; ToolQA-D p.5-6; results p.7-8 Tables 2-4; analysis p.8-9; ablation p.9-10; appendix error analysis",
+ "confidence": "High",
+ "cluster": "T5",
+ "secondary_clusters": ["T8"],
+ "integrity": "MCTS formulas partly lost; result tables column-split so ToolEVO averages not fully recoverable; figures missing"
+}

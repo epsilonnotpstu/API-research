@@ -1,0 +1,19 @@
+{
+ "paper_id": "P025",
+ "research_problem": "Frequently evolving cloud REST APIs introduce breaking changes in either the published specification or the service implementation; existing detection relies on manual tests, visual spec review or post-rollout incidents",
+ "technical_approach": "Differential regression testing over a client/service version matrix: RESTler-generated clients per spec version run against service versions; network logs abstracted for non-determinism; stateful diffs across service updates and stateless (request-type, status-code) diffs across spec updates; diagonal-only strategy reducing comparisons to 2(N-1)",
+ "primary_contribution": "Concept of service vs specification regressions and a practical differential testing approach for REST API evolution",
+ "dataset_benchmark": "Azure DNS (3 versions) and Azure Network APIs (17 versions, 2016-2019, >600K lines of Swagger); 92,381 requests; 278 diffs",
+ "evaluation_metrics": "Number/type of manually confirmed regressions; diff sizes; strategy comparison; runtime and inspection effort",
+ "baselines": "Upper-triangular vs diagonal-only strategies; stateful vs stateless diffing",
+ "key_findings": "14 regressions (5 spec: broken examples, renamed endpoint; 9 service: unspecified response properties); 12 later fixed or confirmed; diagonal-only needs 36 instead of 278 diffs (9% of lines) yet finds all 14; log collection 3+ days, diffing <1 hour, manual analysis ~1 week",
+ "author_limitations": "Depends on RESTler coverage; diffing could produce false positives; results specific to Azure networking APIs; diagonal-only assumes determinism and transitivity",
+ "analyst_limitations": "Manual regression judgement with no precision/recall; single provider governance; requires old service versions to remain live; stateless diff ignores body semantics; severity/client impact unmeasured; tool not released",
+ "reproducibility": "Medium-low: public specs and live Azure versions, but diffing tool not published",
+ "suggested_extensions": "Automated regression triage; cross-version invariant (AGORA-style) oracles for behavioural regressions; open REST version-history benchmark; consumer-usage-weighted prioritisation; continuous differential testing in microservice CI; MCP/tool schema regression",
+ "evidence_location": "Concepts p.3-5; diffing p.6-7; dataset p.7-8; regressions p.8-10 Table 2; strategies p.10 Tables 3-5; threats p.10; continuous mode p.10-11",
+ "confidence": "High",
+ "cluster": "T5",
+ "secondary_clusters": ["T1", "T6"],
+ "integrity": "Complexity formulas partly lost; tables column-split; figures missing"
+}

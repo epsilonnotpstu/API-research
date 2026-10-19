@@ -1,0 +1,19 @@
+{
+ "paper_id": "P015",
+ "research_problem": "REST API fuzzers detect crashes and schema mismatches but not authorization faults (BOLA/BFLA); access policies are never formally specified",
+ "technical_approach": "Post-fuzzing security phase in EvoMaster: reuse and slice fuzzer-generated tests with multiple users to instantiate scenarios for three status-code-based oracles: Not-Recognized (401 for authenticated user), Leakage (403 vs 404 existence disclosure), Missed-Check (403 on one of PUT/PATCH/DELETE but 2xx on another)",
+ "primary_contribution": "Three specification-free automated access-policy oracles integrated into a REST fuzzer",
+ "dataset_benchmark": "3 artificial APIs with injected faults; 3 security example APIs (capital, crAPI, WebGoat); 10 authenticated EMB real-world APIs (291K LoC, 792 endpoints)",
+ "evaluation_metrics": "Average distinct faults per oracle over 10 runs, compared with existing H500 and schema oracles",
+ "baselines": "Existing EvoMaster oracles (HTTP 500, schema mismatch)",
+ "key_findings": "All injected faults found; 27 distinct new faults overall (Not-Recognized 22.2, Leakage 3.0, Missed-Check 0.7 average sums); Missed-Check only in capital, none in real-world APIs; existing oracles report 812 500s and 12,413 schema faults whose severity is questionable",
+ "author_limitations": "16 APIs; integration into other fuzzers untested; depends on fuzzer-generated tests; Missed-Check false positives possible; recall not assessed; severity unknown without practitioners",
+ "analyst_limitations": "Precision never measured and no developer confirmation; most findings are usability (401) faults not vulnerabilities; true BOLA (cross-user 2xx) not directly detected; inconsistent '13 real-world' count; self-evaluation, no cross-tool comparison; 200-with-error-body APIs confuse status oracles",
+ "reproducibility": "High: open-source EvoMaster extension and public SUTs",
+ "suggested_extensions": "Ownership tracking and LLM policy inference for direct BOLA oracles; practitioner-validated precision/severity study; cross-tool REST security oracle benchmark; LLM-assisted fault triage; response-semantic oracles",
+ "evidence_location": "Oracles p.3-6; integration p.6-7; RQs/setup p.8; Table III p.9; discussion p.11; threats p.11",
+ "confidence": "High",
+ "cluster": "T3",
+ "secondary_clusters": ["T1"],
+ "integrity": "Two-column interleaving in oracle sections; tables column-split but verified via Sum row"
+}

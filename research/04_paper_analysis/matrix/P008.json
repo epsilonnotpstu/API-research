@@ -1,0 +1,19 @@
+{
+ "paper_id": "P008",
+ "research_problem": "REST test generators' oracles only catch crashes, spec violations, regressions and best-practice violations; spec-conformant but wrong responses go undetected",
+ "technical_approach": "AGORA: Beet instrumenter maps OAS + request/response logs to Daikon traces (with nested levels for arrays of objects); customized Daikon with 105 REST invariant types (22 new); likely invariants become oracles after confirmation",
+ "primary_contribution": "First likely-invariant-based black-box test oracle generation for REST APIs",
+ "dataset_benchmark": "11 operations of 7 industrial APIs (Amadeus, GitHub, Marvel, OMDb, Spotify, Yelp, YouTube); 10K RESTest calls per operation",
+ "evaluation_metrics": "Precision of invariants (manual TP/FP labeling); failure detection ratio on 1.1M response-level seeded errors",
+ "baselines": "Default Daikon (with Beet)",
+ "key_findings": "Precision 81.2% vs Daikon 51.4% (93.6% excluding arithmetic comparisons); 50 requests already give 73.2%; oracles detect 57.3% of seeded output errors; 11 real bugs (4 confirmed, 2 fixed) and a GitHub documentation update",
+ "author_limitations": "Manually created/fixed specs; manual input dictionaries; human labeling bias; single random split; 11 operations; incomplete invariant catalogue; operation-level only, JSON only",
+ "analyst_limitations": "Mutation operators mirror invariant types (favourable FDR); real-fault recall unknown; manual FP review cost; weak baseline; inputs from same-group RESTest; stateful/write APIs untested",
+ "reproducibility": "Zenodo artifact with code, data and VM; Beet open-source; live APIs drift",
+ "suggested_extensions": "Sequence-level invariants; LLM-assisted invariant triage/explanation; evaluation on real-fault benchmarks; write invariants back into specs; combine with online testing",
+ "evidence_location": "Approach p.4-6; RQs p.6-7; Table 2 p.9; RQ3 p.9 Table 3; bugs p.9-10; threats p.10",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": ["T6"],
+ "integrity": "Table 2 column-split but totals reconstructable; sunburst figure partial"
+}

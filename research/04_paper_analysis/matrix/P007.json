@@ -1,0 +1,19 @@
+{
+ "paper_id": "P007",
+ "research_problem": "REST testing tools optimise operation selection, dependencies, parameters and values in isolation, causing invalid requests and low coverage on large services",
+ "technical_approach": "AutoRestTest: semantic property dependency graph (GloVe cosine >0.7, runtime-refined) + four cooperating Q-learning agents (operation, parameter, value, dependency) with value decomposition + GPT-3.5 few-shot value generation + 20% mutator",
+ "primary_contribution": "Dependency-embedded multi-agent RL approach for black-box REST testing",
+ "dataset_benchmark": "Same 12 services as P005 (9 open-source + FDIC, Spotify, OhSome)",
+ "evaluation_metrics": "JaCoCo method/line/branch coverage; processed operations; unique 500 errors (per operation)",
+ "baselines": "RESTler, EvoMaster, ARAT-RL, MoRest (RESTGPT-enhanced specs)",
+ "key_findings": "Method/line coverage 58.3%, branch 32.1% (+15-27 pp); 25 online operations vs 9-11; 42 500-errors vs 14-33; only tool to fail Spotify; OhSome bug fixed; ablation: removing Q-learning, SPDG or LLM drops coverage 10.7-13.9 pp",
+ "author_limitations": "GPT-3.5 data leakage; mutation rate/default params; flaky APIs; uneven spec quality; benchmark selection; no comparison with DeepREST/LlamaRestTest",
+ "analyst_limitations": "Baseline numbers inconsistent with sibling P005 on identical setup (e.g., ARAT-RL 33 vs 160 errors due to different counting); never compared against LlamaRestTest; no statistical tests; ablation runs unspecified; Table IV column labels inconsistent; 500-only oracle; GloVe threshold not sensitivity-tested; closed-model reproducibility",
+ "reproducibility": "Artifact released; depends on GPT-3.5-Turbo; large VMs used",
+ "suggested_extensions": "Independent head-to-head of AutoRestTest/LlamaRestTest/DeepREST with unified fault counting and statistics; better embeddings for SPDG; controlled study of spec completeness; fault classification",
+ "evidence_location": "Approach p.4-7; RQ1 p.8; Table III p.9; Table IV p.10; threats p.10",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": ["T8"],
+ "integrity": "Equations partly broken; coverage figures absent; Table IV labels need PDF check"
+}

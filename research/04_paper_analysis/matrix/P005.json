@@ -1,0 +1,19 @@
+{
+ "paper_id": "P005",
+ "research_problem": "Black-box REST testing fails on complex input formats and inter-parameter dependencies; prior NLP/LLM spec enhancers are static and LLM APIs are costly/private",
+ "technical_approach": "Two Llama3-8B models fine-tuned with QLoRA (IPD rules from 551 params; enum example values from 4,133 APIs.guru specs), quantized (2/4/8-bit), invoked inside ARAT-RL Q-learning when repeated 4xx occur, using parameter descriptions + server response messages",
+ "primary_contribution": "LlamaRestTest: small, local, fine-tuned LMs that use runtime server feedback for REST testing",
+ "dataset_benchmark": "12 services (9 open-source, 3 online: FDIC, Ohsome, Spotify); RESTGPT ground-truth for values (7 services) and IPDs (3 services, 18 rules)",
+ "evaluation_metrics": "semantic validity precision (2 external raters); correct IPD rules; JaCoCo method/branch/line coverage; processed operations; unique 500 errors",
+ "baselines": "RESTGPT, base Llama3-8B; RESTler, EvoMaster, ARAT-RL, MoRest (with RESTGPT-enhanced specs)",
+ "key_findings": "Value validity 72.44% (FT) vs RESTGPT 68.82% vs base 22.94%; 12/18 IPD rules vs RESTGPT 9; 8-bit quantized best testing config (55.8% method, 37.5 ops); +10-22.7 pp method coverage over tools; 204 vs 130-160 500-errors; ablation: IPD model and server messages matter most",
+ "author_limitations": "12 services; dataset dependence; limited tool comparison; possibly suboptimal settings; script bugs; ARAT-RL dependence; weaker on uninformative server messages; 2-bit degrades",
+ "analyst_limitations": "Fault gain vs ARAT-RL (44) entirely from Ohsome+Spotify; no statistical tests; quantization>FT likely time-budget confound; tiny homogeneous IPD eval (13/18 YouTube type=video); RESTGPT used both to build training labels and as ground truth; 500-only oracle; same-group baselines; internal inconsistencies (22.94 vs 24.94; 17 vs 18 rules)",
+ "reproducibility": "Tool, models and data released; inference on consumer laptop; fine-tuning needs A100 (Colab); online services drift",
+ "suggested_extensions": "Equal-call/equal-time re-evaluation with statistics; non-enum value fine-tuning; study effect of error-message informativeness; feed learned IPDs back into spec (spec repair)",
+ "evidence_location": "Approach p.7-10; Table 2 p.11; Tables 3-4 p.12; RQ2 p.14-15; RQ3 p.16-17; ablation Table 7 p.18; threats p.19",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": ["T4", "T8"],
+ "integrity": "Tables reconstructable; coverage figures absent; Table 4 symbol columns uncertain"
+}

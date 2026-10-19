@@ -1,0 +1,19 @@
+{
+ "paper_id": "P012",
+ "research_problem": "Mass assignment (auto-binding) vulnerabilities in REST APIs lack any automated black-box detection approach",
+ "technical_approach": "From OpenAPI: CRUD semantics from HTTP methods, EM clustering of stemmed parameter vectors to group operations by resource, resource-id heuristic, read-only fields = read outputs never in create/update inputs; update/create-injection test templates; oracle checks overwrite with two distinct values",
+ "primary_contribution": "First automated black-box mass assignment testing approach (RestTestGen strategy)",
+ "dataset_benchmark": "5 open-source REST APIs (VAmPI, OWASP, Toggle, Bookstore, CRUD; 47 operations, 4 languages) with existing + seeded vulnerabilities and safe versions; 10 Google API specs (454 operations) for static scalability",
+ "evaluation_metrics": "Correctness of CRUD/clustering/resource-id vs gold standard; TP/FP/FN, precision, recall; analysis time",
+ "baselines": "None",
+ "key_findings": "CRUD 98%, clustering 94%, resource-id 93%; zero false positives, all vulnerabilities found except 0.4 average FN on OWASP; 5 extra distinct 500-bugs; Google specs analysed in 37.2 s yielding 981 read-only candidates",
+ "author_limitations": "Gold-standard subjectivity; open-source only; heuristic inference may be imprecise (manual annotation possible)",
+ "analyst_limitations": "~10 vulnerabilities, majority self-seeded in exactly the pattern detected (circularity); specs manually corrected; blind to fields absent from read schemas; RQ3 static only, candidate precision unknown; role-agnostic; no baseline; preprint version read",
+ "reproducibility": "Open-source in RestTestGen; replication package; local SUTs",
+ "suggested_extensions": "LLM/observation-based sensitive-field discovery without specs; role-aware unified oracle with BOLA/BFLA; real (non-seeded) REST security benchmark; large-scale candidate precision; white-box ORM-based hybrid",
+ "evidence_location": "Approach p.3-6; setting p.6-7 Table II; RQ1 p.8; RQ2 p.9 Table IV; RQ3 p.9; threats p.8",
+ "confidence": "High",
+ "cluster": "T3",
+ "secondary_clusters": ["T1", "T4"],
+ "integrity": "Two-column reading order partly scrambled; tables column-split; Template 2 formula partly lost"
+}

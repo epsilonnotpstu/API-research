@@ -1,0 +1,19 @@
+{
+ "paper_id": "P017",
+ "research_problem": "Developer-maintained OAS are outdated/incomplete; existing generators depend on technology-specific rules, deployment or human experts, and naive LLM use hits context limits and hallucinations",
+ "technical_approach": "OOPS LLM agent workflow: technology analyzer; file-level API entry detection, LLM-built API dependency graph and topological endpoint extraction; multi-stage request/response generation with self-refine, Swagger 2.0 fragments converted to OpenAPI 3.0.4, schema reference rebuilding",
+ "primary_contribution": "First technology-agnostic LLM-based static OAS generation from server source code",
+ "dataset_benchmark": "12 REST APIs (8 open-source, 4 proprietary; 5 languages, 8 frameworks); expert-built ground truth",
+ "evaluation_metrics": "Precision/recall/F1 for endpoint methods, request parameters, 2xx responses, 13 constraint types; LLM calls, tokens, cost",
+ "baselines": "APICARV, ExpressO, Respector (applicable subsets); two ablation variants; five base LLMs",
+ "key_findings": "Endpoint F1 ~98.8%, parameters ~97.3%, responses ~97%, constraints ~92.5% with GPT-5 mini; F1 gains over baselines 41.5/60.2/70.4/43.6%; ReAct-agent variant loses 43.8% recall; Gemini 3 Flash best overall, small models fail; ~$0.41 per API",
+ "author_limitations": "Possible training-data leakage; prompt/hyperparameter sensitivity; limited language/framework coverage; only 2xx responses; business-logic semantic hallucinations",
+ "analyst_limitations": "Ground truth from code reading without runtime validation or agreement statistic; heterogeneous baselines and ambiguous relative gains; single run, no statistics; downstream testing utility unmeasured; LLM injects best-practice assumptions (201, limit>=0) creating new spec-implementation mismatch; no inter-parameter dependencies or security schemes; closed-model dependence",
+ "reproducibility": "Medium: code and open-source data released; proprietary APIs and closed LLMs",
+ "suggested_extensions": "Static+dynamic validation hybrid; 4xx/5xx and auth inference; LLM-based IDL dependency inference; spec drift detection vs developer OAS; downstream fuzzing benchmark of generated specs; MCP/tool description generation",
+ "evidence_location": "Approach p.4-8; dataset/ground truth p.8-9; criteria p.9; RQ1 p.10-12; RQ2 p.12; RQ3 p.12-13; RQ4 p.13-14; threats p.14",
+ "confidence": "High",
+ "cluster": "T4",
+ "secondary_clusters": ["T8"],
+ "integrity": "Reading order partly scrambled; Tables 4-7 per-API values column-split; summary values verified from text"
+}
