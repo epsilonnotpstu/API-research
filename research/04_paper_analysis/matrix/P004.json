@@ -1,0 +1,19 @@
+{
+ "paper_id": "P004",
+ "research_problem": "REST API test generation tools evaluated on different benchmarks/metrics; their relative effectiveness and limitations unknown",
+ "technical_approach": "Independent empirical comparison: 10 tools (systematically selected research + practitioner) on 20 Java/Kotlin services, 1h x10 trials + 24h runs; JaCoCo coverage; unique 500 errors/failure points; plus NLP proof-of-concepts",
+ "primary_contribution": "Comparative evidence and three root causes of low coverage (constrained parameter values, operation dependencies, spec-implementation mismatch); research directions validated by small proofs-of-concept",
+ "dataset_benchmark": "20 open-source Java/Kotlin RESTful services (977K total LOC, 675 operations)",
+ "evaluation_metrics": "Line/branch/method coverage; unique 500 errors, unique failure points, unique library failure points; Pearson correlation",
+ "baselines": "EvoMasterWB, EvoMasterBB, RESTler, RestTestGen, RESTest, Schemathesis, Dredd, Tcases, bBOXRT, APIFuzzer",
+ "key_findings": "Best line coverage EvoMasterWB 52.76% (branch 36.08%); best black-box EvoMasterBB 45.41%; coverage-error correlation ~0.79; library failure points ~half and more severe; ~99% of 1,000+ APIs.guru specs contain mismatches; parameter descriptions provide suggested values for 32% of params; NLP detected 8/12 inter-parameter dependencies",
+ "author_limitations": "20 services may not generalize; local deployment; incomplete specs; authors wrote RESTest dependency annotations and EvoMaster drivers",
+ "analyst_limitations": "Fault metric limited to 500 errors; no significance tests on rankings; Java/Kotlin only; small proofs-of-concept; tool versions from 2021-22",
+ "reproducibility": "Zenodo artifact + website; modest hardware (4 vCPU/16GB)",
+ "suggested_extensions": "NLP/LLM extraction of values and dependencies from specs and server messages; symbolic execution for gradient-less branches; ML dependency classifier; mutation-based fault evaluation",
+ "evidence_location": "Table 3 p.5; root causes p.6 L840-882; correlation p.7 L973-981; PoCs p.8-9 L1089-1153; 99% mismatch p.10 L1320-1329",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": ["T4"],
+ "integrity": "Tables column-split but reconstructable; box plots absent"
+}

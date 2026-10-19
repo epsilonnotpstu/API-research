@@ -1,0 +1,19 @@
+{
+ "paper_id": "P001",
+ "research_problem": "Whether research REST API test-generation techniques scale to and perform in online (production) testing of industrial APIs",
+ "technical_approach": "Empirical study with RESTest re-architected as a multi-bot system (228 bots); black-box test data strategies (FD, CDG, DP, SD, CD) x test case strategies (RT, CBT, ART); six status-code/spec oracles; NLD-based failure clustering + manual triage",
+ "primary_contribution": "First industrial-scale online testing study: 13 production APIs, 15 days, 1.1M tests; 254 reproducible bugs (65 acknowledged); 5 adoption challenges; open multi-bot architecture + dataset",
+ "dataset_benchmark": "13 industrial APIs (Amadeus, DHL, FDIC, Foursquare, LanguageTool, Marvel, Ohsome, OMDb, RESTCountries, Spotify, Stripe, Yelp, YouTube x2): 189 operations, 1,694 parameters",
+ "evaluation_metrics": "failures/faults by oracle type; FDR, FtDR; APFD; black-box API coverage (inputs counted only for successful requests)",
+ "baselines": "None external; internal comparison among bot strategies (explicitly not a rigorous technique comparison)",
+ "key_findings": "389,216 failures (1 in 3 tests); 63% are spec-response disconformities (F_OAS); 147 faults in 11 APIs (50% F_OAS, 52 invalid-input-accepted, only 6 server errors); 87% faults found in first 3 days; data perturbation found most unique bugs (55); CBT more cost-effective than RT; ART no gain",
+ "author_limitations": "Fault clustering imprecise (363 of 502 clusters misclassified); need human-in-the-loop, strategy selection, quota-aware scheduling, resource optimization; FDIC/Ohsome only sampled; RESTest-dependence; 13 APIs may not be representative",
+ "analyst_limitations": "Oracles cannot detect business-logic errors; F_OAS ambiguity (spec vs implementation fault not separated); strategy comparison confounded by unequal bot counts and budgets; single tool/group; few write operations; NLD thresholds not sensitivity-tested; internal inconsistency 11 vs 12 APIs",
+ "reproducibility": "Artifact on Zenodo (code, binaries, data, scripts); exact replication impossible because production APIs change; heavy hardware (512GB RAM VM)",
+ "suggested_extensions": "ML/LLM-based failure triage on the released 390K-failure dataset; quota-aware test scheduling optimization; automatic spec repair from F_OAS failures; semantic/metamorphic oracles in online setting",
+ "evidence_location": "RQs p.3 L381-390; oracles p.5 L694-711; RQ1 p.6 L792-833; RQ2 p.6-8 L839-855, L1944-1952; RQ3 p.8-9 L1963-2015; challenges p.10-11 L2136-2210; threats p.11 L2224-2276",
+ "confidence": "High (full text read; tables partially corrupted in conversion)",
+ "cluster": "T1",
+ "secondary_clusters": ["T4", "T6"],
+ "integrity": "Tables 1,2,4 column-split by pdftotext; figures absent (captions only); references complete (103)"
+}

@@ -1,0 +1,19 @@
+{
+ "paper_id": "P006",
+ "research_problem": "No automated tool generated stateful request sequences from a REST API specification to test cloud services",
+ "technical_approach": "Swagger-derived fuzzing grammar; producer-consumer dependency inference; dynamic-feedback pruning (keep only 2xx sequences); BFS, BFS-Fast, RandomWalk search; small value dictionaries; 500 = bug; GC, token refresh, annotations for production",
+ "primary_contribution": "RESTler, first stateful REST API fuzzer; evidence that dependencies + feedback are both necessary",
+ "dataset_benchmark": "189-LOC blog-posts service with planted bug; GitLab (376K LOC Ruby, 6 API groups); 3 Azure + 1 Office365 services (undisclosed)",
+ "evaluation_metrics": "Code coverage (Ruby TracePoint), HTTP status distribution, tests/sequence counts, bug buckets",
+ "baselines": "Own ablations (no dependencies; no feedback) and three search strategies; no external tools",
+ "key_findings": "Both techniques needed (same coverage with <800 tests in 179s vs 4,600 tests in 1,750s; planted bug found only with dependencies); longer sequences raise coverage; RandomWalk found most bugs (21) despite lower coverage; 28 confirmed/fixed GitLab bugs; bugs in all cloud services tested",
+ "author_limitations": "No redirect support; oracle limited to status codes (misses e.g. information exposure); generality unknown; RandomWalk results may not generalize",
+ "analyst_limitations": "Q1 on toy service with self-planted bug; no external baselines; single runs, no statistics; tiny dictionaries; production results undisclosed; read MSR-hosted copy",
+ "reproducibility": "Tool later open-sourced; experiment scripts/data not reported; GitLab version not stated",
+ "suggested_extensions": "Semantic/security oracles; spec inference from traffic or code when no Swagger; back-end log/assertion-based oracles; study coverage vs bug-finding across strategies",
+ "evidence_location": "Algorithm p.3; limitations p.4 L454-465; Q1 p.5; Tables I-III p.6-8; GitLab bugs p.8-9; production p.9",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": [],
+ "integrity": "Figure 4 values unreadable; tables column-split; no threats section in original"
+}

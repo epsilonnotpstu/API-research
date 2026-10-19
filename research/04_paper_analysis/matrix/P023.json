@@ -1,0 +1,19 @@
+{
+ "paper_id": "P023",
+ "research_problem": "Whether Java libraries on Maven Central follow semantic versioning when introducing breaking changes, and how much breaking changes actually impact clients; the original Raemaekers study relied on an unsound tool and a 2011 snapshot",
+ "technical_approach": "External differentiated replication: refined upgrade filters (semver-form, adjacent, external clients, Java-only, Java<=8), Maracas (japicmp-based) bytecode analysis computing binary breaking changes and affected client locations, applied to the original MDD (2011) and extended MDG (2018) corpora",
+ "primary_contribution": "Large-scale replication overturning prior claims plus the Maracas BC/impact analysis tool",
+ "dataset_benchmark": "119,879 library upgrades and 293,817 clients from Maven Central (MDD 2011, MDG 2018)",
+ "evaluation_metrics": "Share of breaking upgrades per semver level, temporal trend, share of broken clients; Maracas precision/recall on Jezek-Dietrich benchmark",
+ "baselines": "Original study results (clirr, compiler-based impact)",
+ "key_findings": "83.4% of upgrades comply with semver but 20.1% of non-major upgrades break; non-major breaking upgrades fell from 67.7% (2005) to 16.0% (2018); only 7.9% of clients are impacted, most BCs touch unused declarations, but clients using them likely break; H3 of original study rejected; Maracas precision 96.3%, recall 98.5%",
+ "author_limitations": "Tool imperfections (pessimistic); incomplete unstable-API conventions; library heuristic; qualified versions excluded; no version ranges; Java/MCR only; behavioural compatibility not studied",
+ "analyst_limitations": "Binary-only BCs make 7.9% a lower bound; impact via static reachability not executed builds/tests; adjacent upgrades only; Java<=8 and data to 2018; not directly transferable to web APIs lacking compile-time checks",
+ "reproducibility": "High: Zenodo package with code, notebooks and corpus access",
+ "suggested_extensions": "REST/OpenAPI 'breaking bad' study combining spec diffs with consumer usage; behavioural BC detection via differential testing; checking LLM-generated code against library BCs; stability-marker standardisation; client reaction mining for migration",
+ "evidence_location": "Protocol p.10-13; Maracas p.21-22; Q1 p.25-29; Q2 p.37; Q3 p.38-34; threats p.34-35; implications p.40-41; conclusion p.42",
+ "confidence": "High",
+ "cluster": "T5",
+ "secondary_clusters": [],
+ "integrity": "Several result tables column-split; trend figures missing; page markers out of order in Q3 section"
+}

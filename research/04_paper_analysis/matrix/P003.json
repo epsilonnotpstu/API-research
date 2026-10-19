@@ -1,0 +1,19 @@
+{
+ "paper_id": "P003",
+ "research_problem": "Black-box REST fuzzers are rarely evaluated with code coverage, so their real limitations are unknown",
+ "technical_approach": "7 fuzzers x 19 SUTs x 10 runs x 1h with JaCoCo/c8 line coverage; EvoMaster white-box vs grey-box; manual source-code analysis of uncovered branches",
+ "primary_contribution": "Coverage-based tool comparison plus a source-level catalogue of open problems in REST fuzzing",
+ "dataset_benchmark": "19 APIs from EMB (6 NodeJS, 13 JVM incl. 1 industrial), ~285K LOC",
+ "evaluation_metrics": "Line coverage (JaCoCo/c8); detected faults (white-box only, EvoMaster-internal); Mann-Whitney U, Vargha-Delaney A12",
+ "baselines": "bBOXRT, EvoMaster BB, RESTest, RestCT, RESTler, RestTestGen, Schemathesis",
+ "key_findings": "Avg coverage: EvoMaster 56.8%, Schemathesis 54.5%, others 33.6-45.4%; no tool >60%; white-box +7.5% coverage but only +3.4 faults (<10%); white-box worse on ocvn-rest; open problems: faulty/underspecified schemas, non-JSON payloads, recursive schemas, external services (no fuzzer mocks), string/regex constraints, NoSQL, third-party @Valid constraints, auth/initial data, non-REST-compliant APIs",
+ "author_limitations": "Authors built EvoMaster (bias); possible misconfiguration of other tools; 19 APIs; arbitrary 1h budget; compares implementations not techniques",
+ "analyst_limitations": "EMB is EvoMaster's own benchmark (home advantage); authors repaired schemas for other tools; no black-box fault metric; dynamic auth not configured for 2 APIs; pre-LLM (2022)",
+ "reproducibility": "Scripts in EvoMaster repo (Zenodo); SUTs in EMB except industrial ind0; ~71 days compute",
+ "suggested_extensions": "Spec inference/enrichment for underspecified schemas; external-service mocking in fuzzers; NoSQL-aware generation; extract @Valid constraints; field-name-based type inference (possibly LLM)",
+ "evidence_location": "RQs p.4 L201-204; Table 2 p.9; Table 4 p.11; open problems p.12-28 L1229-2361; threats p.28",
+ "confidence": "High",
+ "cluster": "T1",
+ "secondary_clusters": ["T4"],
+ "integrity": "arXiv v2 (19 APIs) differs from TOSEM version (20 APIs); tables column-split but recoverable; code figures letter-spaced"
+}

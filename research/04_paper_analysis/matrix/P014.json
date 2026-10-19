@@ -1,0 +1,19 @@
+{
+ "paper_id": "P014",
+ "research_problem": "BOLA (OWASP API #1) attacks need automated detection; OpenAPI specs are not directly amenable to formal analysis",
+ "technical_approach": "Links2CPN: transform OpenAPI 3.1 (operations x responses, linked via OpenAPI 'links') into a Colored Petri Net; replay JSON-enriched web server logs with token-based conformance checking; data-flow violations (unexpected object id) flagged as BOLA",
+ "primary_contribution": "OpenAPI-to-CPN transformation and log-based BOLA attack detection tool",
+ "dataset_benchmark": "OWASP Juice Shop (2 BOLA vulns), CTF with 15 students (12 reports, ~2,000 requests), Memos with reverted BOLA fix",
+ "evaluation_metrics": "Accuracy, precision, recall, F1 against manually labelled attack attempts and successful attacks",
+ "baselines": "None",
+ "key_findings": "All attack attempts detected (all metrics = 1 at attempt level); at successful-attack level V1 F1 0.98 but V2 precision 0.22, F1 0.37; only 9 of 1,955 APIs.guru specs use OpenAPI links",
+ "author_limitations": "Requires well-formed OpenAPI with links and error cases; centralized logs; JSON log conversion; known patterns only; non-representative user sample; offline only",
+ "analyst_limitations": "Links almost never present (0.46%) so applicability is severely limited; BOLA heuristic (id not previously issued in session) would flag legitimate access; detects attempts not vulnerabilities; inverted TP/TN definitions; overconfident threats section; tiny logs, two apps, reverted vulnerability",
+ "reproducibility": "Tool, instrumented apps and logs on GitHub; open access",
+ "suggested_extensions": "Automatic inference of links/dependencies; ownership-aware oracle; active BOLA test generation from CPN; production false-positive measurement; real-time gateway/eBPF deployment; distributed microservice logs",
+ "evidence_location": "Links statistic p.3; algorithms p.6-7; conformance p.7-8; user study p.10-11 Table 2; Memos p.12; threats p.12-13",
+ "confidence": "High",
+ "cluster": "T3",
+ "secondary_clusters": ["T9", "T4"],
+ "integrity": "Algorithms and CPN symbols partly garbled; confusion tables column-split; figures missing"
+}

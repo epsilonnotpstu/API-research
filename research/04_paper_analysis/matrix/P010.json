@@ -1,0 +1,19 @@
+{
+ "paper_id": "P010",
+ "research_problem": "GraphQL queries can be exponentially costly; providers lack a cheap, accurate, backend-agnostic way to estimate query cost (83% of 30 public APIs document no query analysis)",
+ "technical_approach": "Formal GraphQL semantics; pagination-aware configuration (limit arguments, default limits, weights, regex); linear-time static analyses computing provable upper bounds for resolve complexity and type complexity",
+ "primary_contribution": "First provably correct static GraphQL query cost analysis plus first GraphQL query-response corpus",
+ "dataset_benchmark": "10,000 generated query-response pairs from GitHub and Yelp GraphQL APIs (Apr 2019-Mar 2020)",
+ "evaluation_metrics": "Under/over-estimation rates, median and 90th-percentile error, runtime (ms)",
+ "baselines": "Three open-source static libraries (libA, libB, libC); GitHub and Yelp closed analyses (qualitative)",
+ "key_findings": "No under-estimation; 84% of GitHub type predictions over-estimate <50%; median error 19% vs libA 634%; libB/libC under-estimate ~64%; median 3.0 ms per query; GitHub DoS vector disclosed and patched; Yelp limit bug confirmed; shipped in IBM API Connect/DataPower v10",
+ "author_limitations": "Configuration errors and query realism (random, bounded queries); depends on resolvers enforcing limits; configuration burden; mutation type complexity and hybrid static/dynamic left to future work; prototype not shareable",
+ "analyst_limitations": "W1,0 weights never correlated with real server cost; only two large commercial APIs; synthetic corpus; closed prototype; Table 2 layout lost in conversion; modern attack vectors (batching, aliases) not considered",
+ "reproducibility": "Zenodo corpus, generator and library configs; analysis prototype withheld",
+ "suggested_extensions": "Hybrid learned cost models; automatic configuration inference from schema/LLM; fuzzing for resolver limit violations; cost-aware GraphQL test generation; mutation/subscription cost; REST/LLM-agent cost bounds",
+ "evidence_location": "Motivation p.2; analysis p.5-6; corpus p.7; RQ2-4 p.7-8 Table 2; RQ5 p.9; disclosures p.10; threats p.11",
+ "confidence": "High",
+ "cluster": "T2",
+ "secondary_clusters": ["T3"],
+ "integrity": "Formulas partly garbled; heat-map axes scattered; Table 2 columns unrecoverable without PDF"
+}

@@ -1,0 +1,19 @@
+{
+ "paper_id": "P024",
+ "research_problem": "LLM-based code completion may suggest deprecated library APIs because libraries evolve after training; the extent and causes are unstudied",
+ "technical_approach": "145 manually collected deprecated->replacement mappings from 8 Python libraries; 28,125 line-level completion prompts from real GitHub functions (9,022 outdated, 19,103 up-to-date) via Sourcegraph and AST/type/alias resolution; 7 code LLMs; AUP/DUR metrics; likelihood t-tests and context-similarity analysis; two fixes REPLACEAPI (decoding intervention) and INSERTPROMPT (comment hint)",
+ "primary_contribution": "First evaluation of deprecated API usage in LLM code completion with root-cause analysis and baseline mitigations",
+ "dataset_benchmark": "145 API mappings, 28,125 prompts from 113,660 Python files; CodeGen 350M/2B/6B, DeepSeek-1.3B, StarCoder2-3B, CodeLlama-7B, GPT-3.5",
+ "evaluation_metrics": "API Usage Plausibility, Deprecated Usage Rate, Reference Usage Rate; Fixed Rate, Edit Similarity, Exact Match",
+ "baselines": "Unfixed completions; comparison across models",
+ "key_findings": "AUP only 9-23%; DUR 25-38% overall, higher for larger models; DUR 70-90% on outdated-context prompts vs 9-18% on up-to-date ones (models follow context); library-dependent DUR (PyTorch 50-70%) driven by minor package-move deprecations; REPLACEAPI fixes >85% with ES >80% on open models; INSERTPROMPT 25.7-97.2%",
+ "author_limitations": "Lightweight Python type/alias resolution may miss calls; function-level deprecation only; Python-only; selected libraries/LLMs; INSERTPROMPT untuned",
+ "analyst_limitations": "Overall DUR depends on outdated/up-to-date mix and context-following, not intrinsic preference; small/older models only; possible training-data contamination; fixes require known dep->rep mapping; RAG/model editing only proposed; no confidence intervals; line-level completion not agentic generation",
+ "reproducibility": "High: code and data released; open models",
+ "suggested_extensions": "Deprecated REST/OpenAPI operations in LLM-generated clients and agent tool calls; controlled comparison of RAG, model editing and constrained decoding; automatic mapping mining from changelogs/spec diffs; parameter-level and behavioural deprecations; frontier-model replication",
+ "evidence_location": "Setup p.3-5; RQ1 p.5-7; RQ2 p.7; RQ3 p.8-9; fixes p.9-10 Table V; implications/threats p.11",
+ "confidence": "High",
+ "cluster": "T5",
+ "secondary_clusters": ["T8", "T7"],
+ "integrity": "Two-column lines merged across columns; tables column-split; figures missing; numbers verified from summary boxes"
+}

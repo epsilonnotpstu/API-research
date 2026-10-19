@@ -1,0 +1,19 @@
+{
+ "paper_id": "P011",
+ "research_problem": "No automated testing approach or tool exists for modern RPC-based APIs (Thrift, gRPC, Dubbo, SOFARPC) widely used in industrial microservices",
+ "technical_approach": "Framework-agnostic RPC schema extracted via Java reflection from RPC interfaces (with javax/Thrift constraints); tests as sequences of RPC calls evolved by MIO in EvoMaster with white-box heuristics, SQL handling and new RPC-specific testing targets (handled/error, success/fail, null/empty)",
+ "primary_contribution": "First white-box search-based fuzzer for RPC APIs, integrated into Meituan's CI",
+ "dataset_benchmark": "2 artificial Thrift APIs + 4 Meituan industrial APIs (195K LoC) in depth; 50 further Meituan APIs (1.44M LoC), 54 industrial in total",
+ "evaluation_metrics": "Line and target coverage, unique potential faults, manually triaged real faults; Mann-Whitney U, Vargha-Delaney A12 over 30 runs",
+ "baselines": "Random search (grey-box) within EvoMaster; Meituan's existing manual/replay tests",
+ "key_findings": "Significantly better than random on all 6 SUTs (A12>0.80; up to +47% artificial, +11.15% industrial); industrial line coverage 9-27%, avg 17.49% on 50 APIs; exceeds existing tests; 126 real faults (24 L1, 17 L2, 85 L3), 41 fixed; 8,377 potential faults pending; low coverage due to external services, business-level validation, huge DTOs, DB state",
+ "author_limitations": "Single fixed budget; one company and Thrift-based framework; industrial results not replicable; gRPC result analysis incomplete; only MIO; external services, DB reset, flakiness, readability open",
+ "analyst_limitations": "Weak baseline (own random search); self-evaluation by tool authors; exception-only oracle misses semantic bugs; empty databases; no gRPC/GraphQL evaluation despite 'modern RPC' framing; potential-fault inflation",
+ "reproducibility": "EvoMaster open-source and artificial SUTs public; industrial data confidential; 129 days compute",
+ "suggested_extensions": "Open-source RPC/gRPC benchmark; search-integrated external service mocking; LLM-generated complex DTO inputs; production data seeding; semantic oracles and automated fault triage; non-JVM/gRPC support",
+ "evidence_location": "Approach p.9-20; Table 2 p.21; RQ1 p.23; RQ2 p.24-27; Table 6-7 p.28-29; lessons p.30-32; threats p.32",
+ "confidence": "High",
+ "cluster": "T2",
+ "secondary_clusters": ["T1", "T9"],
+ "integrity": "Fig.6 UML glyph-garbled; code listings letter-spaced; Tables 3,5,6 column-split; key numbers cross-checked with text"
+}

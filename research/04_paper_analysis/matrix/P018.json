@@ -1,0 +1,19 @@
+{
+ "paper_id": "P018",
+ "research_problem": "Developer-maintained OpenAPI specs are missing or inconsistent; existing generators need annotations, deployment or tests and produce shallow specs",
+ "technical_approach": "Respector: framework pattern database (Spring Boot, Jersey); static extraction of controllers, endpoints, parameters (incl. request-body classes, sub-resources) and responses; Soot ICFG symbolic execution with Z3 to derive valid/invalid path constraints; constraint simplification to OpenAPI keywords; enhanced extensions for non-expressible constraints and global-variable-based endpoint interdependencies",
+ "primary_contribution": "First static/symbolic-analysis-based REST API specification generator",
+ "dataset_benchmark": "15 open-source Java REST APIs (1K-119K SLOC) with developer specs; author-built ground truth",
+ "evaluation_metrics": "Precision/recall for endpoints, parameters, constraints, responses; counts vs developer specs; coverage relative to baselines",
+ "baselines": "AppMap, Swagger Core, springdoc-openapi, SpringFox",
+ "key_findings": "Endpoints 100/98.6%, parameters 100/94.4%, responses 100/92.6%, constraints 95.6% precision but 50% average (27.9% pooled) recall; 4,806 interdependencies; developer specs missed 228 endpoints, 2,795 parameters, 502 responses; 4 developer-confirmed constraint inconsistencies; baselines found ~75% endpoints, 66% parameters, 18% constraints",
+ "author_limitations": "Path explosion, dynamic endpoints, type erasure, Z3/Soot limits, no external library or configuration analysis; Java Spring Boot/Jersey only; 15 APIs",
+ "analyst_limitations": "Constraint recall presented as 50% average while pooled 27.9%; ground truth built by authors without agreement statistic; coarse global-variable interdependencies unvalidated for testing; no downstream testing evaluation; baseline comparison relative to Respector's own detections; uneven runtime",
+ "reproducibility": "High: data and code archived on Software Heritage; open-source subjects",
+ "suggested_extensions": "Static+LLM hybrid for constraints and unresolvable functions; bean-validation modelling; static IDL dependency inference; DB/ORM-mediated producer-consumer dependencies; CI spec-drift detection; downstream fuzzing evaluation",
+ "evidence_location": "Approach p.4-7; setup p.8; RQ1 p.8-9; RQ2 p.9-10; RQ3 p.10; limitations p.10; threats p.11",
+ "confidence": "High",
+ "cluster": "T4",
+ "secondary_clusters": ["T1", "T6"],
+ "integrity": "Algorithm math glyphs partly garbled; per-API figure-tables column-split; totals verified from text"
+}

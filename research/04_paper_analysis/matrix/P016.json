@@ -1,0 +1,19 @@
+{
+ "paper_id": "P016",
+ "research_problem": "Web APIs impose inter-parameter dependencies (85% of 40 studied APIs) that OAS/RAML cannot express, blocking automated interaction and testing",
+ "technical_approach": "IDL, a DSL for seven dependency types (Requires, Or, OnlyOne, AllOrNone, ZeroOrOne, Arithmetic/Relational, Complex); mapping to CSP; nine analysis operations (consistency, dead/false-optional parameters, valid (partial) request, all/number/random requests) automated in IDLReasoner via MiniZinc",
+ "primary_contribution": "First DSL with formal CSP semantics and tool suite (editor, IDL4OAS extension, IDLReasoner) for inter-parameter dependencies",
+ "dataset_benchmark": "Prior study of 2,557 operations from 40 APIs (633 dependencies); 149 dependencies from 30 operations of 22 APIs for expressiveness; 178 test cases",
+ "evaluation_metrics": "Qualitative expressiveness; test-suite pass/fail and execution time",
+ "baselines": "None",
+ "key_findings": "All 149 real dependencies expressible; test suite revealed and fixed parsing/translation faults; operations run in milliseconds except all-requests",
+ "author_limitations": "Manual dependency identification; possible tool bugs; generalisability beyond 40 APIs; no practitioner usability evaluation",
+ "analyst_limitations": "IDL must be hand-written, no inference; expressiveness self-assessed by language designers; no measurement of testing benefit here; single-operation scope (no stateful/response constraints); documented vs actual dependencies unchecked; preprint version read",
+ "reproducibility": "High: tools, dataset, test suite and demo publicly available",
+ "suggested_extensions": "LLM/static/traffic-based automatic IDL inference; documentation-implementation dependency drift detection; stateful inter-operation constraint language; IDL-aware LLM tool calling; usability study",
+ "evidence_location": "Catalogue p.2-4; IDL p.4-6; CSP p.6-7; operations p.8-9; tools p.9-10; RQ1-2 p.11-12; threats p.12",
+ "confidence": "High",
+ "cluster": "T4",
+ "secondary_clusters": ["T1", "T6"],
+ "integrity": "Many section headings undetected; CSP table symbols garbled; Fig.1 missing; conclusions placed after references"
+}

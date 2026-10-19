@@ -1,0 +1,19 @@
+{
+ "paper_id": "P019",
+ "research_problem": "Proxy/test-based REST specs are incomplete (miss error and configuration-dependent responses); existing generators cannot enumerate all response types per endpoint",
+ "technical_approach": "RESTpi: path-sensitive, flow-sensitive type inference (path types over syntactic branch conditions) built on Ruby's RDL, with singleton and computed types (Hash#merge, ActiveRecord as_json via DB schema), layered Rails request lifecycle inference, path-type merging and path-insensitive library calls to curb path explosion",
+ "primary_contribution": "Path-sensitive type inference theory and Ruby implementation enumerating REST response types with their path conditions",
+ "dataset_benchmark": "132 control-flow-rich endpoints from 5 Rails apps (Code.org, Discourse, Journey, Canvas, OpenFarm)",
+ "evaluation_metrics": "Unique response types; median inference time vs control-flow splits (merging on/off); status codes, extra fields and required-field errors vs dynamic proxy specs",
+ "baselines": "Specifications from test-suite proxying (rswag, rspec-openapi, HAR->OpenAPI)",
+ "key_findings": "545 response types (166 x 200, 379 non-200); 1.353 s average per endpoint, 5 timeouts without merging; only 76/132 endpoints exercised by tests; 227 vs 132 response types (+71.97%), non-200 +129.17%; extra fields from serialization formats and access levels; dynamic specs mis-mark required fields",
+ "author_limitations": "Ruby on Rails specific (DB schema, serialization); no loop typing rules (language-level loops unsoundly analysed once)",
+ "analyst_limitations": "Precision of extra response types never validated (guards not interpreted, infeasible paths possible); endpoint selection favours the technique; weak baseline (proxy only); response-side only, no request/constraint inference; path conditions not mapped into OpenAPI; small hardware/scale",
+ "reproducibility": "High: open-source tool and public benchmarks",
+ "suggested_extensions": "SMT-checked feasibility of path types; path conditions as fuzzing guidance and error-path oracles; access-level-dependent response auditing for data exposure; multi-language/LLM hybrid; conditional-response OpenAPI extension; CI spec checking",
+ "evidence_location": "Motivation p.2-4; theory p.5-7; implementation p.7-12; setup p.13; RQ1 p.13; RQ2 p.15; RQ3 p.16-17; threats p.17",
+ "confidence": "High",
+ "cluster": "T4",
+ "secondary_clusters": ["T6"],
+ "integrity": "Inference-rule symbols partly garbled; tables column-split; runtime figure missing; conclusion section not detected"
+}
