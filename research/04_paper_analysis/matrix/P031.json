@@ -1,0 +1,19 @@
+{
+ "paper_id": "P031",
+ "research_problem": "LLM code generation frequently misuses library APIs, but prior studies used synthetic tasks and rule-based repair lacks semantic understanding",
+ "technical_approach": "6,000 unique APIs (Python/Java) from The Stack; IDE-style method infilling and parameter completion with StarCoder-7B, Qwen2.5-Coder-7B and Copilot; EM/BLEU/CodeBERTScore; closed+axial coding of EM failures (kappa 0.97) using an adapted misuse taxonomy adding Intent and Hallucination; Dr.Fix detect-reason-fix taxonomy-guided LLM repair",
+ "primary_contribution": "Large-scale study of API misuse in LLM code completion and a taxonomy-guided LLM repair approach",
+ "dataset_benchmark": "3,000 APIs per language from 631 Python and 486 Java repositories; 36,000 generations; ~6.5-6.7K annotated misuses",
+ "evaluation_metrics": "Exact match at masked element, BLEU, CodeBERTScore, precision/recall; repair BLEU/EM/refusal",
+ "baselines": "Plain prompting, Dr.Fix without taxonomy, fine-tuned CodeBERT/CodeT5 APR (Zhang et al.)",
+ "key_findings": "Qwen2.5-Coder best (Python method EM 85.4%; Java 61.2% vs Copilot 53.1%, StarCoder 44.3%); hallucination most common misuse (up to 43.3% of Java parameter misuses), intent misuse 23.6-30.4% of method errors; Dr.Fix improves BLEU by up to 38.4 and EM by up to 40 points, far above CodeBERT/CodeT5",
+ "author_limitations": "Annotation subjectivity; single run; closed-coding subjectivity; uncertain domain coverage; Python/Java only; limited backbones and APR baselines; frequent APIs only, not rare/deprecated",
+ "analyst_limitations": "EM failure against developer code conflated with misuse; inconsistent annotated-sample counts; Dr.Fix tested on 10% with known misuses and text-similarity metrics, not execution; older 2024 models; no web/REST API client code; manual Copilot use",
+ "reproducibility": "Medium: replication package, planned GitHub release; closed models",
+ "suggested_extensions": "LLM REST/OpenAPI client-code misuse with spec-as-oracle; execution-validated end-to-end repair benchmark; spec/IDL-constrained decoding; deprecated/rare/security API misuse; agentic coding tools",
+ "evidence_location": "Setup p.4-6; RQ1 p.9; RQ2 p.10-11; Dr.Fix p.11-14; threats p.14-15",
+ "confidence": "High",
+ "cluster": "T7",
+ "secondary_clusters": ["T8", "T5"],
+ "integrity": "Partial column interleaving; distribution tables column-split; figures missing"
+}

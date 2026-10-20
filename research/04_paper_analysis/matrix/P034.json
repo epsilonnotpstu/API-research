@@ -1,0 +1,19 @@
+{
+ "paper_id": "P034",
+ "research_problem": "LLMs (even GPT-4) generate inaccurate API arguments and hallucinate API usage; web-scale, overlapping, changing API sets cannot fit in context and lack benchmarks",
+ "technical_approach": "APIBench (1,645 TorchHub/TF Hub/HuggingFace ML API calls, 10 GPT-4 self-instruct instructions each); retriever-aware instruction fine-tuning of LLaMA-7B (Gorilla) with appended documentation; AST sub-tree matching for accuracy and hallucination (non-existent API) measurement; constraint-aware evaluation",
+ "primary_contribution": "Fine-tuned API-calling LLM with retrieval-aware training and an API hallucination benchmark/metric",
+ "dataset_benchmark": "APIBench: ~11K instruction-API pairs over 1,645 ML model APIs; holdout split from self-instruct pairs",
+ "evaluation_metrics": "AST accuracy, hallucination rate, wrong-API error",
+ "baselines": "GPT-4, GPT-3.5, Claude-v1, LLaMA-7B; zero-shot, BM25, GPT-Index, oracle retrievers",
+ "key_findings": "Zero-shot Gorilla beats GPT-4 by 20.43% and ChatGPT by 10.75%; imperfect retrievers at test time hurt (up to -47.57%); retriever-aware training with oracle docs helps (+12.37% TorchHub, +23.46% HF) but non-oracle retrievers degrade it (up to -52.27%); GPT-4 hallucinates more than GPT-3.5; qualitative adaptation to documentation changes; accuracy drops under constraints",
+ "author_limitations": "ML domain chosen for difficulty; potential bias of ML APIs; execution out of scope (no explicit limitations section)",
+ "analyst_limitations": "Instruction-level split leaves same APIs in train and test (memorisation); unequal HuggingFace evaluation for baselines; ML-hub single calls not REST/multi-step; AST match without execution; GPT-4-generated instructions; count inconsistencies (696 vs 626); documentation-change adaptation only anecdotal",
+ "reproducibility": "High: code, model and data released",
+ "suggested_extensions": "OpenAPI/REST hallucination benchmark with spec validation and execution; API-level and time-based unseen splits; robustness to noisy retrieved docs; constraint-aware selection with cost/latency/rate limits; quantitative documentation-change benchmark",
+ "evidence_location": "APIBench p.2-4; training p.4-5; AST metric p.5; results p.7-9 Tables 1-3; conclusion p.9",
+ "confidence": "High",
+ "cluster": "T8",
+ "secondary_clusters": ["T5", "T7"],
+ "integrity": "Result tables column-split; figures missing"
+}
