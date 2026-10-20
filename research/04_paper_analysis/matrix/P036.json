@@ -1,0 +1,19 @@
+{
+ "paper_id": "P036",
+ "research_problem": "MCP is rapidly becoming the standard tool interface for foundation models, but the health, security and maintainability of MCP servers, including MCP-specific risks like tool poisoning, are unknown",
+ "technical_approach": "Mining 1,899 MCP servers (official, community, GitHub SDK-import search), filtering to 583 with >=10 stars; 14 CHAOSS/literature health metrics; SonarQube static analysis mapped to CWE; mcp-scan dynamic tool-description scanning on a Cochran sample (83 -> 73 scanned); LLM-Jury clustering of issues validated with humans (kappa 0.9); cross-ecosystem baselines (PyPI, NPM, IaC, ML)",
+ "primary_contribution": "First large-scale empirical study of MCP server health, security and maintainability with a hybrid analysis framework and dataset",
+ "dataset_benchmark": "1,899 MCP servers (88 official, 255 community, 1,556 mined); 583 analysed; 73 dynamically scanned",
+ "evaluation_metrics": "Commit rate, CI adoption, contributors, followers, issue resolution; vulnerability/smell/bug prevalence by pattern",
+ "baselines": "Published metrics for traditional OSS, ML, PyPI, NPM and IaC ecosystems",
+ "key_findings": "Healthy activity (5.5 commits/week vs 2.5, CI 42.2%); 7.2% of servers have one of 8 vulnerability patterns, credential exposure most common (3.6%), little overlap with PyPI/NPM top vulnerabilities; 5.5% of scanned servers show tool poisoning, undetectable by SonarQube; mcp-scan misses excessive permissions and insecure auto-approval; 66% have critical/blocker smells, 14.4% bug patterns",
+ "author_limitations": "Open-source only; SonarQube not exhaustive and its bugs not always real faults; SDK-import mining may miss servers; mcp-scan on a sample and description-reflection only; star filter weak proxy; incomplete health metrics/baselines",
+ "analyst_limitations": "Abstract says 1,899 evaluated but analyses use 583 and 73; tool poisoning ~4 servers with +/-10% margin; finding precision not validated and no disclosure noted; no API-level authorization/least-privilege analysis of wrapped REST APIs; age bias in health comparison; mid-2025 snapshot",
+ "reproducibility": "Medium: dataset released; SonarQube open; mcp-scan proprietary and versioned; credential-dependent setup",
+ "suggested_extensions": "Fuzzing and access-policy oracles for MCP tool interfaces; least-privilege generation and auditing; labelled tool-poisoning benchmark with LLM detectors; MCP schema vs OpenAPI consistency checks; MCP server evolution and differential testing; longitudinal ecosystem health",
+ "evidence_location": "RQs/findings p.4-5; data p.14-15; analysis pipeline p.17-19; RQ-1 p.26-31; threats p.39-41",
+ "confidence": "High",
+ "cluster": "T8",
+ "secondary_clusters": ["T3", "T9"],
+ "integrity": "Pattern tables column-split; motivating figures partial; formula lost; appendix unread"
+}

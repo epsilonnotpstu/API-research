@@ -1,7 +1,7 @@
 # RESEARCH_STATE
 
 **শেষ হালনাগাদ:** 2026-10-19 (Claude)
-**বর্তমান phase:** ▶️ **PHASE C চলছে** (supervisor 2026-10-19-এ সব ৩৮টি PDF দিয়ে ‘next stage’ শুরুর নির্দেশ দিয়েছেন)
+**বর্তমান phase:** ✅ **PHASE C, D, E সম্পন্ন** — supervisor-এর সিদ্ধান্তের অপেক্ষা (`06_final_recommendations/research_execution_roadmap.md` §14)
 
 ---
 
@@ -13,9 +13,9 @@
 | Checkpoint 1 | ✅ | Supervisor merge নির্দেশ দিয়েছেন |
 | B — Merge & screening | ✅ | ১০৪ merged → ৩৮ নির্বাচিত (P001–P038) |
 | Checkpoint 2 | ✅ | ৩৮/৩৮ PDF `paper/`-এ; Markdown pdftotext দিয়ে পুনর্নির্মিত (supervisor-এর ‘markdown ঠিক করো’ নির্দেশ) |
-| C — Deep reading | ▶️ চলছে | C1 automated scan সম্পন্ন (`04_paper_analysis/integrity_scan.csv`); C2 প্রতি paper: `Pxxx_analysis.md` + `matrix/Pxxx.json` |
-| D — Clusters & gaps | ⬜ | |
-| E — Recommendations | ⬜ | |
+| C — Deep reading | ✅ | ৩৮/৩৮ (`Pxxx_analysis.md` + `matrix/`); `evidence_matrix.csv`, `comparative_matrix.md`, `document_integrity_report.md`, `cross_paper_synthesis.md`; ⚠️ P038 identity mismatch |
+| D — Clusters & gaps | ✅ | ৯টি cluster report, `final_paper_cluster_table.md/.csv` (final table), `cluster_comparison.md`, `research_gap_register.csv` (G1–G14), `gap_validation.md` (GV01–GV17), `cluster_relationships.md`, `research_landscape_report.md` |
+| E — Recommendations | ✅ | `ranked_research_topics.md` (R1–R7), `best_research_direction.md` (A: R2, **B: R1 ⭐**, C: R3), `research_execution_roadmap.md`, `final_research_report.md` |
 
 ## 2. সংখ্যা
 
@@ -28,7 +28,7 @@
 | Eligible after Stage 1 | 97 |
 | **Papers selected** | **38** (P001–P038) |
 | Verified PDF (selected) | 32/38 (OA 11 · preprint 21); **6 not verified** |
-| Papers deeply analyzed | 0 |
+| Papers deeply analyzed | **38** (P038 = substitute document) |
 
 ## 3. PHASE B deliverables
 
@@ -63,13 +63,16 @@
 ## 5c. PHASE C অগ্রগতি
 
 - Markdown: `03_papers_markdown/Pxxx.md` (pdftotext, `<!-- page N -->` marker); পুরোনো markitdown কপি `_markitdown/`-এ।
-- পাঠ-ক্রম: P001 → P038। **সম্পন্ন: P001–P025** (প্রতিটির `04_paper_analysis/Pxxx_analysis.md` + `matrix/Pxxx.json`, cluster সহ)। পরবর্তী: P026।
+- পাঠ-ক্রম: P001 → P038। **সম্পন্ন: P001–P038** (প্রতিটির `04_paper_analysis/Pxxx_analysis.md` + `matrix/Pxxx.json`, cluster সহ)। পরবর্তী: synthesis (evidence matrix, integrity report, cross-paper synthesis) → PHASE D।
+- ⚠️ **P038 IDENTITY MISMATCH:** supervisor-প্রদত্ত PDF = Ghani et al. 2019, IJIE (10.30880/ijie.2019.11.08.008), নির্বাচিত Ponce et al. 2025, IST (10.1016/j.infsof.2025.107870) নয়। প্রদত্ত document labelled substitute হিসেবে বিশ্লেষিত (confidence Low); Ponce 2025-এর কোনো দাবি ব্যবহার হয়নি। সঠিক PDF পেলে পুনর্বিশ্লেষণ। বাকি ৩৭টি first-author check-এ মিলেছে।
 - Supervisor নির্দেশ (2026-10-19): পাঠের সঙ্গে সঙ্গে cluster-এ ভাগ করা এবং শেষে একটি final table।
 - Evidence location রীতি: `p.N` = PDF page marker, `L` = Markdown line number।
 
 ## 6. পরবর্তী নিরাপদ ধাপ
 
-Supervisor-এর নিশ্চিতকরণের অপেক্ষা: “Markdown files ready”। তারপর PHASE C1: `03_papers_markdown/` scan → P-ID mapping → `04_paper_analysis/document_integrity_report.md`।
+1. Supervisor সিদ্ধান্ত (roadmap §14): Option (R1/R2/R3), LLM ব্যবহারের নীতি, scope।
+2. P038-এর সঠিক PDF (Ponce et al. 2025) পেলে `P038_analysis.md` পুনর্লিখন → `build_evidence_matrix.py` ও `build_final_table.py` পুনরায় চালানো → T9 cluster report হালনাগাদ।
+3. R1 E0: 2607.12101 ও SpecFix-এর সর্বশেষ version পূর্ণ পাঠ; লক্ষ্যভিত্তিক scholarly search।
 
 ## 7. Context reset হলে
 

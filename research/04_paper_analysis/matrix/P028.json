@@ -1,0 +1,19 @@
+{
+ "paper_id": "P028",
+ "research_problem": "API documentation presentation ('how') problems hinder API use, yet no work automatically detects such documentation smells",
+ "technical_approach": "Catalog of five smells (Bloated, Excess Structural Info, Tangled, Fragmented, Lazy); 1,000-unit multi-label benchmark from Java SE docs; survey of 21 developers; rule-based metrics (length, readability, jargon, URLs, structural names, edit distance), shallow ML (OVR/LPS/CC-SVM, ML-kNN) and deep models (Bi-LSTM, BERT) with 5-fold iterative stratified CV",
+ "primary_contribution": "First API documentation smell catalog, benchmark and automatic detectors",
+ "dataset_benchmark": "1,000 Java SE API documentation units (778 smelly) sampled from 29K methods; 21 surveyed developers",
+ "evaluation_metrics": "Accuracy, precision, recall, F1 per smell; survey agreement, frequency, severity",
+ "baselines": "Rule-based classifiers; shallow vs deep models",
+ "key_findings": "78% of units contain at least one smell, Lazy most common; smells weakly correlated; 95.2% of developers report productivity loss and >90% want fixes; rule-based good only for Bloated (F1 .90) and Lazy (.95); BERT best for all smells with F1 0.75-0.97, large gains for Excess/Tangled/Fragmented",
+ "author_limitations": "Possible author bias mitigated by multiple coders and literature; catalog limited to five smells; generalisability corroborated by literature",
+ "analyst_limitations": "Java SE reference docs only, not Web/REST API docs; 800 units single-coded by students; kappa 0.83 overstated as perfect; small leading convenience survey; possible length-based circularity; no objective task-performance evidence; detection only, no repair",
+ "reproducibility": "High: benchmark, code and survey on GitHub",
+ "suggested_extensions": "REST/OpenAPI documentation smell catalog and detector combined with design linting; LLM detection and rewriting vs BERT; documentation smells as predictors of LLM tool-call errors and API misuse; controlled experiments on smell impact",
+ "evidence_location": "Catalog p.1-4; benchmark p.3; prevalence p.4-5; survey p.5-7; classifiers p.7-9; threats p.10",
+ "confidence": "High",
+ "cluster": "T6",
+ "secondary_clusters": ["T7"],
+ "integrity": "Two-column interleaving in smell definitions; Tables I-V column-split; figures missing"
+}

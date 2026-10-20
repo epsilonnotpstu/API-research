@@ -1,0 +1,19 @@
+{
+ "paper_id": "P033",
+ "research_problem": "Open-source LLMs lack tool-use ability because instruction tuning ignores tools; prior tool datasets have few APIs, constrained single-tool scenarios, weak planning and often no real execution",
+ "technical_approach": "ToolBench: 16,464 filtered real REST APIs (3,451 tools, 49 categories) from RapidAPI; ChatGPT-generated single/multi-tool instructions; solution paths annotated by ChatGPT with DFSDT (depth-first decision tree) over live API calls; ToolEval ChatGPT judge (pass/win rate); LLaMA-2 7B fine-tuned (ToolLLaMA) with Sentence-BERT API retriever",
+ "primary_contribution": "Large real-API tool-use instruction dataset plus DFSDT reasoning, automatic evaluator and an open tool-using model matching ChatGPT",
+ "dataset_benchmark": "~200K instruction-API pairs, 126,486 annotated solution paths; generalization splits (instruction, tool, category); APIBench OOD",
+ "evaluation_metrics": "Pass rate, win rate (ToolEval, 87.1%/80.3% human agreement), NDCG@1/5, AST accuracy, hallucination rate",
+ "baselines": "ChatGPT, GPT-4, Claude-2, Text-Davinci-003, Vicuna, Alpaca (ReAct/DFSDT); BM25, ada-002 retrievers; Gorilla on APIBench",
+ "key_findings": "Vicuna/Alpaca score 0; DFSDT beats ReAct for all LLMs, especially on multi-tool tasks; ToolLLaMA+DFSDT beats Text-Davinci-003 and Claude-2, near ChatGPT, second only to GPT-4+DFSDT; retrieved top-5 APIs outperform oracle APIs; ToolLLaMA beats Gorilla zero-shot OOD on APIBench",
+ "author_limitations": "API temporal variability and infinite solution paths necessitate an LLM evaluator; uneven RapidAPI quality required filtering (no explicit limitations section)",
+ "analyst_limitations": "ChatGPT generates, annotates and judges (self-referential bias); live API drift harms reproducibility; ~69% of APIs filtered and only passed paths kept (survivorship); reverse-generated instructions; pass rate ignores answer correctness; no safety/side-effect analysis; no variance; main table column-split in conversion",
+ "reproducibility": "Medium: code, models and data released; live APIs and ChatGPT judge drift",
+ "suggested_extensions": "Inject spec/documentation defects to measure agent robustness; longitudinal API-evolution robustness; execution-grounded verifiable oracles instead of LLM judges; security-aware tool use; reuse REST testing dependency inference for agent planning",
+ "evidence_location": "Data construction p.3-6; ToolEval p.6; retriever/DFSDT p.6-7; main results p.8 Table 4; OOD p.8-9 Table 5",
+ "confidence": "High",
+ "cluster": "T8",
+ "secondary_clusters": ["T1"],
+ "integrity": "Wrapfigure text interleaved on p.2; formulas partial; Tables 2-5 column-split, averages reconstructed tentatively"
+}

@@ -1,0 +1,19 @@
+{
+ "paper_id": "P037",
+ "research_problem": "Microservice anomaly detection needs multi-modal monitoring data, but existing datasets come from demo benchmarks or proprietary systems, focus on injected performance faults, or lack modalities",
+ "technical_approach": "Deploy the OSS production-grade Light-OAuth2 system (7 services + MySQL); Locust test suite covering OAuth2.0 flows and CRUD with documented-error negative tasks (53 labels); hourly runs (60 s correct, 10 s per error); collect Docker logs, Prometheus host metrics, Jaeger traces; preliminary LogLead anomaly detection and metric PCA",
+ "primary_contribution": "LO2 labelled logs-and-metrics dataset of API-error-induced anomalies in a production OSS microservice system",
+ "dataset_benchmark": "1,740 runs x 54 tests; ~657K log files (>2B lines); 485 metrics (>45.5M files); ~540 GB",
+ "evaluation_metrics": "F1 and AUC-ROC for log anomaly detection; PCA explained variance",
+ "baselines": "DecisionTree, LogisticRegression, IsolationForest, KMeans, RarityModel, OOVD",
+ "key_findings": "Concatenating all service logs fails (optimized F1 ~0.667, unsupervised AUC ~0.5; only DecisionTree >0.7); per-service, per-error models can reach perfect detection (Token/Client logs most informative, Key worst); PCA highlights memory/disk host metrics; traces unusable (single-span) so dataset is effectively bi-modal",
+ "author_limitations": "Incomplete API documentation may affect tests; traces missing; no hardware anomalies; DB reset per run; university server; equal-probability task selection",
+ "analyst_limitations": "Anomalies are documented 4xx responses, not real faults; single archived system; host-level metrics with tiny 10 s windows; weak preliminary analysis with no multi-modal fusion; no security attack traffic despite OAuth2 system",
+ "reproducibility": "High: Zenodo dataset and replication package, CC-BY",
+ "suggested_extensions": "Security-attack microservice datasets (BOLA, token misuse); fuzzer-generated real-fault observability data and log/metric oracles; spec-aware runtime anomaly detection; multi-service thresholding and root-cause localisation; properly traced multi-modal benchmarks",
+ "evidence_location": "Motivation p.1-2; system/tests p.2-3; collection p.3-4; data p.4; analysis p.4-6; threats p.7-8",
+ "confidence": "High",
+ "cluster": "T9",
+ "secondary_clusters": ["T1", "T3"],
+ "integrity": "Tables 1-4 column-split (Table 4 matrix unrecoverable); figures missing"
+}

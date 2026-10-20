@@ -1,0 +1,19 @@
+{
+ "paper_id": "P030",
+ "research_problem": "Despite two decades of static API-misuse detectors, misuses remain prevalent and the detectors' comparative capabilities, precision and especially recall are unknown",
+ "technical_approach": "MUC taxonomy (usage element x missing/redundant) derived from MUBench (100 Java misuses); qualitative survey of 12 detectors validated with original authors; MUBenchPipe automated benchmark; Experiments P (precision, top-20), RUB (recall upper bound with crafted correct usages) and R (realistic recall) on 4 detectors; root-cause analysis",
+ "primary_contribution": "First systematic conceptual and empirical (precision and recall) evaluation of static API-misuse detectors with a public benchmark pipeline",
+ "dataset_benchmark": "MUBench extended to 100 misuses; 29 real-world Java projects and 25 hand-crafted examples; JADET, GROUMINER, TIKANGA, DMMC",
+ "evaluation_metrics": "Precision, empirical vs conceptual recall upper bound, realistic recall, Cohen's kappa, root-cause frequencies",
+ "baselines": "Cross-detector comparison",
+ "key_findings": "All detectors <12% precision (TIKANGA 11.4%); only 14 confirmed misuses; main FP cause is valid-but-uncommon usage (34.3%) from the frequency=correctness assumption, plus analysis imprecision (23.9%) and alternative patterns (19.2%); empirical recall far below conceptual even with correct examples; realistic recall extremely low, true misuses ranked very low; lack of correct usage examples is key",
+ "author_limitations": "Configuration-dependent results using published settings; static detectors only; Java; top-20 review",
+ "analyst_limitations": "Small Java library dataset with 47% non-compilable versions; only four older pattern-mining detectors; partial precision; authors' own benchmark; pre-LLM; web/REST client misuse out of scope",
+ "reproducibility": "High: MUBenchPipe and dataset public",
+ "suggested_extensions": "REST/web API client misuse benchmark from real fixes; LLM detectors evaluated on MUBench; cross-project/code-search and spec-derived constraints; better ranking; OpenAPI/IDL-driven static checks of client code",
+ "evidence_location": "Contributions p.2; MUC p.3-4; survey p.7-8; experiment design p.10-11; results p.12-18 (O1-O15); threats p.18-19",
+ "confidence": "High",
+ "cluster": "T7",
+ "secondary_clusters": ["T5", "T6"],
+ "integrity": "Two-column lines merged in taxonomy section; Tables 1-9 column-split; figures missing"
+}

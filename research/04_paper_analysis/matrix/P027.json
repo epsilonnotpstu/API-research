@@ -1,0 +1,19 @@
+{
+ "paper_id": "P027",
+ "research_problem": "Practitioners struggle to identify violations of empirically validated RESTful design rules; existing linters (Spectral, Zally) mostly check syntax/naming and cover few such rules",
+ "technical_approach": "RESTRuler: modular Java CLI statically analysing OpenAPI documents for 14 Masse rules via string checks, dictionaries, Apache OpenNLP POS tagging and a Naive Bayes model (89% CV accuracy) for NoTunnel; line-mapped Markdown reports for CI/CD",
+ "primary_contribution": "Open-source static design-rule violation detector for OpenAPI with a reusable benchmark evaluation",
+ "dataset_benchmark": "2,331 APIs.guru OpenAPI documents; 1,596 manually checked violations for precision; 111 expert-crafted violations for recall",
+ "evaluation_metrics": "Success rate, analysis time, RAM, CPU, per-rule precision and recall; recall vs Zally on 4 shared rules",
+ "baselines": "Zally (4 shared rules)",
+ "key_findings": "98.7% analysed (30 very large files fail on RAM); 169,061 violations, ContentType and RC401 >40%; 84% of files in <23 s, ~1 GB RAM; precision 91.2% (60-100%), recall 67.6% (46.2-100%), ~75% after fixes; weakest NoTunnel (P67/R46) and ForwardSlash recall 44%; Hyphens recall 89% vs Zally 22%",
+ "author_limitations": "Single-person precision labelling; expert violations translated into OpenAPI; APIs.guru bias toward big providers; 0.94% of violations sampled; small recall samples; static analysis only; RAM issues on huge files",
+ "analyst_limitations": "Tiny per-rule recall samples without intervals; post-benchmark improvements tuned on the test set; no developer-value or understandability-outcome evaluation; top violations may be documentation noise without severity weighting; ML depends on description quality; no LLM baseline",
+ "reproducibility": "High: tool on GitHub, artefacts on Zenodo, public dataset",
+ "suggested_extensions": "LLM-assisted semantic rule checks benchmarked on the same gold standard; severity weighting using P026 effect sizes; correlation of design violations with testing/security defects; design rules for MCP/tool descriptions; evolution-aware linting of design degradation",
+ "evidence_location": "Tool p.3-6; evaluation design p.6-7; RQ1 p.7; RQ2 p.7-8; RQ3 p.8-10; threats p.10",
+ "confidence": "High",
+ "cluster": "T6",
+ "secondary_clusters": ["T4"],
+ "integrity": "Reading order scrambled; spurious headings from figure; tables column-split; per-rule numbers from text"
+}

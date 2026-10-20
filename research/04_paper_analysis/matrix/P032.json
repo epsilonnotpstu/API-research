@@ -1,0 +1,19 @@
+{
+ "paper_id": "P032",
+ "research_problem": "MCP servers increasingly wrap vendor REST APIs for LLM agents, but how they relate to the underlying API surface, which operations they expose, and whether they can be generated from OpenAPI is unknown",
+ "technical_approach": "Manual trace-based coding of 116 official MCP servers (REST reliance, configuration, bare vs custom integration); tool-operation alignment for 42 servers with OpenAPI (gold standard + validated GPT-4.1 labeler), structural/semantic coverage and lift analysis, mapping patterns; AutoMCP-Baseline one-operation-one-tool generator executed against 77 live APIs; SpecFix rule+LLM spec repair; category filtering and Collection/Item merge",
+ "primary_contribution": "First empirical characterisation of REST-to-MCP wrapping plus the AutoMCP generation/repair/reduction pipeline",
+ "dataset_benchmark": "116 MCP servers (Anthropic catalogue, Jul 2025); 42 server-OpenAPI pairs; 77 OpenAPI APIs (8,890 tools; 2,190 sampled invocations)",
+ "evaluation_metrics": "Category shares, kappa/alpha, operation coverage/omission/lift, invocation success rate, repair precision/correctness, tool-count reduction, behavioural equivalence",
+ "baselines": "AutoMCP-Baseline vs +SpecFix vs +transformations; real MCP servers as reference",
+ "key_findings": "88.6% of servers REST-backed (fully/partially), 92% bare wrappers, only 4.6% of tools use OpenAPI-generated clients, 73.6% expose all tools; median 19% operation coverage (6% for very large APIs), auth/config/destructive ops omitted, 89.8% one-to-one mappings; baseline generation 76% tool success, failures from spec-level defects; SpecFix raises to 94.2% with 84.2% correct repairs and 0.45% regressions; tool count -23.9%, median 73->49",
+ "author_limitations": "Manual coding subjectivity; GPT-4.1 alignment errors; transient live-API conditions; SpecFix covers 3 of 5 defect classes; official catalogue and >=10 stars may not generalise; conservative transformations",
+ "analyst_limitations": "Success = error-free invocation, not semantic correctness or agent task success; tool-selection impact unmeasured; sampled invocations; 80 vs 77 API inconsistency; SpecFix evaluated on the same failures used to build the taxonomy; limited security analysis of generated servers; closed-model dependence; preprint",
+ "reproducibility": "Medium: replication package; live APIs drift; GPT-4.1",
+ "suggested_extensions": "Agent-centric evaluation of generated vs hand-crafted MCP servers; spec-quality to agent-reliability causal study; LLM-assisted task-oriented tool abstraction; secure-by-default MCP generation; MCP-REST co-evolution and differential testing; fuzzing MCP tool interfaces",
+ "evidence_location": "Design p.5-17; RQ1 p.18-24; RQ2 p.25-33; RQ3 p.34-45; RQ4 p.46-52; threats p.52-53",
+ "confidence": "Medium",
+ "cluster": "T8",
+ "secondary_clusters": ["T4", "T6"],
+ "integrity": "832 NUL/control bytes from figure glyphs removed; figure numbers became spurious headings; formulas partly lost; tables column-split"
+}

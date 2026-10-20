@@ -95,3 +95,83 @@
 4. Scoring একক screener-এর; inter-rater reliability নেই।
 5. Event-driven/async API, API privacy, performance — চূড়ান্ত তালিকায় অনুপস্থিত (সাহিত্য ও search উভয় সীমাবদ্ধতা)।
 6. Retraction যাচাই সীমিত (Retraction Watch database ব্যবহৃত হয়নি)।
+
+---
+
+## PHASE C — Deep reading (2026-10-19)
+
+### A. QA checklist
+
+| # | চেক | ফল | প্রমাণ/মন্তব্য |
+|---|---|---|---|
+| 1 | প্রতিটি নির্বাচিত paper-এর Markdown পাঠ | ✅ ৩৮/৩৮ (P038 substitute) | `04_paper_analysis/Pxxx_analysis.md` (A–P section) |
+| 2 | ফাইল ↔ paper identity | ⚠️ ১টি ব্যর্থ | First-author check: P038 = Ghani et al. 2019, নির্বাচিত Ponce et al. 2025 নয়; title-word check এটি ধরতে পারেনি |
+| 3 | প্রতিটি দাবির page/line প্রমাণ | ✅ | §P evidence table (p.N = PDF page marker, L = Markdown line) |
+| 4 | Author-reported বনাম inferred limitation আলাদা | ✅ | §J বনাম §K (⚠️); JSON `author_limitations` বনাম `analyst_limitations` |
+| 5 | Opportunity-কে hypothesis হিসেবে লেবেল করা | ✅ | §N “(hypothesis)” |
+| 6 | Conversion ত্রুটির প্রভাব রেকর্ড | ✅ | `document_integrity_report.md`; অনিশ্চিত সংখ্যা চিহ্নিত (P010, P022, P033, P037) |
+| 7 | Matrix ↔ analysis সামঞ্জস্য | ✅ | `evidence_matrix.csv` script দিয়ে JSON থেকে (`00_protocol/scripts/build_evidence_matrix.py`); ৩৮টি JSON-এর key-set অভিন্ন |
+| 8 | Paper-এর ভেতরের অসঙ্গতি রিপোর্ট | ✅ | P009, P021, P029, P031, P032, P034, P036, P038 (`cross_paper_synthesis.md` থিম ৭) |
+| 9 | Retrieved content-কে নির্দেশ হিসেবে গণ্য না করা | ✅ | Paper text-এর ভেতরের কোনো নির্দেশ অনুসরণ করা হয়নি |
+| 10 | Cross-paper synthesis-এ বিরোধ বিবেচনা | ✅ | `cross_paper_synthesis.md` §4 |
+
+### B. ত্রুটি ও সংশোধন
+
+| # | ত্রুটি | ধরা পড়ল | সংশোধন |
+|---|---|---|---|
+| C1 | P032-এ ৮৩২টি NUL/control byte — `grep` নীরবে ব্যর্থ | grep output শূন্য; `grep -a` ও Python count | Control byte অপসারণ; `markdown_fixes_log.csv` |
+| C2 | P038 PDF ভুল paper (supervisor manual download) | First-author surname check | Substitute হিসেবে বিশ্লেষণ, confidence Low; সঠিক PDF প্রয়োজন |
+| C3 | Read tool size limit (>২৫K token ফাইল) | Tool error | Section-ভিত্তিক compressed পাঠ ও offset/limit read; কোনো section বাদ পড়েনি (references ছাড়া) |
+| C4 | Table column-split | পাঠের সময় | Text বা summary box-এর সংখ্যা অগ্রাধিকার পেয়েছে; অনিশ্চিত পুনর্গঠন চিহ্নিত |
+
+### C. অমীমাংসিত
+
+1. P038-এর সঠিক PDF (Ponce et al. 2025)।
+2. ২৪টি preprint-এর সংখ্যা version of record-এর সাথে মিলিয়ে দেখা হয়নি।
+3. P026, P035, P036-এর appendix পড়া হয়নি।
+
+---
+
+## PHASE D — Clusters & gap analysis (2026-10-19)
+
+### A. QA checklist
+
+| # | চেক | ফল | প্রমাণ/মন্তব্য |
+|---|---|---|---|
+| 1 | Paper reference বাস্তব | ✅ | সব P-ID P001–P038-এর মধ্যে (script check); বাইরের কাজ কেবল search log-এ নথিভুক্ত শিরোনাম বা ID হিসেবে, “snippet-স্তর” লেবেলসহ |
+| 2 | Title/identifier সামঞ্জস্য | ✅ | `final_paper_cluster_table.csv` সরাসরি `evidence_matrix.csv` + `final_papers.csv` থেকে (script); P038 substitute-এর আলাদা metadata |
+| 3 | Link label | ✅ | নতুন link যোগ হয়নি; DOI কেবল যাচাইকৃত রেকর্ড থেকে |
+| 4 | Duplicate নেই | ✅ | ৩৮টি সারি, অনন্য ID |
+| 5 | সিদ্ধান্ত প্রমাণ-সমর্থিত | ✅ | Cluster report-এ paper ID; gap-এ supporting paper + search ID |
+| 6 | বিরোধী প্রমাণ বিবেচিত | ✅ | ১৭টি gap-validation search; ৪টি gap weakened (G6, G7, G8, G11), ৪টি partially weakened |
+| 7 | অসমর্থিত দাবি চিহ্নিত | ✅ | ⚠️/[H] লেবেল; Class C আলাদা |
+| 8 | Gap অতিরঞ্জিত নয় | ✅ | G1 “no dataset” → “no behavioural labels”-এ সংকুচিত; G3 broad → narrowed |
+| 9 | CSV ↔ Markdown সামঞ্জস্য | ✅ | Gap ID ও GV ID cross-check script: অমিল নেই; cluster link matrix script দিয়ে যাচাই |
+| 10 | পুনরুৎপাদনযোগ্যতা | ✅ | `build_evidence_matrix.py`, `build_final_table.py`, search log GV01–GV17 |
+
+### B. ত্রুটি ও সংশোধন
+| # | ত্রুটি | সংশোধন |
+|---|---|---|
+| D1 | Cluster report-এর প্রথম খসড়ায় dataset বিবরণ স্মৃতি থেকে (P012 SUT, P016/P018/P019 সংখ্যা, P032 “৫০টি API”) | `evidence_matrix.csv`-এর সাথে মিলিয়ে সংশোধন |
+| D2 | P025 tool-এর বিবরণ অস্পষ্ট | P025 analysis থেকে “RESTler-generated suite + log diff” |
+| D3 | Title-word identity check P038 ধরতে পারেনি | First-author check যোগ (PHASE C) |
+
+### C. সীমাবদ্ধতা
+- Gap-validation WebSearch snippet-স্তরের; scholarly API (OpenAlex/S2) ব্যবহৃত হয়নি (আগের quota বা 429 সমস্যা)।
+- বাইরের ২০২৫–২০২৬ কাজের দাবি যাচাই হয়নি।
+
+---
+
+## PHASE E — Recommendations (2026-10-19)
+
+| # | চেক | ফল | মন্তব্য |
+|---|---|---|---|
+| 1 | প্রতিটি প্রস্তাব কংক্রিট unresolved প্রশ্নসহ | ✅ | R1–R7 প্রতিটিতে RQ, baseline, metric |
+| 2 | Weakened gap থেকে প্রস্তাব নয় | ✅ | G6/G7/G8/G11 বাদ |
+| 3 | Scoring স্বচ্ছ | ✅ | `score_topics.py` + `_scoring.json`; প্রতিটি score-এর যুক্তি |
+| 4 | Importance বনাম convenience আলাদা | ✅ | Significance কলাম আলাদাভাবে আলোচিত |
+| 5 | Sensitivity analysis | ✅ | ৫টি weighting + ৩টি perturbation; R1 novelty-সংবেদনশীল তা স্পষ্ট |
+| 6 | Novelty বা publication-এর অতিরঞ্জন নেই | ✅ | “global novelty দাবি নয়” স্পষ্ট লেখা |
+| 7 | Option A/B/C | ✅ | R2 / R1 / R3 (+C′ R5) |
+| 8 | Roadmap-এর ১৪টি উপাদান | ✅ | `research_execution_roadmap.md` |
+| 9 | Supervisor সিদ্ধান্ত চিহ্নিত | ✅ | Roadmap §14 |
