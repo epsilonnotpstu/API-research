@@ -175,3 +175,26 @@
 | 7 | Option A/B/C | ✅ | R2 / R1 / R3 (+C′ R5) |
 | 8 | Roadmap-এর ১৪টি উপাদান | ✅ | `research_execution_roadmap.md` |
 | 9 | Supervisor সিদ্ধান্ত চিহ্নিত | ✅ | Roadmap §14 |
+
+---
+
+## R1 E0/E1 (2026-11-09)
+
+| # | বিষয় | ফল |
+|---|---|---|
+| 1 | E0 novelty check | 2607.12101 ও RESTifAI পূর্ণ পাঠ; P032 v4 সর্বশেষ নিশ্চিত; P001 Zenodo পরিদর্শন; GV18–GV20 লগ করা |
+| 2 | TOSEM 10.1145/3491038 (Marculescu et al.) | Open full text পাওয়া যায়নি। Repository handle (11250/2991533) ভিন্ন paper-এ resolve হয় — **শুধু abstract-স্তর** ব্যবহৃত |
+| 3 | `restest.us.es` archive | TLS chain যাচাই ব্যর্থ; bypass করা হয়নি |
+| 4 | `specmut` যাচাই | ১৪৪/১৪৪ property check পাস। প্রথম run-এ locality bug (no-op mutation-এর `$ref` inlining থেকে যাচ্ছিল) ধরা পড়ে সংশোধিত |
+| 5 | External code execution | EMB build auto-mode classifier বাতিল করেছে; workaround করা হয়নি। Supervisor-এর সিদ্ধান্তের জন্য `08_experiments/README.md` |
+| 6 | ভুল git ক্রম | Sparse-checkout-এর আগে checkout-এ পুরো EMB নামতে শুরু করেছিল; থামানো ও মুছে ফেলা হয়েছে (১৩০ MB), তারপর সঠিক sparse clone |
+
+### R1 E1 — pipeline ও P001 বিশ্লেষণ (2026-11-09, পরবর্তী অংশ)
+
+| # | বিষয় | ফল |
+|---|---|---|
+| 1 | P001 data-র সংখ্যা যাচাই | ১৪৭টি fault ও ৭৩টি F_OAS — paper-এর সংখ্যার সাথে হুবহু মেলে |
+| 2 | Instrument-এর bug (replay-তে ধরা) | `$ref` parameter-এর key-ভুল, array query deserialize, content-type, date format, non-JSON body — সব সংশোধিত; regression pass |
+| 3 | অনুমান চিহ্নিত | ADDITIONAL_PROPERTIES strictness, TYPE_NULL-এর SPEC-ঝোঁক, developer confirm-হারের ব্যাখ্যা — সব ⚠️/[H] |
+| 4 | Double-escape উদাহরণ | Python `re` দিয়ে যাচাই; উৎস (Amadeus বনাম P001-এর রূপান্তর) অনিশ্চিত হিসেবে উল্লেখিত |
+| 5 | Data licence | P001 package CC-BY 4.0; raw ফাইল git-বহির্ভূত (`_external/`) |
