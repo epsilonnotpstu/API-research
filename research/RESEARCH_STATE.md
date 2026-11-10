@@ -72,7 +72,20 @@
 
 1. Supervisor সিদ্ধান্ত (roadmap §14): Option (R1/R2/R3), LLM ব্যবহারের নীতি, scope।
 2. P038-এর সঠিক PDF (Ponce et al. 2025) পেলে `P038_analysis.md` পুনর্লিখন → `build_evidence_matrix.py` ও `build_final_table.py` পুনরায় চালানো → T9 cluster report হালনাগাদ।
-3. R1 E0: 2607.12101 ও SpecFix-এর সর্বশেষ version পূর্ণ পাঠ; লক্ষ্যভিত্তিক scholarly search।
+3. ✅ R1 E0 সম্পন্ন (2026-11-09): **GO** — `06_final_recommendations/R1_novelty_check_E0.md`। বাকি: 2504.08113 ও TOSEM 10.1145/3491038 পূর্ণ পাঠ; `restest.us.es` archive-এর প্রাপ্যতা (TLS সমস্যা) supervisor-এর browser থেকে যাচাই; ACM DL বা IEEE-তে search।
+4. ▶️ Roadmap E1 আংশিক (2026-11-09) — `08_experiments/README.md`:
+   - নিজস্ব `specmut` tool (Swagger 2 + OAS3, ground-truth manifest); ১৪৪/১৪৪ check পাস।
+   - Triage codebook v0.1।
+   - ৩৬টি EMB spec-এর mutability তালিকা।
+   - Pilot SUT প্রস্তাব: market, swagger-petstore, scout-api, cwa-verification।
+   - ⛔ SUT build বা run (external code) auto-mode-এ বাতিল — supervisor-এর অনুমতি বা নিজে চালানো প্রয়োজন।
+   - ✅ (পরবর্তী অংশ) Analysis pipeline সম্পন্ন: `conformance.py`, `attribute.py`, `mitm_fulllog.py`; replay test pass।
+   - ✅ P001-এর ১৪৭টি confirmed fault বিশ্লেষণ (`08_experiments/E1_pilot/P001_empirical_findings.md`):
+     - F_OAS confirm-হার ১৪.৫% বনাম F_2XXP ৫৭.১%।
+     - F_OAS-এর ১২% কেবল strict validator-এ violation।
+     - Amadeus spec-এ double-escaped pattern (নিশ্চিত SPEC ত্রুটি)।
+     - আমাদের checker P001-এর verdict ৮৫–৯৭% পুনরুৎপাদন করে।
+   - ✅ Codebook v0.2।
 
 ## 7. Context reset হলে
 

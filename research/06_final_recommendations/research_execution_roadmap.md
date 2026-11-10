@@ -115,8 +115,8 @@ OpenAPI spec + SUT ──▶ Fuzzer (Schemathesis / EvoMaster BB) ──▶ Conf
 
 | ধাপ | কাজ | আউটপুট | আনুমানিক সময় ⚠️ |
 |---|---|---|---|
-| E0 | Novelty যাচাই: উপরের পাঠ ও search | Go/pivot সিদ্ধান্ত-নোট | ১–২ সপ্তাহ |
-| E1 | ৩–৫টি SUT (P018 + EMB) Docker-এ চালানো; Schemathesis/EvoMaster BB দিয়ে failure সংগ্রহ | Failure log | ২ সপ্তাহ |
+| E0 ✅ (2026-11-09) | Novelty যাচাই: উপরের পাঠ ও search | **GO** — `R1_novelty_check_E0.md`; নকশায় দ্বিমুখী fault injection (spec mutation + code mutation) যোগ | সম্পন্ন |
+| E1 ▶️ আংশিক | ৩–৫টি SUT (P018 + EMB) Docker-এ চালানো; Schemathesis/EvoMaster BB দিয়ে failure সংগ্রহ | ✅ `specmut` + test, codebook v0.1, SUT mutability তালিকা (`08_experiments/`)। ⛔ SUT build/run অনুমতির অপেক্ষায় | ২ সপ্তাহ |
 | E2 | Pilot labelling: ২০০টি failure, দুইজন labeller, taxonomy খসড়া | κ, taxonomy v1 | ২ সপ্তাহ |
 | E3 | **R2 pilot:** developer বনাম Respector spec দিয়ে fuzzing তুলনা | প্রথম empirical ফল (RQ4 প্রাথমিক) | ২–৩ সপ্তাহ |
 | E4 | Rule-based triage baseline + evidence collector (a)–(c) | RQ2 প্রাথমিক F1 | ৩ সপ্তাহ |
