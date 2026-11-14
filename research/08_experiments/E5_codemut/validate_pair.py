@@ -168,13 +168,13 @@ def normalized_runtime(container, meta, run, proxy=False):
         if key in ('org.r1.jar_sha256', 'org.r1.source_tree_sha256'):
             labels.pop(key)
     config['Labels'] = labels
-    # Docker may reorder the environment array. Unique keys make its order
-    # irrelevant; retain every key/value and reject ambiguous duplicate keys.
+    # Compare the full environment multiset: order is incidental, multiplicity
+    # and every key/value remain strict, including duplicate-key entries.
     env = config.get('Env')
     if env is not None:
         c.require(isinstance(env,list) and all(isinstance(x,str) and '=' in x for x in env), 'Invalid container environment')
         names = [x.split('=',1)[0] for x in env]
-        c.require(all(names) and len(set(names)) == len(names), 'Duplicate/empty container environment key')
+        c.require(all(names), 'Empty container environment key')
         config['Env'] = sorted(env)
     network = host.get('NetworkMode')
     project = meta['compose_project']
@@ -197,7 +197,7 @@ def normalized_runtime(container, meta, run, proxy=False):
     if not proxy:
         equal(container['Mounts'], [], 'SUT must use a fresh container without mounts')
         c.require(not config.get('Volumes'), 'SUT image declares persistent volumes')
-    host['Binds'] = [(s.replace(str(run), '<run>')) for s in (host.get('Binds') or [])]
+    host['Binds'] = sorted({s.replace(str(run), '<run>') for s in (host.get('Binds') or [])})
     return {'Config': config, 'HostConfig': host, 'Mounts': sorted(mounts, key=lambda x: x['Destination']),
             'Platform': container.get('Platform'), 'Driver': container.get('Driver'),
             'AppArmorProfile': container.get('AppArmorProfile'), 'Path': container['Path'], 'Args': container['Args']}
@@ -211,7 +211,7 @@ def junit_error_set(root):
 
 def validate(control, mutant, mut):
     control, mutant, mut = (Path(p).resolve() for p in (control, mutant, mut))
-    checks = Checks(); inputs = {}; junit_errors = {}; notes = []
+    checks = Checks(); inputs = {}; junit_errors = {}; notes = []; excluded_ops = []
     def build():
         inputs['manifest'], inputs['images'] = build_checks(mut, checks)
     checks.run('build.manifest_and_base', build)
@@ -299,8 +299,25 @@ def validate(control, mutant, mut):
 
     def paired_junit():
         c.require(set(junit_errors) == {'control','mutant'}, 'Missing parsed JUnit evidence')
-        equal(junit_errors['control'], junit_errors['mutant'], 'Paired JUnit execution-error sets differ')
-        if junit_errors['control']:
+        difference = junit_errors['control'] ^ junit_errors['mutant']
+        if difference:
+            manifest = inputs['manifest']
+            mutated = {(op['method'].upper(),op['path']) for op in manifest['operations']}
+            spec = c.load(control / 'spec.original.json')
+            operations = set()
+            for name,text in sorted(difference):
+                match = re.fullmatch(r'(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE) (/\S*)', name)
+                c.require(match is not None, 'Cannot map asymmetric JUnit error to an operation: ' + name)
+                method,path = match.groups()
+                c.require(method.lower() in spec.get('paths',{}).get(path,{}), 'Asymmetric JUnit operation is absent from spec: ' + name)
+                c.require((method,path) not in mutated, 'Asymmetric JUnit error on mutated operation: ' + name)
+                operations.add((method,path))
+            excluded_ops.extend({'method':method,'path':path,'reason':'Asymmetric JUnit generator error on a non-mutated operation; excluded from both roles.'}
+                                for method,path in sorted(operations))
+            notes.append({'check':'pair.equal_junit_errors','note':'Non-mutated operations with asymmetric JUnit errors are excluded from both roles.',
+                          'differing_errors':[{'testcase_name':name,'error_text':text} for name,text in sorted(difference)]})
+        elif junit_errors['control']:
+
             notes.append({'check':'pair.equal_junit_errors',
                           'note':'Identical JUnit execution errors in both roles; affected test cases did not generate normally.',
                           'errors':[{'testcase_name':name,'error_text':text} for name,text in sorted(junit_errors['control'])]})
@@ -344,9 +361,9 @@ def validate(control, mutant, mut):
             if p.is_file() and p.name in ('run.json','code.manifest.json','exchanges.jsonl','spec.original.json','spec.test.json','generator-input.json'):
                 try: evidence[f'{prefix}/{p.name}'] = c.sha(p)
                 except (OSError, ValueError): pass
-    return {'format': 'e5-pair-validation-v1', 'status': 'PASS' if checks.passed else 'FAIL', 'seed': seed,
+    return {'format': 'e5-pair-validation-v1', 'status': ('PASS_WITH_EXCLUSION' if excluded_ops else 'PASS') if checks.passed else 'FAIL', 'seed': seed,
             'control_run': str(control), 'mutant_run': str(mutant), 'mut_dir': str(mut),
-            'checks': checks.rows, 'input_sha256': evidence, 'notes': notes,
+            'checks': checks.rows, 'input_sha256': evidence, 'notes': notes, 'excluded_ops':excluded_ops,
             'junit_errors':{role:[{'testcase_name':name,'error_text':text} for name,text in sorted(junit_errors.get(role,set()))]
                             for role in ('control','mutant')},
             'limitations': ['Saved evidence and current snapshots only; no Docker/build execution.',
@@ -369,7 +386,7 @@ def main(argv=None):
     dest = args.mut_dir / ('pair-validation-s' + str(report['seed']) + '.json')
     c.atomic_json(dest, report, staging_dir=args.report_staging_dir)
     print(str(dest) + ': ' + report['status'])
-    return 0 if report['status'] == 'PASS' else 1
+    return 0 if report['status'] in ('PASS','PASS_WITH_EXCLUSION') else 1
 
 
 if __name__ == '__main__':

@@ -104,6 +104,13 @@
    - fuzzer-এর probe।
    - আর default oracle SUT-এর rejection convention (market 406) বোঝে না।
 
+7. **[H7] Code fault (E5) fresh fuzzing-এ নির্ভরযোগ্যভাবে ধরা পড়ে, কিন্তু মোট গণনায় নয়।**
+   - 9টি mutant, 22টি বৈধ জোড়া-seed।
+   - Mutated op-এ সংকেত 22/22; প্রত্যাশিত kind 20/22।
+   - অপরিবর্তিত op-এর noise বড়।
+   - Attribution label-এর মূল্যায়ন এখনো বাকি।
+   - উৎস: `../../E5_codemut/E5_RESULTS.md`।
+
 ## 6. সীমা (threats to validity)
 - **External validity:**
   - চারটিই Java/Spring/Dropwizard SUT; একটি fuzzer; budget 300 s; seed 3টি।
@@ -121,5 +128,5 @@
 ## 7. পরের ধাপ
 2. Fresh-এর noise floor: একই seed-এ বারবার baseline।
 3. Checker-এ int32/int64 format enforcement।
-4. Code mutation (E5): IMPL-এর ground truth।
+4. E5-এর NEW violation-এর blind A/B labelling: attribution কি code fault-কে IMPL বলে? E5-এর জন্য noise floor।
 5. দ্বিতীয় fuzzer (EvoMaster)।

@@ -106,3 +106,17 @@ def paired_rows(path, allow_incomplete=False):
         pairs[seed] = {r['role']:Path(r['run_dir']).resolve() for r in group}
     require(pairs, 'No complete control/mutant pair in ledger')
     return pairs
+
+
+def excluded_operations(report):
+    """Return validated operation identities; never silently accept malformed exclusions."""
+    entries = report.get('excluded_ops', [])
+    require(isinstance(entries,list), 'Invalid excluded operations')
+    result = set()
+    for op in entries:
+        require(op['method'] in ('GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS','TRACE') and
+                isinstance(op['path'],str) and op['path'].startswith('/') and op.get('reason'), 'Invalid excluded operation')
+        result.add((op['method'],op['path']))
+    require(len(result)==len(entries), 'Duplicate excluded operation')
+    require(not entries or report['status']=='PASS_WITH_EXCLUSION', 'Exclusions require PASS_WITH_EXCLUSION')
+    return result

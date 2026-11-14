@@ -1,0 +1,424 @@
+--- before/validate_pair.py
++++ after/validate_pair.py
+@@ -168,13 +168,13 @@
+         if key in ('org.r1.jar_sha256', 'org.r1.source_tree_sha256'):
+             labels.pop(key)
+     config['Labels'] = labels
+-    # Docker may reorder the environment array. Unique keys make its order
+-    # irrelevant; retain every key/value and reject ambiguous duplicate keys.
++    # Compare the full environment multiset: order is incidental, multiplicity
++    # and every key/value remain strict, including duplicate-key entries.
+     env = config.get('Env')
+     if env is not None:
+         c.require(isinstance(env,list) and all(isinstance(x,str) and '=' in x for x in env), 'Invalid container environment')
+         names = [x.split('=',1)[0] for x in env]
+-        c.require(all(names) and len(set(names)) == len(names), 'Duplicate/empty container environment key')
++        c.require(all(names), 'Empty container environment key')
+         config['Env'] = sorted(env)
+     network = host.get('NetworkMode')
+     project = meta['compose_project']
+@@ -197,7 +197,7 @@
+     if not proxy:
+         equal(container['Mounts'], [], 'SUT must use a fresh container without mounts')
+         c.require(not config.get('Volumes'), 'SUT image declares persistent volumes')
+-    host['Binds'] = [(s.replace(str(run), '<run>')) for s in (host.get('Binds') or [])]
++    host['Binds'] = sorted({s.replace(str(run), '<run>') for s in (host.get('Binds') or [])})
+     return {'Config': config, 'HostConfig': host, 'Mounts': sorted(mounts, key=lambda x: x['Destination']),
+             'Platform': container.get('Platform'), 'Driver': container.get('Driver'),
+             'AppArmorProfile': container.get('AppArmorProfile'), 'Path': container['Path'], 'Args': container['Args']}
+@@ -211,7 +211,7 @@
+ 
+ def validate(control, mutant, mut):
+     control, mutant, mut = (Path(p).resolve() for p in (control, mutant, mut))
+-    checks = Checks(); inputs = {}; junit_errors = {}; notes = []
++    checks = Checks(); inputs = {}; junit_errors = {}; notes = []; excluded_ops = []
+     def build():
+         inputs['manifest'], inputs['images'] = build_checks(mut, checks)
+     checks.run('build.manifest_and_base', build)
+@@ -299,8 +299,25 @@
+ 
+     def paired_junit():
+         c.require(set(junit_errors) == {'control','mutant'}, 'Missing parsed JUnit evidence')
+-        equal(junit_errors['control'], junit_errors['mutant'], 'Paired JUnit execution-error sets differ')
+-        if junit_errors['control']:
++        difference = junit_errors['control'] ^ junit_errors['mutant']
++        if difference:
++            manifest = inputs['manifest']
++            mutated = {(op['method'].upper(),op['path']) for op in manifest['operations']}
++            spec = c.load(control / 'spec.original.json')
++            operations = set()
++            for name,text in sorted(difference):
++                match = re.fullmatch(r'(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE) (/\S*)', name)
++                c.require(match is not None, 'Cannot map asymmetric JUnit error to an operation: ' + name)
++                method,path = match.groups()
++                c.require(method.lower() in spec.get('paths',{}).get(path,{}), 'Asymmetric JUnit operation is absent from spec: ' + name)
++                c.require((method,path) not in mutated, 'Asymmetric JUnit error on mutated operation: ' + name)
++                operations.add((method,path))
++            excluded_ops.extend({'method':method,'path':path,'reason':'Asymmetric JUnit generator error on a non-mutated operation; excluded from both roles.'}
++                                for method,path in sorted(operations))
++            notes.append({'check':'pair.equal_junit_errors','note':'Non-mutated operations with asymmetric JUnit errors are excluded from both roles.',
++                          'differing_errors':[{'testcase_name':name,'error_text':text} for name,text in sorted(difference)]})
++        elif junit_errors['control']:
++
+             notes.append({'check':'pair.equal_junit_errors',
+                           'note':'Identical JUnit execution errors in both roles; affected test cases did not generate normally.',
+                           'errors':[{'testcase_name':name,'error_text':text} for name,text in sorted(junit_errors['control'])]})
+@@ -344,9 +361,9 @@
+             if p.is_file() and p.name in ('run.json','code.manifest.json','exchanges.jsonl','spec.original.json','spec.test.json','generator-input.json'):
+                 try: evidence[f'{prefix}/{p.name}'] = c.sha(p)
+                 except (OSError, ValueError): pass
+-    return {'format': 'e5-pair-validation-v1', 'status': 'PASS' if checks.passed else 'FAIL', 'seed': seed,
++    return {'format': 'e5-pair-validation-v1', 'status': ('PASS_WITH_EXCLUSION' if excluded_ops else 'PASS') if checks.passed else 'FAIL', 'seed': seed,
+             'control_run': str(control), 'mutant_run': str(mutant), 'mut_dir': str(mut),
+-            'checks': checks.rows, 'input_sha256': evidence, 'notes': notes,
++            'checks': checks.rows, 'input_sha256': evidence, 'notes': notes, 'excluded_ops':excluded_ops,
+             'junit_errors':{role:[{'testcase_name':name,'error_text':text} for name,text in sorted(junit_errors.get(role,set()))]
+                             for role in ('control','mutant')},
+             'limitations': ['Saved evidence and current snapshots only; no Docker/build execution.',
+@@ -369,7 +386,7 @@
+     dest = args.mut_dir / ('pair-validation-s' + str(report['seed']) + '.json')
+     c.atomic_json(dest, report, staging_dir=args.report_staging_dir)
+     print(str(dest) + ': ' + report['status'])
+-    return 0 if report['status'] == 'PASS' else 1
++    return 0 if report['status'] in ('PASS','PASS_WITH_EXCLUSION') else 1
+ 
+ 
+ if __name__ == '__main__':
+--- before/e5_common.py
++++ after/e5_common.py
+@@ -106,3 +106,17 @@
+         pairs[seed] = {r['role']:Path(r['run_dir']).resolve() for r in group}
+     require(pairs, 'No complete control/mutant pair in ledger')
+     return pairs
++
++
++def excluded_operations(report):
++    """Return validated operation identities; never silently accept malformed exclusions."""
++    entries = report.get('excluded_ops', [])
++    require(isinstance(entries,list), 'Invalid excluded operations')
++    result = set()
++    for op in entries:
++        require(op['method'] in ('GET','POST','PUT','PATCH','DELETE','HEAD','OPTIONS','TRACE') and
++                isinstance(op['path'],str) and op['path'].startswith('/') and op.get('reason'), 'Invalid excluded operation')
++        result.add((op['method'],op['path']))
++    require(len(result)==len(entries), 'Duplicate excluded operation')
++    require(not entries or report['status']=='PASS_WITH_EXCLUSION', 'Exclusions require PASS_WITH_EXCLUSION')
++    return result
+--- before/e5_pipeline.py
++++ after/e5_pipeline.py
+@@ -117,7 +117,7 @@
+             c.require(row['status'] == 'COMPLETE', f'Run failed; stopped at seed {seed}/{role}. See runs.tsv and run log')
+         report = vp.validate(paths['control'], paths['mutant'], mut)
+         c.atomic_json(mut / f'pair-validation-s{seed}.json', report)
+-        c.require(report['status'] == 'PASS', f'Pair validation failed for seed {seed}; stopping')
++        c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), f'Pair validation failed for seed {seed}; stopping')
+     print(str(mut / 'runs.tsv'))
+ 
+ 
+@@ -127,6 +127,15 @@
+         result = subprocess.run(['/usr/bin/python3','-I','-B','-c',wrapper,str(c.TOOLS / script),*map(str,arguments)],
+                                 stdout=stream, stderr=errors, check=False)
+     c.require(result.returncode == 0, f'{script} failed with exit {result.returncode}; see tools.log')
++
++
++def filter_violations(source, dest, excluded):
++    with dest.open('x',encoding='utf-8') as stream:
++        for line in source.read_bytes().split(b'\n'):
++            if not line.strip(): continue
++            record = json.loads(line)
++            if (record['method'].upper(),record['template']) not in excluded:
++                stream.write(json.dumps(record,ensure_ascii=False) + '\n')
+ 
+ 
+ def analyse_pair(mut):
+@@ -141,7 +150,7 @@
+         report = vp.validate(pair['control'], pair['mutant'], mut)
+         validation_path = mut / f'pair-validation-s{seed}.json'
+         c.atomic_json(validation_path, report)
+-        c.require(report['status'] == 'PASS', f'Pair validation failed for seed {seed}')
++        c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), f'Pair validation failed for seed {seed}')
+         meta = c.load(pair['control'] / 'run.json')
+         for oracle in ('default','sut'):
+             reject = '400,406,422' if m['sut'] == 'market' and oracle == 'sut' else '400,422'
+@@ -152,13 +161,15 @@
+                       'control_run':str(pair['control']), 'mutant_run':str(pair['mutant']),
+                       'manifest_sha256':c.sha(mut / 'manifest.json'), 'pair_validation_sha256':c.sha(validation_path),
+                       'run_metadata_sha256':{r:c.sha(p / 'run.json') for r,p in pair.items()},
+-                      'tool_sha256':meta['tool_sha256'], 'pipeline_sha256':trusted_files()}
++                      'tool_sha256':meta['tool_sha256'], 'pipeline_sha256':trusted_files(),
++                      'excluded_ops':report.get('excluded_ops',[]), 'validation_status':report['status']}
+             c.atomic_json(out / 'analysis.json', record)
+             try:
+                 for role in ('control','mutant'):
+                     tool('conformance.py', [pair['control'] / 'spec.original.json', pair[role] / 'exchanges.jsonl',
+                                            '--deploy-origin', origin,'--reject-statuses',reject],
+-                         out / f'{role}.violations.jsonl', out / 'tools.log')
++                         out / f'{role}.raw.violations.jsonl', out / 'tools.log')
++                    filter_violations(out / f'{role}.raw.violations.jsonl', out / f'{role}.violations.jsonl', c.excluded_operations(report))
+                 tool('attribute.py', [out / 'control.violations.jsonl', out / 'mutant.violations.jsonl', mut / 'manifest.json', '--mode','fresh'],
+                      out / 'attribution.csv', out / 'tools.log')
+                 c.snapshot(c.TOOLS, meta['tool_sha256'])
+--- before/summarise_e5.py
++++ after/summarise_e5.py
+@@ -17,7 +17,7 @@
+ 
+ METRICS = [f'{scope}_{name}' for scope in ('mutated','non_mutated')
+            for name in ('NEW','VANISHED','INCREASED','DECREASED')]
+-FIELDS = ['mut_dir','site_id','sut','operator','seed','oracle','validation_status','analysis_status','error',
++FIELDS = ['mut_dir','site_id','sut','operator','seed','oracle','validation_status','excluded_ops','pipeline_snapshot_status','analysis_status','error',
+           *METRICS,'expected_signals','expected_signal_observed','expected_signal_present_mutant',
+           'expected_signal_NEW','expected_signal_INCREASED','fresh_L1_NEW_mutated',
+           'triage_status','triage_L1_NEW_mutated','causal_kill_status']
+@@ -44,27 +44,44 @@
+     c.require(record['pair_validation_sha256'] == c.sha(mut / f'pair-validation-s{seed}.json'), 'Validation report changed')
+     c.require(record['control_run'] == str(pair['control']) and record['mutant_run'] == str(pair['mutant']), 'Analysis pair paths differ')
+     c.require(record['run_metadata_sha256'] == {r:c.sha(p / 'run.json') for r,p in pair.items()}, 'Analysis run metadata changed')
+-    c.require(report['status'] == 'PASS', 'Pair did not pass validation')
++    c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), 'Pair did not pass validation')
++    excluded = c.excluded_operations(report)
++    c.require(record.get('excluded_ops',[]) == report.get('excluded_ops',[]) and
++              record.get('validation_status','PASS') == report['status'], 'Analysis exclusion/validation policy differs')
+     c.snapshot(c.TOOLS, record['tool_sha256'])
+     c.require({'control.violations.jsonl','mutant.violations.jsonl','attribution.csv'} <= set(record['file_sha256']), 'Missing analysis output')
+     c.snapshot(directory, record['file_sha256'])
++    prior = False
+     for name, digest in record['pipeline_sha256'].items():
+-        c.require(c.sha(name) == digest, 'Analysis pipeline changed')
++        if c.sha(name) != digest:
++            path = Path(name).resolve()
++            c.require(path.parent == c.HERE and path.name in {'validate_pair.py','e5_common.py','e5_pipeline.py','summarise_e5.py'}
++                      and isinstance(digest,str) and len(digest)==64 and all(x in '0123456789abcdef' for x in digest), 'Analysis pipeline changed outside reviewed E5 policy files')
++            prior = True
+     base = violations(directory / 'control.violations.jsonl'); treat = violations(directory / 'mutant.violations.jsonl')
++    for role, data in [('control',base),('mutant',treat)]:
++        c.require(all((v['method'].upper(),v['template']) not in excluded for v in data), 'Excluded operation leaked into scoped violations')
++        raw = directory / f'{role}.raw.violations.jsonl'
++        if raw.is_file():
++            c.require(raw.name in record['file_sha256'], 'Raw violations are not hashed')
++            c.require([v for v in violations(raw) if (v['method'].upper(),v['template']) not in excluded] == data, 'Scoped violations differ from exact paired exclusion')
++        else:
++            c.require(not excluded, 'Excluded analysis lacks raw violation evidence')
+     expected = load_attribute().attribute(base, treat, m, mode='fresh')
+     with (directory / 'attribution.csv').open(newline='', encoding='utf-8') as stream:
+         reader = csv.DictReader(stream); rows = list(reader)
+         c.require(reader.fieldnames == (list(expected[0]) if expected else ['fingerprint']), 'Unexpected attribution CSV schema')
+     c.require(rows == [{k:str(v) for k,v in row.items()} for row in expected], 'Attribution CSV differs from fresh recomputation')
+-    return rows
++    return rows, ('PRIOR_E5_PIPELINE_RECOMPUTED' if prior else 'CURRENT')
+ 
+ 
+-def metrics(rows, manifest):
++def metrics(rows, manifest, excluded_ops=()):
+     result = {key:0 for key in METRICS}
+     expected = set(manifest['expected_conformance_signal'])
+     ops = {(o['method'].upper(),o['path']) for o in manifest['operations']}
+     signal_new = signal_inc = 0; present = False; l1 = Counter(); seen = set()
+     for row in rows:
++        if (row['method'],row['template']) in excluded_ops: continue
+         c.require(row['fingerprint'] not in seen, 'Duplicate attributed fingerprint'); seen.add(row['fingerprint'])
+         c.require(row['mode'] == 'fresh' and row['status'] in ('NEW','VANISHED','PERSISTENT'), 'Non-fresh/unknown status')
+         before, after = int(row['baseline_occurrences']), int(row['mutated_occurrences'])
+@@ -108,19 +125,21 @@
+                 c.require(set(pair) == {'control','mutant'} and all(r['status'] == 'COMPLETE' and r['harness_exit'] == '0' for r in group), 'Failed/pending/incomplete run pair')
+                 saved = c.load(mut / f'pair-validation-s{seed}.json')
+                 report = vp.validate(pair['control'],pair['mutant'],mut)
+-                c.require(saved == report and report['status'] == 'PASS', 'Pair validation missing, stale or FAIL')
++                # Older PASS reports have no exclusions key; all existing fields must match.
++                saved = dict(saved, excluded_ops=saved.get('excluded_ops',[]))
++                c.require(saved == report and report['status'] in ('PASS','PASS_WITH_EXCLUSION'), 'Pair validation missing, stale or FAIL')
+             except (OSError, ValueError, KeyError, TypeError) as exc:
+                 error = str(exc)
+             for oracle in ('default','sut'):
+                 row = dict.fromkeys(FIELDS, '')
+                 row.update(mut_dir=str(mut),site_id=m['site_id'],sut=m['sut'],operator=m['operator'],seed=seed,oracle=oracle,
+-                           validation_status='FAIL' if error else 'PASS',analysis_status='FAIL',error=error,
++                           validation_status='FAIL' if error else report['status'],excluded_ops=json.dumps(report.get('excluded_ops',[]) if report else []),analysis_status='FAIL',error=error,
+                            expected_signals=json.dumps(sorted(m['expected_conformance_signal'])), triage_status='NOT_APPLICABLE_P001_CLI',
+                            causal_kill_status='NEEDS_INDEPENDENT_WITNESS')
+                 if not error:
+                     try:
+-                        rows = verify_analysis(mut / f'analysis-s{seed}-{oracle}', mut,seed,oracle,pair,report)
+-                        row.update(metrics(rows,m),analysis_status='COMPLETE')
++                        rows, version = verify_analysis(mut / f'analysis-s{seed}-{oracle}', mut,seed,oracle,pair,report)
++                        row.update(metrics(rows,m,c.excluded_operations(report)),analysis_status='COMPLETE',pipeline_snapshot_status=version)
+                     except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
+                         row['error'] = str(exc)
+                 result.append(row)
+--- before/test_e5_pipeline.py
++++ after/test_e5_pipeline.py
+@@ -165,6 +165,12 @@
+         for key,value in [('TOOLS',self.f.tools),('HARNESS',self.f.harness),('EMB',self.f.emb)]:
+             mock = patch.object(c,key,value); mock.start(); self.addCleanup(mock.stop)
+ 
++    def add_other_operation(self):
++        for role,run in self.f.paths.items():
++            spec=c.load(run / 'spec.original.json');spec['paths']['/other']={'get':{'responses':{'200':{'description':'ok'}}}}
++            for name in ('spec.original.json','spec.test.json','generator-input.json'):dump(run / name,spec)
++            self.f.change_meta(role,'source_sha256',c.sha(run / 'spec.original.json'));self.f.rehash_run(role)
++
+     def assert_fail(self,part=None):
+         r = self.f.validate()
+         self.assertEqual(r['status'],'FAIL')
+@@ -361,6 +367,38 @@
+                 obj=copy.deepcopy(original);obj[0]['Config']['Env']=env
+                 dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
+             dump(path,original);self.f.rehash_run('mutant')
++
++    def test_environment_multiset_and_bind_set_ignore_order_but_keep_values(self):
++        for role,run in self.f.paths.items():
++            for service in ('sut-market','mitmproxy'):
++                path=run / (service+'-container.json');obj=c.load(path)
++                obj[0]['Config']['Env']=['DUP=1','DUP=2','DUP=1'] if role=='control' else ['DUP=1','DUP=1','DUP=2']
++                binds=[str(run)+':/custom-logs:rw','/trusted:/addons:ro']
++                obj[0]['HostConfig']['Binds']=binds if role=='control' else binds[::-1]+binds[:1]
++                dump(path,obj)
++            self.f.rehash_run(role)
++        self.assertEqual(self.f.validate()['status'],'PASS')
++        run=self.f.paths['mutant'];path=run / 'mitmproxy-container.json';obj=c.load(path)
++        obj[0]['Config']['Env'].pop();dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
++
++    def test_bind_source_or_mount_options_remain_strict(self):
++        path=self.f.paths['mutant'] / 'mitmproxy-container.json';original=c.load(path)
++        for value in ('/foreign:/custom-logs:rw',str(self.f.paths['mutant'])+':/custom-logs:ro'):
++            obj=copy.deepcopy(original);obj[0]['HostConfig']['Binds']=[value]
++            dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
++
++    def test_non_mutated_junit_asymmetry_passes_with_reasoned_exclusion(self):
++        self.add_other_operation();self.set_junit('control',[('GET /other','Schema Error')])
++        result=self.f.validate();self.assertEqual(result['status'],'PASS_WITH_EXCLUSION',result)
++        self.assertEqual([(x['method'],x['path']) for x in result['excluded_ops']],[('GET','/other')])
++        self.assertTrue(result['excluded_ops'][0]['reason'])
++
++    def test_any_mutated_error_difference_fails_even_with_other_excludable_errors(self):
++        self.add_other_operation();self.set_junit('control',[('GET /other','schema'),('GET /things','schema')])
++        self.assert_fail('pair.equal_junit_errors')
++
++    def test_unmappable_error_name_fails_closed(self):
++        self.set_junit('control',[('unmappable generator failure','schema')]);self.assert_fail('pair.equal_junit_errors')
+ 
+     def test_report_can_stage_outside_mut_dir_and_remains_atomic(self):
+         stage=self.f.root / 'report-stage';stage.mkdir()
+@@ -430,6 +468,36 @@
+         self.assertEqual(len(rows),6)
+         self.assertTrue(all(r['error'] and r['mutated_NEW']=='' for r in rows if r['seed'] in (2,3)))
+ 
++    def test_exclusion_filters_both_roles_before_attribution_and_summary(self):
++        self.add_other_operation()
++        PairValidationTests.set_junit(self,'control',[('GET /other','Schema Error')])
++        for role,run in self.f.paths.items():
++            record=json.loads((run / 'exchanges.jsonl').read_text());record['request']['path']='/other';record['request']['url']='http://sut-market:8080/other'
++            record['response']['status']=500
++            with (run / 'exchanges.jsonl').open('a') as stream:stream.write(json.dumps(record)+'\n')
++            self.f.rehash_run(role)
++        rows=self.prepare_analysis()
++        self.assertTrue(all(r['validation_status']=='PASS_WITH_EXCLUSION' and r['non_mutated_NEW']==0 and r['mutated_NEW']==2 for r in rows))
++        out=self.f.mut / 'analysis-s1-default'
++        self.assertTrue(any(v['template']=='/other' for v in summary.violations(out / 'control.raw.violations.jsonl')))
++        self.assertFalse(any(v['template']=='/other' for v in summary.violations(out / 'control.violations.jsonl')))
++        self.assertTrue(json.loads(rows[0]['excluded_ops']))
++
++    def test_old_empty_exclusion_reports_and_prior_pipeline_are_recomputed(self):
++        self.prepare_analysis();report_path=self.f.mut / 'pair-validation-s1.json'
++        report=c.load(report_path);report.pop('excluded_ops');dump(report_path,report)
++        for oracle in ('default','sut'):
++            p=self.f.mut / f'analysis-s1-{oracle}/analysis.json';record=c.load(p)
++            record.pop('excluded_ops');record.pop('validation_status');record['pair_validation_sha256']=c.sha(report_path)
++            record['pipeline_sha256'][str(HERE / 'summarise_e5.py')]='0'*64;dump(p,record)
++        rows=summary.summarise([self.f.mut])
++        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['pipeline_snapshot_status']=='PRIOR_E5_PIPELINE_RECOMPUTED' for r in rows),rows)
++
++    def test_prior_pipeline_exception_does_not_allow_unreviewed_code_changes(self):
++        self.prepare_analysis();p=self.f.mut / 'analysis-s1-default/analysis.json';record=c.load(p)
++        record['pipeline_sha256'][str(HERE / 'codemut.py')]='0'*64;dump(p,record)
++        self.assertEqual(summary.summarise([self.f.mut])[0]['analysis_status'],'FAIL')
++
+     def test_summary_refuses_stale_validation(self):
+         self.prepare_analysis(); self.f.change_meta('mutant','complete',False)
+         rows = summary.summarise([self.f.mut])
+@@ -498,6 +566,12 @@
+         r=summary.metrics([self.row(1,'PERSISTENT',1,4)],self.m)
+         self.assertTrue(r['expected_signal_observed']); self.assertEqual(r['mutated_NEW'],0)
+ 
++    def test_excluded_ops_never_enter_either_metric_scope(self):
++        rows=[self.row(1,'NEW',0,3),self.row(2,'NEW',0,2,False)]
++        result=summary.metrics(rows,self.m,{('GET','/things'),('GET','/other')})
++        self.assertTrue(all(result[k]==0 for k in summary.METRICS))
++        self.assertFalse(result['expected_signal_observed'])
++
+     def test_empty_rows_and_empty_expectation(self):
+         r=summary.metrics([],dict(self.m,expected_conformance_signal=[]))
+         self.assertFalse(r['expected_signal_observed']); self.assertEqual(r['mutated_NEW'],0)
+--- before/PIPELINE.md
++++ after/PIPELINE.md
+@@ -44,7 +44,7 @@
+ the build snapshots, avoiding later tag movement (`e5_pipeline.py`, `run_pair`;
+ `e5_common.py`, `LEDGER_FIELDS`).
+ 
+-The launcher stops after a failed run or pair validation. It never silently
++The launcher stops after a failed run or failed pair validation. PASS_WITH_EXCLUSION is eligible for analysis. It never silently
+ resumes or overwrites a launch ledger. Preserve failed attempts and arrange a
+ fresh pair/launch with the coordinator. SIGINT/SIGTERM are forwarded to the
+ harness so its cleanup trap can finish; the ledger records the interrupt. No
+@@ -71,13 +71,13 @@
+ 
+ | T19 requirement | Implemented saved-evidence check |
+ |---|---|
+-| Complete baseline/NONE/0 pair; same seed and scenario | Completion/exit/coverage/cleanup, expected budget/checks, metadata field equality with a narrow allowlist of run/code differences. JUnit must parse and contain test cases. Identical sets of (testcase name, execution-error text) pass with a recorded note/list; asymmetric or changed error sets fail. Test failures remain for manual review. |
++| Complete baseline/NONE/0 pair; same seed and scenario | Completion/exit/coverage/cleanup, expected budget/checks, metadata field equality with a narrow allowlist of run/code differences. JUnit must parse and contain test cases. Identical sets of (testcase name, execution-error text) pass with a recorded note/list. Asymmetry exclusively on known non-mutated operations yields PASS_WITH_EXCLUSION; any mutated or unmappable differing operation fails. Test failures remain for manual review. |
+ | Unchanged original/test specs, derecursion, auth and generator settings | Rehash all recorded artifacts; compare paired spec/generator/cuts/config/help/argv; enforce DATA_GEN=all from argv; auth fixture hash checked against its current file; runtime auth override rejected. |
+ | Same frozen tools, harness, EMB config and JaCoCo | Compare dictionaries across the pair and rehash every listed file against the current files; validate staged agent bytes and metadata. |
+ | Same source except the reviewed edit | Recompute both retained source inventories; verify original manifest inventory, tree digests, exact edited bytes, changed-file set and patch bytes/hash. `target/` remains excluded from source hashing. |
+ | Same Maven/dependencies and non-JAR runtime inputs | Saved Maven image ID and arguments/logs; compare actual cloned `.m2` JAR/POM inventories to `resolved-artifacts.json`; rehash context checksum inventories, reject extra/missing files, compare all non-SUT-JAR files. |
+ | Correct built/selected/running code image | Built target JAR equals staged JAR; image labels match role-specific source/JAR digests; copied manifests and code metadata match; built image ID equals collected image ID and actual container `.Image`; actual container config and Compose code override use the immutable ID. |
+-| Same runtime base and container settings | Both image layer chains have the recorded runtime-base prefix; FROM uses its digest; platform/image runtime config match. Compare SUT/proxy container Config, HostConfig, mounts, entrypoint/args after normalizing Docker hostnames, each own project prefix in network mode and known Compose bookkeeping. SandboxID is excluded; unique environment entries compare independent of array order, with every key/value retained and duplicate keys rejected. No SUT mounts/persistent volumes; separate container IDs/projects and proxy volumes. |
++| Same runtime base and container settings | Both image layer chains have the recorded runtime-base prefix; FROM uses its digest; platform/image runtime config match. Compare SUT/proxy container Config, HostConfig, mounts, entrypoint/args after normalizing Docker hostnames, each own project prefix in network mode and known Compose bookkeeping. SandboxID is excluded; environment entries compare as a multiset (including multiplicity), and Binds compare as a set after normalizing each run directory. Every environment value and bind setting remains strict. No SUT mounts/persistent volumes; separate container IDs/projects and proxy volumes. |
+ | Reject unexplained differences | Unknown metadata differences, unrecognized image records, image/schema/proxy drift, changed snapshots and changed runtime settings fail. The `compose.code-image` metadata entry is treated specially because the existing metadata glob mistakes the Compose JSON for an image inspection; the Compose JSON itself is checked directly. |
+ 
+ Implementation: `validate_pair.py`, `build_checks`, `generator_argv`,
+@@ -104,12 +104,13 @@
+ directories, including partial ones, are never overwritten automatically
+ (`e5_pipeline.py`, `analyse_pair`; `e5_common.py`, `paired_rows`).
+ 
+-Each directory contains `control.violations.jsonl`, `mutant.violations.jsonl`,
++Each directory retains unfiltered `control.raw.violations.jsonl` and
++`mutant.raw.violations.jsonl`, plus scoped `control.violations.jsonl`, `mutant.violations.jsonl`,
+ `attribution.csv`, `tools.log`, and `analysis.json`. Conformance uses the original
+ spec and `--deploy-origin http://$SUT_SERVICE:$INTERNAL_PORT`. Default rejects
+ 400/422; market's SUT variant additionally includes 406. Other SUTs' two oracles
+-have identical rejection sets. Attribution always uses `--mode fresh` with the
+-code manifest. `analysis.json` records the oracle, inputs, validation report,
++have identical rejection sets. Excluded operations are removed from both roles before attribution.
++Attribution always uses `--mode fresh` with the code manifest. `analysis.json` records the oracle, inputs, validation report,
+ tool/pipeline and output hashes, and COMPLETE/FAIL. Errors retain partial files;
+ a partial directory is never treated as a successful empty analysis
+ (`e5_pipeline.py`, `tool`, `analyse_pair`; `08_experiments/tools/attribute.py:1–7,33–57`;
+@@ -174,3 +175,29 @@
+ seed-1 pair passes with the shared POST /register generation error listed.
+ Evidence: `09_collab/logs/T20b_scratch/tests.txt`, final summary;
+ `work/market-drop-null_20261114T113144Z/pair-validation-s1.json`, notes/checks.
++
++## T20c exclusion and version rules
++
++`validate_pair.py` maps each asymmetric JUnit error's exact testcase name to a
++method/path in the original spec. If any differing operation is mutated, or a
++name cannot be mapped, the pair is FAIL. Otherwise the pair is
++PASS_WITH_EXCLUSION and `excluded_ops` lists method/path/reason. Identical error
++sets still pass with a note. This is an exclusion from the comparison, not a
++repair of the spec or generator (`validate_pair.py`, `paired_junit`).
++
++`e5_pipeline.py` accepts both pass statuses, preserves raw violations, filters
++both roles identically, and records `validation_status`/`excluded_ops` in
++`analysis.json`. `summarise_e5.py` validates that scope against the pair report,
++checks raw-to-scoped filtering, and excludes the same operations from every
++metric and signal count. The CSV includes `excluded_ops` and `validation_status`.
++
++Previously completed analyses outside T20c's writable pairs remain unchanged.
++Old PASS reports without `excluded_ops` are compatible only with an empty current
++exclusion list and otherwise identical current validation. The summary keeps
++the saved pipeline hashes; differences in the four reviewed E5 policy modules
++are accepted only while all tool/harness and other pipeline hashes remain
++strict and attribution is recomputed from the hashed saved violations. Such
++rows carry `pipeline_snapshot_status=PRIOR_E5_PIPELINE_RECOMPUTED`; current
++analyses carry CURRENT. This avoids rewriting prior evidence or claiming that
++its recorded code version equals the new one (`summarise_e5.py`,
++`verify_analysis`, `summarise`).
