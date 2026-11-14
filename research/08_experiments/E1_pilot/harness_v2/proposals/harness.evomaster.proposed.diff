@@ -1,0 +1,1009 @@
+diff --git a/E1_pilot/harness_v2/evomaster_guard.py b/E1_pilot/harness_v2/evomaster_guard.py
+new file mode 100644
+--- /dev/null
++++ b/E1_pilot/harness_v2/evomaster_guard.py
+@@ -0,0 +1,83 @@
++"""Validate EvoMaster-only settings and schema routing, without network or SUT code."""
++import json
++from pathlib import Path
++import sys
++from urllib.parse import urlsplit
++
++
++def validate_options(mode, seed, budget, data_gen, only_ops):
++    if data_gen:
++        raise ValueError("EvoMaster does not support DATA_GEN; unset it")
++    if only_ops and mode != "mutated":
++        raise ValueError("EvoMaster ONLY_OPS selects mutation candidates; requires mutated mode")
++    if not seed.isascii() or not seed.isdecimal() or not 0 <= int(seed) <= 9223372036854775807:
++        raise ValueError("EvoMaster seed must fit a non-negative Long")
++    if not budget.isascii() or not budget.isdecimal() or not 1 <= int(budget) <= 2147483527:
++        raise ValueError("EvoMaster budget exceeds the supported seconds range")
++
++
++def server_path(server):
++    url = server.get("url")
++    if not isinstance(url, str) or "{" in url or "}" in url:
++        raise ValueError("EvoMaster requires concrete schema server URLs")
++    parts = urlsplit(url)
++    if parts.query or parts.fragment or parts.username or parts.password:
++        raise ValueError("EvoMaster schema server URLs cannot contain credentials, query or fragment")
++    if parts.scheme and parts.scheme not in ("http", "https"):
++        raise ValueError("EvoMaster schema server URL must use HTTP(S)")
++    path = parts.path or "/"
++    if not path.startswith("/") or "//" in path or any(p in (".", "..") for p in path.split("/")):
++        raise ValueError("EvoMaster requires an absolute, normalized schema base path")
++    return path.rstrip("/") or "/"
++
++
++def validate_schema(document, base_path):
++    # --base replaces only the authority; EvoMaster infers the path from the schema.
++    # Reject ambiguous server overrides rather than risk direct/non-proxy traffic.
++    if "swagger" in document:
++        paths = {server_path({"url": document.get("basePath", "/")})}
++    elif "openapi" in document:
++        servers = document.get("servers", [{"url": "/"}])
++        if not isinstance(servers, list) or not servers:
++            raise ValueError("EvoMaster requires a nonempty schema servers list")
++        paths = {server_path(server) for server in servers}
++        for item in document.get("paths", {}).values():
++            if not isinstance(item, dict):
++                raise ValueError("EvoMaster requires object path items")
++            if "servers" in item or any(isinstance(op, dict) and "servers" in op for op in item.values()):
++                raise ValueError("EvoMaster path/operation server overrides are unsupported")
++    else:
++        raise ValueError("EvoMaster requires a Swagger/OpenAPI document")
++    expected = server_path({"url": base_path})
++    if paths != {expected}:
++        raise ValueError("EvoMaster schema base path differs from BASE_PATH; refusing a different target")
++
++
++def validate_outputs(directory):
++    directory = Path(directory)
++    stats = directory / "statistics.csv"
++    tests = directory / "tests"
++    if not stats.is_file() or not stats.stat().st_size:
++        raise ValueError("Missing EvoMaster statistics")
++    if not any(p.is_file() and p.stat().st_size for p in tests.rglob("*.java")):
++        raise ValueError("Missing EvoMaster generated tests")
++
++
++def main():
++    action, *args = sys.argv[1:]
++    if action == "options":
++        validate_options(*args)
++    elif action == "schema":
++        validate_schema(json.loads(Path(args[0]).read_text()), args[1])
++    elif action == "outputs":
++        validate_outputs(args[0])
++    else:
++        raise ValueError("Unknown EvoMaster validation action")
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except ValueError as error:
++        # Messages contain no supplied header, schema URL, or environment value.
++        raise SystemExit(str(error)) from None
+diff --git a/E1_pilot/harness_v2/fuzzer-golden.json b/E1_pilot/harness_v2/fuzzer-golden.json
+new file mode 100644
+--- /dev/null
++++ b/E1_pilot/harness_v2/fuzzer-golden.json
+@@ -0,0 +1,363 @@
++{
++  "source": "E1_pilot/harness_v2/run_pilot.sh",
++  "source_sha256": "02d46d32e260940cd84592c0a055b9088c230ae50063f8f295be46f986b2ebe7",
++  "cases": [
++    {
++      "name": "default-scout",
++      "environment": {},
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ]
++    },
++    {
++      "name": "default-explicit",
++      "environment": {
++        "FUZZER": "schemathesis"
++      },
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ]
++    },
++    {
++      "name": "root-custom-checks",
++      "environment": {
++        "BASE_PATH": "/",
++        "SCHEMA_CHECKS": "not_a_server_error",
++        "seed": "0"
++      },
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/",
++        "--checks",
++        "not_a_server_error",
++        "--hypothesis-seed",
++        "0",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/",
++        "--checks",
++        "not_a_server_error",
++        "--hypothesis-seed",
++        "0",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true"
++      ]
++    },
++    {
++      "name": "petstore-positive-auth",
++      "environment": {
++        "BASE_PATH": "/api/v3",
++        "DATA_GEN": "positive",
++        "AUTH_HEADER": "X-Test: synthetic-t27"
++      },
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api/v3",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "positive",
++        "-H",
++        "X-Test: synthetic-t27"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api/v3",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "positive",
++        "-H",
++        "<redacted>"
++      ]
++    },
++    {
++      "name": "negative",
++      "environment": {
++        "DATA_GEN": "negative"
++      },
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "negative"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "100",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "10000",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "negative"
++      ]
++    },
++    {
++      "name": "all-custom-timeout",
++      "environment": {
++        "DATA_GEN": "all",
++        "REQUEST_TIMEOUT_MS": "123",
++        "MAX_EXAMPLES": "5"
++      },
++      "argv": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "5",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "123",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "all"
++      ],
++      "recorded": [
++        "run",
++        "/work/generator-input.json",
++        "--base-url",
++        "http://mitmproxy:8080/api",
++        "--checks",
++        "all",
++        "--hypothesis-seed",
++        "7",
++        "--hypothesis-max-examples",
++        "5",
++        "--junit-xml",
++        "/work/schemathesis.junit.xml",
++        "--cassette-path",
++        "/work/schemathesis-cassette.yaml",
++        "--request-timeout",
++        "123",
++        "--hypothesis-phases",
++        "explicit,generate",
++        "--sanitize-output",
++        "true",
++        "--data-generation-method",
++        "all"
++      ]
++    }
++  ],
++  "preserved_fragments": {
++    "default-docker-argv": {
++      "start": "timeout --signal=INT --kill-after=20 \"${budget}s\" docker run",
++      "end": ">\"$run_dir/schemathesis.log\"",
++      "sha256": "0e4d8b6610f7a7d41d45a45e6f8af76a00f878b1267ff360ed056f30af09d254"
++    },
++    "default-image-and-help": {
++      "start": "# A registry/DNS outage",
++      "end": "\ndone",
++      "sha256": "ddca30597176352757d17f67b6aacf6f30818acb9a68e2f9871cb464dddaec49"
++    },
++    "readiness-and-quarantine": {
++      "start": "# Probe through the proxy",
++      "end": "phase=generation",
++      "sha256": "d286f178a9ea567e6168cfd7e3fe474c89e16ea288aff4aec26f4cc30f061856"
++    },
++    "cleanup-and-coverage": {
++      "start": "finish() {",
++      "end": "    metadata \"$rc\"",
++      "sha256": "a7d305bbc522138e7071886a6b52a0b0399fc1dd952f00d11d3ed0211128c5af"
++    },
++    "mutation-candidate-pool": {
++      "start": "    # Optional candidate pool",
++      "end": "cp \"$test_spec\"",
++      "sha256": "ebc3f493f6a8049b4d23b87b5d308cc0cde987df491e3fbd0cf11a283e5fe3e1"
++    },
++    "default-derecursion": {
++      "start": "# mount the run directory",
++      "end": "schema_cmd[1]=",
++      "sha256": "a10bbb96ae4960479b5ee9fd266d3afe5580f65b0f1862aece259647c2f51a0c"
++    },
++    "default-exit-semantics": {
++      "start": "# Exit 1 includes test failures;",
++      "end": "\nesac",
++      "sha256": "f847bf6f070f12264114c70760d146fe24021a85dcdb3ae14c3c99cdb959103a"
++    }
++  }
++}
+diff --git a/E1_pilot/harness_v2/fuzzer_args.sh b/E1_pilot/harness_v2/fuzzer_args.sh
+new file mode 100755
+--- /dev/null
++++ b/E1_pilot/harness_v2/fuzzer_args.sh
+@@ -0,0 +1,32 @@
++#!/usr/bin/env bash
++set -euo pipefail
++# Pure argv builders. The caller supplies validated run settings; no subprocesses.
++build_schemathesis_argv() {
++    schema_cmd=(run "/work/$(basename "$test_spec")" --base-url "http://mitmproxy:8080$BASE_PATH" \
++        --checks "$SCHEMA_CHECKS" --hypothesis-seed "$seed" --hypothesis-max-examples "$MAX_EXAMPLES" \
++        --junit-xml /work/schemathesis.junit.xml --cassette-path /work/schemathesis-cassette.yaml \
++        --request-timeout "$REQUEST_TIMEOUT_MS" --hypothesis-phases "$PILOT_HYPOTHESIS_PHASES" --sanitize-output true)
++    # An unset or empty DATA_GEN preserves the original argv exactly.
++    if [[ -n ${DATA_GEN:-} ]]; then
++        [[ $DATA_GEN =~ ^(positive|negative|all)$ ]] || { echo 'Invalid DATA_GEN' >&2; return 2; }
++        schema_cmd+=(--data-generation-method "$DATA_GEN")
++    fi
++}
++
++build_evomaster_argv() {
++    schema_cmd=(--blackBox true --problemType REST --base http://mitmproxy:8080 \
++        --schema /work/spec.test.json --seed "$seed" --stoppingCriterion TIME --maxTime "${budget}s" \
++        --outputFolder /work/evomaster/tests --outputFormat JAVA_JUNIT_5 \
++        --writeStatistics true --statisticsFile /work/evomaster/statistics.csv \
++        --appendToStatisticsFile false --ratePerMinute 0 --schemaOracles true \
++        --tcpTimeoutMs "$REQUEST_TIMEOUT_MS" --createConfigPathIfMissing false)
++}
++
++record_fuzzer_argv() {
++    local destination=$1 header_flag=$2
++    printf '%s\n' "${schema_cmd[@]}" >"$destination"
++    if [[ -n $AUTH_HEADER ]]; then
++        printf '%s\n' "$header_flag" '<redacted>' >>"$destination"
++        schema_cmd+=("$header_flag" "$AUTH_HEADER")
++    fi
++}
+diff --git a/E1_pilot/harness_v2/run_metadata.py b/E1_pilot/harness_v2/run_metadata.py
+--- a/E1_pilot/harness_v2/run_metadata.py
++++ b/E1_pilot/harness_v2/run_metadata.py
+@@ -29,7 +29,9 @@
+             images[path.stem] = {'inspection_error': str(error)}
+     files = {p.name: sha(p) for p in sorted(run.iterdir())
+              if p.is_file() and p.name != 'run.json' and not p.name.endswith('.tmp')}
++    fuzzer = os.environ.get('PILOT_FUZZER', 'schemathesis')
+     data = {
++        'fuzzer': fuzzer,
+         'run_id': run.name, 'sut': sut, 'source_spec': source,
+         'source_sha256': sha(next(run.glob('spec.original.*'), Path(source))),
+         'mode': mode, 'fault': fault, 'severity': int(severity), 'seed': int(seed),
+@@ -73,7 +75,26 @@
+                          'transport-error and truncation coverage require review',
+                          'locally built SUT may have only image ID, no registry digest'],
+     }
+-    tmp = run / 'run.json.tmp'
++    if fuzzer == 'evomaster':
++        # Legacy image key identifies the selected generator for unchanged analysis.
++        # Do not claim that Schemathesis ran in an EvoMaster collection.
++        data['schemathesis_exit'] = 'not_started'
++        data.update({
++            'evomaster_image': os.environ['PILOT_EVOMASTER_IMAGE'],
++            'evomaster_version': os.environ['PILOT_EVOMASTER_VERSION'],
++            'evomaster_exit': schema_rc,
++            'evomaster_argv_file': 'evomaster-argv.txt',
++            'evomaster_argv': ((run / 'evomaster-argv.txt').read_text().splitlines()
++                               if (run / 'evomaster-argv.txt').is_file() else []),
++            'evomaster_watchdog_seconds': int(budget) + 120,
++        })
++        data['file_sha256'].update({str(p.relative_to(run)): sha(p)
++                                   for p in sorted((run / 'evomaster').rglob('*')) if p.is_file()})
++        data['limitations'] = [line for line in data['limitations']
++                               if not line.startswith(('generator schema back edges',
++                                                       'equal mutation operation sets'))]
++        data['limitations'].append('EvoMaster uses spec.test unchanged; schema path checked against base_path')
++    tmp = run / 'run.json.tmp' 
+     tmp.write_text(json.dumps(data, indent=2) + '\n')
+     tmp.replace(run / 'run.json')
+ 
+diff --git a/E1_pilot/harness_v2/run_pilot.sh b/E1_pilot/harness_v2/run_pilot.sh
+--- a/E1_pilot/harness_v2/run_pilot.sh
++++ b/E1_pilot/harness_v2/run_pilot.sh
+@@ -16,12 +16,28 @@
+     case $fault in REQUEST_LOOSE|REQUEST_STRICT|RESPONSE_ORACLE|METHOD_SEM) ;; *) echo 'Invalid fault class' >&2; exit 2;; esac
+     ((severity > 0)) || { echo 'Mutated run requires positive severity' >&2; exit 2; }
+ fi
++# Select/validate the fuzzer before any Docker command or run-directory creation.
++export PILOT_FUZZER=${FUZZER:-schemathesis}
++case $PILOT_FUZZER in
++    schemathesis) ;;
++    evomaster)
++        /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" options "$mode" "$seed" "$budget" "${DATA_GEN:-}" "${ONLY_OPS:-}"
++        ;;
++    *) echo 'Invalid FUZZER: use schemathesis or evomaster' >&2; exit 2;;
++esac
++source "$HERE/fuzzer_args.sh"
+ for tool in docker curl java timeout flock git sha256sum grep /usr/bin/python3; do command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 1; }; done
+ docker compose version >/dev/null
+ export PILOT_UID=$(id -u) PILOT_GID=$(id -g)
+ # Original EMB port interpolation accepts an IP prefix; bind published ports to loopback.
+ export MITM_MAX_BODY=${MITM_MAX_BODY:-65536}
+ SCHEMA_IMAGE=schemathesis/schemathesis:3.39.16
++if [[ $PILOT_FUZZER == evomaster ]]; then
++    export PILOT_EVOMASTER_IMAGE=webfuzzing/evomaster@sha256:de1f4387e809a309a4c61517f3340c3d0b733b78bbb86d0e3ebd217d343515ab
++    export PILOT_EVOMASTER_VERSION=6.2.0
++    # Keep schema-image.json / schemathesis_image as compatibility aliases for analysis.
++    SCHEMA_IMAGE=$PILOT_EVOMASTER_IMAGE
++fi
+ MAX_EXAMPLES=${MAX_EXAMPLES:-100}
+ # Our oracle is tools/conformance.py. Schemathesis abandons an operation at its first failed check,
+ # so batch 2 uses a check that does not fail on 5xx to keep generating (SCHEMA_CHECKS).
+@@ -112,7 +128,11 @@
+     if (($? != 0)); then echo 'Credential redaction failed' >&2; rc=1; fi
+     metadata "$rc"
+     if (($? != 0)); then echo 'Failed to finalize run.json' >&2; rc=1; fi
++    if [[ $PILOT_FUZZER == evomaster ]]; then
++        echo "Run: $run_dir; harness exit=$rc; EvoMaster exit=$schema_rc; coverage exit=$coverage_rc"
++    else
+     echo "Run: $run_dir; harness exit=$rc; Schemathesis exit=$schema_rc; coverage exit=$coverage_rc"
++    fi
+     exit "$rc"
+ }
+ trap finish EXIT
+@@ -163,6 +183,12 @@
+ cp "$test_spec" "$run_dir/spec.test.${test_spec##*.}"
+ # Keep both the effective compose configuration and immutable image IDs/digests.
+ "${compose[@]}" config >"$run_dir/compose.resolved.yaml"
++if [[ $PILOT_FUZZER == evomaster ]]; then
++    /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" schema "$run_dir/spec.test.json" "$BASE_PATH"
++    # The supervisor already pulled this immutable image. Never pull or run help here.
++    docker image inspect "$SCHEMA_IMAGE" >"$run_dir/schema-image.json"
++    cp "$run_dir/schema-image.json" "$run_dir/evomaster-image.json"
++else
+ # A registry/DNS outage must not abort a run when the pinned image is already local;
+ # its exact ID/digest is recorded below either way.
+ if ! docker pull "$SCHEMA_IMAGE" >"$run_dir/schema-pull.log" 2>&1; then
+@@ -177,6 +203,7 @@
+         echo "Pinned Schemathesis CLI missing $flag" >&2; exit 1
+     fi
+ done
++fi
+ phase=startup
+ if [[ -n $PILOT_CODE_ROLE ]]; then
+     "${compose[@]}" up -d --no-build >"$run_dir/compose-up.log" 2>&1
+@@ -219,16 +246,8 @@
+ done
+ ((proxy_ready == 1)) || { echo 'Proxy did not restart' >&2; exit 1; }
+ phase=generation
+-schema_cmd=(run "/work/$(basename "$test_spec")" --base-url "http://mitmproxy:8080$BASE_PATH" \
+-    --checks "$SCHEMA_CHECKS" --hypothesis-seed "$seed" --hypothesis-max-examples "$MAX_EXAMPLES" \
+-    --junit-xml /work/schemathesis.junit.xml --cassette-path /work/schemathesis-cassette.yaml \
+-    --request-timeout "$REQUEST_TIMEOUT_MS" --hypothesis-phases "$PILOT_HYPOTHESIS_PHASES" --sanitize-output true)
+-# DATA_GEN (positive|negative|all): unset keeps the argv of earlier batches (Schemathesis default = positive).
+-# REQUEST_LOOSE can only show an effect if traffic violates the loosened constraint, i.e. with negative data.
+-if [[ -n ${DATA_GEN:-} ]]; then
+-    [[ $DATA_GEN =~ ^(positive|negative|all)$ ]] || { echo 'Invalid DATA_GEN' >&2; exit 2; }
+-    schema_cmd+=(--data-generation-method "$DATA_GEN")
+-fi
++if [[ $PILOT_FUZZER == schemathesis ]]; then
++build_schemathesis_argv
+ # mount the run directory, so the input and every output remain in this run.
+ # Generator input only: cut recursive $ref back-edges (hypothesis-jsonschema stalls on them).
+ # Conformance analysis keeps using spec.test.* (the untouched original or mutated spec).
+@@ -247,26 +266,47 @@
+     /usr/bin/python3 -I -B "$HERE/derecurse.py" "$test_spec" "$run_dir/generator-input.json" >"$run_dir/derecurse-cuts.json"
+ fi
+ schema_cmd[1]="/work/generator-input.json"
+-printf '%s\n' "${schema_cmd[@]}" >"$run_dir/schemathesis-argv.txt"
+-if [[ -n $AUTH_HEADER ]]; then
+-    printf '%s\n' -H '<redacted>' >>"$run_dir/schemathesis-argv.txt"
+-    schema_cmd+=(-H "$AUTH_HEADER")
++record_fuzzer_argv "$run_dir/schemathesis-argv.txt" -H
++else
++    # Compatibility snapshot required by analyse_run.sh; no de-recursion for EvoMaster.
++    cp "$run_dir/spec.test.json" "$run_dir/generator-input.json"
++    mkdir "$run_dir/evomaster"
++    build_evomaster_argv
++    record_fuzzer_argv "$run_dir/evomaster-argv.txt" --header0
+ fi
+ metadata pending
+ set +e
++if [[ $PILOT_FUZZER == evomaster ]]; then
++    # maxTime bounds search; allow startup and generated-test/statistics serialization.
++    # A watchdog timeout is still incomplete, exactly as on the default path.
++    timeout --signal=INT --kill-after=20 "$((budget + 120))s" docker run --rm --name "$generator" \
++        --user "$PILOT_UID:$PILOT_GID" --workdir /work/evomaster --network "${project}_default" \
++        -v "$run_dir:/work" -v "$run_dir/spec.test.json:/work/spec.test.json:ro" \
++        "$SCHEMA_IMAGE" "${schema_cmd[@]}" 2>&1 | /usr/bin/python3 -I -B "$HERE/redact_auth.py" >"$run_dir/evomaster.log"
++    pilot_pipeline_rc=("${PIPESTATUS[@]}")
++else
+ timeout --signal=INT --kill-after=20 "${budget}s" docker run --rm --name "$generator" \
+     --user "$PILOT_UID:$PILOT_GID" -e XDG_CACHE_HOME=/tmp/cache \
+     -e HYPOTHESIS_STORAGE_DIRECTORY=/tmp/hypothesis --network "${project}_default" \
+     -v "$run_dir:/work" "$SCHEMA_IMAGE" "${schema_cmd[@]}" 2>&1 | /usr/bin/python3 -I -B "$HERE/redact_auth.py" >"$run_dir/schemathesis.log"
+-pilot_pipeline_rc=("${PIPESTATUS[@]}")
++    pilot_pipeline_rc=("${PIPESTATUS[@]}")
++fi
+ schema_rc=${pilot_pipeline_rc[0]}
+ ((pilot_pipeline_rc[1] == 0)) || { echo 'Output redaction failed' >&2; exit 1; }
+ set -e
+ phase=collection
++if [[ $PILOT_FUZZER == evomaster ]]; then
++    case $schema_rc in
++        0|1) /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" outputs "$run_dir/evomaster" ;;
++        124|137) echo 'Generation budget expired; partial run retained, do not treat as complete' >&2; exit "$schema_rc";;
++        *) echo "EvoMaster execution failed ($schema_rc)" >&2; exit "$schema_rc";;
++    esac
++else
+ # Exit 1 includes test failures; the report/log retains the outcome. Timeouts are incomplete.
+ case $schema_rc in
+     0|1) [[ -s $run_dir/schemathesis.junit.xml ]] || { echo 'Missing JUnit report' >&2; exit 1; };;
+     124|137) echo 'Generation budget expired; partial run retained, do not treat as complete' >&2; exit "$schema_rc";;
+     *) echo "Schemathesis execution failed ($schema_rc)" >&2; exit "$schema_rc";;
+ esac
++fi
+ phase=complete
+diff --git a/E1_pilot/harness_v2/static_validate.py b/E1_pilot/harness_v2/static_validate.py
+--- a/E1_pilot/harness_v2/static_validate.py
++++ b/E1_pilot/harness_v2/static_validate.py
+@@ -1,4 +1,4 @@
+-"""T14/T17 static validation and the permitted stdlib derecurse tests.
++"""T14/T17/T27 static validation and the permitted stdlib derecurse tests.
+ 
+ No harness scripts, third-party project code, Docker, Java, network, or SUT
+ commands are executed. Run from any directory with /usr/bin/python3 -I -B.
+@@ -28,7 +28,7 @@
+ 
+ 
+ def main():
+-    print("T14/T17 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
++    print("T14/T17/T27 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
+     for path in sorted(HERE.glob("*.sh")):
+         subprocess.run(["bash", "-n", str(path)], check=True)
+         source = path.read_text()
+@@ -135,11 +135,12 @@
+     assert "HOST_PORT=127.0.0.1:18080 JACOCO_PORT=127.0.0.1:16300" in common
+     assert 'exec 8<"$HERE/../harness/.run.lock"' in common
+     run = (HERE / "run_pilot.sh").read_text()
++    fuzzer_args = (HERE / "fuzzer_args.sh").read_text()
+     for marker in ('SCHEMA_CHECKS', '--request-timeout', 'explicit,generate', 'acquire_run_lock',
+                    'mkdir "$run_dir"', '--no-build', 'derecurse.py" "$original_spec"',
+                    'mutation_gen', 'Generator mutation selected different operations',
+                    'redact_auth.py', 'run_metadata.py', 'jacococli.jar'):
+-        assert marker in run, marker
++        assert marker in run + fuzzer_args, marker
+     batch = (HERE / "run_batch.sh").read_text()
+     assert 'PILOT_RUN_ID="$id"' in batch and 'baseline=$LAST_RUN' in batch
+     assert 'HEALTH_METHOD_DEFAULT:-GET' in run and 'HEALTH_STATUS_DEFAULT:?' in run
+@@ -172,8 +173,11 @@
+     print("BEGIN DERECURSE UNIT TESTS", flush=True)
+     subprocess.run(["/usr/bin/python3", "-I", "-B", str(HERE / "test_derecurse.py")],
+                    check=True, stderr=subprocess.STDOUT)
++    print("BEGIN FUZZER ARGV/ROUTING/REDACTION/PROVENANCE UNIT TESTS", flush=True)
++    subprocess.run(["/usr/bin/python3", "-I", "-B", str(HERE / "test_fuzzer_args.py")],
++                   check=True, stderr=subprocess.STDOUT)
+     print("PASS ALL STATIC CHECKS AND PERMITTED UNIT TESTS", flush=True)
+-    print("NOT EXECUTED: harness orchestration, Docker, Compose, Java, Schemathesis, SUTs, "
++    print("NOT EXECUTED: harness orchestration, Docker, Compose, Java, Schemathesis, EvoMaster, SUTs, "
+           "network/downloads, builds, dependency installs, tool-pipeline execution.", flush=True)
+ 
+ 
+diff --git a/E1_pilot/harness_v2/test_fuzzer_args.py b/E1_pilot/harness_v2/test_fuzzer_args.py
+new file mode 100644
+--- /dev/null
++++ b/E1_pilot/harness_v2/test_fuzzer_args.py
+@@ -0,0 +1,288 @@
++"""Offline argv, routing, redaction, completion, and provenance regression tests."""
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import subprocess
++import sys
++import tempfile
++import unittest
++from unittest.mock import patch
++
++HERE = Path(__file__).resolve().parent
++
++
++def load(name):
++    spec = importlib.util.spec_from_file_location('t27_' + name, HERE / (name + '.py'))
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++GUARD = load('evomaster_guard')
++REDACTOR = load('redact_auth')
++METADATA = load('run_metadata')
++
++
++def settings(**updates):
++    values = dict(os.environ)
++    # Synthetic headers only; inherited real credentials never enter a subprocess.
++    for key in ('AUTH_HEADER', 'PILOT_AUTH_REDACT', 'DATA_GEN', 'FUZZER', 'PILOT_FUZZER', 'ONLY_OPS'):
++        values.pop(key, None)
++    values.update({'BASE_PATH': '/api', 'SCHEMA_CHECKS': 'all', 'seed': '7', 'budget': '300',
++                   'MAX_EXAMPLES': '100', 'REQUEST_TIMEOUT_MS': '10000',
++                   'PILOT_HYPOTHESIS_PHASES': 'explicit,generate', 'AUTH_HEADER': '',
++                   'test_spec': '/synthetic/spec.test.json', 'HERE': str(HERE), 'mode': 'baseline'})
++    values.update(updates)
++    return values
++
++
++def build(fuzzer, **updates):
++    with tempfile.TemporaryDirectory(prefix='t27-argv-') as directory:
++        dest = Path(directory) / 'argv.txt'
++        script = 'source "$HERE/fuzzer_args.sh"\n'
++        if fuzzer == 'schemathesis':
++            script += 'build_schemathesis_argv\nschema_cmd[1]=/work/generator-input.json\n'
++            flag = '-H'
++        else:
++            script += 'build_evomaster_argv\n'
++            flag = '--header0'
++        script += 'record_fuzzer_argv "$ARGV_DEST" ' + flag + '\nprintf "%s\\0" "${schema_cmd[@]}"'
++        result = subprocess.run(['bash', '-c', script], env=settings(ARGV_DEST=str(dest), **updates),
++                                capture_output=True, check=True)
++        return result.stdout.decode().removesuffix('\0').split('\0'), dest.read_text().splitlines()
++
++
++class ArgvTests(unittest.TestCase):
++    def test_original_golden_argv_and_recording(self):
++        # The fixture was captured from the unmodified run_pilot.sh argv statements.
++        for item in json.loads((HERE / 'fuzzer-golden.json').read_text())['cases']:
++            with self.subTest(item['name']):
++                actual, recorded = build('schemathesis', **item['environment'])
++                self.assertEqual(actual, item['argv'])
++                self.assertEqual(recorded, item['recorded'])
++
++    def test_unset_and_explicit_default_selection(self):
++        source = (HERE / 'run_pilot.sh').read_text()
++        block = source[source.index('export PILOT_FUZZER='):source.index('source "$HERE/fuzzer_args.sh"')]
++        for value in (None, '', 'schemathesis', 'evomaster', 'other'):
++            with self.subTest(value=value):
++                values = settings()
++                if value is not None:
++                    values['FUZZER'] = value
++                result = subprocess.run(['bash', '-euc', block + '\nprintf "%s" "$PILOT_FUZZER"'],
++                                        env=values, capture_output=True)
++                if value == 'other':
++                    self.assertEqual(result.returncode, 2)
++                    self.assertNotIn(value.encode(), result.stderr)
++                else:
++                    self.assertEqual(result.returncode, 0, result.stderr)
++                    self.assertEqual(result.stdout.decode(), value or 'schemathesis')
++
++    def test_evomaster_golden(self):
++        actual, recorded = build('evomaster')
++        expected = ['--blackBox', 'true', '--problemType', 'REST', '--base', 'http://mitmproxy:8080',
++                    '--schema', '/work/spec.test.json', '--seed', '7', '--stoppingCriterion', 'TIME',
++                    '--maxTime', '300s', '--outputFolder', '/work/evomaster/tests', '--outputFormat',
++                    'JAVA_JUNIT_5', '--writeStatistics', 'true', '--statisticsFile',
++                    '/work/evomaster/statistics.csv', '--appendToStatisticsFile', 'false',
++                    '--ratePerMinute', '0', '--schemaOracles', 'true', '--tcpTimeoutMs', '10000',
++                    '--createConfigPathIfMissing', 'false']
++        self.assertEqual(actual, expected)
++        self.assertEqual(recorded, expected)
++
++    def test_auth_both_fuzzers_shell_metacharacters_are_literal(self):
++        header = 'Authorization: Bearer synthetic $(do-not-execute) `literal` "quotes"'
++        for fuzzer, flag in (('schemathesis', '-H'), ('evomaster', '--header0')):
++            with self.subTest(fuzzer=fuzzer):
++                argv, recorded = build(fuzzer, AUTH_HEADER=header)
++                self.assertEqual(argv[-2:], [flag, header])
++                self.assertEqual(recorded[-2:], [flag, '<redacted>'])
++                self.assertNotIn(header, '\n'.join(recorded))
++                self.assertNotIn('synthetic', '\n'.join(recorded))
++
++    def test_seed_budget_timeout_are_forwarded(self):
++        argv, _ = build('evomaster', seed='9223372036854775807', budget='123', REQUEST_TIMEOUT_MS='42')
++        self.assertEqual(argv[argv.index('--seed') + 1], '9223372036854775807')
++        self.assertEqual(argv[argv.index('--maxTime') + 1], '123s')
++        self.assertEqual(argv[argv.index('--tcpTimeoutMs') + 1], '42')
++
++    def test_default_invalid_data_gen_fails(self):
++        with self.assertRaises(subprocess.CalledProcessError):
++            build('schemathesis', DATA_GEN='invalid')
++
++    def test_schemathesis_data_gen_variants(self):
++        default, _ = build('schemathesis')
++        for value in ('positive', 'negative', 'all'):
++            self.assertEqual(build('schemathesis', DATA_GEN=value)[0], default + ['--data-generation-method', value])
++
++    def test_preexisting_shell_fragments_are_byte_identical(self):
++        # Pinned source fragments include default Docker argv, readiness, cleanup,
++        # mutation candidate handling and both original de-recursion passes.
++        source = (HERE / 'run_pilot.sh').read_text()
++        fixture = json.loads((HERE / 'fuzzer-golden.json').read_text())
++        for name, item in fixture['preserved_fragments'].items():
++            with self.subTest(fragment=name):
++                begin = source.index(item['start'])
++                end = source.index(item['end'], begin)
++                self.assertEqual(hashlib.sha256(source[begin:end].encode()).hexdigest(), item['sha256'])
++
++    def test_pipeline_status_is_saved_before_if_completion(self):
++        source = (HERE / 'run_pilot.sh').read_text()
++        for log in ('evomaster.log', 'schemathesis.log'):
++            tail = source.split('>"$run_dir/' + log + '"\n', 1)[1]
++            self.assertEqual(tail.lstrip().splitlines()[0], 'pilot_pipeline_rc=("${PIPESTATUS[@]}")')
++
++
++class GuardTests(unittest.TestCase):
++    def test_supported_options_and_long_boundaries(self):
++        for seed in ('0', '1', '9223372036854775807'):
++            GUARD.validate_options('baseline', seed, '300', '', '')
++        GUARD.validate_options('mutated', '1', '1', '', 'pool.json')
++
++    def test_unsupported_data_generation_never_silently_ignored(self):
++        for value in ('positive', 'negative', 'all', 'invalid'):
++            with self.subTest(value=value), self.assertRaises(ValueError):
++                GUARD.validate_options('mutated', '1', '300', value, '')
++
++    def test_baseline_pool_rejected(self):
++        with self.assertRaises(ValueError):
++            GUARD.validate_options('baseline', '1', '300', '', 'pool.json')
++
++    def test_invalid_seed_and_budget(self):
++        for seed in ('-1', '9223372036854775808', 'abc', '١'):
++            with self.subTest(seed=seed), self.assertRaises(ValueError):
++                GUARD.validate_options('baseline', seed, '300', '', '')
++        for budget in ('0', '-1', '2147483528', 'abc'):
++            with self.subTest(budget=budget), self.assertRaises(ValueError):
++                GUARD.validate_options('baseline', '1', budget, '', '')
++
++    def test_all_four_current_schemas_match_the_proxy_base_path(self):
++        emb = HERE.parents[1] / '_external/emb'
++        for sut in ('scout-api', 'swagger-petstore', 'market', 'cwa-verification'):
++            config = dict(line.split('=', 1) for line in (HERE / 'suts' / (sut + '.env')).read_text().splitlines()
++                          if line and not line.startswith('#'))
++            with self.subTest(sut=sut):
++                GUARD.validate_schema(json.loads((emb / config['SPEC_SOURCE']).read_text()), config['BASE_PATH_DEFAULT'])
++
++    def test_base_path_override_mismatch_rejected(self):
++        for document in ({'swagger': '2.0', 'basePath': '/api'},
++                         {'openapi': '3.0.4', 'servers': [{'url': 'http://localhost/api'}]}):
++            with self.subTest(document=document), self.assertRaises(ValueError):
++                GUARD.validate_schema(document, '/wrong')
++
++    def test_default_root_and_trailing_slash(self):
++        for document in ({'swagger': '2.0'}, {'openapi': '3.0.4'}):
++            GUARD.validate_schema(document, '/')
++        GUARD.validate_schema({'swagger': '2.0', 'basePath': '/api/'}, '/api')
++
++    def test_schema_server_ambiguities_rejected(self):
++        servers = ([], [{'url': '/a'}, {'url': '/b'}], [{'url': '/{version}'}],
++                   [{'url': 'https://user:secret@host/api'}], [{'url': '/api?query'}],
++                   [{'url': '/api#fragment'}], [{'url': 'file:///api'}],
++                   [{'url': 'relative'}], [{'url': '/a/../api'}], [{'url': '/api//v3'}])
++        for value in servers:
++            with self.subTest(servers=value), self.assertRaises(ValueError):
++                GUARD.validate_schema({'openapi': '3.0.4', 'servers': value}, '/api')
++
++    def test_path_and_operation_servers_rejected(self):
++        for item in ({'servers': [{'url': '/'}]}, {'get': {'servers': [{'url': '/'}]}}):
++            with self.subTest(item=item), self.assertRaises(ValueError):
++                GUARD.validate_schema({'openapi': '3.0.4', 'paths': {'/x': item}}, '/')
++
++    def test_missing_or_empty_outputs_fail(self):
++        with tempfile.TemporaryDirectory(prefix='t27-outputs-') as directory:
++            root = Path(directory)
++            with self.assertRaises(ValueError):
++                GUARD.validate_outputs(root)
++            (root / 'statistics.csv').write_text('header\nvalue\n')
++            with self.assertRaises(ValueError):
++                GUARD.validate_outputs(root)
++            (root / 'tests').mkdir()
++            (root / 'tests' / 'Test.java').touch()
++            with self.assertRaises(ValueError):
++                GUARD.validate_outputs(root)
++            (root / 'tests' / 'Test.java').write_text('// Synthetic output fixture; never executed.\n')
++            GUARD.validate_outputs(root)
++
++
++class RedactionTests(unittest.TestCase):
++    def test_streaming_and_saved_recursive_outputs(self):
++        header = 'Authorization: Bearer synthetic-t27-credential'
++        with patch.dict(os.environ, {'PILOT_AUTH_REDACT': header}, clear=True):
++            needles = REDACTOR.secrets()
++            raw = (header + '\nBearer synthetic-t27-credential\nsynthetic-t27-credential\n').encode()
++            self.assertEqual(REDACTOR.clean(raw, needles), b'<redacted>\n<redacted>\n<redacted>\n')
++            stream = subprocess.run(['/usr/bin/python3', '-I', '-B', str(HERE / 'redact_auth.py')],
++                                    input=raw, capture_output=True, env=dict(os.environ), check=True)
++            self.assertEqual(stream.stdout, b'<redacted>\n<redacted>\n<redacted>\n')
++            with tempfile.TemporaryDirectory(prefix='t27-redact-') as directory:
++                root = Path(directory)
++                (root / 'evomaster' / 'tests').mkdir(parents=True)
++                for name in ('evomaster.log', 'evomaster/tests/Test.java', 'evomaster/statistics.csv'):
++                    (root / name).write_bytes(raw)
++                with patch.object(sys, 'argv', ['redact_auth.py', directory]):
++                    REDACTOR.main()
++                self.assertTrue(all(b'synthetic-t27-credential' not in p.read_bytes()
++                                    for p in root.rglob('*') if p.is_file()))
++
++    def test_empty_auth_is_noop(self):
++        with patch.dict(os.environ, {'PILOT_AUTH_REDACT': ''}, clear=True):
++            self.assertEqual(REDACTOR.clean(b'public', REDACTOR.secrets()), b'public')
++
++
++class MetadataTests(unittest.TestCase):
++    def metadata(self, fuzzer, code):
++        with tempfile.TemporaryDirectory(prefix='t27-metadata-') as directory:
++            root = Path(directory)
++            run, emb = root / 'run', root / '_external/emb'
++            run.mkdir()
++            emb.mkdir(parents=True)
++            (run / 'evomaster').mkdir()
++            (run / 'evomaster' / 'statistics.csv').write_text('synthetic\n')
++            (run / 'evomaster-argv.txt').write_text('--header0\n<redacted>\n')
++            (run / 'schema-image.json').write_text(json.dumps([{'Id': 'sha256:synthetic', 'RepoDigests': ['synthetic@sha256:123']}]))
++            values = {'PILOT_FUZZER': fuzzer, 'PILOT_AUTH_ROLE': 'none', 'SCHEMA_CHECKS': 'all',
++                      'SUT_SERVICE': 'sut-synthetic', 'SUT_IMAGE': 'synthetic', 'INTERNAL_PORT': '8080',
++                      'COMPOSE_FILE': 'synthetic.yaml', 'DOCKERFILE': 'synthetic.dockerfile',
++                      'PILOT_AUTH_SOURCE': 'none', 'MITM_MAX_BODY': '65536', 'HOST_PORT': '127.0.0.1:18080',
++                      'JACOCO_PORT': '127.0.0.1:16300', 'PILOT_EVOMASTER_IMAGE': 'synthetic@sha256:123',
++                      'PILOT_EVOMASTER_VERSION': '6.2.0'}
++            argv = ['run_metadata.py', str(run), str(emb), 'synthetic', str(root / 'source.json'),
++                    'baseline', 'NONE', '0', '7', '300', '100', 'synthetic@sha256:123',
++                    'project', 'start', 'complete', code, '0', '0', '0' if code in ('0', '1') else code,
++                    '/health', '/']
++            with patch.dict(os.environ, values, clear=True), patch.object(sys, 'argv', argv), \
++                    patch.object(METADATA.subprocess, 'check_output', side_effect=['synthetic-commit\n', '']):
++                METADATA.main()
++            return json.loads((run / 'run.json').read_text())
++
++    def test_evomaster_identity_redacted_argv_and_nested_hashes(self):
++        data = self.metadata('evomaster', '1')
++        self.assertEqual(data['fuzzer'], 'evomaster')
++        self.assertEqual(data['evomaster_version'], '6.2.0')
++        self.assertEqual(data['evomaster_image'], 'synthetic@sha256:123')
++        self.assertEqual(data['evomaster_exit'], '1')
++        self.assertEqual(data['schemathesis_exit'], 'not_started')
++        self.assertEqual(data['evomaster_argv'], ['--header0', '<redacted>'])
++        self.assertEqual(data['evomaster_watchdog_seconds'], 420)
++        self.assertTrue(data['complete'])
++        self.assertIn('evomaster/statistics.csv', data['file_sha256'])
++        self.assertIn('schema-image', data['images'])
++
++    def test_default_metadata_has_unchanged_generator_fields(self):
++        data = self.metadata('schemathesis', '1')
++        self.assertEqual(data['schemathesis_exit'], '1')
++        self.assertTrue(data['complete'])
++        self.assertNotIn('evomaster_exit', data)
++        self.assertNotIn('evomaster/statistics.csv', data['file_sha256'])
++
++    def test_timeout_metadata_is_incomplete(self):
++        data = self.metadata('evomaster', '124')
++        self.assertEqual(data['evomaster_exit'], '124')
++        self.assertFalse(data['complete'])
++
++
++if __name__ == '__main__':
++    unittest.main(verbosity=2)

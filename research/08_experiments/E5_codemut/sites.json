@@ -515,6 +515,60 @@
       "witness_plan": "Fresh 64-hex hashed GUID with keyType GUID; establish a control 201 witness first.",
       "pilot": false,
       "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91"
+    },
+    {
+      "site_id": "market-response-field-v2",
+      "sut": "market",
+      "operator": "RESP_FIELD",
+      "file": "market-rest/src/main/java/market/RestConfig.java",
+      "line": 13,
+      "before": "public class RestConfig {",
+      "after": "public class RestConfig {\n\n\t@Bean\n\tpublic org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer e5ProductPriceMixin() {\n\t\treturn builder -> builder.mixIn(market.dto.ProductDTO.class, E5ProductPriceMixin.class);\n\t}\n\n\tpublic abstract static class E5ProductPriceMixin {\n\t\t@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)\n\t\tpublic abstract Double getPrice();\n\t}",
+      "operations": [
+        {
+          "path": "/products",
+          "method": "get"
+        },
+        {
+          "path": "/products/{productId}",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "RESPONSE_SCHEMA"
+      ],
+      "source_sha256": "6923166ab53103be941c9828ffcf199f3d6219e6d707c6b9e1322cbc2e044e21",
+      "conditions": "Static POM evidence: market-rest -> spring-boot-starter-web 2.4.3 -> spring-boot-starter-json 2.4.3 -> jackson-databind 2.11.4 -> jackson-annotations 2.11.4 (compile scopes); starter also supplies spring-boot-autoconfigure. A Jackson builder customizer installs a ProductDTO getter mix-in in market-rest; market-core is untouched. ProductDTO.price is required by the unchanged saved spec. ⚠️ Expected: WRITE_ONLY removes price from JSON output while retaining setter binding. Build and runtime mapper/HATEOAS mix-in behavior remain unverified; existing _links violations must be separated from the required-price signal.",
+      "witness_plan": "After Claude builds a fresh pair, replay the same successful GET /products (nonempty JSON array) and a successful GET /products/{productId}. Require control price key/non-null value, mutant missing price, unchanged input spec, and a required-price RESPONSE_SCHEMA diagnostic. Record pre-existing _links diagnostics separately. Confirm the customizer is used by the active MVC ObjectMapper; do not count an empty list or 404 as exposure.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/src/main/java/market/RestConfig.java:13; 08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/pom.xml:60-63; 08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/pom.xml:44-49 (parent dependency management); 09_collab/logs/T25_scratch/poms/spring-boot-starter-web-2.4.3.pom:50-54; poms/spring-boot-starter-json-2.4.3.pom:56-60 and poms/jackson-databind-2.11.4.pom:60-67 relative to T25_scratch; 08_experiments/_external/emb/openapi-swagger/market.json:#/definitions/ProductDTO/required; 09_collab/reports/T25_report.md (dependency graph and source mapping)"
+    },
+    {
+      "site_id": "petstore-reject-valid-v2",
+      "sut": "swagger-petstore",
+      "operator": "REJECT_VALID",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 103,
+      "before": "public ResponseContext loginUser(final RequestContext request, final String username, final String password) {",
+      "after": "public ResponseContext loginUser(final RequestContext request, final String username, final String password) {\n        if (username == null) { throw new javax.ws.rs.BadRequestException(\"E5 requires optional login username\"); }",
+      "operations": [
+        {
+          "path": "/user/login",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "257a89219d5dadc1fa10006098d0fdb95a7e6668f0de7d43040a3d9ec4ede58e",
+      "conditions": "The unchanged OAS makes username and password optional. Across both saved petstore site bundles, seeds 1-3, mutant-pair controls/mutants and noise controls/control_repeats: GET /user/login has 48 request-valid exchanges, all 200, no 400/422, no saved VALID_REJECTED; 36 are control/control_repeat and 12 are historical mutants of other sites. Every query omits username, hitting the new null guard. Only two exchanges per run and one empty-query shape: repeated exposure is not input diversity. ⚠️ Expected new 400/VALID_REJECTED fingerprint is absent from the saved noise floor; this is selection evidence, not a measured v2 kill. Existing login RESPONSE_PARSE/header defects do not establish response conformance.",
+      "witness_plan": "Use GET /api/v3/user/login with no query parameters, captured JSON-compatible headers and clean equal state. Require control 200 and mutant 400 on the identical request, with request validity checked under unchanged OAS including T24 integer formats. Run fresh v2 pair and control-vs-control seeds 1-3, and apply EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1; report low per-run exposure and any new noise rather than assuming it cannot recur.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/UserController.java:103; 08_experiments/_external/emb/openapi-swagger/swagger-petstore.json:#/paths/~1user~1login/get/parameters; 09_collab/logs/T25_scratch/petstore_operation_counts.csv (method=GET,template=/user/login; 24 rows, linked source exchanges/line lists and attribution paths); 09_collab/logs/T25_scratch/petstore_login_witnesses.json (48 file/line locators); 09_collab/reports/T25_report.md (seed/role counts and noise rule)"
     }
   ]
 }

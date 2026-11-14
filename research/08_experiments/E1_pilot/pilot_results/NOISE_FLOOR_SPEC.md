@@ -1,0 +1,56 @@
+# Spec mutation-এর fresh-mode noise floor (2026-11-14, Claude)
+
+**Script:** `noise_floor_spec.py` → `noise_floor_spec.csv`। নতুন কোনো run চালানো হয়নি।
+
+## নকশা
+- **উৎস:** negative-data batch-গুলোতে প্রতিটি SUT × seed-এর জন্য একই execution input-এ 2–5টি সম্পূর্ণ baseline আছে।
+- **যাচাই করা হয়েছে যে এগুলো সত্যিই replicate:**
+  - SUT jar-এর sha, image, আর Schemathesis argv (run id বাদে) সব এক।
+  - `run_pilot.sh`, `common.sh`, `mitm_fulllog.py` অপরিবর্তিত।
+  - পার্থক্য শুধু `analyse_run.sh`, `run_batch.sh`, `market.env` (oracle) আর README-তে। এগুলো run-এর আচরণে প্রভাব ফেলে না।
+- **সংকেত:** fresh attribution(জোড়া baseline @ base spec, mutated run @ mutated spec, manifest)।
+- **Noise:** fresh attribution(জোড়া baseline, অন্য replicate @ base spec, একই manifest)।
+  - এখানে manifest শুধু op-এর স্তর নির্ধারণ করে।
+  - মাপা হয়েছে সব replicate-এর ওপর। "max" মানে সবচেয়ে প্রতিকূল replicate।
+- **Checker:** বর্তমানটা (int format চালু), default oracle 400/422।
+- **নিয়ম:** সংকেত noise ছাড়ায় যদি mutated op-এ NEW > noise max NEW (একই op-এ)। দ্বিতীয় নিয়ম: NEW **বা** INCREASED, noise max-এর চেয়ে বেশি।
+- এটা finite-sample পর্যবেক্ষণ, কোনো statistical test নয়।
+
+## ফল (61টি mutated run)
+| Fault | SUT | NEW > noise | NEW বা INCREASED > noise |
+|---|---|---|---|
+| METHOD_SEM | সব 4টি | 12/12 | 12/12 |
+| REQUEST_STRICT | scout, petstore, market | 9/9 | 9/9 |
+| REQUEST_STRICT | cwa | 0/3 | 0/3 |
+| RESPONSE_ORACLE | petstore, market | 6/6 | 6/6 |
+| RESPONSE_ORACLE | scout | 2/3 | 2/3 |
+| RESPONSE_ORACLE | cwa | 1/3 | 1/3 |
+| REQUEST_LOOSE | cwa | 3/3 | 3/3 |
+| REQUEST_LOOSE | petstore | 6/7 | 6/7 |
+| REQUEST_LOOSE | scout | 5/6 | 5/6 |
+| REQUEST_LOOSE | market | **1/9** | **7/9** |
+| **মোট** | | **45/61** | **51/61** |
+
+- **Noise-এর মাপ (mapped স্তরে NEW, সবচেয়ে বেশি):** scout 4, petstore 3, market 0, cwa 0।
+- **অপরিবর্তিত op-এ noise (max):**
+  - scout: NEW ≤9, I ≤51, D ≤53।
+  - petstore: ≤3 / 12 / 11।
+  - market: 0 / 10 / 11।
+  - cwa: 0 / 4 / 3।
+
+## ব্যাখ্যা
+1. **Fresh fuzzing-এ spec mutation-এর সংকেত বেশিরভাগ ক্ষেত্রেই noise ছাড়ায়** (51/61), negative data দিলে।
+   - এতে PILOT_SUMMARY-র সংশোধিত H1 সমর্থন পায়।
+   - তবে ব্যতিক্রমগুলো নির্দিষ্ট:
+     - cwa-র STRICT আর ORACLE: fresh-এ mutated op-এ প্রায় কোনো NEW-ই নেই।
+     - market-এর LOOSE: সংকেত আসে শুধু occurrence বাড়া হিসেবে, যা §6-এর "occurrence-স্তরের metric লাগে" কথার সাথে মেলে।
+2. **Mutated run-এর অপরিবর্তিত op-এর বড় পরিবর্তন প্রায় পুরোটাই noise।**
+   - Unmut NEW noise max ছাড়িয়েছে মাত্র 11/61 run-এ, আর I+D ছাড়িয়েছে 9/61-এ।
+   - ⚠️ [H] বাকি ব্যতিক্রমগুলো mutation-এর কারণে generator-এর পরোক্ষ পরিবর্তন হতে পারে, যেমন spec বদলালে অন্য op-এর জন্য তৈরি request বা state বদলে যায়।
+   - এটা E5-এর code-mutation noise floor-এর ফলের সাথে মেলে (E5_RESULTS §3b)।
+3. **Replay এখনো নিখুঁত** (0 unexplained)। Fresh-এর জন্য দরকার mutated-op স্তরে noise-এর তুলনা, আর occurrence-স্তরের metric।
+
+## সীমা
+- Replicate কম: cwa-তে প্রতি seed-এ 1টি, scout ও petstore-এর s2/s3-তে 2টি।
+- Replicate-গুলো আলাদা সময়ের batch থেকে। SUT-এর ভেতরের state প্রতিবার নতুন container-এ শুরু হয়, তবে ⚠️ host-এর load আলাদা হতে পারে।
+- NEW-এর হিসাব fingerprint স্তরে। একই op-এ ভিন্ন kind আলাদা গোনা হয়।

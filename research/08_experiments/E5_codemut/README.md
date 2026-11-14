@@ -6,8 +6,8 @@ the commands below only after the live batch chain ends and the supervisor
 approves external execution (`09_collab/PROTOCOL.md:12–14`;
 `09_collab/tasks/T19.md`, Constraints). The current harness remains unchanged.
 
-`OPERATORS.md` lists five families, all 20 digest-pinned sites and the ten
-first-batch choices (2–3 per SUT). `sites.json` rows use `site_id`;
+`OPERATORS.md` lists five families, the original 20 digest-pinned sites, two T25
+v2 additions and the ten first-batch choices (2–3 per SUT). `sites.json` rows use `site_id`;
 `exposure.json` rows use `evidence_id`. Captured operation traffic is evidence of
 HTTP exposure, not proof of reaching the edited branch (`OPERATORS.md:32–41`).
 
@@ -25,8 +25,8 @@ E5="$PWD/08_experiments/E5_codemut"
 ```
 
 Omit `--site` to choose by SHA-256 of `sut:operator:decimal_seed`, modulo the
-sorted matching pool. The present catalogue has one site per SUT/operator, so
-changing the seed currently cannot change that choice. `--source` accepts a
+sorted matching pool. Market RESP_FIELD and Petstore REJECT_VALID now each have
+two sites; use explicit `--site` for the v2 replacements. `--source` accepts a
 separate checkout only if its target bytes match the pinned site; `--catalog`
 accepts reviewed JSON data (`codemut.py:102–119,239–259`; `sites.json`, all rows).
 
@@ -477,3 +477,40 @@ validation coverage, failure handling and CSV definitions. Coordinator build
 inputs are recorded in `COORDINATOR_NOTES.md`; current harness integration is
 recorded in `09_collab/tasks/T20.md`, Current state. T20 did not execute the live
 harness or write to `work/`.
+
+## T25 v2 sites
+
+The two appended `sites.json` entries have `pilot: true`. Existing site IDs and
+their historical outcomes remain intact (`sites.json`, last two site objects;
+`09_collab/reports/T25_report.md`, selection evidence).
+
+- `market-response-field-v2` edits `market-rest`'s `RestConfig.java:13`: a Jackson
+  builder customizer installs a `ProductDTO.getPrice()` WRITE_ONLY mix-in for
+  both product GET operations. The compile dependency path is
+  `market-rest -> spring-boot-starter-web -> spring-boot-starter-json ->
+  jackson-databind -> jackson-annotations`; POM snapshots and line citations are
+  in `09_collab/logs/T25_scratch/pom_evidence.json` and the T25 report.
+- `petstore-reject-valid-v2` adds a null-username guard to
+  `UserController.loginUser():103`, requiring an optional query parameter.
+  Saved GET `/user/login` traffic is 48 valid requests across 24 runs, all 200,
+  no 400/422 and no saved VALID_REJECTED (two per run; one empty-query shape).
+  Per-operation, seed and role counts plus original exchange line locators are
+  in `09_collab/logs/T25_scratch/petstore_operation_counts.csv`; all 48 witnesses
+  are in `petstore_login_witnesses.json` in that directory.
+
+⚠️ Both are source-tested proposals, with compilation and runtime behavior still
+unverified. Claude must build fresh pairs and run seeds 1–3 plus fresh noise
+controls. Confirm missing-price RESPONSE_SCHEMA independently of existing
+`_links` diagnostics, and login 200→400/VALID_REJECTED on an identical valid
+request. Historical controls support selection; they are not v2 controls
+(`sites.json`, v2 `conditions`/`witness_plan`; `PIPELINE.md:205`, noise rule).
+
+Run the source-copy tests without building from the repository root:
+
+```bash
+E5_TEST_SCRATCH="$PWD/09_collab/logs/T25_scratch" \
+  /usr/bin/python3 -I -B 08_experiments/E5_codemut/test_codemut.py -v
+```
+
+The original checkout is read-only input for the v2 tests; outputs use the
+scratch directory (`test_codemut.py`, `ReplacementSiteTests`).

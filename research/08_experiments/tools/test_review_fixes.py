@@ -231,6 +231,34 @@ class ReviewFixes(unittest.TestCase):
         self.assertIn('VALID_REJECTED', [v['kind'] for v in c.check(sp, e)])
         self.assertIn('VALID_REJECTED', kinds(d, ex(status=400)))  # default unchanged
 
+    def test_R10d_integer_formats_bound_request_validity(self):
+        big = str(2 ** 63)  # one beyond signed int64 (E5 blind v2 item E014)
+        d64 = doc(params=[param({'type': 'integer', 'format': 'int64'}, required=True)])
+        self.assertNotIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [big]})))
+        self.assertIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [str(2 ** 63 - 1)]})))
+        self.assertIn('INVALID_ACCEPTED', kinds(d64, ex(status=200, query={'q': [big]})))
+        d32 = doc(params=[param({'type': 'integer', 'format': 'int32'}, required=True)])
+        self.assertNotIn('VALID_REJECTED', kinds(d32, ex(status=400, query={'q': [str(2 ** 31)]})))
+        self.assertIn('VALID_REJECTED', kinds(d32, ex(status=400, query={'q': [str(-2 ** 31)]})))
+        # response bodies: out-of-range integer is a schema violation; booleans/non-integers untouched
+        r = doc({'type': 'object', 'properties': {'id': {'type': 'integer', 'format': 'int32'}}})
+        self.assertIn('RESPONSE_SCHEMA', kinds(r, ex(body=json.dumps({'id': 2 ** 31}))))
+        self.assertEqual(kinds(r, ex(body=json.dumps({'id': 7}))), [])
+        self.assertEqual(c.FORMAT_CHECKER.conforms(True, 'int32'), True)
+        self.assertEqual(c.FORMAT_CHECKER.conforms('x', 'int64'), True)
+        # T24 F1: integral floats are range-checked exactly (OAS 3.1 accepts 1.0 as integer); fractions left to type
+        s31 = {'type': 'integer', 'format': 'int64'}
+        for value, errs in ((2 ** 63, ['format']), (float(2 ** 63), ['format']), (1e100, ['format']), (-1e100, ['format']),
+                            (1.0, []), (float(2 ** 62), [])):
+            self.assertEqual([e.validator for e in c.validator(s31, '3.1.0').iter_errors(value)], errs, value)
+        self.assertEqual([e.validator for e in c.validator({'type': 'number', 'format': 'int32'}, '3.0.3').iter_errors(0.5)], [])
+        self.assertEqual([e.validator for e in c.validator({'type': 'number', 'format': 'int32'}, '3.0.3').iter_errors(2.0 ** 31)], ['format'])
+        r31 = doc({'type': 'object', 'properties': {'id': {'type': 'integer', 'format': 'int64'}}}, version='3.1.0')
+        self.assertIn('RESPONSE_SCHEMA', kinds(r31, ex(body='{"id": 1e100}')))
+        # legacy switch reproduces pre-2026-11-14 behaviour
+        with patch.object(c, 'INT_FORMATS', False):
+            self.assertIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [big]})))
+
     def test_R11_path_parameter_refs_dedup_and_override(self):
         d = doc(params=[{'$ref': '#/components/parameters/Q'}])
         d['paths']['/x']['parameters'] = [{'$ref': '#/components/parameters/R'}]

@@ -243,7 +243,8 @@ Exposure source: `08_experiments/E1_pilot/runs/cwa-verification/20261114T103253Z
 
 All choices remain [H] pending compilation, controlled HTTP witnesses and source/
 image verification. Exact site IDs below can be passed to `codemut.py --site`.
-The subset is also `pilot=true` in `sites.json`.
+The original subset is also `pilot=true` in `sites.json`; the two T25 v2
+additions below are separately pilot-enabled.
 
 | SUT | First sites | Why these before the alternatives |
 |---|---|---|
@@ -259,3 +260,25 @@ looking at attribution outcomes. Compile-invalid, equivalent/oracle-blind,
 unexposed, killed and flaky are separate outcomes. The injected site is code-side
 ground truth; causal exposure and the observed L1/L2 still require independent
 review (`sites.json`, each site's `conditions`; codebook §5 and §10).
+
+## T25 v2 sites
+
+These are appended pilot proposals, preserving the original 20 entries and
+historical failure records (`sites.json`, `market-response-field-v2` and
+`petstore-reject-valid-v2`; `COORDINATOR_NOTES.md`, Build results;
+`E5_RESULTS.md`, §3b).
+
+| Site | Source edit and affected operations | Expected signal and evidence |
+|---|---|---|
+| market-response-field-v2 | `market-rest/src/main/java/market/RestConfig.java:13`: add a Jackson builder customizer and a WRITE_ONLY price getter mix-in for ProductDTO. GET `/products` and GET `/products/{productId}`. | ⚠️ Expected IMPL / I-RESP-CONTRACT / RESPONSE_SCHEMA for absent required price. POM compile path: market-rest → starter-web 2.4.3 → starter-json 2.4.3 → jackson-databind 2.11.4 → jackson-annotations 2.11.4. Snapshots/line citations: `09_collab/logs/T25_scratch/pom_evidence.json`; `09_collab/reports/T25_report.md`, Market evidence. |
+| petstore-reject-valid-v2 | `src/main/java/io/swagger/petstore/controller/UserController.java:103`: reject null username in loginUser. GET `/user/login`; username is optional in the unchanged OAS. | ⚠️ Expected IMPL / I-REJECT-VALID / VALID_REJECTED. All 48 captured login requests across 24 saved runs are valid, omit username and return 200; no 400/422 or saved VALID_REJECTED. Counts: `09_collab/logs/T25_scratch/petstore_operation_counts.csv`, GET `/user/login` rows; exact source lines: `petstore_login_witnesses.json` in that directory. |
+
+Witnesses: require the same request and state to produce control price-present
+JSON versus mutant price-absent JSON, or control login 200 versus mutant 400.
+Keep pre-existing product `_links` and login response-format/header problems
+separate. The login evidence has only two exchanges per run and one empty-query
+shape; 48 is repeated exposure, not input diversity. ⚠️ A new rejection
+fingerprint should exceed the saved noise floor, but only fresh v2 pair/noise
+runs can establish the measured result. Build and runtime mapper behavior are
+unverified (`sites.json`, both v2 `conditions` and `witness_plan`;
+`09_collab/reports/T25_report.md`, limitations).

@@ -37,6 +37,35 @@ def _date_time(value):
     return bool(datetime.datetime.fromisoformat(normalized))
 
 
+# OpenAPI integer formats (OAS 2/3 data types). Draft4's checker ignores them, so an out-of-range
+# value (e.g. a path id beyond signed int64) counted as a *valid* request and its 400 as VALID_REJECTED
+# (E5 blind v2 item E014). INT_FORMATS=False (CLI --no-int-formats) reproduces pre-2026-11-14 analyses.
+INT_FORMATS = True
+INT_RANGES = {'int32': (-2 ** 31, 2 ** 31 - 1), 'int64': (-2 ** 63, 2 ** 63 - 1)}
+
+
+def _int_format(name):
+    lo, hi = INT_RANGES[name]
+
+    def check(value):
+        # Range only: integral floats (OAS 3.1 / Draft 2020-12 accepts 1.0 as integer; also `type: number`)
+        # are compared exactly via int(); fractional / non-finite / non-numeric values are left to `type`.
+        if not INT_FORMATS or isinstance(value, bool):
+            return True
+        if isinstance(value, float):
+            if not value.is_integer():
+                return True
+            value = int(value)
+        if not isinstance(value, int):
+            return True
+        return lo <= value <= hi
+    FORMAT_CHECKER.checks(name)(check)
+
+
+for _name in INT_RANGES:
+    _int_format(_name)
+
+
 def is_31(version):
     return isinstance(version, str) and version.startswith('3.1')
 
@@ -453,9 +482,12 @@ def main(spec_path, exchanges_path, deploy_origin=None, reject_statuses=(400, 42
 
 
 if __name__ == '__main__':
-    # Usage: conformance.py SPEC EXCHANGES [--deploy-origin URL] [--reject-statuses 400,422]
+    # Usage: conformance.py SPEC EXCHANGES [--deploy-origin URL] [--reject-statuses 400,422] [--no-int-formats]
     args = sys.argv[1:]
     deploy, reject = None, (400, 422)
+    if '--no-int-formats' in args:
+        args.remove('--no-int-formats')
+        INT_FORMATS = False
     if '--deploy-origin' in args:
         i = args.index('--deploy-origin')
         deploy = args[i + 1]

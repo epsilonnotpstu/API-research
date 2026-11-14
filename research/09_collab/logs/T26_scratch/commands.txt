@@ -1,0 +1,13 @@
+# Run from research/. No external source code or SUT is executed.
+/usr/bin/python3 -I -B 08_experiments/tools/test_intent_evidence.py
+# Existing review suite uses hardcoded T10 temp dirs; this wrapper redirects them.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/run_review_tests.py
+/usr/bin/python3 -I -B 08_experiments/tools/test_specmut.py 08_experiments/_external/emb/openapi-swagger
+/usr/bin/python3 -I -B 08_experiments/tools/test_pipeline.py 08_experiments/_external/emb/openapi-swagger
+/usr/bin/python3 -I -B 08_experiments/tools/test_triage.py
+/usr/bin/python3 -I -B 08_experiments/tools/test_only_ops.py
+# T10's final command is a replay, not a test; its output is redirected into T26.
+/usr/bin/python3 -I -B 08_experiments/E1_pilot/p001_oas_analysis.py 08_experiments/_external/p001 09_collab/logs/T26_scratch/p001_replay
+/usr/bin/python3 -I -B 08_experiments/tools/intent_evidence.py 08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api 08_experiments/_external/emb/openapi-swagger/scout-api.json --method GET --path /v2/activities --status 200 --json
+/usr/bin/python3 -I -B 08_experiments/tools/intent_evidence.py 08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market 08_experiments/_external/emb/openapi-swagger/market.json --method GET --path /products --status 200 --json
+/usr/bin/python3 -I -B 08_experiments/tools/intent_evidence.py 08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server 08_experiments/_external/emb/openapi-swagger/cwa-verification.json --method POST --path /version/v1/tan --status 201 --json
