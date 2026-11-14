@@ -29,7 +29,12 @@ def main():
             images[path.stem] = {'inspection_error': str(error)}
     files = {p.name: sha(p) for p in sorted(run.iterdir())
              if p.is_file() and p.name != 'run.json' and not p.name.endswith('.tmp')}
+    fuzzer = os.environ.get('PILOT_FUZZER', 'schemathesis')
     data = {
+        'fuzzer': fuzzer,
+        'generator_input_sha256': sha(run / ('spec.test.json' if fuzzer == 'evomaster' and
+                                            os.environ.get('PILOT_EVOMASTER_INPUT', 'spec') == 'spec'
+                                            else 'generator-input.json')),
         'run_id': run.name, 'sut': sut, 'source_spec': source,
         'source_sha256': sha(next(run.glob('spec.original.*'), Path(source))),
         'mode': mode, 'fault': fault, 'severity': int(severity), 'seed': int(seed),
@@ -73,7 +78,29 @@ def main():
                          'transport-error and truncation coverage require review',
                          'locally built SUT may have only image ID, no registry digest'],
     }
-    tmp = run / 'run.json.tmp'
+    if fuzzer == 'evomaster':
+        # Legacy image key identifies the selected generator for unchanged analysis.
+        # Do not claim that Schemathesis ran in an EvoMaster collection.
+        data['schemathesis_exit'] = 'not_started'
+        data.update({
+            'evomaster_input': os.environ.get('PILOT_EVOMASTER_INPUT', 'spec'),
+            'evomaster_image': os.environ['PILOT_EVOMASTER_IMAGE'],
+            'evomaster_version': os.environ['PILOT_EVOMASTER_VERSION'],
+            'evomaster_schema_oracles': os.environ.get('PILOT_EVOMASTER_SCHEMA_ORACLES', 'true') == 'true',
+            'evomaster_exit': schema_rc,
+            'evomaster_argv_file': 'evomaster-argv.txt',
+            'evomaster_argv': ((run / 'evomaster-argv.txt').read_text().splitlines()
+                               if (run / 'evomaster-argv.txt').is_file() else []),
+            'evomaster_watchdog_seconds': int(budget) + 120,
+        })
+        data['file_sha256'].update({str(p.relative_to(run)): sha(p)
+                                   for p in sorted((run / 'evomaster').rglob('*')) if p.is_file()})
+        if data['evomaster_input'] == 'spec':
+            data['limitations'] = [line for line in data['limitations']
+                                   if not line.startswith(('generator schema back edges',
+                                                           'equal mutation operation sets'))]
+            data['limitations'].append('EvoMaster uses spec.test unchanged; schema path checked against base_path')
+    tmp = run / 'run.json.tmp' 
     tmp.write_text(json.dumps(data, indent=2) + '\n')
     tmp.replace(run / 'run.json')
 

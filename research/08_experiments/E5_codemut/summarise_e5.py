@@ -19,15 +19,56 @@ METRICS = [f'{scope}_{name}' for scope in ('mutated','non_mutated')
            for name in ('NEW','VANISHED','INCREASED','DECREASED')]
 SIGNAL_NOISE_RULE = 'EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1'
 FIELDS = ['kind','signal_exceeds_noise','signal_noise_rule','signal_noise_detail','mut_dir','site_id','sut','operator','seed','oracle','validation_status','excluded_ops','pipeline_snapshot_status','analysis_status','error',
+          'runtime_snapshot_sha256','analysis_tool_sha256','analysis_pipeline_sha256','analysis_harness_sha256','analysis_tools_drift','analysis_harness_drift','analysis_basis',
           *METRICS,'expected_signals','expected_signal_observed','expected_signal_present_mutant',
           'expected_signal_NEW','expected_signal_INCREASED','fresh_L1_NEW_mutated',
           'triage_status','triage_L1_NEW_mutated','causal_kill_status']
 
 
 def load_attribute():
-    spec = importlib.util.spec_from_file_location('e5_own_attribute', c.TOOLS / 'attribute.py')
+    return load_tool('attribute')
+
+
+def load_tool(name):
+    spec = importlib.util.spec_from_file_location('e5_own_' + name, c.TOOLS / (name + '.py'))
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     return module
+
+
+def load_checker():
+    # Bind the dependency to the identified current tools directory, including
+    # synthetic tests; never reuse an unrelated cached specmut module.
+    previous = sys.modules.get('specmut')
+    sys.modules['specmut'] = load_tool('specmut')
+    try:
+        return load_tool('conformance')
+    finally:
+        if previous is None: sys.modules.pop('specmut', None)
+        else: sys.modules['specmut'] = previous
+
+
+def current_attribution(pair, manifest, origin, reject, excluded, kind='pair'):
+    _, second = c.layout(kind)
+    checker = load_checker()
+    spec = checker.Spec(c.load(pair['control'] / 'spec.original.json'), deploy_origin=origin,
+                        reject_statuses=tuple(map(int,reject.split(','))))
+    data = {}
+    for role, run in pair.items():
+        data[role] = []
+        for index, exchange in enumerate(violations(run / 'exchanges.jsonl')):
+            for value in checker.check(spec, exchange):
+                value['exchange'] = index
+                if (value['method'].upper(),value['template']) not in excluded:
+                    data[role].append(value)
+    rows = load_attribute().attribute(data['control'], data[second], manifest, mode='fresh')
+    return [{k:str(v) for k,v in row.items()} for row in rows]
+
+
+def analysis_identity():
+    tools = c.tool_inventory()
+    pipeline = {name:c.sha(c.HERE / name) for name in
+                ('codemut.py','e5_common.py','e5_pipeline.py','validate_pair.py','summarise_e5.py')}
+    return {'tools':tools, 'harness':c.harness_inventory(), 'pipeline':pipeline}
 
 
 def violations(path):
@@ -51,13 +92,24 @@ def verify_analysis(directory, mut, seed, oracle, pair, report, kind='pair'):
     excluded = c.excluded_operations(report)
     c.require(record.get('excluded_ops',[]) == report.get('excluded_ops',[]) and
               record.get('validation_status','PASS') == report['status'], 'Analysis exclusion/validation policy differs')
-    c.snapshot(c.TOOLS, record['tool_sha256'])
+    historical_tools = c.hash_inventory(record['tool_sha256'], ('conformance.py','attribute.py','specmut.py'))
     c.require({'control.violations.jsonl',second + '.violations.jsonl','attribution.csv'} <= set(record['file_sha256']), 'Missing analysis output')
     c.snapshot(directory, record['file_sha256'])
     prior = False
-    for name, digest in record['pipeline_sha256'].items():
-        if c.sha(name) != digest:
-            path = Path(name).resolve()
+    pipeline = record['pipeline_sha256']
+    c.require(isinstance(pipeline,dict) and pipeline, 'Missing analysis pipeline inventory')
+    for tool, digest in historical_tools.items():
+        c.require(pipeline.get(str(c.TOOLS / tool)) == digest, 'Historical analysis tool identity differs from pipeline')
+    for name, digest in pipeline.items():
+        path = Path(name)
+        c.require(path.is_absolute() and path == path.resolve() and isinstance(digest,str) and
+                  len(digest)==64 and all(x in '0123456789abcdef' for x in digest), 'Malformed historical pipeline identity')
+        if path.parent == c.TOOLS:
+            c.require(historical_tools.get(path.name) == digest, 'Unrecorded historical analysis tool')
+            prior |= not path.is_file() or c.sha(path) != digest
+        elif c.HARNESS in path.parents:
+            prior |= not path.is_file() or c.sha(path) != digest
+        elif c.sha(path) != digest:
             c.require(path.parent == c.HERE and path.name in {'validate_pair.py','e5_common.py','e5_pipeline.py','summarise_e5.py'}
                       and isinstance(digest,str) and len(digest)==64 and all(x in '0123456789abcdef' for x in digest), 'Analysis pipeline changed outside reviewed E5 policy files')
             prior = True
@@ -70,12 +122,17 @@ def verify_analysis(directory, mut, seed, oracle, pair, report, kind='pair'):
             c.require([v for v in violations(raw) if (v['method'].upper(),v['template']) not in excluded] == data, 'Scoped violations differ from exact paired exclusion')
         else:
             c.require(not excluded, 'Excluded analysis lacks raw violation evidence')
-    expected = load_attribute().attribute(base, treat, m, mode='fresh')
     with (directory / 'attribution.csv').open(newline='', encoding='utf-8') as stream:
         reader = csv.DictReader(stream); rows = list(reader)
+        c.require(reader.fieldnames and 'fingerprint' in reader.fieldnames, 'Unexpected attribution CSV schema')
+    if historical_tools['attribute.py'] == c.sha(c.TOOLS / 'attribute.py'):
+        expected = load_attribute().attribute(base, treat, m, mode='fresh')
         c.require(reader.fieldnames == (list(expected[0]) if expected else ['fingerprint']), 'Unexpected attribution CSV schema')
-    c.require(rows == [{k:str(v) for k,v in row.items()} for row in expected], 'Attribution CSV differs from fresh recomputation')
-    return rows, ('PRIOR_E5_PIPELINE_RECOMPUTED' if prior else 'CURRENT')
+        c.require(rows == [{k:str(v) for k,v in row.items()} for row in expected], 'Attribution CSV differs from fresh recomputation')
+    # Historical violations were produced by their recorded checker. Summary
+    # metrics always come from current checking of validated original captures.
+    current = current_attribution(pair,m,record['deploy_origin'],reject,excluded,kind)
+    return current, ('PRIOR_SNAPSHOT_CURRENT_CHECKER_RECOMPUTED' if prior else 'CURRENT_CHECKER_RECOMPUTED')
 
 
 def metrics(rows, manifest, excluded_ops=()):
@@ -108,8 +165,9 @@ def metrics(rows, manifest, excluded_ops=()):
     return result
 
 
-def summarise_kind(mut_dirs, kind, evidence):
+def summarise_kind(mut_dirs, kind, evidence, identity=None):
     prefix, second = c.layout(kind)
+    identity = identity or analysis_identity()
     result = []
     for mut in sorted(Path(p).resolve() for p in mut_dirs):
         m = c.load(mut / 'manifest.json')
@@ -140,12 +198,19 @@ def summarise_kind(mut_dirs, kind, evidence):
             for oracle in ('default','sut'):
                 row = dict.fromkeys(FIELDS, '')
                 row.update(kind=kind,signal_exceeds_noise='NOT_APPLICABLE' if kind == 'noise' else 'UNKNOWN',
+                           analysis_tool_sha256=c.canonical(identity['tools']),analysis_pipeline_sha256=c.canonical(identity['pipeline']),
+                           analysis_harness_sha256=c.canonical(identity['harness']),
+                           analysis_tools_drift='unknown',analysis_harness_drift='unknown',analysis_basis='CURRENT_CHECKER_RAW_RUNS',
                            signal_noise_rule=SIGNAL_NOISE_RULE,mut_dir=str(mut),site_id=m['site_id'],sut=m['sut'],operator=m['operator'],seed=seed,oracle=oracle,
                            validation_status='FAIL' if error else report['status'],excluded_ops=json.dumps(report.get('excluded_ops',[]) if report else []),analysis_status='FAIL',error=error,
                            expected_signals=json.dumps(sorted(m['expected_conformance_signal'])), triage_status='NOT_APPLICABLE_P001_CLI',
                            causal_kill_status='NEEDS_INDEPENDENT_WITNESS')
                 if not error:
                     try:
+                        runtime = c.runtime_snapshots(c.load(pair['control'] / 'run.json'))
+                        row.update(runtime_snapshot_sha256=c.canonical(runtime),
+                                   analysis_tools_drift='none' if runtime['tools']==identity['tools'] else 'changed',
+                                   analysis_harness_drift='none' if runtime['harness']==identity['harness'] else 'changed')
                         rows, version = verify_analysis(mut / f'{prefix}analysis-s{seed}-{oracle}', mut,seed,oracle,pair,report,kind)
                         row.update(metrics(rows,m,c.excluded_operations(report)),analysis_status='COMPLETE',pipeline_snapshot_status=version)
                         evidence[(str(mut),seed,oracle,kind)] = (rows,pair,report)
@@ -166,8 +231,7 @@ def expected_changed(rows, manifest):
 def observed_operations(run):
     # Use the same route matcher as conformance, including concrete-route priority
     # and deployment origin. Zero violations alone do not establish op exposure.
-    spec = importlib.util.spec_from_file_location('e5_own_conformance', c.TOOLS / 'conformance.py')
-    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    module = load_checker()
     meta = c.load(run / 'run.json')
     matcher = module.Spec(c.load(run / 'spec.original.json'),
                           deploy_origin=f"http://{meta['sut_service']}:{meta['internal_port']}")
@@ -212,7 +276,8 @@ def compare_noise(mut, pair_data, noise_data):
 
 def summarise(mut_dirs):
     evidence = {}; mut_dirs = list(mut_dirs)
-    result = summarise_kind(mut_dirs,'pair',evidence) + summarise_kind(mut_dirs,'noise',evidence)
+    identity = analysis_identity()
+    result = summarise_kind(mut_dirs,'pair',evidence,identity) + summarise_kind(mut_dirs,'noise',evidence,identity)
     for row in result:
         if row['kind'] == 'noise': continue
         key = (row['mut_dir'],row['seed'],row['oracle'])
@@ -225,6 +290,10 @@ def summarise(mut_dirs):
             row.update(signal_exceeds_noise=value,signal_noise_detail=detail)
         except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
             row['signal_noise_detail'] = str(exc)
+    finished = analysis_identity()
+    # The harness is not executed by analysis. Its drift describes the initial
+    # snapshot; concurrent harness maintenance cannot change checker metrics.
+    c.require(all(finished[k] == identity[k] for k in ('tools','pipeline')), 'Analysis tools/pipeline changed during summary')
     return result
 
 

@@ -83,6 +83,24 @@ class NoiseTests(FixtureCase):
         (self.noise['control_repeat']/'jacoco.exec').write_bytes(b'tampered')
         self.assertEqual(self.validate_noise()['status'],'FAIL')
 
+    def test_noise_snapshot_mismatch_and_missing_snapshot_fail(self):
+        path=self.noise['control_repeat']/'run.json';original=c.load(path)
+        for field in ('tool_sha256','harness_sha256'):
+            with self.subTest(field=field):
+                changed=copy.deepcopy(original);changed[field][next(iter(changed[field]))]='0'*64
+                dump(path,changed);self.assertEqual(self.validate_noise()['status'],'FAIL')
+                changed=copy.deepcopy(original);changed.pop(field)
+                dump(path,changed);self.assertEqual(self.validate_noise()['status'],'FAIL')
+                dump(path,original)
+
+    def test_noise_drift_is_reported_with_identical_runtime_snapshots(self):
+        self.analyse()
+        path=self.f.tools/'conformance.py';path.write_text(path.read_text()+'\n# Later analysis revision\n')
+        rows=summary.summarise([self.f.mut])
+        self.assertTrue(all(r['validation_status']=='PASS' and r['analysis_status']=='COMPLETE' and
+                            r['analysis_tools_drift']=='changed' for r in rows),rows)
+        self.assertTrue(all(r['signal_exceeds_noise'] is True for r in rows if r['kind']=='pair'),rows)
+
     def test_noise_runtime_order_allowed_but_values_and_multiplicity_strict(self):
         for role,run in self.noise.items():
             path=run/'mitmproxy-container.json';obj=c.load(path)

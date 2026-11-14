@@ -16,12 +16,41 @@ else
     case $fault in REQUEST_LOOSE|REQUEST_STRICT|RESPONSE_ORACLE|METHOD_SEM) ;; *) echo 'Invalid fault class' >&2; exit 2;; esac
     ((severity > 0)) || { echo 'Mutated run requires positive severity' >&2; exit 2; }
 fi
+# Select/validate the fuzzer before any Docker command or run-directory creation.
+export PILOT_FUZZER=${FUZZER:-schemathesis}
+case $PILOT_FUZZER in
+    schemathesis)
+        [[ -z ${EVOMASTER_INPUT:-} ]] || { echo 'EVOMASTER_INPUT requires FUZZER=evomaster' >&2; exit 2; }
+        [[ -z ${EVOMASTER_SCHEMA_ORACLES:-} ]] || { echo 'EVOMASTER_SCHEMA_ORACLES requires FUZZER=evomaster' >&2; exit 2; }
+        ;;
+    evomaster)
+        export PILOT_EVOMASTER_INPUT=${EVOMASTER_INPUT:-spec}
+        case $PILOT_EVOMASTER_INPUT in
+            spec|derecursed) ;;
+            *) echo 'Invalid EVOMASTER_INPUT' >&2; exit 2;;
+        esac
+        export PILOT_EVOMASTER_SCHEMA_ORACLES=${EVOMASTER_SCHEMA_ORACLES:-true}
+        case $PILOT_EVOMASTER_SCHEMA_ORACLES in
+            true|false) ;;
+            *) echo 'Invalid EVOMASTER_SCHEMA_ORACLES' >&2; exit 2;;
+        esac
+        /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" options "$mode" "$seed" "$budget" "${DATA_GEN:-}" "${ONLY_OPS:-}"
+        ;;
+    *) echo 'Invalid FUZZER: use schemathesis or evomaster' >&2; exit 2;;
+esac
+source "$HERE/fuzzer_args.sh"
 for tool in docker curl java timeout flock git sha256sum grep /usr/bin/python3; do command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 1; }; done
 docker compose version >/dev/null
 export PILOT_UID=$(id -u) PILOT_GID=$(id -g)
 # Original EMB port interpolation accepts an IP prefix; bind published ports to loopback.
 export MITM_MAX_BODY=${MITM_MAX_BODY:-65536}
 SCHEMA_IMAGE=schemathesis/schemathesis:3.39.16
+if [[ $PILOT_FUZZER == evomaster ]]; then
+    export PILOT_EVOMASTER_IMAGE=webfuzzing/evomaster@sha256:de1f4387e809a309a4c61517f3340c3d0b733b78bbb86d0e3ebd217d343515ab
+    export PILOT_EVOMASTER_VERSION=6.2.0
+    # Keep schema-image.json / schemathesis_image as compatibility aliases for analysis.
+    SCHEMA_IMAGE=$PILOT_EVOMASTER_IMAGE
+fi
 MAX_EXAMPLES=${MAX_EXAMPLES:-100}
 # Our oracle is tools/conformance.py. Schemathesis abandons an operation at its first failed check,
 # so batch 2 uses a check that does not fail on 5xx to keep generating (SCHEMA_CHECKS).
@@ -112,7 +141,11 @@ finish() {
     if (($? != 0)); then echo 'Credential redaction failed' >&2; rc=1; fi
     metadata "$rc"
     if (($? != 0)); then echo 'Failed to finalize run.json' >&2; rc=1; fi
+    if [[ $PILOT_FUZZER == evomaster ]]; then
+        echo "Run: $run_dir; harness exit=$rc; EvoMaster exit=$schema_rc; coverage exit=$coverage_rc"
+    else
     echo "Run: $run_dir; harness exit=$rc; Schemathesis exit=$schema_rc; coverage exit=$coverage_rc"
+    fi
     exit "$rc"
 }
 trap finish EXIT
@@ -163,6 +196,12 @@ fi
 cp "$test_spec" "$run_dir/spec.test.${test_spec##*.}"
 # Keep both the effective compose configuration and immutable image IDs/digests.
 "${compose[@]}" config >"$run_dir/compose.resolved.yaml"
+if [[ $PILOT_FUZZER == evomaster ]]; then
+    /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" schema "$run_dir/spec.test.json" "$BASE_PATH"
+    # The supervisor already pulled this immutable image. Never pull or run help here.
+    docker image inspect "$SCHEMA_IMAGE" >"$run_dir/schema-image.json"
+    cp "$run_dir/schema-image.json" "$run_dir/evomaster-image.json"
+else
 # A registry/DNS outage must not abort a run when the pinned image is already local;
 # its exact ID/digest is recorded below either way.
 if ! docker pull "$SCHEMA_IMAGE" >"$run_dir/schema-pull.log" 2>&1; then
@@ -177,6 +216,27 @@ for flag in --checks --hypothesis-seed --hypothesis-max-examples --junit-xml --c
         echo "Pinned Schemathesis CLI missing $flag" >&2; exit 1
     fi
 done
+fi
+build_derecursed_generator_input() {
+# mount the run directory, so the input and every output remain in this run.
+# Generator input only: cut recursive $ref back-edges (hypothesis-jsonschema stalls on them).
+# Conformance analysis keeps using spec.test.* (the untouched original or mutated spec).
+if [[ $mode == mutated ]]; then
+    # specmut inlines $refs into mutated operations, which would unroll recursive schemas again.
+    # So: de-recurse the ORIGINAL first, then apply the same mutation (same fault/severity/seed
+    # => same operations selected) to obtain the generator input.
+    /usr/bin/python3 -I -B "$HERE/derecurse.py" "$original_spec" "$run_dir/spec.derecursed.json" >"$run_dir/derecurse-cuts.json"
+    /usr/bin/python3 -I -B "$TOOLS_DIR/specmut.py" "$run_dir/spec.derecursed.json" --fault "$fault" --severity "$severity" \
+        --seed "$seed" "${only_args[@]}" --out "$run_dir/mutation_gen" >"$run_dir/specmut_gen.log" 2>&1
+    gen=("$run_dir"/mutation_gen/*.manifest.json)
+    [[ ${#gen[@]} == 1 ]] || { echo 'Expected one generator mutation manifest' >&2; exit 1; }
+    /usr/bin/python3 -I -B -c 'import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:3]); k=lambda m: sorted((x["path"],x["method"]) for x in m["mutations"]); sys.exit(0 if k(a)==k(b) else "Generator mutation selected different operations")' "$run_dir/manifest.json" "${gen[0]}"
+    cp "${gen[0]%.manifest.json}.json" "$run_dir/generator-input.json"
+else
+    /usr/bin/python3 -I -B "$HERE/derecurse.py" "$test_spec" "$run_dir/generator-input.json" >"$run_dir/derecurse-cuts.json"
+fi
+schema_cmd[1]="/work/generator-input.json"
+}
 phase=startup
 if [[ -n $PILOT_CODE_ROLE ]]; then
     "${compose[@]}" up -d --no-build >"$run_dir/compose-up.log" 2>&1
@@ -219,54 +279,56 @@ for ((attempt=1; attempt<=30; attempt++)); do
 done
 ((proxy_ready == 1)) || { echo 'Proxy did not restart' >&2; exit 1; }
 phase=generation
-schema_cmd=(run "/work/$(basename "$test_spec")" --base-url "http://mitmproxy:8080$BASE_PATH" \
-    --checks "$SCHEMA_CHECKS" --hypothesis-seed "$seed" --hypothesis-max-examples "$MAX_EXAMPLES" \
-    --junit-xml /work/schemathesis.junit.xml --cassette-path /work/schemathesis-cassette.yaml \
-    --request-timeout "$REQUEST_TIMEOUT_MS" --hypothesis-phases "$PILOT_HYPOTHESIS_PHASES" --sanitize-output true)
-# DATA_GEN (positive|negative|all): unset keeps the argv of earlier batches (Schemathesis default = positive).
-# REQUEST_LOOSE can only show an effect if traffic violates the loosened constraint, i.e. with negative data.
-if [[ -n ${DATA_GEN:-} ]]; then
-    [[ $DATA_GEN =~ ^(positive|negative|all)$ ]] || { echo 'Invalid DATA_GEN' >&2; exit 2; }
-    schema_cmd+=(--data-generation-method "$DATA_GEN")
-fi
-# mount the run directory, so the input and every output remain in this run.
-# Generator input only: cut recursive $ref back-edges (hypothesis-jsonschema stalls on them).
-# Conformance analysis keeps using spec.test.* (the untouched original or mutated spec).
-if [[ $mode == mutated ]]; then
-    # specmut inlines $refs into mutated operations, which would unroll recursive schemas again.
-    # So: de-recurse the ORIGINAL first, then apply the same mutation (same fault/severity/seed
-    # => same operations selected) to obtain the generator input.
-    /usr/bin/python3 -I -B "$HERE/derecurse.py" "$original_spec" "$run_dir/spec.derecursed.json" >"$run_dir/derecurse-cuts.json"
-    /usr/bin/python3 -I -B "$TOOLS_DIR/specmut.py" "$run_dir/spec.derecursed.json" --fault "$fault" --severity "$severity" \
-        --seed "$seed" "${only_args[@]}" --out "$run_dir/mutation_gen" >"$run_dir/specmut_gen.log" 2>&1
-    gen=("$run_dir"/mutation_gen/*.manifest.json)
-    [[ ${#gen[@]} == 1 ]] || { echo 'Expected one generator mutation manifest' >&2; exit 1; }
-    /usr/bin/python3 -I -B -c 'import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:3]); k=lambda m: sorted((x["path"],x["method"]) for x in m["mutations"]); sys.exit(0 if k(a)==k(b) else "Generator mutation selected different operations")' "$run_dir/manifest.json" "${gen[0]}"
-    cp "${gen[0]%.manifest.json}.json" "$run_dir/generator-input.json"
+if [[ $PILOT_FUZZER == schemathesis ]]; then
+build_schemathesis_argv
+build_derecursed_generator_input
+record_fuzzer_argv "$run_dir/schemathesis-argv.txt" -H
 else
-    /usr/bin/python3 -I -B "$HERE/derecurse.py" "$test_spec" "$run_dir/generator-input.json" >"$run_dir/derecurse-cuts.json"
-fi
-schema_cmd[1]="/work/generator-input.json"
-printf '%s\n' "${schema_cmd[@]}" >"$run_dir/schemathesis-argv.txt"
-if [[ -n $AUTH_HEADER ]]; then
-    printf '%s\n' -H '<redacted>' >>"$run_dir/schemathesis-argv.txt"
-    schema_cmd+=(-H "$AUTH_HEADER")
+    if [[ $PILOT_EVOMASTER_INPUT == derecursed ]]; then
+        build_derecursed_generator_input
+    else
+        # Compatibility snapshot required by analyse_run.sh.
+        cp "$run_dir/spec.test.json" "$run_dir/generator-input.json"
+    fi
+    build_evomaster_mounts
+    mkdir "$run_dir/evomaster"
+    build_evomaster_argv
+    record_fuzzer_argv "$run_dir/evomaster-argv.txt" --header0
 fi
 metadata pending
 set +e
+if [[ $PILOT_FUZZER == evomaster ]]; then
+    # maxTime bounds search; allow startup and generated-test/statistics serialization.
+    # A watchdog timeout is still incomplete, exactly as on the default path.
+    timeout --signal=INT --kill-after=20 "$((budget + 120))s" docker run --rm --name "$generator" \
+        --user "$PILOT_UID:$PILOT_GID" --workdir /work/evomaster --network "${project}_default" \
+        "${evomaster_mounts[@]}" \
+        --entrypoint java "$SCHEMA_IMAGE" -Xmx4G -jar /evomaster.jar --runningInDocker true \
+        "${schema_cmd[@]}" 2>&1 | /usr/bin/python3 -I -B "$HERE/redact_auth.py" >"$run_dir/evomaster.log"
+    pilot_pipeline_rc=("${PIPESTATUS[@]}")
+else
 timeout --signal=INT --kill-after=20 "${budget}s" docker run --rm --name "$generator" \
     --user "$PILOT_UID:$PILOT_GID" -e XDG_CACHE_HOME=/tmp/cache \
     -e HYPOTHESIS_STORAGE_DIRECTORY=/tmp/hypothesis --network "${project}_default" \
     -v "$run_dir:/work" "$SCHEMA_IMAGE" "${schema_cmd[@]}" 2>&1 | /usr/bin/python3 -I -B "$HERE/redact_auth.py" >"$run_dir/schemathesis.log"
-pilot_pipeline_rc=("${PIPESTATUS[@]}")
+    pilot_pipeline_rc=("${PIPESTATUS[@]}")
+fi
 schema_rc=${pilot_pipeline_rc[0]}
 ((pilot_pipeline_rc[1] == 0)) || { echo 'Output redaction failed' >&2; exit 1; }
 set -e
 phase=collection
+if [[ $PILOT_FUZZER == evomaster ]]; then
+    case $schema_rc in
+        0|1) /usr/bin/python3 -I -B "$HERE/evomaster_guard.py" outputs "$run_dir/evomaster" ;;
+        124|137) echo 'Generation budget expired; partial run retained, do not treat as complete' >&2; exit "$schema_rc";;
+        *) echo "EvoMaster execution failed ($schema_rc)" >&2; exit "$schema_rc";;
+    esac
+else
 # Exit 1 includes test failures; the report/log retains the outcome. Timeouts are incomplete.
 case $schema_rc in
     0|1) [[ -s $run_dir/schemathesis.junit.xml ]] || { echo 'Missing JUnit report' >&2; exit 1; };;
     124|137) echo 'Generation budget expired; partial run retained, do not treat as complete' >&2; exit "$schema_rc";;
     *) echo "Schemathesis execution failed ($schema_rc)" >&2; exit "$schema_rc";;
 esac
+fi
 phase=complete

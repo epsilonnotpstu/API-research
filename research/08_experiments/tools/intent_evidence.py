@@ -23,6 +23,7 @@ import signal
 import subprocess
 import sys
 import time
+from urllib.parse import urlsplit
 
 
 SKIP = {'.git', 'target', 'node_modules', '.venv', 'venv', '__pycache__',
@@ -79,12 +80,14 @@ def yaml_subset(text):
         m = re.match(r'''((?:"[^"\n]*"|'[^'\n]*'|[^:]+)):(?:\s+(.*)|$)''', s)
         return (str(scalar(m[1].strip())), m[2] or '') if m else None
 
-    def block(i, indent):
+    def block(i, indent, indentless=False):
         seq = rows[i][1].startswith('- ')
         out = [] if seq else {}
         while i < len(rows) and rows[i][0] == indent:
             _, s, n = rows[i]
             if s.startswith('- ') != seq:
+                if seq and indentless:
+                    break
                 raise ValueError(f'Mixed YAML container at line {n}')
             s = s[2:] if seq else s
             pair = mapping_pair(s)
@@ -101,6 +104,8 @@ def yaml_subset(text):
                     value = scalar(val)
                 elif i < len(rows) and rows[i][0] > indent:
                     value, i = block(i, rows[i][0])
+                elif i < len(rows) and rows[i][0] == indent and rows[i][1].startswith('- '):
+                    value, i = block(i, indent, indentless=True)
                 else:
                     value = {}
                 if seq:
@@ -320,8 +325,146 @@ def path_reference(text, path):
                                   for s in segments)
 
 
+def string_literals(text):
+    return re.findall(r'''["']([^"'\n]*)["']''', text)
+
+
+def test_path_reference(text, path, spec_paths):
+    """Keep full references and add weaker, bounded prefix-stripped literals."""
+    if path_reference(text, path):
+        return {'match': 'literal' if path in text else 'segments'}
+    target = normalize(path).strip('/').split('/')
+    for literal in string_literals(text):
+        parts = normalize(literal).strip('/').split('/')
+        if not literal.strip('/') or len(parts) > len(target):
+            continue
+        suffix = target[-len(parts):]
+        if not all(re.fullmatch(r'\{[^}]+\}', a) or a == b for a, b in zip(suffix, parts)):
+            continue
+        if len(parts) == 1:
+            # A parameter-only suffix cannot identify an operation. A literal
+            # must occur in just one distinct spec path, including parent paths.
+            if suffix[0].startswith('{'):
+                continue
+            occurrences = sum(parts[0] in p.strip('/').split('/') for p in set(spec_paths))
+            if occurrences != 1:
+                continue
+        return {'match': 'suffix', 'matched_literal': literal, 'suffix_segments': len(parts)}
+    return None
+
+
+def module_for(path, root, cache):
+    """Nearest ancestor build descriptor; inspect paths without running builds."""
+    directory = path.parent
+    walked = []
+    while directory not in cache:
+        walked.append(directory)
+        build = next((directory / n for n in ('pom.xml', 'build.gradle', 'build.gradle.kts')
+                      if (directory / n).is_file() and not (directory / n).is_symlink()), None)
+        if build:
+            result = (os.path.relpath(directory, root), os.path.relpath(build, root))
+            break
+        if directory == directory.parent:
+            result = (None, None)
+            break
+        directory = directory.parent
+    else:
+        result = cache[directory]
+    for parent in walked:
+        cache[parent] = result
+    return result
+
+
+def rest_base_paths(document):
+    bases = [document.get('basePath', '')]
+    bases.extend(urlsplit(s.get('url', '')).path for s in document.get('servers', []) if isinstance(s, dict))
+    return sorted({normalize(b) for b in bases if isinstance(b, str) and normalize(b) != '/'})
+
+
+def inflector_routes(files, document, spec_path, method, path, warnings):
+    """Resolve explicit controller/operation keys, plus configured tag defaults.
+
+    The configured fallback is a lexical candidate: original EMB Petstore has
+    controllerPackage + operationId + tags but no controller extension on GET pet.
+    Never infer an Inflector handler from operationId alone in an ordinary spec.
+    """
+    documents = [(str(spec_path), document)]
+    configs = []
+    for f in files:
+        if not f.get('routing_data'):
+            continue
+        try:
+            parsed = json.loads(f['text']) if f['path'].endswith('.json') else yaml_subset(f['text'])
+            if not isinstance(parsed, dict):
+                continue
+            if Path(f['path']).stem == 'inflector':
+                configs.append((f['path'], parsed, f['module']))
+            elif isinstance(parsed.get('paths'), dict) and Path(f['path']).resolve() != Path(spec_path).resolve():
+                documents.append((f['path'], parsed))
+        except (ValueError, TypeError, RecursionError) as exc:
+            warnings.append(f"Routing data {f['path']}: {str(exc)[:160]}")
+    found = []
+    for source, doc in documents:
+        for route_path, item in sorted(doc.get('paths', {}).items()):
+            if not isinstance(item, dict) or not route_equal(route_path, path):
+                continue
+            operation = item.get(method.lower(), {})
+            if not isinstance(operation, dict):
+                continue
+            operation_id = operation.get('operationId')
+            controller = operation.get('x-swagger-router-controller', item.get('x-swagger-router-controller',
+                                        doc.get('x-swagger-router-controller')))
+            if not isinstance(operation_id, str) or not re.fullmatch(r'\w+', operation_id):
+                continue
+            choices = []
+            if isinstance(controller, str):
+                choices.append((controller, 'x-swagger-router-controller', None, None))
+            else:
+                for config_path, config, module in configs:
+                    package = config.get('controllerPackage')
+                    tags = operation.get('tags', [])
+                    if isinstance(package, str) and tags and isinstance(tags[0], str) and re.fullmatch(r'\w+', tags[0]):
+                        class_name = tags[0][:1].upper() + tags[0][1:] + 'Controller'
+                        choices.append((package + '.' + class_name, 'inflector-config-tag-convention', config_path, module))
+            for controller_name, basis, config_path, config_module in choices:
+                for f in files:
+                    if f['test'] or not f['mask'] or (config_path and f['module'] != config_module):
+                        continue
+                    package = re.search(r'\bpackage\s+([\w.]+)\s*;', f['mask'])
+                    for cls in f['classes']:
+                        qualified = ((package[1] + '.') if package else '') + cls['name']
+                        if controller_name not in {cls['name'], qualified}:
+                            continue
+                        for match in re.finditer(r'\b' + re.escape(operation_id) + r'\s*\(', f['mask']):
+                            if not cls['start'] < match.start() < cls['end']:
+                                continue
+                            prefix = f['mask'][cls['start'] + 1:match.start()]
+                            if prefix.count('{') != prefix.count('}'):
+                                continue
+                            close = matching(f['mask'], match.end() - 1)
+                            tail = re.match(r'\s*(?:throws\s+[\w.,\s]+)?\{', f['mask'][close:])
+                            if not tail:
+                                continue
+                            body = close + tail.end() - 1
+                            start = max(f['mask'].rfind(';', cls['start'], match.start()),
+                                        f['mask'].rfind('}', cls['start'], match.start()), cls['start']) + 1
+                            r = {'start': start, 'body': body,
+                                 'end': matching(f['mask'], body, '{', '}'), 'path': normalize(path),
+                                 'methods': [method.upper()], 'class': cls['name'],
+                                 'annotations': [a for a in annotations(f['text'], f['mask']) if start <= a[1] < body],
+                                 'routing': 'swagger_inflector', 'routing_basis': basis,
+                                 'routing_source': source, 'operation_id': operation_id,
+                                 'controller': qualified, 'inflector_config': config_path}
+                            # Several specs can describe the same handler. Keep
+                            # one deterministic locator, preferring the input spec.
+                            if not any(mf is f and mr['body'] == body for mf, mr in found):
+                                found.append((f, r))
+    return found
+
+
 def field_value(text, field):
-    if not field or not re.search(r'\b' + re.escape(field) + r'\b', text):
+    if not field or not (re.search(r'\b' + re.escape(field) + r'\b', text) or re.search(
+            r'\b(?:get|set|is)' + re.escape(field[:1].upper() + field[1:]) + r'\s*\(', text)):
         return None
     if re.search(r'JsonIgnore\b(?!\s*\(\s*(?:value\s*=\s*)?false)|WRITE_ONLY', text):
         return 'absent'
@@ -395,8 +538,10 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
     root = Path(source).resolve()
     if not root.is_dir():
         raise ValueError('SOURCE_DIR must be a directory')
-    spec = spec_context(load_spec(spec_path), method.upper(), path, field, status)
+    document = load_spec(spec_path)
+    spec = spec_context(document, method.upper(), path, field, status)
     files, warnings = [], []
+    module_cache = {}
     stats = {'text_files': 0, 'skipped_binary_or_encoding': 0, 'skipped_large': 0,
              'skipped_symlink': 0, 'skipped_dirs': 0, 'complete': True}
     def remaining():
@@ -420,9 +565,11 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
                     stats['skipped_symlink'] += 1
                     continue
                 suffix = full.suffix.lower()
+                routing_data = suffix in {'.yaml', '.yml', '.json'} and (
+                    re.match(r'^(?:openapi|swagger)', full.stem, re.I) or full.stem == 'inflector')
                 doc = suffix in DOC or name.lower().startswith('readme') or bool(
                     set(relative.parts[:-1]) & {'docs', 'templates'})
-                if suffix not in CODE and not doc:
+                if suffix not in CODE and not doc and not routing_data:
                     continue
                 try:
                     if full.stat().st_size > 2_000_000:
@@ -440,9 +587,11 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
                     stats['complete'] = False
                     warnings.append(f'{relative}: {exc.strerror}')
                     continue
+                module, build_file = module_for(full, root, module_cache)
                 file = {'path': relative.as_posix(), 'text': text, 'lines': text.splitlines(),
                         'offsets': [0] + [m.end() for m in re.finditer('\n', text)],
-                        'test': is_test(relative), 'doc': doc and suffix not in CODE,
+                        'test': is_test(relative), 'doc': doc and suffix not in CODE and not routing_data,
+                        'module': module, 'module_build_file': build_file, 'routing_data': bool(routing_data),
                         'mask': mask_java(text) if suffix == '.java' else '', 'classes': []}
                 file['clean_lines'] = (strip_comments(text) if suffix in {'.java', '.kt', '.js', '.ts', '.cs'}
                                        else re.sub(r'(?m)^\s*#.*$', '', text)).splitlines()
@@ -455,12 +604,20 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
     hits = []
     matched = [(f, r) for f in files for r in f['routes']
                if method.upper() in r['methods'] and route_equal(r['path'], path)]
+    for f, r in inflector_routes(files, document, spec_path, method, path, warnings):
+        if not any(mf is f and mr['body'] == r['body'] for mf, mr in matched):
+            f['routes'].append(r)
+            matched.append((f, r))
+    handler_modules = {f['module'] for f, _ in matched}
+    handler_classes = sorted({r['class'] for _, r in matched})
+    bases = rest_base_paths(document)
     code_fields = set()
 
     def add(category, f, line, strength, **extra):
         snippet = f['lines'][line - 1].strip() if 0 < line <= len(f['lines']) else ''
         hit = {'category': category, 'location': f"{f['path']}:{line}",
                'file': f['path'], 'line': line, 'snippet': snippet[:160],
+               'module': f['module'], 'module_build_file': f['module_build_file'],
                'strength': '⚠️ ' + strength, **extra}
         if hit not in hits:
             hits.append(hit)
@@ -471,8 +628,10 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
     # 1. Routing and explicit behavior are context, never independent evidence.
     for f, r in matched:
         line = lineno(f, r['body'])
-        add('HANDLER', f, line, 'context only; lexical method/path match',
-            route=r['path'], methods=r['methods'], independent=False)
+        routing = {k: r[k] for k in ('routing', 'routing_basis', 'routing_source', 'operation_id', 'controller', 'inflector_config') if k in r}
+        add('HANDLER', f, line, 'context only; lexical method/path match' + (
+            '; configured tag/controller convention requires review' if r.get('routing_basis') == 'inflector-config-tag-convention' else ''),
+            route=r['path'], methods=r['methods'], independent=False, **routing)
         first, last = lineno(f, r['start']), lineno(f, r['end'] - 1)
         for n in range(first, last + 1):
             raw = f['clean_lines'][n - 1]
@@ -494,14 +653,18 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
         if not relevant:
             continue
         for name, a, b, _ in annotations(f['text'], f['mask']):
-            if name not in {'JsonProperty', 'JsonIgnore'}:
+            if name not in {'JsonProperty', 'JsonIgnore', 'XmlElement'}:
                 continue
             end = min((x for x in [f['mask'].find(';', b), f['mask'].find('{', b)] if x >= 0), default=b)
             window = f['text'][a:end]
             value = field_value(window, field)
-            if value:
-                code_fields.add(value)
-                add('HANDLER', f, lineno(f, a), 'context only; response DTO link and serialization are lexical inferences',
+            xml_field = name == 'XmlElement' and (re.search(r'''\bname\s*=\s*["']''' + re.escape(field) + r'''["']''', window)
+                        or re.search(r'\b(?:get|set|is)' + re.escape(field[:1].upper() + field[1:]) + r'\s*\(', window))
+            if value or xml_field:
+                if value:
+                    code_fields.add(value)
+                add('HANDLER', f, lineno(f, a), 'context only; response DTO link and serialization are lexical inferences' + (
+                    '; XML annotation does not establish JSON presence' if xml_field else ''),
                     field=field, field_behavior=value, independent=False)
 
     def comparison(values, behavior=None):
@@ -542,12 +705,29 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
             if not values and not mentions:
                 continue
             window = '\n'.join(f['clean_lines'][max(0, i - 10):i + 11])
-            if not path_reference(window, path):
+            route_match = test_path_reference(window, path, document['paths'])
+            if not route_match:
                 continue
             behavior = field_value(raw, field) if assertion else None
-            add('E-TEST', f, i + 1, 'candidate independent test; path within ±10 lines; verify scenario and assertion',
+            same_module = f['module'] in handler_modules if matched else True
+            linked_class = next((c for c in handler_classes if re.search(r'\b' + re.escape(c) + r'\b', '\n'.join(f['clean_lines']))), None)
+            linked_base = next((base for base in bases if any(normalize(lit) == base or normalize(lit).startswith(base + '/')
+                               for lit in string_literals('\n'.join(f['clean_lines'])))), None)
+            independent = same_module or bool(linked_class or linked_base)
+            scope = 'handler_module' if same_module and matched else 'unknown' if not matched else 'other_module_linked' if independent else 'other_module'
+            note = 'candidate independent test; path within ±10 lines; verify scenario and assertion'
+            if route_match['match'] == 'suffix':
+                note += '; weaker suffix match; helper-added prefix is not verified'
+            if not independent:
+                note = 'other_module context only; no handler-class or REST-base-path reference; ' + note
+            relation = comparison(values, behavior)
+            if not independent:
+                relation['support'] = []
+            add('E-TEST', f, i + 1, note,
                 asserted_values=values, field=field if mentions else None, field_behavior=behavior,
-                independent=True, **comparison(values, behavior))
+                independent=independent, counts_toward_verdict=independent, module_scope=scope,
+                module_link_reason='handler_class_reference' if linked_class else 'rest_base_path_reference' if linked_base else None,
+                **route_match, **relation)
 
     # 3. Non-code docs, handler Javadoc and OpenAPI documentation annotations.
     doc_ranges = []
@@ -674,7 +854,7 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
     return {'operation': {'method': method.upper(), 'path': path}, 'observed_status': status,
             'field': field, 'spec': {'file': str(spec_path), **spec},
             'code_field_behavior': sorted(code_fields), 'independent_evidence': verdict,
-            'evidence_types_found': [c for c in CATEGORIES[1:] if any(h['category'] == c for h in hits)],
+            'evidence_types_found': [c for c in CATEGORIES[1:] if any(h['category'] == c and h.get('independent') for h in hits)],
             'hits': hits, 'history': history, 'scan': stats, 'warnings': warnings,
             'limitations': ['Lexical candidate search; verify branch/scenario and DTO linkage before attribution.',
                             'Input specification is comparison context, never independent documentation.',

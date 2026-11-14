@@ -1,4 +1,4 @@
-"""T14/T17 static validation and the permitted stdlib derecurse tests.
+"""T14/T17/T27 static validation and the permitted stdlib derecurse tests.
 
 No harness scripts, third-party project code, Docker, Java, network, or SUT
 commands are executed. Run from any directory with /usr/bin/python3 -I -B.
@@ -28,7 +28,7 @@ def digest(path):
 
 
 def main():
-    print("T14/T17 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
+    print("T14/T17/T27 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
     for path in sorted(HERE.glob("*.sh")):
         subprocess.run(["bash", "-n", str(path)], check=True)
         source = path.read_text()
@@ -135,11 +135,22 @@ def main():
     assert "HOST_PORT=127.0.0.1:18080 JACOCO_PORT=127.0.0.1:16300" in common
     assert 'exec 8<"$HERE/../harness/.run.lock"' in common
     run = (HERE / "run_pilot.sh").read_text()
+    fuzzer_args = (HERE / "fuzzer_args.sh").read_text()
+    assert 'export PILOT_EVOMASTER_SCHEMA_ORACLES=${EVOMASTER_SCHEMA_ORACLES:-true}' in run
+    assert 'export PILOT_EVOMASTER_INPUT=${EVOMASTER_INPUT:-spec}' in run
+    assert 'build_derecursed_generator_input() {' in run
+    assert run.count('build_derecursed_generator_input\n') == 2
+    assert '"${evomaster_mounts[@]}"' in run
+    assert '$schema_source:/work/spec.test.json:ro' in fuzzer_args
+    assert "'generator_input_sha256':" in (HERE / "run_metadata.py").read_text()
+    assert "'evomaster_input':" in (HERE / "run_metadata.py").read_text()
+    assert '--schemaOracles "$PILOT_EVOMASTER_SCHEMA_ORACLES"' in fuzzer_args
+    assert "'evomaster_schema_oracles':" in (HERE / "run_metadata.py").read_text()
     for marker in ('SCHEMA_CHECKS', '--request-timeout', 'explicit,generate', 'acquire_run_lock',
                    'mkdir "$run_dir"', '--no-build', 'derecurse.py" "$original_spec"',
                    'mutation_gen', 'Generator mutation selected different operations',
                    'redact_auth.py', 'run_metadata.py', 'jacococli.jar'):
-        assert marker in run, marker
+        assert marker in run + fuzzer_args, marker
     batch = (HERE / "run_batch.sh").read_text()
     assert 'PILOT_RUN_ID="$id"' in batch and 'baseline=$LAST_RUN' in batch
     assert 'HEALTH_METHOD_DEFAULT:-GET' in run and 'HEALTH_STATUS_DEFAULT:?' in run
@@ -172,8 +183,11 @@ def main():
     print("BEGIN DERECURSE UNIT TESTS", flush=True)
     subprocess.run(["/usr/bin/python3", "-I", "-B", str(HERE / "test_derecurse.py")],
                    check=True, stderr=subprocess.STDOUT)
+    print("BEGIN FUZZER ARGV/ROUTING/REDACTION/PROVENANCE UNIT TESTS", flush=True)
+    subprocess.run(["/usr/bin/python3", "-I", "-B", str(HERE / "test_fuzzer_args.py")],
+                   check=True, stderr=subprocess.STDOUT)
     print("PASS ALL STATIC CHECKS AND PERMITTED UNIT TESTS", flush=True)
-    print("NOT EXECUTED: harness orchestration, Docker, Compose, Java, Schemathesis, SUTs, "
+    print("NOT EXECUTED: harness orchestration, Docker, Compose, Java, Schemathesis, EvoMaster, SUTs, "
           "network/downloads, builds, dependency installs, tool-pipeline execution.", flush=True)
 
 

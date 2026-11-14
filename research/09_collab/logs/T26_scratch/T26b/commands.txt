@@ -1,0 +1,14 @@
+# Run from research/. All Python calls use isolation and disable bytecode writes.
+# Baseline snapshot and reproduction were captured before staged implementation edits.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/checks.py snapshot
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/checks.py before
+# Staged tests import the adjacent staged intent_evidence module.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/staged/test_intent_evidence.py
+# This runs every existing tools test, staged tests and the saved P001 replay.
+# Existing review-suite temporary directories are redirected to T26b scratch.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/checks.py tests
+# The earlier Market smoke is also the market_products reproduction case.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/checks.py after
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/checks.py performance
+# Run after the report is appended; creates an unapplied coordinator install patch.
+/usr/bin/python3 -I -B 09_collab/logs/T26_scratch/T26b/verify.py

@@ -1,0 +1,348 @@
+"""Offline argv, routing, redaction, completion, and provenance regression tests."""
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+
+
+def load(name):
+    spec = importlib.util.spec_from_file_location('t27_' + name, HERE / (name + '.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+GUARD = load('evomaster_guard')
+REDACTOR = load('redact_auth')
+METADATA = load('run_metadata')
+
+
+def settings(**updates):
+    values = dict(os.environ)
+    # Synthetic headers only; inherited real credentials never enter a subprocess.
+    for key in ('AUTH_HEADER', 'PILOT_AUTH_REDACT', 'DATA_GEN', 'FUZZER', 'PILOT_FUZZER', 'ONLY_OPS',
+                'EVOMASTER_SCHEMA_ORACLES', 'PILOT_EVOMASTER_SCHEMA_ORACLES'):
+        values.pop(key, None)
+    values.update({'BASE_PATH': '/api', 'SCHEMA_CHECKS': 'all', 'seed': '7', 'budget': '300',
+                   'MAX_EXAMPLES': '100', 'REQUEST_TIMEOUT_MS': '10000',
+                   'PILOT_HYPOTHESIS_PHASES': 'explicit,generate', 'AUTH_HEADER': '',
+                   'test_spec': '/synthetic/spec.test.json', 'HERE': str(HERE), 'mode': 'baseline'})
+    values.update(updates)
+    return values
+
+
+def selection_block():
+    source = (HERE / 'run_pilot.sh').read_text()
+    return source[source.index('export PILOT_FUZZER='):source.index('source "$HERE/fuzzer_args.sh"')]
+
+
+def build(fuzzer, **updates):
+    with tempfile.TemporaryDirectory(prefix='t27-argv-') as directory:
+        dest = Path(directory) / 'argv.txt'
+        script = selection_block() + '\nsource "$HERE/fuzzer_args.sh"\n'
+        if fuzzer == 'schemathesis':
+            script += 'build_schemathesis_argv\nschema_cmd[1]=/work/generator-input.json\n'
+            flag = '-H'
+        else:
+            script += 'build_evomaster_argv\n'
+            flag = '--header0'
+        script += 'record_fuzzer_argv "$ARGV_DEST" ' + flag + '\nprintf "%s\\0" "${schema_cmd[@]}"'
+        values = settings(**{'FUZZER': fuzzer, 'ARGV_DEST': str(dest), **updates})
+        result = subprocess.run(['bash', '-euc', script], env=values,
+                                capture_output=True, check=True)
+        return result.stdout.decode().removesuffix('\0').split('\0'), dest.read_text().splitlines()
+
+
+class ArgvTests(unittest.TestCase):
+    def test_original_golden_argv_and_recording(self):
+        # The fixture was captured from the unmodified run_pilot.sh argv statements.
+        for item in json.loads((HERE / 'fuzzer-golden.json').read_text())['cases']:
+            with self.subTest(item['name']):
+                actual, recorded = build('schemathesis', **item['environment'])
+                self.assertEqual(actual, item['argv'])
+                self.assertEqual(recorded, item['recorded'])
+
+    def test_unset_and_explicit_default_selection(self):
+        source = (HERE / 'run_pilot.sh').read_text()
+        block = source[source.index('export PILOT_FUZZER='):source.index('source "$HERE/fuzzer_args.sh"')]
+        for value in (None, '', 'schemathesis', 'evomaster', 'other'):
+            with self.subTest(value=value):
+                values = settings()
+                if value is not None:
+                    values['FUZZER'] = value
+                result = subprocess.run(['bash', '-euc', block + '\nprintf "%s" "$PILOT_FUZZER"'],
+                                        env=values, capture_output=True)
+                if value == 'other':
+                    self.assertEqual(result.returncode, 2)
+                    self.assertNotIn(value.encode(), result.stderr)
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stdout.decode(), value or 'schemathesis')
+
+    def test_evomaster_golden(self):
+        actual, recorded = build('evomaster')
+        expected = ['--blackBox', 'true', '--problemType', 'REST', '--base', 'http://mitmproxy:8080',
+                    '--schema', '/work/spec.test.json', '--seed', '7', '--stoppingCriterion', 'TIME',
+                    '--maxTime', '300s', '--outputFolder', '/work/evomaster/tests', '--outputFormat',
+                    'JAVA_JUNIT_5', '--writeStatistics', 'true', '--statisticsFile',
+                    '/work/evomaster/statistics.csv', '--appendToStatisticsFile', 'false',
+                    '--ratePerMinute', '0', '--schemaOracles', 'true', '--tcpTimeoutMs', '10000',
+                    '--createConfigPathIfMissing', 'false']
+        self.assertEqual(actual, expected)
+        self.assertEqual(recorded, expected)
+
+    def test_auth_both_fuzzers_shell_metacharacters_are_literal(self):
+        header = 'Authorization: Bearer synthetic $(do-not-execute) `literal` "quotes"'
+        for fuzzer, flag in (('schemathesis', '-H'), ('evomaster', '--header0')):
+            with self.subTest(fuzzer=fuzzer):
+                argv, recorded = build(fuzzer, AUTH_HEADER=header)
+                self.assertEqual(argv[-2:], [flag, header])
+                self.assertEqual(recorded[-2:], [flag, '<redacted>'])
+                self.assertNotIn(header, '\n'.join(recorded))
+                self.assertNotIn('synthetic', '\n'.join(recorded))
+
+    def test_schema_oracles_default_empty_true_false_argv_and_export(self):
+        default, default_recorded = build('evomaster')
+        for value in (None, '', 'true', 'false'):
+            with self.subTest(value=value):
+                updates = {} if value is None else {'EVOMASTER_SCHEMA_ORACLES': value}
+                expected = default.copy()
+                expected[expected.index('--schemaOracles') + 1] = value or 'true'
+                argv, recorded = build('evomaster', **updates)
+                self.assertEqual(argv, expected)
+                self.assertEqual(recorded, expected)
+                if value != 'false':
+                    self.assertEqual(recorded, default_recorded)
+                result = subprocess.run(
+                    ['bash', '-euc', selection_block() +
+                     '\n/usr/bin/python3 -I -B -c \'import os; print(os.environ["PILOT_EVOMASTER_SCHEMA_ORACLES"])\''],
+                    env=settings(FUZZER='evomaster', **updates), capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, ((value or 'true') + '\n').encode())
+
+    def test_invalid_schema_oracles_exit_2_without_echoing_value(self):
+        for value in ('synthetic-private-value', 'TRUE', 'False', '0', ' true', 'false\n'):
+            with self.subTest(value=value):
+                result = subprocess.run(['bash', '-euc', selection_block()],
+                                        env=settings(FUZZER='evomaster', EVOMASTER_SCHEMA_ORACLES=value),
+                                        capture_output=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(b'Invalid EVOMASTER_SCHEMA_ORACLES', result.stderr)
+                self.assertNotIn(value.encode(), result.stdout + result.stderr)
+
+    def test_schemathesis_rejects_nonempty_schema_oracles(self):
+        for fuzzer in (None, '', 'schemathesis'):
+            for value in ('true', 'false', 'synthetic-private-value'):
+                with self.subTest(fuzzer=fuzzer, value=value):
+                    updates = {} if fuzzer is None else {'FUZZER': fuzzer}
+                    result = subprocess.run(['bash', '-euc', selection_block()],
+                                            env=settings(EVOMASTER_SCHEMA_ORACLES=value, **updates),
+                                            capture_output=True)
+                    self.assertEqual(result.returncode, 2)
+                    self.assertIn(b'EVOMASTER_SCHEMA_ORACLES requires FUZZER=evomaster', result.stderr)
+                    self.assertNotIn(value.encode(), result.stdout + result.stderr)
+        self.assertEqual(build('schemathesis', EVOMASTER_SCHEMA_ORACLES=''), build('schemathesis'))
+
+    def test_seed_budget_timeout_are_forwarded(self):
+        argv, _ = build('evomaster', seed='9223372036854775807', budget='123', REQUEST_TIMEOUT_MS='42')
+        self.assertEqual(argv[argv.index('--seed') + 1], '9223372036854775807')
+        self.assertEqual(argv[argv.index('--maxTime') + 1], '123s')
+        self.assertEqual(argv[argv.index('--tcpTimeoutMs') + 1], '42')
+
+    def test_default_invalid_data_gen_fails(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            build('schemathesis', DATA_GEN='invalid')
+
+    def test_schemathesis_data_gen_variants(self):
+        default, _ = build('schemathesis')
+        for value in ('positive', 'negative', 'all'):
+            self.assertEqual(build('schemathesis', DATA_GEN=value)[0], default + ['--data-generation-method', value])
+
+    def test_preexisting_shell_fragments_are_byte_identical(self):
+        # Pinned source fragments include default Docker argv, readiness, cleanup,
+        # mutation candidate handling and both original de-recursion passes.
+        source = (HERE / 'run_pilot.sh').read_text()
+        fixture = json.loads((HERE / 'fuzzer-golden.json').read_text())
+        for name, item in fixture['preserved_fragments'].items():
+            with self.subTest(fragment=name):
+                begin = source.index(item['start'])
+                end = source.index(item['end'], begin)
+                self.assertEqual(hashlib.sha256(source[begin:end].encode()).hexdigest(), item['sha256'])
+
+    def test_pipeline_status_is_saved_before_if_completion(self):
+        source = (HERE / 'run_pilot.sh').read_text()
+        for log in ('evomaster.log', 'schemathesis.log'):
+            tail = source.split('>"$run_dir/' + log + '"\n', 1)[1]
+            self.assertEqual(tail.lstrip().splitlines()[0], 'pilot_pipeline_rc=("${PIPESTATUS[@]}")')
+
+
+class GuardTests(unittest.TestCase):
+    def test_supported_options_and_long_boundaries(self):
+        for seed in ('0', '1', '9223372036854775807'):
+            GUARD.validate_options('baseline', seed, '300', '', '')
+        GUARD.validate_options('mutated', '1', '1', '', 'pool.json')
+
+    def test_unsupported_data_generation_never_silently_ignored(self):
+        for value in ('positive', 'negative', 'all', 'invalid'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                GUARD.validate_options('mutated', '1', '300', value, '')
+
+    def test_baseline_pool_rejected(self):
+        with self.assertRaises(ValueError):
+            GUARD.validate_options('baseline', '1', '300', '', 'pool.json')
+
+    def test_invalid_seed_and_budget(self):
+        for seed in ('-1', '9223372036854775808', 'abc', '١'):
+            with self.subTest(seed=seed), self.assertRaises(ValueError):
+                GUARD.validate_options('baseline', seed, '300', '', '')
+        for budget in ('0', '-1', '2147483528', 'abc'):
+            with self.subTest(budget=budget), self.assertRaises(ValueError):
+                GUARD.validate_options('baseline', '1', budget, '', '')
+
+    def test_all_four_current_schemas_match_the_proxy_base_path(self):
+        emb = HERE.parents[1] / '_external/emb'
+        for sut in ('scout-api', 'swagger-petstore', 'market', 'cwa-verification'):
+            config = dict(line.split('=', 1) for line in (HERE / 'suts' / (sut + '.env')).read_text().splitlines()
+                          if line and not line.startswith('#'))
+            with self.subTest(sut=sut):
+                GUARD.validate_schema(json.loads((emb / config['SPEC_SOURCE']).read_text()), config['BASE_PATH_DEFAULT'])
+
+    def test_base_path_override_mismatch_rejected(self):
+        for document in ({'swagger': '2.0', 'basePath': '/api'},
+                         {'openapi': '3.0.4', 'servers': [{'url': 'http://localhost/api'}]}):
+            with self.subTest(document=document), self.assertRaises(ValueError):
+                GUARD.validate_schema(document, '/wrong')
+
+    def test_default_root_and_trailing_slash(self):
+        for document in ({'swagger': '2.0'}, {'openapi': '3.0.4'}):
+            GUARD.validate_schema(document, '/')
+        GUARD.validate_schema({'swagger': '2.0', 'basePath': '/api/'}, '/api')
+
+    def test_schema_server_ambiguities_rejected(self):
+        servers = ([], [{'url': '/a'}, {'url': '/b'}], [{'url': '/{version}'}],
+                   [{'url': 'https://user:secret@host/api'}], [{'url': '/api?query'}],
+                   [{'url': '/api#fragment'}], [{'url': 'file:///api'}],
+                   [{'url': 'relative'}], [{'url': '/a/../api'}], [{'url': '/api//v3'}])
+        for value in servers:
+            with self.subTest(servers=value), self.assertRaises(ValueError):
+                GUARD.validate_schema({'openapi': '3.0.4', 'servers': value}, '/api')
+
+    def test_path_and_operation_servers_rejected(self):
+        for item in ({'servers': [{'url': '/'}]}, {'get': {'servers': [{'url': '/'}]}}):
+            with self.subTest(item=item), self.assertRaises(ValueError):
+                GUARD.validate_schema({'openapi': '3.0.4', 'paths': {'/x': item}}, '/')
+
+    def test_missing_or_empty_outputs_fail(self):
+        with tempfile.TemporaryDirectory(prefix='t27-outputs-') as directory:
+            root = Path(directory)
+            with self.assertRaises(ValueError):
+                GUARD.validate_outputs(root)
+            (root / 'statistics.csv').write_text('header\nvalue\n')
+            with self.assertRaises(ValueError):
+                GUARD.validate_outputs(root)
+            (root / 'tests').mkdir()
+            (root / 'tests' / 'Test.java').touch()
+            with self.assertRaises(ValueError):
+                GUARD.validate_outputs(root)
+            (root / 'tests' / 'Test.java').write_text('// Synthetic output fixture; never executed.\n')
+            GUARD.validate_outputs(root)
+
+
+class RedactionTests(unittest.TestCase):
+    def test_streaming_and_saved_recursive_outputs(self):
+        header = 'Authorization: Bearer synthetic-t27-credential'
+        with patch.dict(os.environ, {'PILOT_AUTH_REDACT': header}, clear=True):
+            needles = REDACTOR.secrets()
+            raw = (header + '\nBearer synthetic-t27-credential\nsynthetic-t27-credential\n').encode()
+            self.assertEqual(REDACTOR.clean(raw, needles), b'<redacted>\n<redacted>\n<redacted>\n')
+            stream = subprocess.run(['/usr/bin/python3', '-I', '-B', str(HERE / 'redact_auth.py')],
+                                    input=raw, capture_output=True, env=dict(os.environ), check=True)
+            self.assertEqual(stream.stdout, b'<redacted>\n<redacted>\n<redacted>\n')
+            with tempfile.TemporaryDirectory(prefix='t27-redact-') as directory:
+                root = Path(directory)
+                (root / 'evomaster' / 'tests').mkdir(parents=True)
+                for name in ('evomaster.log', 'evomaster/tests/Test.java', 'evomaster/statistics.csv'):
+                    (root / name).write_bytes(raw)
+                with patch.object(sys, 'argv', ['redact_auth.py', directory]):
+                    REDACTOR.main()
+                self.assertTrue(all(b'synthetic-t27-credential' not in p.read_bytes()
+                                    for p in root.rglob('*') if p.is_file()))
+
+    def test_empty_auth_is_noop(self):
+        with patch.dict(os.environ, {'PILOT_AUTH_REDACT': ''}, clear=True):
+            self.assertEqual(REDACTOR.clean(b'public', REDACTOR.secrets()), b'public')
+
+
+class MetadataTests(unittest.TestCase):
+    def metadata(self, fuzzer, code, schema_oracles=None):
+        with tempfile.TemporaryDirectory(prefix='t27-metadata-') as directory:
+            root = Path(directory)
+            run, emb = root / 'run', root / '_external/emb'
+            run.mkdir()
+            emb.mkdir(parents=True)
+            (run / 'evomaster').mkdir()
+            (run / 'evomaster' / 'statistics.csv').write_text('synthetic\n')
+            (run / 'evomaster-argv.txt').write_text('--header0\n<redacted>\n')
+            (run / 'schema-image.json').write_text(json.dumps([{'Id': 'sha256:synthetic', 'RepoDigests': ['synthetic@sha256:123']}]))
+            values = {'PILOT_FUZZER': fuzzer, 'PILOT_AUTH_ROLE': 'none', 'SCHEMA_CHECKS': 'all',
+                      'SUT_SERVICE': 'sut-synthetic', 'SUT_IMAGE': 'synthetic', 'INTERNAL_PORT': '8080',
+                      'COMPOSE_FILE': 'synthetic.yaml', 'DOCKERFILE': 'synthetic.dockerfile',
+                      'PILOT_AUTH_SOURCE': 'none', 'MITM_MAX_BODY': '65536', 'HOST_PORT': '127.0.0.1:18080',
+                      'JACOCO_PORT': '127.0.0.1:16300', 'PILOT_EVOMASTER_IMAGE': 'synthetic@sha256:123',
+                      'PILOT_EVOMASTER_VERSION': '6.2.0'}
+            if schema_oracles is not None:
+                values['PILOT_EVOMASTER_SCHEMA_ORACLES'] = schema_oracles
+            argv = ['run_metadata.py', str(run), str(emb), 'synthetic', str(root / 'source.json'),
+                    'baseline', 'NONE', '0', '7', '300', '100', 'synthetic@sha256:123',
+                    'project', 'start', 'complete', code, '0', '0', '0' if code in ('0', '1') else code,
+                    '/health', '/']
+            with patch.dict(os.environ, values, clear=True), patch.object(sys, 'argv', argv), \
+                    patch.object(METADATA.subprocess, 'check_output', side_effect=['synthetic-commit\n', '']):
+                METADATA.main()
+            return json.loads((run / 'run.json').read_text())
+
+    def test_evomaster_identity_redacted_argv_and_nested_hashes(self):
+        data = self.metadata('evomaster', '1')
+        self.assertEqual(data['fuzzer'], 'evomaster')
+        self.assertEqual(data['evomaster_version'], '6.2.0')
+        self.assertEqual(data['evomaster_image'], 'synthetic@sha256:123')
+        self.assertEqual(data['evomaster_exit'], '1')
+        self.assertEqual(data['schemathesis_exit'], 'not_started')
+        self.assertEqual(data['evomaster_argv'], ['--header0', '<redacted>'])
+        self.assertEqual(data['evomaster_watchdog_seconds'], 420)
+        self.assertTrue(data['complete'])
+        self.assertIn('evomaster/statistics.csv', data['file_sha256'])
+        self.assertIn('schema-image', data['images'])
+
+    def test_default_metadata_has_unchanged_generator_fields(self):
+        data = self.metadata('schemathesis', '1')
+        self.assertEqual(data['schemathesis_exit'], '1')
+        self.assertTrue(data['complete'])
+        self.assertNotIn('evomaster_exit', data)
+        self.assertNotIn('evomaster_schema_oracles', data)
+        self.assertNotIn('evomaster/statistics.csv', data['file_sha256'])
+
+    def test_schema_oracles_metadata_is_boolean_and_evomaster_only(self):
+        for setting, expected in ((None, True), ('true', True), ('false', False)):
+            with self.subTest(setting=setting):
+                data = self.metadata('evomaster', '0', schema_oracles=setting)
+                self.assertIs(data['evomaster_schema_oracles'], expected)
+        self.assertNotIn('evomaster_schema_oracles',
+                         self.metadata('schemathesis', '0', schema_oracles='false'))
+
+    def test_timeout_metadata_is_incomplete(self):
+        data = self.metadata('evomaster', '124')
+        self.assertEqual(data['evomaster_exit'], '124')
+        self.assertFalse(data['complete'])
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

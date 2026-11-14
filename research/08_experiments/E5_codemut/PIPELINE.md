@@ -73,7 +73,7 @@ values (`validate_pair.py`, `Checks`, `validate`, `main`; `e5_common.py`, `atomi
 |---|---|
 | Complete baseline/NONE/0 pair; same seed and scenario | Completion/exit/coverage/cleanup, expected budget/checks, metadata field equality with a narrow allowlist of run/code differences. JUnit must parse and contain test cases. Identical sets of (testcase name, execution-error text) pass with a recorded note/list. Asymmetry exclusively on known non-mutated operations yields PASS_WITH_EXCLUSION; any mutated or unmappable differing operation fails. Test failures remain for manual review. |
 | Unchanged original/test specs, derecursion, auth and generator settings | Rehash all recorded artifacts; compare paired spec/generator/cuts/config/help/argv; enforce DATA_GEN=all from argv; auth fixture hash checked against its current file; runtime auth override rejected. |
-| Same frozen tools, harness, EMB config and JaCoCo | Compare dictionaries across the pair and rehash every listed file against the current files; validate staged agent bytes and metadata. |
+| Same recorded tools/harness, EMB config and JaCoCo | Validate nonempty safe-path SHA-256 tool/harness inventories with required core entries, then compare their complete dictionaries across the pair. Historical tool/harness bytes need not exist in the current checkout. EMB config/auth/JaCoCo still compare to current files; staged agent bytes and metadata remain checked. |
 | Same source except the reviewed edit | Recompute both retained source inventories; verify original manifest inventory, tree digests, exact edited bytes, changed-file set and patch bytes/hash. `target/` remains excluded from source hashing. |
 | Same Maven/dependencies and non-JAR runtime inputs | Saved Maven image ID and arguments/logs; compare actual cloned `.m2` JAR/POM inventories to `resolved-artifacts.json`; rehash context checksum inventories, reject extra/missing files, compare all non-SUT-JAR files. |
 | Correct built/selected/running code image | Built target JAR equals staged JAR; image labels match role-specific source/JAR digests; copied manifests and code metadata match; built image ID equals collected image ID and actual container `.Image`; actual container config and Compose code override use the immutable ID. |
@@ -119,7 +119,8 @@ a partial directory is never treated as a successful empty analysis
 ## Summary meanings
 
 `summarise_e5.py` revalidates each pair, checks the saved validation report and
-analysis hash chain, then recomputes fresh attribution from the saved violations
+historical analysis hash chain, then reruns the CURRENT checker on the original
+hashed run exchanges and recomputes fresh attribution from those new violations
 to verify the CSV. One row is written per selected pair × seed × oracle. Seeds
 recorded in the launch plan but never attempted are included as error rows.
 Missing/failed/stale validation or analysis gives blank metric cells and an
@@ -195,12 +196,53 @@ Previously completed analyses outside T20c's writable pairs remain unchanged.
 Old PASS reports without `excluded_ops` are compatible only with an empty current
 exclusion list and otherwise identical current validation. The summary keeps
 the saved pipeline hashes; differences in the four reviewed E5 policy modules
-are accepted only while all tool/harness and other pipeline hashes remain
-strict and attribution is recomputed from the hashed saved violations. Such
-rows carry `pipeline_snapshot_status=PRIOR_E5_PIPELINE_RECOMPUTED`; current
-analyses carry CURRENT. This avoids rewriting prior evidence or claiming that
+are accepted while other E5 pipeline hashes remain strict. Historical tool
+entries must match the analysis record's tool inventory; historical harness
+entries retain their recorded identities without requiring current equality.
+Historical outputs remain hashed and scoped; saved attribution is also checked
+against saved violations when the attribution tool is unchanged. Summary metrics
+always rerun the current checker and attribution on original captures. Such
+rows carry `pipeline_snapshot_status=PRIOR_SNAPSHOT_CURRENT_CHECKER_RECOMPUTED`; current
+analyses carry `CURRENT_CHECKER_RECOMPUTED`. This avoids rewriting prior evidence or claiming that
 its recorded code version equals the new one (`summarise_e5.py`,
 `verify_analysis`, `summarise`).
+
+### T30: run provenance and analysis drift
+
+Recorded `tool_sha256` and `harness_sha256` must be identical across pair members,
+including a control/control_repeat comparison and the pair/noise control bridge.
+Missing inventories, missing core tools (`conformance.py`, `attribute.py`,
+`specmut.py`) or harness entries (`run_pilot.sh`, `run_metadata.py`), unsafe paths,
+and malformed hashes fail. No epoch allowlist is required: the recorded identity
+and preserved artefact/build/scenario checks establish the provenance boundary.
+Hash inventories are recording attestations; without historical source bytes or
+signatures they do not independently prove code correctness or prevent forgery.
+
+Summary columns identify the analysis explicitly:
+
+- `analysis_tool_sha256`: canonical SHA-256 of the current complete tool inventory.
+- `analysis_pipeline_sha256`: canonical SHA-256 of current `codemut.py`,
+  `e5_common.py`, `e5_pipeline.py`, `validate_pair.py`, `summarise_e5.py` hashes.
+- `runtime_snapshot_sha256`: canonical SHA-256 of recorded tool/harness inventories.
+- `analysis_harness_sha256`: canonical SHA-256 of the local harness inventory
+  sampled at summary start. The harness is not executed by analysis.
+- `analysis_tools_drift`, `analysis_harness_drift`: `none` or `changed` versus
+  the run inventories, including added/deleted filenames; `unknown` for invalid
+  pair provenance. A PASS with drift is visible in these columns.
+- `analysis_basis=CURRENT_CHECKER_RAW_RUNS`: both oracle policies use current
+  checker defaults, paired exclusions and fresh attribution. No legacy int-format
+  override is used. Executed tools and E5 pipeline snapshots are checked again
+  after summarisation. Concurrent changes to the unexecuted harness do not
+  invalidate metrics; its drift always refers to the initial identified snapshot.
+
+Canonical hashing uses JSON sorted keys, compact separators and SHA-256
+(`e5_common.canonical`). The full T30 inventory and before/after validation hashes
+are retained in `09_collab/logs/T30_scratch/`. Historical analyses and validation
+reports can remain byte-identical: the summary does not relabel their checker
+version. New `analyse_pair` executions record and freeze analysis-time tool
+hashes, independently of collection hashes. Existing output-overwrite refusal
+still applies (`e5_common.runtime_snapshots`; `summarise_e5.verify_analysis`,
+`current_attribution`; `e5_pipeline.analyse_pair`).
 
 ## T22 control-vs-control noise mode
 

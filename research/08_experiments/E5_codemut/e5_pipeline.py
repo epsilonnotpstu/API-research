@@ -157,6 +157,7 @@ def analyse_pair(mut, kind='pair'):
         c.atomic_json(validation_path, report)
         c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), f'Pair validation failed for seed {seed}')
         meta = c.load(pair['control'] / 'run.json')
+        analysis_tools = c.tool_inventory()
         for oracle in ('default','sut'):
             reject = '400,406,422' if m['sut'] == 'market' and oracle == 'sut' else '400,422'
             origin = f'http://{meta["sut_service"]}:{meta["internal_port"]}'
@@ -166,7 +167,7 @@ def analyse_pair(mut, kind='pair'):
                       'control_run':str(pair['control']), (second + '_run'):str(pair[second]),
                       'manifest_sha256':c.sha(mut / 'manifest.json'), 'pair_validation_sha256':c.sha(validation_path),
                       'run_metadata_sha256':{r:c.sha(p / 'run.json') for r,p in pair.items()},
-                      'tool_sha256':meta['tool_sha256'], 'pipeline_sha256':trusted_files(),
+                      'tool_sha256':analysis_tools, 'pipeline_sha256':trusted_files(),
                       'excluded_ops':report.get('excluded_ops',[]), 'validation_status':report['status']}
             c.atomic_json(out / 'analysis.json', record)
             try:
@@ -177,7 +178,7 @@ def analyse_pair(mut, kind='pair'):
                     filter_violations(out / f'{role}.raw.violations.jsonl', out / f'{role}.violations.jsonl', c.excluded_operations(report))
                 tool('attribute.py', [out / 'control.violations.jsonl', out / f'{second}.violations.jsonl', mut / 'manifest.json', '--mode','fresh'],
                      out / 'attribution.csv', out / 'tools.log')
-                c.snapshot(c.TOOLS, meta['tool_sha256'])
+                c.require(c.tool_inventory() == analysis_tools, 'Analysis tools changed during execution')
                 equal = vp.validate(pair['control'], pair[second], mut, kind)
                 c.require(equal == report, 'Pair evidence changed during analysis')
                 record['status'] = 'COMPLETE'
