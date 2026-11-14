@@ -114,3 +114,9 @@
     - Petstore ও market baseline-এর labelling।
     - cwa-verification build।
 - 🚩 **RESUME POINT (2026-11-14, বিদ্যুৎ বিভ্রাট):** `09_collab/HANDOFF.md` — কী শেষ, কী থামানো হয়েছে, পুনরায় চালানোর ঠিক command, আর পরের কাজের ক্রম।
+- **Codex পর্যবেক্ষণ:** `09_collab/watch_codex.sh`।
+  - কোনো argument ছাড়া: কী চলছে আর board-এর অবস্থা।
+  - `-f`: live দেখা।
+  - `Txx`: কোনো task-এর শেষ পদক্ষেপ।
+  - Codex-এর প্রতিটি launch-এর log যাবে `09_collab/logs/Txx.log`-এ।
+  - Codex session `~/.codex/sessions/`-এ থাকে, তাই `codex exec resume <id>` দিয়ে আগের session চালিয়ে যাওয়া যায় (T16 এভাবে T15-এর session-এ চালানো হয়েছে)।

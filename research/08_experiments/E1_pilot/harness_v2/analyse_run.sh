@@ -58,19 +58,24 @@ pytool() {
 pytool attribute.py --help > /dev/null
 base_specs=("$baseline"/spec.test.*); mut_specs=("$run_dir"/spec.test.*)
 [[ ${#base_specs[@]} == 1 && -f ${base_specs[0]} && ${#mut_specs[@]} == 1 && -f ${mut_specs[0]} ]] || exit 1
-analysis="$run_dir/analysis-$mode"
+analysis="$run_dir/analysis-$mode${ORACLE:+-$ORACLE}"
+# Exchanges record the upstream SUT origin; absolute spec servers (e.g. localhost) are dev placeholders for it.
+deploy_origin="http://$SUT_SERVICE:$INTERNAL_PORT"
+# ORACLE=default forces the generic 400/422 rejection set even for SUTs with a code-justified override.
+if [[ ${ORACLE:-sut} == default ]]; then reject_statuses=400,422; else reject_statuses=${REJECT_STATUSES_DEFAULT:-400,422}; fi
+[[ $reject_statuses =~ ^[0-9]{3}(,[0-9]{3})*$ ]] || { echo "Invalid reject statuses" >&2; exit 2; }
 mkdir "$analysis" # Refuse to overwrite earlier analysis.
-pytool conformance.py "${base_specs[0]}" "$baseline/exchanges.jsonl" >"$analysis/baseline.violations.jsonl"
+pytool conformance.py "${base_specs[0]}" "$baseline/exchanges.jsonl" --deploy-origin "$deploy_origin" --reject-statuses "$reject_statuses" >"$analysis/baseline.violations.jsonl"
 if [[ $mode == both || $mode == fresh ]]; then
-    pytool conformance.py "${mut_specs[0]}" "$run_dir/exchanges.jsonl" >"$analysis/fresh.violations.jsonl"
+    pytool conformance.py "${mut_specs[0]}" "$run_dir/exchanges.jsonl" --deploy-origin "$deploy_origin" --reject-statuses "$reject_statuses" >"$analysis/fresh.violations.jsonl"
     pytool attribute.py "$analysis/baseline.violations.jsonl" "$analysis/fresh.violations.jsonl" \
         "$run_dir/manifest.json" --mode fresh >"$analysis/fresh.attributed.csv"
 fi
 if [[ $mode == both || $mode == replay ]]; then
-    pytool conformance.py "${mut_specs[0]}" "$baseline/exchanges.jsonl" >"$analysis/replay.violations.jsonl"
+    pytool conformance.py "${mut_specs[0]}" "$baseline/exchanges.jsonl" --deploy-origin "$deploy_origin" --reject-statuses "$reject_statuses" >"$analysis/replay.violations.jsonl"
     pytool attribute.py "$analysis/baseline.violations.jsonl" "$analysis/replay.violations.jsonl" \
         "$run_dir/manifest.json" --mode replay >"$analysis/replay.attributed.csv"
 fi
 sha256sum "$EXP/tools/conformance.py" "$EXP/tools/attribute.py" "$EXP/tools/specmut.py" >"$analysis/tool-sha256.txt"
-printf '%s\n' "baseline=$baseline" "mutated=$run_dir" "mode=$mode" >"$analysis/inputs.txt"
+printf '%s\n' "baseline=$baseline" "mutated=$run_dir" "mode=$mode" "deploy_origin=$deploy_origin" "reject_statuses=$reject_statuses" >"$analysis/inputs.txt"
 echo "Analysis: $analysis"

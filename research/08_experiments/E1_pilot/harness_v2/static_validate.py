@@ -1,4 +1,4 @@
-"""T14 static validation and the explicitly permitted stdlib derecurse tests.
+"""T14/T17 static validation and the permitted stdlib derecurse tests.
 
 No harness scripts, third-party project code, Docker, Java, network, or SUT
 commands are executed. Run from any directory with /usr/bin/python3 -I -B.
@@ -6,18 +6,21 @@ commands are executed. Run from any directory with /usr/bin/python3 -I -B.
 import ast
 import datetime
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
 
 import yaml
 
 HERE = Path(__file__).resolve().parent
 EXP = HERE.parents[1]
 EMB = EXP / "_external" / "emb"
-SUTS = ("scout-api", "swagger-petstore", "market")
+SUTS = ("scout-api", "swagger-petstore", "market", "cwa-verification")
 
 
 def digest(path):
@@ -25,7 +28,7 @@ def digest(path):
 
 
 def main():
-    print("T14 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
+    print("T14/T17 validation:", datetime.datetime.now(datetime.timezone.utc).isoformat(), flush=True)
     for path in sorted(HERE.glob("*.sh")):
         subprocess.run(["bash", "-n", str(path)], check=True)
         source = path.read_text()
@@ -92,8 +95,43 @@ def main():
             assert not (EMB / "auth" / f"{sut}-auth.yaml").exists()
         print(f"PASS CONFIG:{sut} jar/paths/YAML/proxy/auth-shape; declared_operations={count}; "
               f"spec_version={spec.get('swagger', spec.get('openapi'))}", flush=True)
+        if sut == "cwa-verification":
+            cwa = EMB / "jdk_11_maven/cs/rest/cwa-verification-server"
+            ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+            pom = ET.parse(cwa / "pom.xml").getroot()
+            plugin = next(p for p in pom.findall("m:build/m:plugins/m:plugin", ns)
+                          if p.findtext("m:artifactId", namespaces=ns) == "spring-boot-maven-plugin")
+            execution = next(e for e in plugin.findall("m:executions/m:execution", ns)
+                             if "repackage" in [g.text for g in e.findall("m:goals/m:goal", ns)])
+            final_name = execution.findtext("m:configuration/m:finalName", namespaces=ns)
+            classifier = execution.findtext("m:configuration/m:classifier", namespaces=ns)
+            assert final_name == "cwa-verification" and classifier == "sut"
+            assert (EMB / config["JAR_SOURCE"]) == cwa / "target" / f"{final_name}-{classifier}.jar"
+            assert config["AUTH_ROLE_DEFAULT"] == "none"
+            assert not list((EMB / "auth").glob("cwa-verification*.yaml"))
+            assert config["BASE_PATH_DEFAULT"] == "/" and count == 5
+            assert all(urlsplit(server["url"]).path in ("", "/") for server in spec["servers"])
+            assert config["HEALTH_PATH_DEFAULT"] == "/version/v1/tan/verify"
+            assert config["HEALTH_METHOD_DEFAULT"] == "POST" and config["HEALTH_STATUS_DEFAULT"] == "400"
+            assert "--management.server.port=-1" in (EMB / config["DOCKERFILE"]).read_text()
+            assert 'mvcMatchers("/version/**").permitAll()' in (
+                cwa / "src/main/java/app/coronawarn/verification/config/SecurityConfig.java").read_text()
+            app = yaml.safe_load((cwa / "src/main/resources/application.yml").read_text())
+            assert app["jwt"]["enabled"] is False
+            module_spec = importlib.util.spec_from_file_location("t17_derecurse", HERE / "derecurse.py")
+            module = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            generated, cuts = module.derecurse(spec)
+            assert generated["paths"] == spec["paths"]
+            assert module.derecurse(generated) == (generated, [])
+            print(f"PASS CWA_SOURCE pom-derived-jar/root-base/POST-empty-400/no-auth-fixture/JWT-disabled; "
+                  f"static_derecurse_cuts={len(cuts)}; runtime unverified", flush=True)
+            print("REVIEW CWA_ORIGIN absolute localhost server versus Docker proxy/upstream origins; "
+                  "verify authority matching before interpreting conformance results (README CWA section)", flush=True)
 
     common = (HERE / "common.sh").read_text()
+    allowlist = re.search(r"case .*? in ([^)]+)\)", common).group(1)
+    assert set(allowlist.split("|")) == set(SUTS)
     assert "HOST_PORT=127.0.0.1:18080 JACOCO_PORT=127.0.0.1:16300" in common
     assert 'exec 8<"$HERE/../harness/.run.lock"' in common
     run = (HERE / "run_pilot.sh").read_text()
@@ -104,6 +142,9 @@ def main():
         assert marker in run, marker
     batch = (HERE / "run_batch.sh").read_text()
     assert 'PILOT_RUN_ID="$id"' in batch and 'baseline=$LAST_RUN' in batch
+    assert 'HEALTH_METHOD_DEFAULT:-GET' in run and 'HEALTH_STATUS_DEFAULT:?' in run
+    assert '--only-ops' in run and 'pull failed; using local copy' in run
+    assert 'FAULTS:-' in batch and 'ORACLE_POOL:-all' in batch and 'eligible_ops.py' in batch
     analysis = (HERE / "analyse_run.sh").read_text()
     for marker in ('schema_checks', 'harness_sha256', 'auth_source', 'r["sut"]',
                    'Current tool differs', 'generator-input.json', 'mkdir "$analysis"'):
@@ -118,9 +159,10 @@ def main():
     # Do not mistake a plain role identifier for a copied Authorization header.
     fixture_values.update(fixture_tokens - public_roles)
     outputs = list(HERE.rglob("*"))
-    report = EXP.parent / "09_collab" / "reports" / "T14_report.md"
-    if report.exists():
-        outputs.append(report)
+    for task in ("T14", "T17"):
+        report = EXP.parent / "09_collab" / "reports" / f"{task}_report.md"
+        if report.exists():
+            outputs.append(report)
     for path in outputs:
         if path.is_file():
             data = path.read_bytes()

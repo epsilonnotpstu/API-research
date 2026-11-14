@@ -1,0 +1,520 @@
+{
+  "format": "codemut-sites-v1",
+  "roots": {
+    "scout-api": "jdk_8_maven/cs/rest/original/scout-api",
+    "swagger-petstore": "jdk_8_maven/cs/rest/original/swagger-petstore",
+    "market": "jdk_11_maven/cs/rest-gui/market",
+    "cwa-verification": "jdk_11_maven/cs/rest/cwa-verification-server"
+  },
+  "sites": [
+    {
+      "site_id": "scout-drop-validation",
+      "sut": "scout-api",
+      "operator": "DROP_VALIDATION",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/ActivityResource.java",
+      "line": 54,
+      "before": "throw new WebApplicationException(\"Could not understand the request. Perhaps you sent text instead of integers?\", Response.Status.BAD_REQUEST);",
+      "after": "return java.util.Collections.emptyList();",
+      "operations": [
+        {
+          "path": "/v2/activities",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-ACCEPT-INVALID",
+      "expected_conformance_signal": [],
+      "source_sha256": "b2150d0a438f9f81ffd8fe854cc1f9aa0aaada26d050a754ae4b373891bc9dd6",
+      "conditions": "Latent under current spec: comma-separated numeric filters are declared strings. Removing the explicit parser guard changes code intent, but INVALID_ACCEPTED needs an encoded spec constraint. Exclude from detection denominator until a non-spec-changing oracle/witness is justified.",
+      "witness_plan": "Send ages=not-an-integer to demonstrate the removed guard; report semantic-only survival if original spec accepts it.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/ActivityResource.java:54"
+    },
+    {
+      "site_id": "scout-wrong-status",
+      "sut": "scout-api",
+      "operator": "WRONG_STATUS",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java",
+      "line": 31,
+      "before": "public RolesView roles() {\n        return new RolesView(\n                Stream.of(Permission.values()).collect(Collectors.toMap(Enum::name, Permission::getLevel)),\n                Stream.of(Role.values()).collect(Collectors.toMap(Enum::name, Role::getLevel))\n        );\n    }",
+      "after": "public Response roles() {\n        return Response.status(418).entity(new RolesView(\n                Stream.of(Permission.values()).collect(Collectors.toMap(Enum::name, Permission::getLevel)),\n                Stream.of(Role.values()).collect(Collectors.toMap(Enum::name, Role::getLevel))\n        )).build();\n    }",
+      "operations": [
+        {
+          "path": "/v1/system/roles",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "UNDOCUMENTED_STATUS"
+      ],
+      "source_sha256": "9ceac4f002f06ad51356340633922cd50211eeaa88148b4d7ad912af59092c38",
+      "conditions": "This operation declares only 200; 418 has no default fallback. Confirm body unchanged and original 200 witness.",
+      "witness_plan": "GET /api/v1/system/roles with the same headers against clean baseline and mutant.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:31"
+    },
+    {
+      "site_id": "scout-drop-null",
+      "sut": "scout-api",
+      "operator": "DROP_NULL_CHECK",
+      "file": "data-access/src/main/java/se/devscout/scoutapi/dao/TagDao.java",
+      "line": 36,
+      "before": "if (name != null) {",
+      "after": "if (true) {",
+      "operations": [
+        {
+          "path": "/v2/tags",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "7ba236f4c2a8325317b13a47a81098aef26bdf1e3e8d0b620a56c41a2e306ee2",
+      "conditions": "Absent optional name reaches name.toUpperCase(); original skips the filter. Verify original request succeeds; group/name mutations can share an existing SERVER_ERROR fingerprint.",
+      "witness_plan": "GET /api/v2/tags without name; preserve optional attrs behavior and inspect the new stack.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/data-access/src/main/java/se/devscout/scoutapi/dao/TagDao.java:36"
+    },
+    {
+      "site_id": "scout-response-field",
+      "sut": "scout-api",
+      "operator": "RESP_FIELD",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java",
+      "line": 51,
+      "before": "public Map<String, Integer> getPermissionLevels() {",
+      "after": "@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)\n        public Map<String, Integer> getPermissionLevels() {",
+      "operations": [
+        {
+          "path": "/v1/system/roles",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [],
+      "source_sha256": "9ceac4f002f06ad51356340633922cd50211eeaa88148b4d7ad912af59092c38",
+      "conditions": "Dropping permission_levels is invisible to the current default schema because neither RolesView field is required. Strict additional-property policy does not detect an absent optional field. Keep as an oracle-blind negative control, not a claimed killed mutant.",
+      "witness_plan": "Compare raw JSON key presence, separately from conformance. Do not strengthen the test spec.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:51"
+    },
+    {
+      "site_id": "scout-reject-valid",
+      "sut": "scout-api",
+      "operator": "REJECT_VALID",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/TagResource.java",
+      "line": 44,
+      "before": "return okResponse(dao.find(group, name, minActivitiesCount), attrs);",
+      "after": "if (group == null) { throw new javax.ws.rs.BadRequestException(\"E5 requires optional group\"); }\n        return okResponse(dao.find(group, name, minActivitiesCount), attrs);",
+      "operations": [
+        {
+          "path": "/v2/tags",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "1062db303364a38e5e5a0d0ed505c4cda08d833d097b16ced03537703bdbc4fe",
+      "conditions": "group is optional. Use an original 2xx witness without group; default/SUT rejection oracle includes 400.",
+      "witness_plan": "GET /api/v2/tags without group against fresh identical seed state.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:44"
+    },
+    {
+      "site_id": "petstore-drop-validation",
+      "sut": "swagger-petstore",
+      "operator": "DROP_VALIDATION",
+      "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+      "line": 59,
+      "before": "if (order == null) {",
+      "after": "if (false) {",
+      "operations": [
+        {
+          "path": "/store/order",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "fc8c9dbe730b19e06bb3a0ce2f2e4e464a943f18540a9effa21fffd1eae0e9c3",
+      "conditions": "Removing the explicit empty-order guard lets null reach OrderData.addOrder. Framework request validation may reject first: verify handler reachability before treating survival as an attribution miss.",
+      "witness_plan": "Empty order request; compare the original 400 with a mutant stack, and report framework-preempted if the handler is never invoked.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/OrderController.java:59"
+    },
+    {
+      "site_id": "petstore-wrong-status",
+      "sut": "swagger-petstore",
+      "operator": "WRONG_STATUS",
+      "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+      "line": 34,
+      "before": "public ResponseContext getInventory(final RequestContext request) {\n        return new ResponseContext()",
+      "after": "public ResponseContext getInventory(final RequestContext request) {\n        return new ResponseContext().status(418)",
+      "operations": [
+        {
+          "path": "/store/inventory",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [],
+      "source_sha256": "fc8c9dbe730b19e06bb3a0ce2f2e4e464a943f18540a9effa21fffd1eae0e9c3",
+      "conditions": "default is declared without a schema. Thus 418 does not trigger UNDOCUMENTED_STATUS or RESPONSE_SCHEMA under this spec. A status-semantic negative control, not a conformance kill.",
+      "witness_plan": "GET /api/v3/store/inventory; record raw 200-to-418 delta without inventing an oracle failure.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/OrderController.java:34"
+    },
+    {
+      "site_id": "petstore-drop-null",
+      "sut": "swagger-petstore",
+      "operator": "DROP_NULL_CHECK",
+      "file": "src/main/java/io/swagger/petstore/data/PetData.java",
+      "line": 87,
+      "before": "if (null != pet.getTags()) {",
+      "after": "if (true) {",
+      "operations": [
+        {
+          "path": "/pet/findByTags",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "0bb07df40bd1e3ac296ca09fd8a34c0e46804378b0c61da7385e544170b29722",
+      "conditions": "Needs a stored pet with null tags; default seeded lists may be non-null. State setup and Jackson null handling must be verified. Any propagated faults outside this operation need manual review.",
+      "witness_plan": "Create a valid named pet with photoUrls and tags:null (if accepted by intended contract), then findByTags; otherwise reject the witness as spec-invalid.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/data/PetData.java:87"
+    },
+    {
+      "site_id": "petstore-response-field",
+      "sut": "swagger-petstore",
+      "operator": "RESP_FIELD",
+      "file": "src/main/java/io/swagger/petstore/model/Pet.java",
+      "line": 55,
+      "before": "public String getName() {",
+      "after": "@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)\n    public String getName() {",
+      "operations": [
+        {
+          "path": "/pet/{petId}",
+          "method": "get"
+        },
+        {
+          "path": "/pet/findByStatus",
+          "method": "get"
+        },
+        {
+          "path": "/pet/findByTags",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "RESPONSE_SCHEMA"
+      ],
+      "source_sha256": "ef0cc89307da8dbc0cc04cc4eebb9e93a2441bebbd2600646ed3d3774da621d9",
+      "conditions": "Pet.name is required. Force Accept:application/json and a nonempty successful Pet result. Verify Inflector/Jackson honors WRITE_ONLY; XML is outside this witness. Input setters remain present.",
+      "witness_plan": "GET a seeded pet that returned JSON 200/name in the control; repeat identical request against the mutant.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/model/Pet.java:55"
+    },
+    {
+      "site_id": "petstore-reject-valid",
+      "sut": "swagger-petstore",
+      "operator": "REJECT_VALID",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 71,
+      "before": "public ResponseContext getPetById(final RequestContext request, final Long petId) {",
+      "after": "public ResponseContext getPetById(final RequestContext request, final Long petId) {\n        if (petId != null && petId.longValue() > 0L) { throw new javax.ws.rs.BadRequestException(\"E5 rejects positive pet IDs\"); }",
+      "operations": [
+        {
+          "path": "/pet/{petId}",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "c42f60767e1d7c7fb36668b48a89df762a1f8ded39a010180a03df13c9ebb2be",
+      "conditions": "Use a positive seeded ID with a control 200 and JSON Accept; request-side int64 format coverage must not be confused with a valid resource witness.",
+      "witness_plan": "Replay the control's successful GET /api/v3/pet/<positive ID> as an actual HTTP request to both SUTs.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/PetController.java:71"
+    },
+    {
+      "site_id": "market-drop-validation",
+      "sut": "market",
+      "operator": "DROP_VALIDATION",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 52,
+      "before": "public UserDTO createCustomer(@RequestBody @Valid UserDTO user) {",
+      "after": "public UserDTO createCustomer(@RequestBody UserDTO user) {",
+      "operations": [
+        {
+          "path": "/register",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-ACCEPT-INVALID",
+      "expected_conformance_signal": [
+        "INVALID_ACCEPTED",
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "ff7f096eb7914cc3f0fb295934a2f5c81b09cdd79ad645d20fc0bdc850d496b8",
+      "conditions": "DTO validation is removed, but domain/service validation and persistence may reject independently. Need an original 4xx and mutant 2xx for a spec-invalid witness, or a new causal 5xx classified I-CRASH instead.",
+      "witness_plan": "Use a fresh unique email and an invalid required request field; check remaining validators and the unchanged original schema first.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/src/main/java/market/rest/CustomerRestController.java:52"
+    },
+    {
+      "site_id": "market-wrong-status",
+      "sut": "market",
+      "operator": "WRONG_STATUS",
+      "file": "market-rest/src/main/java/market/rest/ProductsRestController.java",
+      "line": 37,
+      "before": "public Collection<ProductDTO> getProducts() {\n\t\treturn productService.findAll().stream()\n\t\t\t.sorted(Comparator.comparing(Product::getId))\n\t\t\t.map(productAssembler::toModel)\n\t\t\t.peek(this::addSelfLink)\n\t\t\t.collect(Collectors.toList());\n\t}",
+      "after": "public org.springframework.http.ResponseEntity<Collection<ProductDTO>> getProducts() {\n\t\treturn org.springframework.http.ResponseEntity.status(418).body(productService.findAll().stream()\n\t\t\t.sorted(Comparator.comparing(Product::getId))\n\t\t\t.map(productAssembler::toModel)\n\t\t\t.peek(this::addSelfLink)\n\t\t\t.collect(Collectors.toList()));\n\t}",
+      "operations": [
+        {
+          "path": "/products",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "UNDOCUMENTED_STATUS"
+      ],
+      "source_sha256": "70c59e51f1fe879d654ce3e7488ee50f9fdb2af4bc28624c4153cbb3c5d30cbd",
+      "conditions": "GET products documents 200/401/403/404 without default. Existing response-schema gaps remain baseline defects; only injected 418 is the expected new signal. Verify HATEOAS method-link generation compiles with ResponseEntity return type.",
+      "witness_plan": "GET /products with the same runtime user fixture and JSON Accept.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/src/main/java/market/rest/ProductsRestController.java:37"
+    },
+    {
+      "site_id": "market-drop-null",
+      "sut": "market",
+      "operator": "DROP_NULL_CHECK",
+      "file": "market-rest/src/main/java/market/rest/ProductsRestController.java",
+      "line": 60,
+      "before": ".orElseThrow(() -> new UnknownEntityException(ProductDTO.class, productId));",
+      "after": ".get();",
+      "operations": [
+        {
+          "path": "/products/{productId}",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "70c59e51f1fe879d654ce3e7488ee50f9fdb2af4bc28624c4153cbb3c5d30cbd",
+      "conditions": "Absent Optional now throws NoSuchElementException rather than mapped UnknownEntityException/404. Verify the missing-ID control and the stack; successful resources retain the map chain.",
+      "witness_plan": "Use a control request with 404 for a spec-valid missing product ID; repeat in the mutant.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/src/main/java/market/rest/ProductsRestController.java:60"
+    },
+    {
+      "site_id": "market-response-field",
+      "sut": "market",
+      "operator": "RESP_FIELD",
+      "file": "market-core/src/main/java/market/dto/ProductDTO.java",
+      "line": 63,
+      "before": "public Double getPrice() {",
+      "after": "@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)\n\tpublic Double getPrice() {",
+      "operations": [
+        {
+          "path": "/products",
+          "method": "get"
+        },
+        {
+          "path": "/products/{productId}",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "RESPONSE_SCHEMA"
+      ],
+      "source_sha256": "ca32b9e3fcfc5db619a674291995e487d00ce3ed9a4b87326451aa2952a498fb",
+      "conditions": "price is required in ProductDTO. Select nonempty JSON product responses and inspect required-price messages separately from existing _links schema failures.",
+      "witness_plan": "Reuse successful product listing/detail requests with non-null prices in the control.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-core/src/main/java/market/dto/ProductDTO.java:63"
+    },
+    {
+      "site_id": "market-reject-valid",
+      "sut": "market",
+      "operator": "REJECT_VALID",
+      "file": "market-rest/src/main/java/market/rest/ProductsRestController.java",
+      "line": 56,
+      "before": "public ProductDTO getProduct(@PathVariable long productId) {",
+      "after": "public ProductDTO getProduct(@PathVariable long productId) {\n\t\tif (productId > 0L) { throw new market.exception.CustomNotValidException(\"Error.Validation.Parameter\", \"ProductDTO\", \"productId\"); }",
+      "operations": [
+        {
+          "path": "/products/{productId}",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "UNDOCUMENTED_STATUS",
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "70c59e51f1fe879d654ce3e7488ee50f9fdb2af4bc28624c4153cbb3c5d30cbd",
+      "conditions": "The existing CustomNotValidException mapper returns 406. UNDOCUMENTED_STATUS should appear; VALID_REJECTED additionally needs the code-justified market SUT oracle (400,406,422). Generic 400/422 will not recognize 406 as rejection.",
+      "witness_plan": "Use an existing positive product ID; check control 200 and the 406 handler outcome; report default and market-SUT oracles separately.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market/market-rest/src/main/java/market/rest/ProductsRestController.java:56"
+    },
+    {
+      "site_id": "cwa-drop-validation",
+      "sut": "cwa-verification",
+      "operator": "DROP_VALIDATION",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 80,
+      "before": "@RequestBody @Valid RegistrationTokenRequest request,",
+      "after": "@RequestBody RegistrationTokenRequest request,",
+      "operations": [
+        {
+          "path": "/version/v1/registrationToken",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR",
+        "INVALID_ACCEPTED"
+      ],
+      "source_sha256": "3df18fed9727126e14bf62c888f22a9c8db5251ed48a4c97503006dea65f650f",
+      "conditions": "An empty object bypasses bean validation and reaches switch(null), causing 500. Other invalid GUID inputs can be stored locally. The readiness probe uses a different DTO/controller and remains unchanged.",
+      "witness_plan": "POST {} JSON to registrationToken; original bean validation should return 400 and the mutant should reach a null keyType switch.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:80"
+    },
+    {
+      "site_id": "cwa-wrong-status",
+      "sut": "cwa-verification",
+      "operator": "WRONG_STATUS",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 97,
+      "before": "deferredResult.setResult(responseEntity);",
+      "after": "deferredResult.setResult(ResponseEntity.status(418).body(responseEntity.getBody()));",
+      "operations": [
+        {
+          "path": "/version/v1/registrationToken",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "UNDOCUMENTED_STATUS"
+      ],
+      "source_sha256": "3df18fed9727126e14bf62c888f22a9c8db5251ed48a4c97503006dea65f650f",
+      "conditions": "GUID registration branch only; 418 is undocumented and needs no missing test-result backend. A duplicate GUID would change 400 too, so prefer a fresh valid GUID/control 201 witness.",
+      "witness_plan": "POST a fresh valid GUID registration request against clean control and mutant states.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:97"
+    },
+    {
+      "site_id": "cwa-drop-null",
+      "sut": "cwa-verification",
+      "operator": "DROP_NULL_CHECK",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 120,
+      "before": ".orElseGet(() -> {\n        log.info(\"The Tan is invalid.\");\n        throw new VerificationServerException(HttpStatus.NOT_FOUND, \"No Tan found or Tan is invalid\");\n      });",
+      "after": ".get();",
+      "operations": [
+        {
+          "path": "/version/v1/tan/verify",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-CRASH",
+      "expected_conformance_signal": [
+        "SERVER_ERROR"
+      ],
+      "source_sha256": "fccb3ce2556f831843f39364b14c4e71ade95cd2890e488935301ecd002e241f",
+      "conditions": "Valid-format but absent TAN reaches Optional.get and 500 instead of the control 404. Neither downstream test-result service nor successful TAN generation is needed. Empty-body readiness still fails binding before this code.",
+      "witness_plan": "POST a valid-format UUID v4 TAN absent from the fresh DB; compare control 404 and mutant stack.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/controller/InternalTanController.java:120"
+    },
+    {
+      "site_id": "cwa-response-field",
+      "sut": "cwa-verification",
+      "operator": "RESP_FIELD",
+      "file": "src/main/java/app/coronawarn/verification/model/RegistrationToken.java",
+      "line": 50,
+      "before": "private String registrationToken;",
+      "after": "@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)\n  private String registrationToken;",
+      "operations": [
+        {
+          "path": "/version/v1/registrationToken",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-RESP-CONTRACT",
+      "expected_conformance_signal": [
+        "RESPONSE_SCHEMA"
+      ],
+      "source_sha256": "564130ce45c9dbc8c7da6bb620aeefa70e1e29ffd53124cdf7a70aae47ab9e7a",
+      "conditions": "RegistrationToken.registrationToken is required. WRITE_ONLY is intended to retain input binding for /tan and /testresult; verify Lombok/Jackson merged-property behavior and retain any additional observed effects for review.",
+      "witness_plan": "Generate a token with a fresh valid GUID; expect required-registrationToken failure in its JSON response.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/model/RegistrationToken.java:50"
+    },
+    {
+      "site_id": "cwa-reject-valid",
+      "sut": "cwa-verification",
+      "operator": "REJECT_VALID",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 91,
+      "before": "switch (keyType) {",
+      "after": "if (keyType == app.coronawarn.verification.model.RegistrationTokenKeyType.GUID) { throw new app.coronawarn.verification.exception.VerificationServerException(HttpStatus.BAD_REQUEST, \"E5 rejects valid GUID registration\"); }\n    switch (keyType) {",
+      "operations": [
+        {
+          "path": "/version/v1/registrationToken",
+          "method": "post"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "3df18fed9727126e14bf62c888f22a9c8db5251ed48a4c97503006dea65f650f",
+      "conditions": "Fresh valid GUID would produce control 201; the new guard returns 400 through the explicit VerificationServerException handler. Use a clean DB and no fake header.",
+      "witness_plan": "Fresh 64-hex hashed GUID with keyType GUID; establish a control 201 witness first.",
+      "pilot": false,
+      "evidence": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91"
+    }
+  ]
+}

@@ -43,7 +43,12 @@ for seed in "${seeds[@]}"; do
     for fault in ${FAULTS:-REQUEST_LOOSE REQUEST_STRICT RESPONSE_ORACLE METHOD_SEM}; do
         case $fault in REQUEST_LOOSE|REQUEST_STRICT|RESPONSE_ORACLE|METHOD_SEM) ;; *) echo "Invalid fault: $fault" >&2; exit 2;; esac
         # ORACLE_POOL=baseline: RESPONSE_ORACLE mutates only operations with a 2xx body in this seed's baseline.
-        if [[ $fault == RESPONSE_ORACLE && ${ORACLE_POOL:-all} == baseline ]]; then
+        # LOOSE_POOL=spec: REQUEST_LOOSE mutates only operations with a checker-evaluated request constraint.
+        if [[ $fault == REQUEST_LOOSE && ${LOOSE_POOL:-all} == spec ]]; then
+            /usr/bin/python3 -I -B "$TOOLS_DIR/eligible_ops.py" "$baseline" --fault REQUEST_LOOSE \
+                --out "$batch_dir/eligible_loose_s$seed.json"
+            ONLY_OPS="$batch_dir/eligible_loose_s$seed.json" run_one mutated "$fault" "$severity" "$seed"
+        elif [[ $fault == RESPONSE_ORACLE && ${ORACLE_POOL:-all} == baseline ]]; then
             /usr/bin/python3 -I -B "$TOOLS_DIR/eligible_ops.py" "$baseline" --base-path "$BASE_PATH" \
                 --out "$batch_dir/eligible_s$seed.json"
             ONLY_OPS="$batch_dir/eligible_s$seed.json" run_one mutated "$fault" "$severity" "$seed"

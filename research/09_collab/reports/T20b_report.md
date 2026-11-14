@@ -1,0 +1,15 @@
+# T20b — pair-validation false positives সংশোধন
+
+নির্দিষ্ট saved `market-drop-null`, seed-1 pair revalidate করে **PASS: ১৪/১৪ checks** পাওয়া গেছে। JSON-এ দুই role-এর অভিন্ন `POST /register` generation error এবং explanatory note রাখা হয়েছে; এটি পূর্ণ operation coverage বা causal mutation kill-এর দাবি নয় (`08_experiments/E5_codemut/work/market-drop-null_20261114T113144Z/pair-validation-s1.json:1–54,76–112`; `09_collab/logs/T20b_scratch/revalidation.txt:1`)।
+
+কী বদলেছে:
+
+- NetworkMode-এ প্রত্যেক run-এর নিজস্ব `compose_project` prefix normalise হয়; suffix strict থাকে। Foreign network বা role-ভেদে suffix পরিবর্তন fail করে। SandboxID আগেও runtime projection-এর বাইরে ছিল, এখনও তাই। একই rule SUT ও proxy-তে প্রযোজ্য (`08_experiments/E5_codemut/validate_pair.py:160–203`; `test_e5_pipeline.py`, `test_foreign_network_name_and_changed_network_suffix_fail_for_both_services`)।
+- Task-এর diagnosis পরীক্ষা করে প্রকৃত অতিরিক্ত কারণ পাওয়া গেছে: normalized proxy comparison-এ `Config.Env` array order আলাদা, কিন্তু entries অভিন্ন। তাই unique environment entries sort করে তুলনা হয়; কোনো key/value বাদ যায় না, duplicate/empty keys reject হয়। Value পরিবর্তন এখনও fail করে (`validate_pair.py:171–178`; `09_collab/logs/T20b_scratch/verification.json`, `runtime_reproduction`; `test_e5_pipeline.py`, `test_env_values_and_duplicate_keys_remain_strict`)।
+- JUnit-এর exact `(testcase name, error text)` sets সমান হলে PASS এবং `notes`/`junit_errors` list লেখা হয়। One-sided error, বদলে যাওয়া text বা testcase name হলে FAIL; duplicate occurrence/order set equality বদলায় না। Missing/malformed JUnit বা zero testcases-এর checks রাখা হয়েছে (`validate_pair.py:206–209,300–307,348–351`; `test_e5_pipeline.py`, `test_identical_junit_errors_pass_with_full_recorded_note`, `test_junit_one_sided_changed_text_or_changed_testcase_fails`)।
+
+**৮১/৮১ E5 tests PASS**—আগের ৭৪টি ও সাতটি নতুন test। Own Python tests/analysis ছাড়া Docker, Java, Maven, harness বা SUT চালানো হয়নি। সব snapshotted harness/tool ও দুই saved run-এর file hash অপরিবর্তিত (`09_collab/logs/T20b_scratch/tests.txt:85–87`; `verification.json`, `protected_files`, `execution`)।
+
+Revalidation-এ task-এর অনুমোদিত work file-টিই replace করা হয়েছে। Optional `--report-staging-dir 09_collab/logs/T20b_scratch` যোগ করায় atomic temporary JSON work-এর বাইরে থাকে; `e5_common.atomic_json`-এর default behavior অপরিবর্তিত। Test scratch-ও `E5_TEST_SCRATCH` দিয়ে T20b-এর allowed directory-তে রাখা হয়েছে। Updated usage/policy `08_experiments/E5_codemut/PIPELINE.md`-এ আছে (`validate_pair.py:359–372`; `e5_common.py:68–76`; `test_e5_pipeline.py`, `test_report_can_stage_outside_mut_dir_and_remains_atomic`; `09_collab/tasks/T20b.md`, Constraints)।
+
+সীমা/open question: shared regex error-এর কারণে `POST /register`-এ generation অসম্পূর্ণ রয়ে গেছে; এই task spec বা generator মেরামত করেনি। Pair comparison এখন সেই shared limitation record করে। অন্য seed/SUT-এর validation বা নতুন fuzzing/analysis চালানো হয়নি; independent causal witness আগের মতোই প্রয়োজন (`08_experiments/E5_codemut/work/market-drop-null_20261114T113144Z/pair-validation-s1.json:76–108`; `validate_pair.py`, report `limitations`)।

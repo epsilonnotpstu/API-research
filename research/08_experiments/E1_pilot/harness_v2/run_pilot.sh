@@ -51,7 +51,19 @@ fi
 # Only the redactor receives this host-side environment value; Docker receives -H.
 export PILOT_AUTH_REDACT="$AUTH_HEADER"
 [[ $MAX_EXAMPLES =~ ^[1-9][0-9]*$ && $HEALTH_PATH == /* && $BASE_PATH == /* ]] || { echo 'Invalid MAX_EXAMPLES, HEALTH_PATH or BASE_PATH' >&2; exit 2; }
-for jar in "$sut-sut.jar" jacocoagent.jar jacococli.jar; do
+# Proposed E5: prebuilt images only; never replace EMB/dist or a fixed pilot tag.
+export PILOT_CODE_ROLE=${CODE_ROLE:-}
+export PILOT_CODE_SOURCE_SHA256=${CODE_SOURCE_TREE_SHA256:-}
+export PILOT_SUT_JAR_PATH=${SUT_JAR_OVERRIDE:-$EMB_DIR/dist/$sut-sut.jar}
+if [[ -n $PILOT_CODE_ROLE || -n ${SUT_IMAGE_OVERRIDE:-} || -n ${SUT_JAR_OVERRIDE:-} || -n ${CODE_MANIFEST:-} ]]; then
+    [[ $PILOT_CODE_ROLE == control || $PILOT_CODE_ROLE == mutant ]] || { echo 'E5 requires CODE_ROLE=control|mutant' >&2; exit 2; }
+    [[ $mode == baseline && $fault == NONE && $severity == 0 ]] || { echo 'E5 keeps the spec unchanged' >&2; exit 2; }
+    [[ -n ${SUT_IMAGE_OVERRIDE:-} && -n ${SUT_JAR_OVERRIDE:-} && -s ${CODE_MANIFEST:-} && -s $PILOT_SUT_JAR_PATH ]] || { echo 'E5 image/jar/manifest missing' >&2; exit 2; }
+    [[ $PILOT_CODE_SOURCE_SHA256 =~ ^[a-f0-9]{64}$ ]] || { echo 'Missing E5 source-tree digest' >&2; exit 2; }
+    export SUT_IMAGE="$SUT_IMAGE_OVERRIDE"
+fi
+[[ -s $PILOT_SUT_JAR_PATH ]] || { echo 'Missing selected SUT jar' >&2; exit 1; }
+for jar in jacocoagent.jar jacococli.jar; do
     [[ -s $EMB_DIR/dist/$jar ]] || { echo "Missing $jar; run prepare_dist.sh first" >&2; exit 1; }
 done
 # Serialize runs to avoid port, build, and resource contention. Never replace an existing run.
@@ -108,6 +120,25 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 metadata pending
 cp "$HERE/suts/$sut.env" "$run_dir/sut-config.env"
+if [[ -n $PILOT_CODE_ROLE ]]; then
+    # Pin to immutable local image ID and require the build labels from the E5 plan.
+    e5_image_id=$(docker image inspect --format '{{.Id}}' "$SUT_IMAGE_OVERRIDE")
+    e5_jar_sha=$(sha256sum "$PILOT_SUT_JAR_PATH"); e5_jar_sha=${e5_jar_sha%% *}
+    [[ $(docker image inspect --format '{{index .Config.Labels "org.r1.jar_sha256"}}' "$e5_image_id") == "$e5_jar_sha" ]] || { echo 'E5 image/jar label mismatch' >&2; exit 1; }
+    [[ $(docker image inspect --format '{{index .Config.Labels "org.r1.source_tree_sha256"}}' "$e5_image_id") == "$PILOT_CODE_SOURCE_SHA256" ]] || { echo 'E5 image/source label mismatch' >&2; exit 1; }
+    cp "$CODE_MANIFEST" "$run_dir/code.manifest.json"
+    /usr/bin/python3 -I -B - "$run_dir/code.manifest.json" "$sut" "$PILOT_CODE_ROLE" "$PILOT_CODE_SOURCE_SHA256" "$run_dir/compose.code-image.json" "$SUT_SERVICE" "$e5_image_id" <<'E5_PY'
+import json, pathlib, sys
+manifest, sut, role, expected, dest, service, image = sys.argv[1:]
+m = json.loads(pathlib.Path(manifest).read_text())
+assert m['injection_side'] == 'IMPL' and m['sut'] == sut
+key = 'source_tree_sha256' if role == 'control' else 'mutated_tree_sha256'
+assert m[key] == expected, 'E5 source digest differs from manifest'
+with open(dest, 'x') as stream:
+    json.dump({'services': {service: {'image': image}}}, stream)
+E5_PY
+    compose+=(-f "$run_dir/compose.code-image.json")
+fi
 # Snapshot the JSON source before either mutation pass.
 cp "$spec" "$run_dir/spec.original.${spec##*.}"
 original_spec="$run_dir/spec.original.${spec##*.}"
@@ -147,7 +178,9 @@ for flag in --checks --hypothesis-seed --hypothesis-max-examples --junit-xml --c
     fi
 done
 phase=startup
-if docker image inspect "$SUT_IMAGE" >/dev/null 2>&1; then
+if [[ -n $PILOT_CODE_ROLE ]]; then
+    "${compose[@]}" up -d --no-build >"$run_dir/compose-up.log" 2>&1
+elif docker image inspect "$SUT_IMAGE" >/dev/null 2>&1; then
     "${compose[@]}" up -d --no-build >"$run_dir/compose-up.log" 2>&1
 else
     "${compose[@]}" up -d --build >"$run_dir/compose-up.log" 2>&1
@@ -162,7 +195,14 @@ done
 # Probe through the proxy; readiness traffic is quarantined before generation.
 ready=0
 for ((attempt=1; attempt<=60; attempt++)); do
-    if curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:18080$HEALTH_PATH" \
+    if [[ ${HEALTH_METHOD_DEFAULT:-GET} == POST ]]; then
+        # CWA disables actuator HTTP and exposes POST-only business routes.
+        # Empty body tests MVC binding without invoking the operation or dependencies.
+        if health_status=$(curl --silent --show-error --max-time 2 --request POST \
+            --header 'Content-Type: application/json' --data '' -o /dev/null --write-out '%{http_code}' \
+            "http://127.0.0.1:18080$HEALTH_PATH" 2>"$run_dir/health-error.txt") \
+            && [[ $health_status == "${HEALTH_STATUS_DEFAULT:?Set expected POST readiness status}" ]]; then ready=1; break; fi
+    elif curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:18080$HEALTH_PATH" \
         -o /dev/null 2>"$run_dir/health-error.txt"; then ready=1; break; fi
     sleep 2
 done
@@ -183,6 +223,12 @@ schema_cmd=(run "/work/$(basename "$test_spec")" --base-url "http://mitmproxy:80
     --checks "$SCHEMA_CHECKS" --hypothesis-seed "$seed" --hypothesis-max-examples "$MAX_EXAMPLES" \
     --junit-xml /work/schemathesis.junit.xml --cassette-path /work/schemathesis-cassette.yaml \
     --request-timeout "$REQUEST_TIMEOUT_MS" --hypothesis-phases "$PILOT_HYPOTHESIS_PHASES" --sanitize-output true)
+# DATA_GEN (positive|negative|all): unset keeps the argv of earlier batches (Schemathesis default = positive).
+# REQUEST_LOOSE can only show an effect if traffic violates the loosened constraint, i.e. with negative data.
+if [[ -n ${DATA_GEN:-} ]]; then
+    [[ $DATA_GEN =~ ^(positive|negative|all)$ ]] || { echo 'Invalid DATA_GEN' >&2; exit 2; }
+    schema_cmd+=(--data-generation-method "$DATA_GEN")
+fi
 # mount the run directory, so the input and every output remain in this run.
 # Generator input only: cut recursive $ref back-edges (hypothesis-jsonschema stalls on them).
 # Conformance analysis keeps using spec.test.* (the untouched original or mutated spec).

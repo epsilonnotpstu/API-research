@@ -17,7 +17,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import copy  # noqa: E402
-from specmut import load_spec, operations, mutate_response  # noqa: E402
+from specmut import load_spec, operations, mutate_response, mutate_loose, LOOSE_KEYS  # noqa: E402
+
+# Constraints our checker evaluates; 'format' (e.g. int64) is not enforced by conformance.py.
+CHECKED_LOOSE_KEYS = (set(LOOSE_KEYS) - {'format'}) | {'required'}
+
+
+def loose_effective(spec, path, method):
+    """True if REQUEST_LOOSE would remove at least one request constraint the checker evaluates."""
+    s = copy.deepcopy(spec)
+    edits = []
+    mutate_loose(s, path, method, s['paths'][path][method], edits)
+    return any(e['pointer'].rsplit('/', 1)[-1] in CHECKED_LOOSE_KEYS and e.get('before') not in (None, False)
+               for e in edits)
 
 
 def oracle_mutable(spec, path, method):
@@ -45,11 +57,21 @@ def main():
     ap.add_argument('--min-count', type=int, default=1)
     ap.add_argument('--any-schema', action='store_true',
                     help='do not require a 2xx response schema that RESPONSE_ORACLE can edit')
+    ap.add_argument('--fault', choices=('RESPONSE_ORACLE', 'REQUEST_LOOSE'), default='RESPONSE_ORACLE',
+                    help='REQUEST_LOOSE: spec-only pool of operations with a checker-evaluated request constraint')
     ap.add_argument('--out', required=True)
     a = ap.parse_args()
     run = Path(a.run_dir)
     spec_file = next(run.glob('spec.original.*'))
     spec = load_spec(str(spec_file))
+    if a.fault == 'REQUEST_LOOSE':
+        ops = sorted((p, m) for p, m, _ in operations(spec) if loose_effective(spec, p, m))
+        Path(a.out).write_text(json.dumps({'source_run': run.name, 'spec': spec_file.name, 'fault': a.fault,
+            'criterion': 'REQUEST_LOOSE removes >=1 checker-evaluated request constraint (' +
+                         ', '.join(sorted(CHECKED_LOOSE_KEYS)) + ')',
+            'operations': [list(k) for k in ops]}, indent=2), encoding='utf-8')
+        print(f'{len(ops)} eligible operations -> {a.out}')
+        return
     pats = template_matcher(spec)
     base = a.base_path.rstrip('/')
     counts = {}

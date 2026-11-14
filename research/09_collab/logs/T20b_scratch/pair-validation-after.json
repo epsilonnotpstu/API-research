@@ -1,0 +1,113 @@
+{
+  "checks": [
+    {
+      "check": "build.source_and_patch",
+      "status": "PASS"
+    },
+    {
+      "check": "build.maven_and_dependencies",
+      "status": "PASS"
+    },
+    {
+      "check": "build.control.image_context",
+      "status": "PASS"
+    },
+    {
+      "check": "build.mutant.image_context",
+      "status": "PASS"
+    },
+    {
+      "check": "build.equal_non_jar_inputs",
+      "status": "PASS"
+    },
+    {
+      "check": "build.manifest_and_base",
+      "status": "PASS"
+    },
+    {
+      "check": "control.metadata_read",
+      "status": "PASS"
+    },
+    {
+      "check": "mutant.metadata_read",
+      "status": "PASS"
+    },
+    {
+      "check": "control.completion_snapshots_tools",
+      "status": "PASS"
+    },
+    {
+      "check": "control.treatment_image_chain",
+      "status": "PASS"
+    },
+    {
+      "check": "mutant.completion_snapshots_tools",
+      "status": "PASS"
+    },
+    {
+      "check": "mutant.treatment_image_chain",
+      "status": "PASS"
+    },
+    {
+      "check": "pair.equal_junit_errors",
+      "status": "PASS"
+    },
+    {
+      "check": "pair.equal_scenario_runtime_and_provenance",
+      "status": "PASS"
+    }
+  ],
+  "control_run": "/home/afridi/Documents/API research/research/08_experiments/E1_pilot/runs/market/20261114T115943Z_398774_e5_market-drop-null_control_s1",
+  "format": "e5-pair-validation-v1",
+  "input_sha256": {
+    "control/code.manifest.json": "99f78ff88fe0787f30fb7a1752e6db7d0f4c8b26d98f3485d85d2e262fec52ae",
+    "control/exchanges.jsonl": "68bb098f694344698a430b1fd9b10f32765c80b6a4d112a9d749a97b3b65a8e9",
+    "control/generator-input.json": "acdb9a5e6cde60f5279923024b1983cc3764a587dff90d262d1ccdf7fb7bb416",
+    "control/run.json": "215575b00002bfdbfdc394d5d573ff4990e362fe5d3aa493d4e507cfa80a3bcd",
+    "control/spec.original.json": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+    "control/spec.test.json": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+    "mutant/code.manifest.json": "99f78ff88fe0787f30fb7a1752e6db7d0f4c8b26d98f3485d85d2e262fec52ae",
+    "mutant/exchanges.jsonl": "9abdfd2683e7eb87df4d1a8ee49b4184eacacb58e2f394293c8b22fdc7eaa941",
+    "mutant/generator-input.json": "acdb9a5e6cde60f5279923024b1983cc3764a587dff90d262d1ccdf7fb7bb416",
+    "mutant/run.json": "f323e737a1e102a59dccde51c26d46c5d7139b01195afb329c3037189f107926",
+    "mutant/spec.original.json": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+    "mutant/spec.test.json": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd"
+  },
+  "junit_errors": {
+    "control": [
+      {
+        "error_text": "Schema Error\n\nFailed to generate test cases for this API operation because of unsupported regular expression `^[\\pL '-]+$`\n\nTip: Ensure your regex is compatible with Python's syntax.\nFor guidance, visit: https://docs.python.org/3/library/re.html",
+        "testcase_name": "POST /register"
+      }
+    ],
+    "mutant": [
+      {
+        "error_text": "Schema Error\n\nFailed to generate test cases for this API operation because of unsupported regular expression `^[\\pL '-]+$`\n\nTip: Ensure your regex is compatible with Python's syntax.\nFor guidance, visit: https://docs.python.org/3/library/re.html",
+        "testcase_name": "POST /register"
+      }
+    ]
+  },
+  "limitations": [
+    "Saved evidence and current snapshots only; no Docker/build execution.",
+    "Fresh containers and no SUT mounts do not prove equal business state or identical traces.",
+    "Generator container is ephemeral; its launch settings are evidenced by frozen harness and argv.",
+    "Runtime-base provenance is relative to the rebuilt pair, not the historical SUT image.",
+    "Provenance PASS is not a causal mutation kill or independent IMPL attribution; review JUnit failures manually."
+  ],
+  "mut_dir": "/home/afridi/Documents/API research/research/08_experiments/E5_codemut/work/market-drop-null_20261114T113144Z",
+  "mutant_run": "/home/afridi/Documents/API research/research/08_experiments/E1_pilot/runs/market/20261114T115943Z_398774_e5_market-drop-null_mutant_s1",
+  "notes": [
+    {
+      "check": "pair.equal_junit_errors",
+      "errors": [
+        {
+          "error_text": "Schema Error\n\nFailed to generate test cases for this API operation because of unsupported regular expression `^[\\pL '-]+$`\n\nTip: Ensure your regex is compatible with Python's syntax.\nFor guidance, visit: https://docs.python.org/3/library/re.html",
+          "testcase_name": "POST /register"
+        }
+      ],
+      "note": "Identical JUnit execution errors in both roles; affected test cases did not generate normally."
+    }
+  ],
+  "seed": 1,
+  "status": "PASS"
+}

@@ -1,6 +1,9 @@
-# 🚩 RESUME POINT — 2026-11-14 (বিদ্যুৎ বিভ্রাটের কারণে বিরতি)
+# HANDOFF — 2026-11-14 (বিদ্যুৎ ফিরেছে; কাজ আবার চলছে)
 
-**অবস্থা:** কোনো process, Docker container বা Codex task চলছে না। সব শেষ বা পরিষ্কারভাবে থামানো হয়েছে।
+> ✅ Resume সম্পন্ন: scout pool batch শেষ (`MARKET_RESULTS.md` §4.4); Codex T16 চলছে (T15 session resume); labeller A (petstore, market) শেষ।
+
+
+**বিরতির সময়ের অবস্থা (ঐতিহাসিক):** তখন কোনো process, Docker container বা Codex task চলছিল না।
 
 ## ✅ সম্পন্ন (এই session)
 | কাজ | Owner | ফল |
@@ -46,3 +49,4 @@ FAULTS=RESPONSE_ORACLE ORACLE_POOL=baseline SCHEMA_CHECKS=response_headers_confo
 - Codex শুধু `-s workspace-write`।
 - Auth header কখনো print করা যাবে না।
 - Batch চলাকালে `tools/` edit করা যাবে না।
+- **Batch চলাকালে কোনো Codex task যেন `harness_v2/`-এ না লেখে।** নইলে harness hash বদলে যায়, বা script চলার মাঝখানে বদলে যায় (2026-11-14-এ T17-এর সময় একবার এমন হয়েছে)।

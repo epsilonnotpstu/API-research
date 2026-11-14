@@ -86,5 +86,20 @@ class EligibleOps(unittest.TestCase):
             self.assertEqual(n, 3)
 
 
+class LoosePool(unittest.TestCase):
+    def test_format_only_and_structural_ops_are_not_eligible(self):
+        import eligible_ops
+        spec = json.loads(json.dumps(SPEC))
+        # /items/{id}: only `format` (checker-ignored) -> not eligible; /items post: maxLength -> eligible
+        spec['paths']['/items/{id}']['parameters'][0]['format'] = 'int64'
+        spec['paths']['/items']['post']['parameters'] = [
+            {'name': 'body', 'in': 'body', 'schema': {'type': 'object', 'properties': {'a': {'type': 'string', 'maxLength': 3}}}}]
+        self.assertFalse(eligible_ops.loose_effective(spec, '/items/{id}', 'get'))
+        self.assertFalse(eligible_ops.loose_effective(spec, '/items', 'get'))
+        self.assertTrue(eligible_ops.loose_effective(spec, '/items', 'post'))
+        spec['paths']['/items']['get']['parameters'] = [{'name': 'q', 'in': 'query', 'required': True, 'type': 'string'}]
+        self.assertTrue(eligible_ops.loose_effective(spec, '/items', 'get'))  # required flag counts
+
+
 if __name__ == '__main__':
     unittest.main()
