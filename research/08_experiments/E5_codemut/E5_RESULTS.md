@@ -41,12 +41,46 @@
 - **Mutated op-এ সংকেত (N বা I):** 22/22।
 - **প্রত্যাশিত violation kind:** 20/22।
 
+## 3b. Noise floor (control বনাম control, T22; 2026-11-14)
+- **নকশা:** প্রতিটি বৈধ জোড়া-seed-এর জন্য একই control image দুবার চালানো হয়েছে (control, control_repeat)।
+  - Seed, 300 s, `DATA_GEN=all` সব একই।
+  - মোট 44টি run। সব noise জোড়া validate হয়েছে (21 PASS, 1 PASS_WITH_EXCLUSION)।
+- **নিয়ম** `EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1` (PIPELINE.md):
+  - সংকেত noise ছাড়ায় যদি mutated op-এর প্রত্যাশিত-kind NEW/INCREASED fingerprint দুই noise capture-এর কোনোটিতেই না থাকে।
+  - এটা রক্ষণশীল পর্যবেক্ষণ, কোনো statistical test নয়।
+
+| Mutant | Signal > noise (seed অনুযায়ী) | মন্তব্য |
+|---|---|---|
+| scout-wrong-status, scout-drop-null, scout-reject-valid | 3/3, 3/3, 3/3 | |
+| petstore-response-field | 3/3 | |
+| market-wrong-status | 3/3 | |
+| cwa-drop-null, cwa-drop-validation | 2/2, 1/1 | |
+| **market-drop-null** | **0/1** | সংকেত শুধু INCREASED (2)। Noise-এও ঠিক একই op-এ INCREASED 2, আর fingerprint control-এই আছে। ফলে noise থেকে আলাদা করা যায় না। |
+| **petstore-reject-valid** | **0/3** | s1, s3-এ প্রত্যাশিত kind-ই নেই। s2-এর fingerprint noise-এও দেখা যায়। |
+
+**মোট:**
+- **Noise ছাড়ানো সংকেত:** 18/22 জোড়া-seed। Mutant হিসেবে 7/9 সব বৈধ seed-এ।
+- **Noise-এ কাকতালীয় "প্রত্যাশিত kind":** mapped op-এ 3/22 noise run-এ (market-drop-null, petstore-reject-valid s3, petstore-response-field s3)। শুধু kind মিলিয়ে mutant ধরা নিরাপদ নয়।
+- **অপরিবর্তিত op (default oracle; min–max):**
+
+| SUT | Mutant জোড়া: NEW / I / D | Noise জোড়া: NEW / I / D |
+|---|---|---|
+| scout | 0–9 / 37–52 / 27–47 | 0–3 / 28–60 / 31–53 |
+| petstore | 0–5 / 8–15 / 7–15 | 0–3 / 4–15 / 5–10 |
+| market | 0 / 5–10 / 4–10 | 0 / 5–10 / 5–11 |
+| cwa | 0 / 0–3 / 0–2 | 0 / 0–2 / 0–3 |
+
+- Occurrence-স্তরের I/D পরিবর্তন mutant আর noise-এ প্রায় সমান, তাই এগুলো fuzzing-এর অনির্দেশ্যতা থেকে আসে, mutation থেকে নয়।
+- NEW-এর সংখ্যা mutant জোড়ায় কিছুটা বেশি (scout সর্বোচ্চ 9 বনাম 3)।
+  - ⚠️ [H] এটা mutation-এর পরোক্ষ প্রভাব হতে পারে, যেমন বদলে যাওয়া state-এর কারণে পরের request-এর আচরণ পাল্টানো।
+  - আবার n ছোট হওয়ার কারণেও হতে পারে। এখান থেকে সিদ্ধান্ত টানা যায় না।
+
 ## 4. পর্যবেক্ষণ
 1. **Detection নির্ভরযোগ্য।** প্রতিটি বৈধ জোড়া-seed-এ code fault mutated operation-এ নতুন violation বা বাড়তি occurrence তৈরি করে, আর প্রায় সবসময় প্রত্যাশিত kind-এ।
    - market-drop-null-এ সংকেত শুধু INCREASED, কারণ ওই fingerprint control-এই ছিল। এটা §6-এর "occurrence-স্তরের metric লাগে" কথার আরেকটা উদাহরণ।
 2. **Fresh-এর noise বড়, বিশেষ করে scout-এ।** অপরিবর্তিত op-এ প্রতি seed-এ ≤9টি NEW, আর occurrence পরিবর্তন 27–52।
    - তাই মোট NEW গুনে mutant শনাক্ত করা যায় না। কাজ করে শুধু mutated op-এ প্রত্যাশিত kind-এর খোঁজ, যার জন্য আগে থেকে manifest জানা থাকতে হয়।
-   - ⚠️ Noise floor (একই seed-এ control বনাম control) এখনো মাপা হয়নি।
+   - Noise floor পরে মাপা হয়েছে (§3b)। অপরিবর্তিত op-এর এই পরিবর্তনগুলো প্রায় পুরোটাই noise।
 3. **R1-এর মূল প্রশ্নের উত্তর এখনো বাকি।** Fresh-mode attribution নতুন violation-কে label দেয় না (সব NEEDS_MANUAL)। আর `triage.py`-এর CLI P001-এর format-এর জন্য বানানো, তাই এখানে চলে না।
    - তাই "attribution কি code fault-কে IMPL বলে?" — এর উত্তর পেতে mutated op-এর NEW violation-গুলোকে A/B protocol-এ blind label করতে হবে।
    - **পরের ধাপ:** 22টি জোড়া-seed থেকে প্রায় 25টি item। Labeller-কে mutant/control পরিচয় জানানো হবে না।
@@ -57,6 +91,7 @@
 
 ## 5. সীমা
 - **নমুনা ছোট:** 9টি build-valid mutant, প্রতিটি একটি করে site।
+- **Noise floor:** প্রতি জোড়া-seed-এ মাত্র একটি repeat। তাই "noise ছাড়ায়" একটা finite-sample পর্যবেক্ষণ, কোনো p-value নয়।
 - **Detection-এর মানদণ্ড** ("mutated op-এ প্রত্যাশিত kind") manifest জানার ওপর নির্ভর করে। এটা oracle-এর ক্ষমতার upper bound, কোনো অন্ধ মূল্যায়ন নয়।
 - **Directed witness** (নির্দিষ্ট request দিয়ে সরাসরি যাচাই, T19 README) করা হয়নি। এখানের "kill" fuzzing-এ ধরা পড়া।
 - **Runtime base:** JDK 11-এর base image আবার pull করতে হয়েছে, তাই digest মূল pilot image-এর থেকে আলাদা। তবে control আর mutant দুটো একই base পেয়েছে।

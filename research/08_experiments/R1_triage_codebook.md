@@ -257,3 +257,24 @@
   - `analyse_run.sh`-এর default হলো SUT oracle।
   - `ORACLE=default` দিলে analysis চলে generic oracle দিয়ে; output যায় `analysis-<mode>-default`-এ।
 - **আগের সংস্করণ:** 2026-11-14-এর আগের সব analysis (আর চূড়ান্ত label) default oracle দিয়ে করা।
+
+## 11. v0.5 সংশোধন — E5 blind labelling থেকে (supervisor-এর সিদ্ধান্ত, 2026-11-14)
+উৎস: `E5_codemut/E5_BLIND_RESULTS.md`। দুই blind labeller-ই ইঞ্জেক্ট করা WRONG_STATUS fault-কে §10.7 অনুযায়ী SPEC বলেছিল।
+
+### 11.1 §10.7-এর সংশোধিত রূপ (আগের §10.7-এর প্রথম বুলেটের জায়গা নেবে)
+"Code ইচ্ছাকৃতভাবে undocumented status দেয় → SPEC/S-STATUS" প্রযোজ্য হবে **কেবল যখন code-এর বাইরে বা একাধিক জায়গায় স্বাধীন intent-প্রমাণ থাকে**। এর অন্তত একটি থাকতে হবে:
+- ওই status assert করে এমন test (unit বা integration);
+- documentation, README বা API guide;
+- commit message, issue বা changelog;
+- একই নীতি একাধিক স্বাধীন জায়গায় (যেমন market-এর 406: দুটো আলাদা exception handler)।
+
+একমাত্র প্রমাণ যদি ওই একটা code লাইন বা annotation হয় → **UNDECIDABLE**, `both_candidate=true`। কারণ code পড়ে ইচ্ছাকৃত নকশা আর ইচ্ছাকৃত-দেখতে ভুলকে আলাদা করা যায় না (H8)।
+
+### 11.2 সাধারণীকরণ
+একই যুক্তি অন্য explicit "ইচ্ছাকৃত-দেখতে" code-এও প্রযোজ্য (যেমন serialization annotation, explicit guard)। E-CODE-INTENT একা থাকলে confidence ≤ 2। Intent-ভিত্তিক SPEC label-এর জন্য উপরের স্বাধীন প্রমাণ লাগবে।
+
+### 11.3 আগের চূড়ান্ত label-এর পুনর্বিচার (Claude, 2026-11-14)
+Baseline-এর সব S-STATUS label (`E2_labelling/*_adjudication.csv`) §11.1-এর আলোকে দেখা হয়েছে। **কোনো চূড়ান্ত label বদলায়নি।**
+- **scout 400/404 (25টি):** Dropwizard/JAX-RS framework-এর default আচরণ; সব operation-এ একই নীতি, কোনো একক code লাইন নয়।
+- **scout 403 (B065):** labeller B test source-কে প্রমাণ হিসেবে উল্লেখ করেছে।
+- **market 406 (M003, M005, M007, M012):** দুটো আলাদা handler (`RestExceptionHandler.java:63-64,73-74`)।

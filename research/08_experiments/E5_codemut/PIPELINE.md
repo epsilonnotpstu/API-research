@@ -201,3 +201,89 @@ rows carry `pipeline_snapshot_status=PRIOR_E5_PIPELINE_RECOMPUTED`; current
 analyses carry CURRENT. This avoids rewriting prior evidence or claiming that
 its recorded code version equals the new one (`summarise_e5.py`,
 `verify_analysis`, `summarise`).
+
+## T22 control-vs-control noise mode
+
+The external stage below is for Claude within supervisor authorization. T22
+only wrote the launcher; no real noise runs were executed in T22. Use an existing
+reviewed build-pair directory. The preflight intentionally checks the complete
+T20 build bundle (including the unused mutant); a build-invalid/incomplete bundle
+cannot be used. Both actual noise runs select **the same control image ID,
+control JAR, original source-tree digest, and CODE_ROLE=control**. Conceptual
+roles are `control` and `control_repeat`. The shared launcher gives them distinct
+run IDs and runs them sequentially with the exact pair settings, including seed,
+300 s, DATA_GEN=all and response_headers_conformance. No harness patch is needed
+(`run_noise.sh:1–6`; `e5_pipeline.py`, `run_pair`; `validate_pair.py`, `treatment`).
+
+```bash
+# Future external execution only; do not execute as part of write-only review.
+"$E5/run_noise.sh" "$MUT" 1 2 3
+# Own Python saved-evidence analysis after the noise runs exist:
+"$E5/analyse_noise.sh" "$MUT"
+# Standalone noise validation (also accepts --report-staging-dir):
+/usr/bin/python3 -I -B "$E5/validate_pair.py" \
+  "$NOISE_CONTROL_RUN" "$CONTROL_REPEAT_RUN" "$MUT" --kind noise
+# Recompute both comparison kinds and both oracles:
+/usr/bin/python3 -I -B "$E5/summarise_e5.py"
+```
+
+Noise files are separate: `noise-run-preflight.json`, `noise-run-plan.json`,
+`noise-runs.tsv`, `noise-run-s<seed>-<role>.log`,
+`noise-pair-validation-s<seed>.json` and `noise-analysis-s<seed>-<oracle>/`.
+The existing `runs.tsv`, pair plan/reports/logs/analysis remain untouched. Each
+noise analysis keeps `control[.raw].violations.jsonl`,
+`control_repeat[.raw].violations.jsonl`, attribution.csv, tools.log and
+analysis.json. Noise provenance records `kind=noise` and `control_repeat_run`.
+All T20/T20b/T20c rules still apply: same scenario/tools/settings, fresh containers
+and volumes, exact image/JAR/source chain, environment multiset, Binds set, paired
+JUnit errors and non-mapped-operation exclusions. Manifest-mapped operations
+retain the strict JUnit asymmetry failure rule even though both builds are
+unmutated (`e5_common.py`, `layout`, `ledger`; `e5_pipeline.py`, `analyse_pair`;
+`validate_pair.py`, `validate`).
+
+The summary discovers either kind's ledger or launch plan and emits `kind=pair`
+and `kind=noise` rows. Every metric has the same definition for each kind.
+For noise, `mutated_*` means **manifest-mapped operation stratum**, not an actual
+code mutation: it measures control variation on the exact target operations.
+The inherited `mutated_occurrences` attribution field and
+`expected_signal_present_mutant` summary field refer to the treatment, hence
+`control_repeat` for noise. Expected-kind noise matches are chance observations;
+fresh labels stay NEEDS_MANUAL, and causal attribution stays unavailable. Missing,
+failed, unattempted or tampered noise analyses have blank metrics and an error;
+no noise ledger/plan means no fabricated noise rows (`summarise_e5.py`,
+`verify_analysis`, `metrics`, `summarise_kind`, `main`).
+
+`signal_noise_rule=EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1` means:
+
+- Match the same MUT_DIR, seed and oracle; both pair/noise analyses must validate
+  and pass the saved hash chain. Revalidate the pair control against the noise
+  control in noise mode to establish the same control build and scenario across
+  comparisons. All four run directories, Compose projects and per-service
+  container IDs must be distinct, with no shared proxy volumes.
+- Select expected-kind fingerprints that are NEW or INCREASED on manifest-mapped
+  operations in the mutant comparison. At least one candidate's operation must
+  be captured in **all four runs**, using the conformance route matcher.
+- `True` iff any such covered candidate fingerprint is absent from **both** noise
+  captures. Test absence against the union of all noise attribution fingerprints,
+  including PERSISTENT, unchanged and VANISHED fingerprints, not only noise NEW.
+- `False` iff there are no expected changed candidates, or all candidates have
+  operation exposure and every fingerprint appears in at least one noise run.
+  `UNKNOWN` if matching valid noise is missing, the cross-comparison scenario
+  differs, or an uncovered candidate could change the result. Noise rows use
+  `NOT_APPLICABLE`. Detail/reason or qualifying fingerprints accompany the value.
+
+This is a conservative finite-sample observation rule, **not** a statistical
+significance test, a magnitude comparison, or a causal kill. A large occurrence
+increase can still be False if that fingerprint appears even once in noise.
+Operation exposure only proves a captured request, not matched request bodies,
+business state, coverage of a branch, or equal request counts. There is one noise
+pair per selected seed; another repeat for that seed requires a separate fresh
+reviewed launch directory. The current launcher refuses implicit resume or
+output overwrite (`summarise_e5.py`, `expected_changed`, `observed_operations`,
+`compare_noise`, `summarise`; `e5_pipeline.py`, `run_pair`, `analyse_pair`).
+
+T22 verification uses `test_e5_noise.py` alongside all prior E5 tests, with
+`E5_TEST_SCRATCH="$PWD/09_collab/logs/T22_scratch"`. Synthetic success/failure/
+interrupt launches mock the process boundary; only our own conformance/attribute
+analysis executes. See `09_collab/logs/T22_scratch/tests.txt` and
+`09_collab/reports/T22_report.md` for final results.
