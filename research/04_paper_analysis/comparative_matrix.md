@@ -1,6 +1,6 @@
 # Comparative Evidence Matrix (P001–P038)
 
-উৎস: `04_paper_analysis/matrix/*.json` (পূর্ণ পাঠ্য `evidence_matrix.csv`-এ)। সংক্ষিপ্ত cell-এ “…” = ছাঁটা। Analyst limitation = অনুমান (⚠️)। P038 = substitute document (IDENTITY MISMATCH)।
+উৎস: `04_paper_analysis/matrix/*.json` (পূর্ণ পাঠ্য `evidence_matrix.csv`-এ)। সংক্ষিপ্ত cell-এ “…” = ছাঁটা। Analyst limitation = অনুমান (⚠️)।
 
 ## T1 — REST testing/fuzzing (8)
 
@@ -83,4 +83,4 @@
 | ID | Year | Approach | Dataset/benchmark | Key findings | Author limits | ⚠️ Analyst limits | Repro | Conf. |
 |---|---|---|---|---|---|---|---|---|
 | P037 | 2025 | Deploy the OSS production-grade Light-OAuth2 system (7 services + MySQL); Locust test suite covering OAuth2.0 flows and CRUD with documented-error negative … | 1,740 runs x 54 tests; ~657K log files (>2B lines); 485 metrics (>45.5M files); ~540 GB | Concatenating all service logs fails (optimized F1 ~0.667, unsupervised AUC ~0.5; only DecisionTree >0.7); per-service, per-error models can reach perfect detection (Token/Client logs most … | Incomplete API documentation may affect tests; traces missing; no hardware anomalies; DB reset per run; university … | Anomalies are documented 4xx responses, not real faults; single archived system; host-level metrics with tiny 10 s windows; weak … | High | High |
-| P038 | 2019 | SLR claiming Petersen guidelines; 7 databases + Google Scholar; 465 -> 173 -> 49 -> 15 primary studies (2013-2018); checkmark/x coding of parameters and … | 15 primary studies (2013-2018) | Security addressed by 7/15, performance 9/15, complexity 10/15; unit testing ~75%, integration 10%, component/contract/E2E 5% each; only 1/15 compares with prior work; challenges include growing … | Possible selection and analysis bias; gray literature may be missed; more studies and databases needed; … | IDENTITY MISMATCH with selected paper; inconsistent inclusion period (2010-2018 vs 2013-2018); online date precedes acceptance date; … | Low | Low |
+| P038 | 2025 | SLR: Google Scholar ALLINTITLE query (186) + Scopus (278, subset), 4-author selection (Fleiss kappa 0.78 on 25), bidirectional snowballing to saturation; … | 74 peer-reviewed primary studies (2015-2024); replication package Zenodo 10.5281/zenodo.16941552 | System testing dominates (47), then integration 21, unit 15, acceptance 5; conformance 23, regression 14, API 8; performance 21, reliability 14, flexibility 2; specification-based strategies … | Google Scholar reproducibility risk; peer-reviewed literature only (no white/grey literature); observer bias mitigated … | Title-only query likely undercounts API testing (8) and misses REST API security work (P012, P014, P015) behind the 'no security testing' … | High | High |

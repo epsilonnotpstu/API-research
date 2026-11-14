@@ -15,6 +15,7 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import attribute
 import conformance
 import specmut
@@ -26,6 +27,12 @@ def instance(schema, depth=0):
         return None
     if 'enum' in schema and schema['enum']:
         return schema['enum'][0]
+    if 'const' in schema:
+        return schema['const']
+    if schema.get('allOf'):
+        parts = [instance(s, depth + 1) for s in schema['allOf']]
+        if all(isinstance(s, dict) for s in parts):
+            return {k: v for part in parts for k, v in part.items()}
     for key in ('allOf', 'oneOf', 'anyOf'):
         if schema.get(key):
             return instance(schema[key][0], depth + 1)
@@ -78,16 +85,19 @@ def exchanges_for(spec_obj):
                 elif p.get('in') == 'query':
                     query[p['name']] = [str(val).lower() if isinstance(val, bool) else str(val)]
             code = next((c for c in op.get('responses', {}) if str(c).startswith('2')), None)
+            code = code if code is not None else next(iter(op.get('responses', {})), None)
             if code is None:
                 continue
-            _, schema = sp.response_schema(op, int(code))
+            status = 200 if code == 'default' else int(str(code).replace('X', '0'))
+            _, schema = sp.response_schema(op, status)
+            schema = specmut.resolve(spec_obj, schema)
             body = instance(schema) if schema else None
             if isinstance(body, dict):
                 body['zz_undeclared'] = 1  # tolerated unless additionalProperties is false
             text = json.dumps(body) if body is not None else ''
             ex = {'request': {'method': method.upper(), 'path': path, 'query': query, 'headers': {},
                               'body': {'text': ''}},
-                  'response': {'status': int(code), 'headers': {}, 'body': {'text': text, 'truncated': False}}}
+                  'response': {'status': status, 'headers': {}, 'body': {'text': text, 'truncated': False}}}
             out.append(ex)
             if query:  # out-of-range variant: every query param gets a long string
                 bad = json.loads(json.dumps(ex))
@@ -103,7 +113,7 @@ def run(spec_path, fault, seed=3):
     b_spec, m_spec = conformance.Spec(base), conformance.Spec(mutated)
     b_viol = [v for ex in exchanges for v in conformance.check(b_spec, ex)]
     m_viol = [v for ex in exchanges for v in conformance.check(m_spec, ex)]
-    rows = attribute.attribute(b_viol, m_viol, {'mutations': manifest})
+    rows = attribute.attribute(b_viol, m_viol, {'mutations': manifest}, mode='replay')
     bad = [r for r in rows if r['status'] in ('NEW', 'VANISHED') and not r['op_mutated']]
     new = sum(r['status'] == 'NEW' for r in rows)
     gone = sum(r['status'] == 'VANISHED' for r in rows)
@@ -111,7 +121,7 @@ def run(spec_path, fault, seed=3):
 
 
 def main(spec_dir):
-    total_bad, summary = 0, {}
+    total_bad, total_exchanges, summary = 0, 0, {}
     for spec_path in sorted(glob.glob(f'{spec_dir}/*.json') + glob.glob(f'{spec_dir}/*.yaml')):
         for fault in specmut.FAULTS:
             try:
@@ -121,6 +131,7 @@ def main(spec_dir):
                 total_bad += 1
                 continue
             s = summary.setdefault(fault, [0, 0, 0, 0])
+            total_exchanges += n_ex
             s[0] += n_mut; s[1] += new; s[2] += gone; s[3] += len(bad)
             for r in bad[:3]:
                 print('UNEXPLAINED', Path(spec_path).stem, fault, r['status'], r['fingerprint'][:150])
@@ -128,6 +139,9 @@ def main(spec_dir):
     print('\nfault             mutated_ops  NEW  VANISHED  unexplained')
     for fault, (m, n, g, b) in summary.items():
         print(f'{fault:17s} {m:11d} {n:4d} {g:9d} {b:12d}')
+    if not summary or not total_exchanges:
+        total_bad += 1
+        print('ERROR zero corpus/exchange coverage')
     print('PASS' if total_bad == 0 else f'FAIL ({total_bad})')
     return 1 if total_bad else 0
 

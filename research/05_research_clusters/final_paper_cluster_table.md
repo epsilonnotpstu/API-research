@@ -2,7 +2,6 @@
 
 উৎস: `04_paper_analysis/evidence_matrix.csv` + প্রতিটি `Pxxx_analysis.md`। Machine-readable: `final_paper_cluster_table.csv`।
 Cluster: **T1** REST testing/fuzzing · **T2** GraphQL/RPC · **T3** Security/authz · **T4** Spec inference · **T5** Evolution · **T6** Docs/design · **T7** API misuse · **T8** LLM tool use/MCP · **T9** Microservices।
-⚠️ P038 = substitute document (নির্বাচিত Ponce et al. 2025 নয়)।
 
 ## T1 — REST testing/fuzzing (primary 8; secondary: P011, P012, P015, P016, P018, P025, P033, P037, P038)
 
@@ -25,7 +24,7 @@ Cluster: **T1** REST testing/fuzzing · **T2** GraphQL/RPC · **T3** Security/au
 | P010 | A principled approach to GraphQL query cost analysis | 2020 | ESEC/FSE 2020 | Technique | T3 | GraphQL query cost-এর formal বিশ্লেষণ | Under-estimation শূন্য; GitHub DoS প্রকাশ | Resolver configuration manual | High |
 | P011 | White-Box Fuzzing RPC-Based APIs with EvoMaster: An Industrial Case Study | 2023 | TOSEM | Technique | T1; T9 | EvoMaster দিয়ে RPC API white-box fuzzing, industrial | ৫০টি industrial API-তে ১২৬টি real fault; coverage ১৭.৪৯% | Industrial data গোপন; self-evaluation | High |
 
-## T3 — Security/authz (primary 4; secondary: P010, P029, P036, P037)
+## T3 — Security/authz (primary 4; secondary: P010, P029, P036, P037, P038)
 
 | ID | Title | Year | Venue | Type | Secondary | মূল অবদান | প্রধান ফল | প্রধান সীমাবদ্ধতা | Conf. |
 |---|---|---|---|---|---|---|---|---|---|
@@ -85,7 +84,7 @@ Cluster: **T1** REST testing/fuzzing · **T2** GraphQL/RPC · **T3** Security/au
 | ID | Title | Year | Venue | Type | Secondary | মূল অবদান | প্রধান ফল | প্রধান সীমাবদ্ধতা | Conf. |
 |---|---|---|---|---|---|---|---|---|---|
 | P037 | LO2: Microservice API Anomaly Dataset of Logs and Metrics | 2025 | PROMISE 2025 | Dataset | T1; T3 | Microservice API-error anomaly dataset (LO2) | সব service-এর log একত্রে ব্যর্থ (F1 ~০.৬৬৭) | Anomaly = documented 4xx | High |
-| P038 | [SUBSTITUTE] Microservice Testing Approaches: A Systematic Literature Review (Ghani et al.) | 2019 | IJIE 2019 ⚠️ substitute | SLR | T1 | ⚠️ Substitute: microservice testing-এর ১৫-study review (Ghani 2019) | Unit testing ~৭৫%; ১/১৫ পূর্ববর্তী কাজের সাথে তুলনা | নির্বাচিত paper নয়; rigor দুর্বল | Low |
+| P038 | Microservices testing: A systematic literature review | 2025 | IST 2025 | SLR | T1; T3 | ৭৪টি microservice testing study-র SLR (SWEBOK, TRL, SUT) | System testing ৪৭; API ৮; TRL ৩–৪; TrainTicket প্রধান | Title-only query; security gap-দাবি সংকীর্ণ | High |
 
 ## Cluster membership matrix (● primary, ○ secondary)
 
@@ -128,5 +127,5 @@ Cluster: **T1** REST testing/fuzzing · **T2** GraphQL/RPC · **T3** Security/au
 | P035 |  |  |  |  | ○ | ○ | ○ | ● |  |
 | P036 |  |  | ○ |  |  |  |  | ● | ○ |
 | P037 | ○ |  | ○ |  |  |  |  |  | ● |
-| P038 | ○ |  |  |  |  |  |  |  | ● |
-| **মোট (●/○)** | 8/9 | 3/0 | 4/4 | 4/9 | 6/4 | 3/11 | 3/5 | 5/6 | 2/4 |
+| P038 | ○ |  | ○ |  |  |  |  |  | ● |
+| **মোট (●/○)** | 8/9 | 3/0 | 4/5 | 4/9 | 6/4 | 3/11 | 3/5 | 5/6 | 2/4 |

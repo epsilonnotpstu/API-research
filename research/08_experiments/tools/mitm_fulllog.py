@@ -6,6 +6,7 @@ status, path and method). Mount it into the mitmproxy container and pass
 exchanges.jsonl). Bodies are truncated at MAX_BODY bytes; secrets in the
 Authorization/Cookie headers are redacted.
 """
+import base64
 import json
 import os
 import time
@@ -22,7 +23,13 @@ os.makedirs(LOG_DIR, exist_ok=True)
 def _body(message):
     raw = message.get_content(strict=False) or b''
     text = raw[:MAX_BODY].decode('utf-8', 'replace')
-    return {'text': text, 'truncated': len(raw) > MAX_BODY, 'size': len(raw)}
+    try:
+        raw[:MAX_BODY].decode('utf-8', 'strict')
+        decode_error = False
+    except UnicodeDecodeError:
+        decode_error = True
+    return {'text': text, 'truncated': len(raw) > MAX_BODY, 'size': len(raw),
+            'base64': base64.b64encode(raw[:MAX_BODY]).decode('ascii'), 'decode_error': decode_error}
 
 
 def _headers(headers):
@@ -34,6 +41,7 @@ def response(flow: http.HTTPFlow):
     record = {
         'ts': time.time(),
         'request': {'method': req.method, 'path': req.path.split('?', 1)[0],
+                    'origin': f'{req.scheme}://{req.host}:{req.port}',
                     'query': {k: req.query.get_all(k) for k in req.query.keys()},
                     'headers': _headers(req.headers), 'body': _body(req)},
         'response': {'status': resp.status_code, 'headers': _headers(resp.headers), 'body': _body(resp)},

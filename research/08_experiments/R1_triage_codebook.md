@@ -1,4 +1,4 @@
-# R1 Triage Codebook — v0.2 (খসড়া)
+# R1 Triage Codebook — v0.3 (খসড়া)
 
 **তারিখ:** 2026-11-09 · **উদ্দেশ্য:** OpenAPI conformance failure-কে **উৎস (attribution)** অনুযায়ী label করার নিয়ম।
 - Manual labelling (বাস্তব failure) ও injected ground truth (§5) — দুটোতেই একই scheme।
@@ -150,3 +150,63 @@
 5. **COMPOSITION (oneOf/allOf/anyOf ব্যর্থতা):**
    - প্রথমে যাচাই করতে হবে schema-টি নিজে satisfiable কিনা। যেমন `oneOf`-এর দুটি শাখা একই instance-এ মিলে যায় কিনা।
    - Satisfiable না হলে → SPEC।
+
+## 9. v0.3 পরিবর্তন (2026-11-13)
+
+**উৎস:** তিনটি label-সেটের তুলনা — rule baseline, T2 triage, T3 blind LLM labeller (`E2_labelling/comparison_rule_triage_codex.csv`) — এবং Codex-এর T3 প্রস্তাব।
+মতভেদের বড় অংশ এসেছে নিচের তিনটি অস্পষ্টতা থেকে।
+
+### 9.1 Label-এর একক: message-স্তর → cluster-স্তর (aggregation)
+- **প্রথমে message-স্তরে label:** প্রতিটি violation message আলাদা L1/L2 পায়।
+- **Cluster-এর L1 নির্ণয়ের নিয়ম:**
+
+| Message-স্তরের ফল | Cluster L1 |
+|---|---|
+| সব message একই L1 (SPEC / IMPL / ENV / TEST) | সেই L1 |
+| কিছু SPEC, বাকি UNDECIDABLE | **SPEC_PARTIAL** |
+| কিছু IMPL, বাকি UNDECIDABLE | **IMPL_PARTIAL** |
+| SPEC ও IMPL দুটোই প্রমাণিত | **BOTH** — প্রতিটি দিক আলাদা প্রমাণসহ |
+| কোনো message-এ সিদ্ধান্ত নেই | UNDECIDABLE |
+
+- **মূল্যায়নে:**
+  - Strict scoring-এ `*_PARTIAL` = UNDECIDABLE।
+  - Lenient scoring-এ `*_PARTIAL` = সংশ্লিষ্ট L1।
+  - দুটোই রিপোর্ট করতে হবে।
+- ⇒ কোনো “decisive” ব্যতিক্রম নেই। যেমন Amadeus F004–F006-এ double-escape SPEC, কিন্তু missing `fax` UNDECIDABLE → cluster = **SPEC_PARTIAL**।
+
+### 9.2 Strict-only violation = oracle policy, SPEC নয়
+- §8.1 সংশোধিত হলো। যে message কেবল OpenAPI-র ডিফল্টের চেয়ে কঠোর validator-এ violation (undeclared property, যখন `additionalProperties` অনুল্লিখিত), তার L1 = **TEST**, L2 = **T-ORACLE-STRICT**।
+- কারণ: OpenAPI semantics-এ implementation বা spec কোনোটিই লঙ্ঘন করেনি — oracle-এর নীতি কঠোর।
+- **Documentation completeness আলাদা attribute:** `doc_gap=true`, যদি field-টি public documentation-এ থাকে কিন্তু schema-তে না থাকে।
+- P001-এ এর প্রভাব:
+  - ৯টি পুরোপুরি strict-only fault → TEST।
+  - বাকি ১৮টিতে undeclared-property message TEST, আর cluster aggregation §9.1 অনুযায়ী।
+
+### 9.3 প্রমাণের নিয়ম
+- **E-DOC (web):** বর্তমান public documentation গ্রহণযোগ্য, তবে confidence ≤ ২। Retrieval তারিখ ও URL বাধ্যতামূলক। Documentation পরে বদলে থাকতে পারে — ঐতিহাসিক অমিলের ঝুঁকি।
+- **Developer evidence-এর দিক:** `confirmed` বা `fixed` একা attribution নয়। Fix কোথায় হয়েছে — spec, code বা documentation — তার URL বা commit না থাকলে কেবল “সমস্যা স্বীকৃত” অর্থে ব্যবহার করতে হবে।
+- **R1 বনাম R4-এর অগ্রাধিকার:**
+  - 429, 502, 503, 504 এবং gateway বা timeout body → **ENV** (R4 অগ্রাধিকার পায়)।
+  - অন্য সব 5xx → IMPL (R1)।
+- **R3 (closed-source):** code না দেখে “code-এ constraint নেই” ধরা যাবে না। Closed-source API-তে R3 প্রযোজ্য নয়।
+- **Malformed JSON body:** documented JSON response-এর body syntactically invalid হলে → **IMPL / I-RESP-CONTRACT** (P001 F047)।
+
+### 9.4 নতুন Level-2 code
+- `S-MEDIA` — Content-Type বা media type undocumented।
+- `S-RESP-VALUE` — enum বা range অসম্পূর্ণ।
+- `T-ORACLE-STRICT` — §9.2।
+
+### 9.5 Composition (oneOf/allOf/anyOf) — তিনটি পরীক্ষা আলাদা করতে হবে
+1. Schema কি globally unsatisfiable?
+2. Representative instance কি একাধিক branch-এ match করে (oneOf ভঙ্গ)?
+3. Converter বা validator-এর সমস্যা কিনা (যেমন nullable parent-এ `type` না থাকা)?
+
+প্রতিটির witness রেকর্ড করতে হবে। Branch-এর নাম দেখে সিদ্ধান্ত দেওয়া যাবে না।
+
+### 9.6 তিন label-সেটের তুলনা (v0.2 দিয়ে labelled; ভিত্তি-চিত্র)
+| তুলনা | মিল | Cohen's κ |
+|---|---|---|
+| T3 LLM বনাম rule baseline | ৪৯.৩% | ০.১০ |
+| T3 LLM বনাম T2 triage | ৬১.৬% | ০.৩৫ |
+
+⚠️ কোনোটিই ground truth নয়। মানব labeller-এর label এখনো বাকি।

@@ -10,10 +10,7 @@ NAMES = {'T1': 'REST testing/fuzzing', 'T2': 'GraphQL/RPC', 'T3': 'Security/auth
          'T4': 'Spec inference', 'T5': 'Evolution/breaking changes', 'T6': 'Docs/design/governance',
          'T7': 'API misuse', 'T8': 'LLM tool use/MCP', 'T9': 'Microservices/observability'}
 
-# P038: the analysed document differs from the selected paper
-OVERRIDE = {'P038': {'title': '[SUBSTITUTE] Microservice Testing Approaches: A Systematic Literature Review (Ghani et al.)',
-                     'year': '2019', 'venue': 'International Journal of Integrated Engineering',
-                     'doi': '10.30880/ijie.2019.11.08.008'}}
+OVERRIDE = {}  # P038 substitute replaced by the correct paper on 2026-11-13
 
 fields = ['paper_id', 'title', 'year', 'venue', 'doi', 'cluster', 'cluster_name', 'secondary_clusters',
           'research_problem', 'technical_approach', 'primary_contribution', 'dataset_benchmark',
@@ -37,7 +34,7 @@ def cell(s, n=None):
 
 md = ['# Comparative Evidence Matrix (P001–P038)', '',
       'উৎস: `04_paper_analysis/matrix/*.json` (পূর্ণ পাঠ্য `evidence_matrix.csv`-এ)। সংক্ষিপ্ত cell-এ “…” = ছাঁটা। '
-      'Analyst limitation = অনুমান (⚠️)। P038 = substitute document (IDENTITY MISMATCH)।', '']
+      'Analyst limitation = অনুমান (⚠️)।', '']
 for t in NAMES:
     group = [p for p in papers if p['cluster'] == t]
     if not group:

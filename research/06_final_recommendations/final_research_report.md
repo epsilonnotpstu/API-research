@@ -1,5 +1,8 @@
 # Final Research Report — Software API Research: Landscape, Gaps & Recommended Direction
 
+> **হালনাগাদ 2026-11-13 — P038 সমস্যার সমাধান:** সঠিক paper (Ponce et al. 2025, IST 188:107870, author-hosted copy) এখন `paper/P038.pdf`-এ আছে। এর বিশ্লেষণ `04_paper_analysis/P038_analysis.md`-এ (৭৪টি study, confidence High)। এই নথিতে যেখানে P038-কে “substitute”, “P038*” বা “Ghani 2019” বলা হয়েছে, তা ঐতিহাসিক — সেগুলো এখন আর প্রযোজ্য নয়। T9-এর evidence strength এখন **মাঝারি** (`05_research_clusters/cluster_T9_microservices.md`)।
+
+
 **তারিখ:** 2026-10-19 · **প্রস্তুতকারী:** Claude (Codex-এর independent discovery-সহ) · **Supervisor:** Human Research Supervisor
 **ভাষা:** বাংলা (শিরোনাম, DOI ও পরিভাষা ইংরেজিতে) · ⚠️ = বিশ্লেষকের অনুমান · [H] = hypothesis
 

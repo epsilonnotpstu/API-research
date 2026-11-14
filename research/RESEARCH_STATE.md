@@ -71,7 +71,7 @@
 ## 6. পরবর্তী নিরাপদ ধাপ
 
 1. Supervisor সিদ্ধান্ত (roadmap §14): Option (R1/R2/R3), LLM ব্যবহারের নীতি, scope।
-2. P038-এর সঠিক PDF (Ponce et al. 2025) পেলে `P038_analysis.md` পুনর্লিখন → `build_evidence_matrix.py` ও `build_final_table.py` পুনরায় চালানো → T9 cluster report হালনাগাদ।
+2. ✅ (2026-11-13) P038 সমাধান: সঠিক PDF `paper/P038.pdf`, analysis ও matrix নতুন করে, final table পুনর্নির্মিত, T9 report হালনাগাদ। পূর্বের নির্দেশ ছিল: P038-এর সঠিক PDF (Ponce et al. 2025) পেলে `P038_analysis.md` পুনর্লিখন → `build_evidence_matrix.py` ও `build_final_table.py` পুনরায় চালানো → T9 cluster report হালনাগাদ।
 3. ✅ R1 E0 সম্পন্ন (2026-11-09): **GO** — `06_final_recommendations/R1_novelty_check_E0.md`। বাকি: 2504.08113 ও TOSEM 10.1145/3491038 পূর্ণ পাঠ; `restest.us.es` archive-এর প্রাপ্যতা (TLS সমস্যা) supervisor-এর browser থেকে যাচাই; ACM DL বা IEEE-তে search।
 4. ▶️ Roadmap E1 আংশিক (2026-11-09) — `08_experiments/README.md`:
    - নিজস্ব `specmut` tool (Swagger 2 + OAS3, ground-truth manifest); ১৪৪/১৪৪ check পাস।
@@ -84,9 +84,33 @@
      - F_OAS confirm-হার ১৪.৫% বনাম F_2XXP ৫৭.১%।
      - F_OAS-এর ১২% কেবল strict validator-এ violation।
      - Amadeus spec-এ double-escaped pattern (নিশ্চিত SPEC ত্রুটি)।
-     - আমাদের checker P001-এর verdict ৮৫–৯৭% পুনরুৎপাদন করে।
+     - আমাদের checker P001-এর oracle category ৮৫–৯৭% re-detect করে। (সংশোধন 2026-11-13: এটি category-level; constraint-level agreement ও negative control বাকি — T4 R01।) Undeclared-property message: default ০/২৭, strict ২৭/২৭।
    - ✅ Codebook v0.2।
+5. ▶️ Roadmap E2 প্রস্তুতি (2026-11-13) — `08_experiments/E2_labelling/`: P001-এর ৭৩টি F_OAS-এর labelling sheet + rule-based baseline (SPEC ৩৭, UNDECIDABLE ৩৬)। বাকি: দুইজন labeller-এর manual label ও κ।
+   - নোট: repo-তে নতুন `.venv` সক্রিয়, তাতে pandas নেই — script চালাতে `/usr/bin/python3` ব্যবহার করতে হবে।
 
 ## 7. Context reset হলে
 
 এই ফাইল → `02_screening/final_papers.md` → `02_screening/selection_methodology.md` → `07_audit/research_quality_audit.md` পড়ুন। Scripts: `00_protocol/scripts/`।
+
+## 8. Claude + Codex সহযোগিতা (2026-11-13 থেকে)
+- সমন্বয়: `09_collab/COLLAB_BOARD.md` (task, owner, status, log), নিয়ম `09_collab/PROTOCOL.md`, Codex-এর জন্য `research/AGENTS.md`।
+- Codex model: gpt-6.1-sol। T2 (high), T3 (xhigh), T4 (xhigh), T9 (medium + web) চালু হয়েছে। T9 সম্পন্ন ও Claude-এর review শেষ।
+- Supervisor docker allow rule যোগ করেছেন → T7 (scout-api pilot) T5 harness-এর পরে।
+- **2026-11-14:** প্রথম বাস্তব pilot (Batch 1, scout-api) সম্পন্ন — `08_experiments/E1_pilot/pilot_results/BATCH1_RESULTS.md`। T11 (triage v0.3) গৃহীত; T13 (Codex, v0.3 re-labelling) চলমান। পরবর্তী: RESPONSE_ORACLE-এর seed-নির্ভরতা ব্যাখ্যা, baseline-এর ৫৩টি violation-এর triage, আরও SUT।
+- **2026-11-14 (পরবর্তী অংশ):**
+  - **Batch 2 (scout-api):** 15/15 run, প্রতিটিতে 4,703টি exchange। Baseline-এ 99টি fingerprint। ফল: `08_experiments/E1_pilot/pilot_results/BATCH2_RESULTS.md`।
+  - **Labeller A (Claude, source-ভিত্তিক):** 99টি fingerprint label করা শেষ। ফল sealed রাখা হয়েছে, যতক্ষণ না T15 শেষ হয়।
+  - **Labelling protocol (supervisor-এর সিদ্ধান্ত):** labeller A = Claude, labeller B = Codex (blind); মতভেদের adjudication করবেন supervisor। Report-এ লিখতে হবে "LLM×2 + human adjudication"।
+  - **T13 গৃহীত:** v0.3 triage বনাম Codex labels — κ 0.75; দুজনেই decide করেছে এমন item-এ 42/43 মিল। দুটোই Codex-এর, তাই স্বাধীন নয়।
+  - **T14 গৃহীত:** harness_v2। Petstore batch সম্পন্ন — `PETSTORE_RESULTS.md`: RESPONSE_ORACLE তিন seed-এই কাজ করে; REQUEST_STRICT-এ replay fresh-এর চেয়ে বেশি ধরে।
+  - **Tools:** specmut-এ `--only-ops`, নতুন `tools/eligible_ops.py`; harness_v2-তে `ORACLE_POOL=baseline`।
+  - **Market:** smoke run সফল; batch চলমান।
+  - **চলমান Codex task:** T15 (blind labeller B)।
+  - **পরবর্তী:**
+    - Market-এর ফল।
+    - A–B agreement ও adjudication তালিকা।
+    - Pool-সহ RESPONSE_ORACLE পুনরায় চালানো।
+    - Petstore ও market baseline-এর labelling।
+    - cwa-verification build।
+- 🚩 **RESUME POINT (2026-11-14, বিদ্যুৎ বিভ্রাট):** `09_collab/HANDOFF.md` — কী শেষ, কী থামানো হয়েছে, পুনরায় চালানোর ঠিক command, আর পরের কাজের ক্রম।

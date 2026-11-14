@@ -13,6 +13,7 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import specmut
 
 
@@ -27,6 +28,37 @@ def get(doc, pointer):
         else:
             raise KeyError(pointer)
     return node
+
+
+def apply_manifest(base, manifest):
+    """Verify every before-value and reconstruct the complete output document."""
+    import copy
+    doc = copy.deepcopy(base)
+    for m in manifest:
+        for e in m['edits']:
+            if e.get('op') == 'move':
+                item = doc['paths'][m['path']]
+                assert item[e['before']] == e['value']
+                assert e['after'] not in item
+                item[e['after']] = item.pop(e['before'])
+                continue
+            try:
+                before = get(doc, e['pointer'])
+                exists = True
+            except KeyError:
+                before, exists = None, False
+            assert exists == e['before_exists'], e
+            assert before == e['before'], e
+            parent_pointer, _, raw_key = e['pointer'].rpartition('/')
+            parent = get(doc, parent_pointer)
+            key = raw_key.replace('~1', '/').replace('~0', '~')
+            if isinstance(parent, list):
+                key = int(key)
+            if e['after_exists']:
+                parent[key] = copy.deepcopy(e['after'])
+            else:
+                del parent[key]
+    return doc
 
 
 def check(spec_path, fault, severity=30, seed=7):
@@ -46,11 +78,12 @@ def check(spec_path, fault, severity=30, seed=7):
                 continue
             try:
                 value = get(mutated, e['pointer'])
-                assert e['after'] is not None and value == e['after'], f'{e["pointer"]}: {value!r} != {e["after"]!r}'
+                assert e['after_exists'] and value == e['after'], f'{e["pointer"]}: {value!r} != {e["after"]!r}'
             except KeyError:
-                assert e['after'] is None, f'missing pointer {e["pointer"]}'
-    again = specmut.mutate(base, fault, severity, seed)[1]
-    assert again == manifest, 'non-deterministic'
+                assert not e['after_exists'], f'missing pointer {e["pointer"]}'
+    assert apply_manifest(base, manifest) == mutated, 'manifest omits changes'
+    again = specmut.mutate(base, fault, severity, seed)
+    assert again == (mutated, manifest, n_ops), 'non-deterministic'
     return n_ops, len(manifest), sum(len(m['edits']) for m in manifest)
 
 
@@ -68,7 +101,7 @@ def main(spec_dir):
     print(f'\n{len(rows)} passed, {len(failures)} failed')
     for f in failures:
         print('FAIL', *f)
-    return 1 if failures else 0
+    return 1 if failures or not rows else 0
 
 
 if __name__ == '__main__':

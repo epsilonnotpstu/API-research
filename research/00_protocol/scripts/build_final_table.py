@@ -12,7 +12,7 @@ VENUE = {'P001': 'ESEC/FSE 2022', 'P002': 'TOSEM', 'P003': 'TOSEM', 'P004': 'ISS
          'P022': 'ICLR 2025', 'P023': 'EMSE', 'P024': 'ICSE 2025', 'P025': 'ISSTA 2020', 'P026': 'EMSE', 'P027': 'ICSA 2024',
          'P028': 'SANER 2021', 'P029': 'ACM CSUR', 'P030': 'TSE', 'P031': 'TSE', 'P032': 'arXiv (preprint)',
          'P033': 'ICLR 2024', 'P034': 'NeurIPS 2024', 'P035': 'ICSE-SEIP 2025', 'P036': 'TOSEM', 'P037': 'PROMISE 2025',
-         'P038': 'IJIE 2019 ⚠️ substitute'}
+         'P038': 'IST 2025'}
 
 TYPE = {'P002': 'SLR', 'P009': 'Mapping', 'P021': 'SLR', 'P029': 'SLR', 'P038': 'SLR', 'P037': 'Dataset',
         'P026': 'Experiment', 'P020': 'Interview', 'P003': 'Tool comparison', 'P004': 'Tool comparison',
@@ -58,7 +58,7 @@ S = {
 'P035': ('Documentation দিয়ে code-LLM hallucination হ্রাস', 'Spec যোগে ৪১.৮০%→৮৬.৮২%', 'AWS-কেন্দ্রিক; benchmark অনিশ্চিত'),
 'P036': ('MCP server-এর health, security ও maintainability', '৭.২%-এ vulnerability, ৫.৫%-এ tool poisoning', 'Static ও sample-ভিত্তিক'),
 'P037': ('Microservice API-error anomaly dataset (LO2)', 'সব service-এর log একত্রে ব্যর্থ (F1 ~০.৬৬৭)', 'Anomaly = documented 4xx'),
-'P038': ('⚠️ Substitute: microservice testing-এর ১৫-study review (Ghani 2019)', 'Unit testing ~৭৫%; ১/১৫ পূর্ববর্তী কাজের সাথে তুলনা', 'নির্বাচিত paper নয়; rigor দুর্বল'),
+'P038': ('৭৪টি microservice testing study-র SLR (SWEBOK, TRL, SUT)', 'System testing ৪৭; API ৮; TRL ৩–৪; TrainTicket প্রধান', 'Title-only query; security gap-দাবি সংকীর্ণ'),
 }
 NAMES = {'T1': 'REST testing/fuzzing', 'T2': 'GraphQL/RPC', 'T3': 'Security/authz', 'T4': 'Spec inference',
          'T5': 'Evolution', 'T6': 'Docs/design', 'T7': 'API misuse', 'T8': 'LLM tool use/MCP', 'T9': 'Microservices'}
@@ -79,7 +79,7 @@ with open(root / '05_research_clusters/final_paper_cluster_table.csv', 'w', newl
 md = ['# Final Table — সব paper × cluster × মূল তথ্য (P001–P038)', '',
       'উৎস: `04_paper_analysis/evidence_matrix.csv` + প্রতিটি `Pxxx_analysis.md`। Machine-readable: `final_paper_cluster_table.csv`।',
       'Cluster: ' + ' · '.join(f'**{k}** {v}' for k, v in NAMES.items()) + '।',
-      '⚠️ P038 = substitute document (নির্বাচিত Ponce et al. 2025 নয়)।', '']
+      '']
 for t, name in NAMES.items():
     grp = [r for r in rows if r['primary_cluster'] == t]
     sec = [pid for pid, r in ev.items() if t in r['secondary_clusters'].split('; ')]
