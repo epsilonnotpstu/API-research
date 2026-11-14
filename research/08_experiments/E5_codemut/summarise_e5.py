@@ -17,7 +17,7 @@ import validate_pair as vp
 
 METRICS = [f'{scope}_{name}' for scope in ('mutated','non_mutated')
            for name in ('NEW','VANISHED','INCREASED','DECREASED')]
-FIELDS = ['mut_dir','site_id','sut','operator','seed','oracle','validation_status','analysis_status','error',
+FIELDS = ['mut_dir','site_id','sut','operator','seed','oracle','validation_status','excluded_ops','pipeline_snapshot_status','analysis_status','error',
           *METRICS,'expected_signals','expected_signal_observed','expected_signal_present_mutant',
           'expected_signal_NEW','expected_signal_INCREASED','fresh_L1_NEW_mutated',
           'triage_status','triage_L1_NEW_mutated','causal_kill_status']
@@ -44,27 +44,44 @@ def verify_analysis(directory, mut, seed, oracle, pair, report):
     c.require(record['pair_validation_sha256'] == c.sha(mut / f'pair-validation-s{seed}.json'), 'Validation report changed')
     c.require(record['control_run'] == str(pair['control']) and record['mutant_run'] == str(pair['mutant']), 'Analysis pair paths differ')
     c.require(record['run_metadata_sha256'] == {r:c.sha(p / 'run.json') for r,p in pair.items()}, 'Analysis run metadata changed')
-    c.require(report['status'] == 'PASS', 'Pair did not pass validation')
+    c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), 'Pair did not pass validation')
+    excluded = c.excluded_operations(report)
+    c.require(record.get('excluded_ops',[]) == report.get('excluded_ops',[]) and
+              record.get('validation_status','PASS') == report['status'], 'Analysis exclusion/validation policy differs')
     c.snapshot(c.TOOLS, record['tool_sha256'])
     c.require({'control.violations.jsonl','mutant.violations.jsonl','attribution.csv'} <= set(record['file_sha256']), 'Missing analysis output')
     c.snapshot(directory, record['file_sha256'])
+    prior = False
     for name, digest in record['pipeline_sha256'].items():
-        c.require(c.sha(name) == digest, 'Analysis pipeline changed')
+        if c.sha(name) != digest:
+            path = Path(name).resolve()
+            c.require(path.parent == c.HERE and path.name in {'validate_pair.py','e5_common.py','e5_pipeline.py','summarise_e5.py'}
+                      and isinstance(digest,str) and len(digest)==64 and all(x in '0123456789abcdef' for x in digest), 'Analysis pipeline changed outside reviewed E5 policy files')
+            prior = True
     base = violations(directory / 'control.violations.jsonl'); treat = violations(directory / 'mutant.violations.jsonl')
+    for role, data in [('control',base),('mutant',treat)]:
+        c.require(all((v['method'].upper(),v['template']) not in excluded for v in data), 'Excluded operation leaked into scoped violations')
+        raw = directory / f'{role}.raw.violations.jsonl'
+        if raw.is_file():
+            c.require(raw.name in record['file_sha256'], 'Raw violations are not hashed')
+            c.require([v for v in violations(raw) if (v['method'].upper(),v['template']) not in excluded] == data, 'Scoped violations differ from exact paired exclusion')
+        else:
+            c.require(not excluded, 'Excluded analysis lacks raw violation evidence')
     expected = load_attribute().attribute(base, treat, m, mode='fresh')
     with (directory / 'attribution.csv').open(newline='', encoding='utf-8') as stream:
         reader = csv.DictReader(stream); rows = list(reader)
         c.require(reader.fieldnames == (list(expected[0]) if expected else ['fingerprint']), 'Unexpected attribution CSV schema')
     c.require(rows == [{k:str(v) for k,v in row.items()} for row in expected], 'Attribution CSV differs from fresh recomputation')
-    return rows
+    return rows, ('PRIOR_E5_PIPELINE_RECOMPUTED' if prior else 'CURRENT')
 
 
-def metrics(rows, manifest):
+def metrics(rows, manifest, excluded_ops=()):
     result = {key:0 for key in METRICS}
     expected = set(manifest['expected_conformance_signal'])
     ops = {(o['method'].upper(),o['path']) for o in manifest['operations']}
     signal_new = signal_inc = 0; present = False; l1 = Counter(); seen = set()
     for row in rows:
+        if (row['method'],row['template']) in excluded_ops: continue
         c.require(row['fingerprint'] not in seen, 'Duplicate attributed fingerprint'); seen.add(row['fingerprint'])
         c.require(row['mode'] == 'fresh' and row['status'] in ('NEW','VANISHED','PERSISTENT'), 'Non-fresh/unknown status')
         before, after = int(row['baseline_occurrences']), int(row['mutated_occurrences'])
@@ -108,19 +125,21 @@ def summarise(mut_dirs):
                 c.require(set(pair) == {'control','mutant'} and all(r['status'] == 'COMPLETE' and r['harness_exit'] == '0' for r in group), 'Failed/pending/incomplete run pair')
                 saved = c.load(mut / f'pair-validation-s{seed}.json')
                 report = vp.validate(pair['control'],pair['mutant'],mut)
-                c.require(saved == report and report['status'] == 'PASS', 'Pair validation missing, stale or FAIL')
+                # Older PASS reports have no exclusions key; all existing fields must match.
+                saved = dict(saved, excluded_ops=saved.get('excluded_ops',[]))
+                c.require(saved == report and report['status'] in ('PASS','PASS_WITH_EXCLUSION'), 'Pair validation missing, stale or FAIL')
             except (OSError, ValueError, KeyError, TypeError) as exc:
                 error = str(exc)
             for oracle in ('default','sut'):
                 row = dict.fromkeys(FIELDS, '')
                 row.update(mut_dir=str(mut),site_id=m['site_id'],sut=m['sut'],operator=m['operator'],seed=seed,oracle=oracle,
-                           validation_status='FAIL' if error else 'PASS',analysis_status='FAIL',error=error,
+                           validation_status='FAIL' if error else report['status'],excluded_ops=json.dumps(report.get('excluded_ops',[]) if report else []),analysis_status='FAIL',error=error,
                            expected_signals=json.dumps(sorted(m['expected_conformance_signal'])), triage_status='NOT_APPLICABLE_P001_CLI',
                            causal_kill_status='NEEDS_INDEPENDENT_WITNESS')
                 if not error:
                     try:
-                        rows = verify_analysis(mut / f'analysis-s{seed}-{oracle}', mut,seed,oracle,pair,report)
-                        row.update(metrics(rows,m),analysis_status='COMPLETE')
+                        rows, version = verify_analysis(mut / f'analysis-s{seed}-{oracle}', mut,seed,oracle,pair,report)
+                        row.update(metrics(rows,m,c.excluded_operations(report)),analysis_status='COMPLETE',pipeline_snapshot_status=version)
                     except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
                         row['error'] = str(exc)
                 result.append(row)

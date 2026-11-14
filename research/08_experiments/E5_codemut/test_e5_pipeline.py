@@ -165,6 +165,12 @@ class FixtureCase(unittest.TestCase):
         for key,value in [('TOOLS',self.f.tools),('HARNESS',self.f.harness),('EMB',self.f.emb)]:
             mock = patch.object(c,key,value); mock.start(); self.addCleanup(mock.stop)
 
+    def add_other_operation(self):
+        for role,run in self.f.paths.items():
+            spec=c.load(run / 'spec.original.json');spec['paths']['/other']={'get':{'responses':{'200':{'description':'ok'}}}}
+            for name in ('spec.original.json','spec.test.json','generator-input.json'):dump(run / name,spec)
+            self.f.change_meta(role,'source_sha256',c.sha(run / 'spec.original.json'));self.f.rehash_run(role)
+
     def assert_fail(self,part=None):
         r = self.f.validate()
         self.assertEqual(r['status'],'FAIL')
@@ -362,6 +368,38 @@ class PairValidationTests(FixtureCase):
                 dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
             dump(path,original);self.f.rehash_run('mutant')
 
+    def test_environment_multiset_and_bind_set_ignore_order_but_keep_values(self):
+        for role,run in self.f.paths.items():
+            for service in ('sut-market','mitmproxy'):
+                path=run / (service+'-container.json');obj=c.load(path)
+                obj[0]['Config']['Env']=['DUP=1','DUP=2','DUP=1'] if role=='control' else ['DUP=1','DUP=1','DUP=2']
+                binds=[str(run)+':/custom-logs:rw','/trusted:/addons:ro']
+                obj[0]['HostConfig']['Binds']=binds if role=='control' else binds[::-1]+binds[:1]
+                dump(path,obj)
+            self.f.rehash_run(role)
+        self.assertEqual(self.f.validate()['status'],'PASS')
+        run=self.f.paths['mutant'];path=run / 'mitmproxy-container.json';obj=c.load(path)
+        obj[0]['Config']['Env'].pop();dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
+
+    def test_bind_source_or_mount_options_remain_strict(self):
+        path=self.f.paths['mutant'] / 'mitmproxy-container.json';original=c.load(path)
+        for value in ('/foreign:/custom-logs:rw',str(self.f.paths['mutant'])+':/custom-logs:ro'):
+            obj=copy.deepcopy(original);obj[0]['HostConfig']['Binds']=[value]
+            dump(path,obj);self.f.rehash_run('mutant');self.assert_fail('pair.equal')
+
+    def test_non_mutated_junit_asymmetry_passes_with_reasoned_exclusion(self):
+        self.add_other_operation();self.set_junit('control',[('GET /other','Schema Error')])
+        result=self.f.validate();self.assertEqual(result['status'],'PASS_WITH_EXCLUSION',result)
+        self.assertEqual([(x['method'],x['path']) for x in result['excluded_ops']],[('GET','/other')])
+        self.assertTrue(result['excluded_ops'][0]['reason'])
+
+    def test_any_mutated_error_difference_fails_even_with_other_excludable_errors(self):
+        self.add_other_operation();self.set_junit('control',[('GET /other','schema'),('GET /things','schema')])
+        self.assert_fail('pair.equal_junit_errors')
+
+    def test_unmappable_error_name_fails_closed(self):
+        self.set_junit('control',[('unmappable generator failure','schema')]);self.assert_fail('pair.equal_junit_errors')
+
     def test_report_can_stage_outside_mut_dir_and_remains_atomic(self):
         stage=self.f.root / 'report-stage';stage.mkdir()
         args=[str(self.f.paths['control']),str(self.f.paths['mutant']),str(self.f.mut),'--report-staging-dir',str(stage)]
@@ -430,6 +468,36 @@ class SummaryTests(FixtureCase):
         self.assertEqual(len(rows),6)
         self.assertTrue(all(r['error'] and r['mutated_NEW']=='' for r in rows if r['seed'] in (2,3)))
 
+    def test_exclusion_filters_both_roles_before_attribution_and_summary(self):
+        self.add_other_operation()
+        PairValidationTests.set_junit(self,'control',[('GET /other','Schema Error')])
+        for role,run in self.f.paths.items():
+            record=json.loads((run / 'exchanges.jsonl').read_text());record['request']['path']='/other';record['request']['url']='http://sut-market:8080/other'
+            record['response']['status']=500
+            with (run / 'exchanges.jsonl').open('a') as stream:stream.write(json.dumps(record)+'\n')
+            self.f.rehash_run(role)
+        rows=self.prepare_analysis()
+        self.assertTrue(all(r['validation_status']=='PASS_WITH_EXCLUSION' and r['non_mutated_NEW']==0 and r['mutated_NEW']==2 for r in rows))
+        out=self.f.mut / 'analysis-s1-default'
+        self.assertTrue(any(v['template']=='/other' for v in summary.violations(out / 'control.raw.violations.jsonl')))
+        self.assertFalse(any(v['template']=='/other' for v in summary.violations(out / 'control.violations.jsonl')))
+        self.assertTrue(json.loads(rows[0]['excluded_ops']))
+
+    def test_old_empty_exclusion_reports_and_prior_pipeline_are_recomputed(self):
+        self.prepare_analysis();report_path=self.f.mut / 'pair-validation-s1.json'
+        report=c.load(report_path);report.pop('excluded_ops');dump(report_path,report)
+        for oracle in ('default','sut'):
+            p=self.f.mut / f'analysis-s1-{oracle}/analysis.json';record=c.load(p)
+            record.pop('excluded_ops');record.pop('validation_status');record['pair_validation_sha256']=c.sha(report_path)
+            record['pipeline_sha256'][str(HERE / 'summarise_e5.py')]='0'*64;dump(p,record)
+        rows=summary.summarise([self.f.mut])
+        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['pipeline_snapshot_status']=='PRIOR_E5_PIPELINE_RECOMPUTED' for r in rows),rows)
+
+    def test_prior_pipeline_exception_does_not_allow_unreviewed_code_changes(self):
+        self.prepare_analysis();p=self.f.mut / 'analysis-s1-default/analysis.json';record=c.load(p)
+        record['pipeline_sha256'][str(HERE / 'codemut.py')]='0'*64;dump(p,record)
+        self.assertEqual(summary.summarise([self.f.mut])[0]['analysis_status'],'FAIL')
+
     def test_summary_refuses_stale_validation(self):
         self.prepare_analysis(); self.f.change_meta('mutant','complete',False)
         rows = summary.summarise([self.f.mut])
@@ -497,6 +565,12 @@ class MetricTests(unittest.TestCase):
     def test_increased_signal_can_be_observed_without_new_fingerprint(self):
         r=summary.metrics([self.row(1,'PERSISTENT',1,4)],self.m)
         self.assertTrue(r['expected_signal_observed']); self.assertEqual(r['mutated_NEW'],0)
+
+    def test_excluded_ops_never_enter_either_metric_scope(self):
+        rows=[self.row(1,'NEW',0,3),self.row(2,'NEW',0,2,False)]
+        result=summary.metrics(rows,self.m,{('GET','/things'),('GET','/other')})
+        self.assertTrue(all(result[k]==0 for k in summary.METRICS))
+        self.assertFalse(result['expected_signal_observed'])
 
     def test_empty_rows_and_empty_expectation(self):
         r=summary.metrics([],dict(self.m,expected_conformance_signal=[]))

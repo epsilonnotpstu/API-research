@@ -117,7 +117,7 @@ def run_pair(mut, values):
             c.require(row['status'] == 'COMPLETE', f'Run failed; stopped at seed {seed}/{role}. See runs.tsv and run log')
         report = vp.validate(paths['control'], paths['mutant'], mut)
         c.atomic_json(mut / f'pair-validation-s{seed}.json', report)
-        c.require(report['status'] == 'PASS', f'Pair validation failed for seed {seed}; stopping')
+        c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), f'Pair validation failed for seed {seed}; stopping')
     print(str(mut / 'runs.tsv'))
 
 
@@ -127,6 +127,15 @@ def tool(script, arguments, out, error_log):
         result = subprocess.run(['/usr/bin/python3','-I','-B','-c',wrapper,str(c.TOOLS / script),*map(str,arguments)],
                                 stdout=stream, stderr=errors, check=False)
     c.require(result.returncode == 0, f'{script} failed with exit {result.returncode}; see tools.log')
+
+
+def filter_violations(source, dest, excluded):
+    with dest.open('x',encoding='utf-8') as stream:
+        for line in source.read_bytes().split(b'\n'):
+            if not line.strip(): continue
+            record = json.loads(line)
+            if (record['method'].upper(),record['template']) not in excluded:
+                stream.write(json.dumps(record,ensure_ascii=False) + '\n')
 
 
 def analyse_pair(mut):
@@ -141,7 +150,7 @@ def analyse_pair(mut):
         report = vp.validate(pair['control'], pair['mutant'], mut)
         validation_path = mut / f'pair-validation-s{seed}.json'
         c.atomic_json(validation_path, report)
-        c.require(report['status'] == 'PASS', f'Pair validation failed for seed {seed}')
+        c.require(report['status'] in ('PASS','PASS_WITH_EXCLUSION'), f'Pair validation failed for seed {seed}')
         meta = c.load(pair['control'] / 'run.json')
         for oracle in ('default','sut'):
             reject = '400,406,422' if m['sut'] == 'market' and oracle == 'sut' else '400,422'
@@ -152,13 +161,15 @@ def analyse_pair(mut):
                       'control_run':str(pair['control']), 'mutant_run':str(pair['mutant']),
                       'manifest_sha256':c.sha(mut / 'manifest.json'), 'pair_validation_sha256':c.sha(validation_path),
                       'run_metadata_sha256':{r:c.sha(p / 'run.json') for r,p in pair.items()},
-                      'tool_sha256':meta['tool_sha256'], 'pipeline_sha256':trusted_files()}
+                      'tool_sha256':meta['tool_sha256'], 'pipeline_sha256':trusted_files(),
+                      'excluded_ops':report.get('excluded_ops',[]), 'validation_status':report['status']}
             c.atomic_json(out / 'analysis.json', record)
             try:
                 for role in ('control','mutant'):
                     tool('conformance.py', [pair['control'] / 'spec.original.json', pair[role] / 'exchanges.jsonl',
                                            '--deploy-origin', origin,'--reject-statuses',reject],
-                         out / f'{role}.violations.jsonl', out / 'tools.log')
+                         out / f'{role}.raw.violations.jsonl', out / 'tools.log')
+                    filter_violations(out / f'{role}.raw.violations.jsonl', out / f'{role}.violations.jsonl', c.excluded_operations(report))
                 tool('attribute.py', [out / 'control.violations.jsonl', out / 'mutant.violations.jsonl', mut / 'manifest.json', '--mode','fresh'],
                      out / 'attribution.csv', out / 'tools.log')
                 c.snapshot(c.TOOLS, meta['tool_sha256'])
