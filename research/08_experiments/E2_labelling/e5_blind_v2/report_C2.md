@@ -1,0 +1,24 @@
+ল্যাবেলার C2 হিসেবে codebook v0.5 অনুযায়ী ২৯টি item-এর স্বাধীন attribution করেছি। ফল [labels_C2.csv](labels_C2.csv)-এ মূল item order-এ আছে; প্রতিটি rationale সর্বোচ্চ ৩০ শব্দ। Deployed source, spec, representative traffic এবং প্রাসঙ্গিক test/log পড়েছি। অনুমোদিত নিজস্ব checker দিয়ে ২৯টি representative-এর kind, pointer ও message পুনরায় মিলেছে। Exchange citation হলো ১-ভিত্তিক physical line; `example_exchange + 1`। প্রথম পাঠে Unicode line separator-কে newline ধরে সাময়িক অসংগতি হয়েছিল; physical-line iteration দিয়ে সংশোধন করে সব representative যাচাই করেছি। পদ্ধতির ভিত্তি: [TASK.md](TASK.md), [codebook §§9–11](CODEBOOK_v0.5.md:149), [checker](../../tools/conformance.py:373)।
+
+বণ্টনটি CSV-এর ২–৩০ নম্বর data-bearing line থেকে গণনা করা:
+
+| প্রাথমিক L1 | সংখ্যা | item |
+|---|---:|---|
+| IMPL | ২০ | E001, E003–E006, E008–E013, E015–E019, E022, E025, E027, E029 |
+| TEST | ৩ | E002, E014, E020 |
+| SPEC | ১ | E007 |
+| UNDECIDABLE | ৫ | E021, E023, E024, E026, E028 |
+| SPEC_PARTIAL / IMPL_PARTIAL / ENV | ০ | — |
+
+`both_candidate=true` মোট ৬টি: E015 এবং পাঁচটি UNDECIDABLE item। কোনো L1-এ BOTH লিখিনি। Confidence ২: ১৯টি; confidence ৩: ১০টি। Source/test-নির্ভর intent-এ confidence সর্বোচ্চ ২ রেখেছি; 5xx convention, stack trace বা সরাসরি checker counterexample থাকলে ৩ ব্যবহার করেছি। [CSV](labels_C2.csv:2), [§11.2](CODEBOOK_v0.5.md:273)।
+
+কঠিন সিদ্ধান্তগুলো:
+
+- **E002/E014/E020:** request ID signed int64-এর সীমার বাইরে; Java Long conversion-এর 400 সঙ্গত। Checker-এর Python `int()` এবং format handling এই সীমা ধরেনি। তাই TEST; §10.5-এর নাম চূড়ান্ত নয় বলে `L2` ফাঁকা, `proposed_L2=T-ORACLE-FORMAT`। [উদাহরণ](K09/r1/exchanges.jsonl:1062), [checker coercion](../../tools/conformance.py:247), [CSV](labels_C2.csv:3)।
+- **E007:** `/v1/favourites` path-এ `{id}` নেই, অথচ spec required path parameter দিয়েছে। Body ID-ভিত্তিক collection POST-এ integration test-ও 204 প্রত্যাশা করে; তাই SPEC/S-STRUCT। [resource](K03/source/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:30), [test](K03/source/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:113), [CSV](labels_C2.csv:8)।
+- **E015:** IMPL দিকে validation ছাড়া null `keyType`-এ switch crash এবং matching stack trace; SPEC দিকে key/keyType-এর `required` অনুপস্থিত। Model-এর NotNull এবং null-key test প্রয়োজনীয়তার পৃথক প্রমাণ। §10.6 অনুযায়ী primary IMPL/I-CRASH, সঙ্গে candidate flag। [controller](K07/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91), [log](K07/r1/compose.log:10355), [model](K07/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59), [test](K07/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540), [schema](K07/spec.json#/components/schemas/RegistrationTokenRequest)।
+- **E019 বনাম E021:** roles-এর test স্পষ্টভাবে 200 প্রত্যাশা করে, তাই 418 implementation contract fault। Products-এর 418 সমর্থনে কেবল একটি return statement পাওয়া গেছে; §11 অনুযায়ী সেটি UNDECIDABLE/candidate। [roles test](K05/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:24), [products return](K04/source/market-rest/src/main/java/market/rest/ProductsRestController.java:38)।
+- **E023/E024/E026 এবং E028:** একমাত্র WRITE_ONLY annotation বা tags-null guard নকশার অভিপ্রায় প্রমাণ করে না। তাই §11-এর UNDECIDABLE/candidate নিয়ম প্রয়োগ করেছি। প্রতিটি item-এর নির্দিষ্ট message বিচার করেছি; একই exchange-এর অন্য field/oracle violation যুক্ত করে aggregation করিনি। [annotation](K01/source/src/main/java/io/swagger/petstore/model/Pet.java:55), [guard](K01/source/src/main/java/io/swagger/petstore/controller/PetController.java:234), [§11](CODEBOOK_v0.5.md:270)।
+- **⚠️ Typed-input cases:** E001/E005-এর blank random, E008/E018/E027-এর encoded control-character ID এবং E012-এর malformed Boolean-এ spec-এর type ও source-এর typed binding মিলিয়ে IMPL/I-ACCEPT-INVALID অনুমান করেছি, confidence ২। নির্দিষ্ট framework normalization mechanism নিশ্চিত দাবি করিনি। [CSV evidence](labels_C2.csv:2), [numeric binding](K05/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:123), [Boolean binding](K03/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:47)।
+
+সীমাবদ্ধতা: নতুন SUT execution, Docker/Java/Maven, network বা external-code execution করিনি; repository test পড়েছি, চালাইনি। প্রতিটি run-এর সব occurrence নতুন করে cluster করিনি। K09-এর E004-এ compose log proxy-তে 500 দেখায়, matching SUT stack trace পাওয়া যায়নি; rejection guard থেকে exception mapping-এর ব্যাখ্যা ⚠️ inference। [proxy log](K09/r1/compose.log:2023), [guard](K09/source/src/main/java/io/swagger/petstore/controller/PetController.java:72)। পাঁচটি UNDECIDABLE-এর জন্য independent policy documentation/test বা supervisor adjudication খোলা প্রশ্ন রইল। নিষিদ্ধ file, COLLAB_BOARD.md বা অন্য labeller-এর output খোলা হয়নি।
