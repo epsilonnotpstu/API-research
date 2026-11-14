@@ -1,11 +1,16 @@
-# Multi-SUT pilot harness v2 — T14 handoff
+# Multi-SUT pilot harness v2 — T14 / T17 handoff
 
 T14 supplies scripts and static validation only. Docker, Java, Schemathesis,
 SUTs, downloads and these orchestration scripts were not executed during T14;
 validation evidence is in `static_checks.txt:2–39`. The source harness is unchanged
 (reference digests: `source-harness-sha256.json:1–12`; verification in `static_checks.txt:17`).
 
-The scripts load only the three allowlisted, non-secret `suts/*.env` files
+T17 adds CWA below; `static_checks.txt` now contains the latest four-SUT validation
+(rows `CONFIG:cwa-verification`, `CWA_SOURCE`, `CWA_ORIGIN`, and the final PASS).
+Earlier T14 line references below describe the original handoff; scripts have
+subsequently evolved as recorded in `09_collab/tasks/T17.md:5–14`.
+
+The scripts load only the four allowlisted, non-secret `suts/*.env` files
 (`common.sh:3–15`). Paths below are relative to `08_experiments/_external/emb/`.
 
 | SUT | Fixed image | Base path | Readiness path | Runtime auth |
@@ -13,10 +18,12 @@ The scripts load only the three allowlisted, non-secret `suts/*.env` files
 | scout-api | `r1-scout-api-sut:pilot` | `/api` | ⚠️ `/admin/healthcheck` | `administrator`, `auth/scout-api-auth.yaml` |
 | swagger-petstore | `r1-swagger-petstore-sut:pilot` | ⚠️ `/api/v3` | ⚠️ `/api/v3/openapi.json` | `none`; no auth fixture exists |
 | market | `r1-market-sut:pilot` | `/` | ⚠️ `/v2/api-docs` | `user`, `auth/market-auth.yaml` |
+| cwa-verification | `r1-cwa-verification-sut:pilot` | `/` | ⚠️ empty JSON POST `/version/v1/tan/verify`, expect **400** | `none`; see CWA header-binding caveat below |
 
 These are the exact defaults in `suts/scout-api.env:2–14`,
-`suts/swagger-petstore.env:2–14`, and `suts/market.env:2–14`.
-All three internal HTTP ports are 8080; sources are their
+`suts/swagger-petstore.env:2–14`, `suts/market.env:2–14`, and
+`suts/cwa-verification.env:2–19`.
+All four internal HTTP ports are 8080; sources are their
 `dockerfiles/<sut>.yaml` service/proxy definitions and
 `dockerfiles/<sut>.dockerfile` entrypoints. First-run assumptions appear below;
 T14 has not verified any HTTP route.
@@ -210,3 +217,154 @@ for script in 08_experiments/E1_pilot/harness_v2/*.sh; do bash -n "$script"; don
 Python AST/inline-AST, YAML/config/path checks, secret-absence scan, preserved-fix
 checks and source-harness digest verification are recorded in `static_checks.txt:2–39`.
 These checks do not establish Docker Compose merge behavior or runtime success.
+
+## CWA verification — T17 source review and commands
+
+In the references in this section, `CWA_SRC` means
+`08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/`.
+No CWA Java/Maven/Docker/Schemathesis command was executed in T17. The jar was
+read only as ZIP data; its path, digest and launcher metadata are saved in
+`09_collab/logs/T17_scratch/jar_evidence.json:2–12`.
+
+### Jar, routes, authentication and readiness
+
+- The project artifact/version are `cwa-verification-server:1.5.0-SNAPSHOT`, but
+  repackage explicitly sets `finalName=cwa-verification` and classifier `sut`
+  (`CWA_SRC/pom.xml:7–8,270–284`). The exact local jar is therefore
+  `target/cwa-verification-sut.jar`, not the task's provisional wildcard name.
+  It now exists and contains the CWA application start class
+  (`09_collab/logs/T17_scratch/jar_evidence.json:2–12`). Spring Boot's
+  [2.4.1 repackage implementation](https://github.com/spring-projects/spring-boot/blob/v2.4.1/spring-boot-project/spring-boot-tools/spring-boot-maven-plugin/src/main/java/org/springframework/boot/maven/RepackageMojo.java)
+  builds the target filename from finalName, classifier and extension. The config
+  points at that exact source; preparation will copy it to `dist/cwa-verification-sut.jar`
+  (`suts/cwa-verification.env:4`; `prepare_dist.sh:10–12,45–48`).
+- The five OpenAPI 3.0.1 operations already include `/version/v1` in their paths.
+  `servers[0].url` is `http://localhost:8080` with no path component, and the
+  controller prefix is `/version/v1`; use `BASE_PATH=/`, not `/version/v1`
+  (`openapi-swagger/cwa-verification.json#/servers` and `#/paths`, under EMB;
+  `CWA_SRC/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:43,51,76–81`;
+  `suts/cwa-verification.env:15`).
+- Security permits `/version/**`, disables CSRF, and allows only GET/POST/HEAD
+  through its firewall. JWT validation returns true immediately when disabled;
+  the default YAML sets `jwt.enabled: false` (`CWA_SRC/src/main/java/app/coronawarn/verification/config/SecurityConfig.java:38–58`;
+  `CWA_SRC/src/main/resources/application.yml:24–26`;
+  `CWA_SRC/src/main/java/app/coronawarn/verification/service/JwtService.java:89–99`).
+  Therefore the harness injects no credential. **Header-binding caveat:**
+  `/version/v1/tan/teletan` still requires an Authorization header parameter before
+  reaching `JwtService`; missing it can return 400 even with JWT validation off.
+  It is an operation input, not an EMB fixture to invent
+  (`CWA_SRC/src/main/java/app/coronawarn/verification/controller/InternalTanController.java:138–154`;
+  `CWA_SRC/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java:64–70`).
+- **Readiness:** the original Dockerfile passes `--management.server.port=-1`,
+  so `/actuator/health` is not a usable HTTP probe. The YAML enables actuator
+  health/probes but assigns them a separate management port that the CLI disables
+  (`dockerfiles/cwa-verification.dockerfile:17`, under EMB;
+  `CWA_SRC/src/main/resources/application.yml:32–56`). `/api/docs` requires a
+  secure channel, despite HTTP being used for the SUT; it is also unsuitable
+  (`CWA_SRC/src/main/resources/application.yml:27–31`;
+  `CWA_SRC/src/main/java/app/coronawarn/verification/config/SecurityConfig.java:53`).
+  ⚠️ Use an **empty body** POST with `Content-Type: application/json` to
+  `/version/v1/tan/verify`, expecting exactly **400**. The controller requires a
+  body; its binding exception maps to 400 before the method accesses any state
+  (`CWA_SRC/src/main/java/app/coronawarn/verification/controller/InternalTanController.java:100–104`;
+  `CWA_SRC/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java:64–70`).
+  This is source-derived and remains runtime-unverified. `run_pilot.sh` has one
+  optional POST-probe branch for these CWA config fields; all existing configs
+  retain their original GET probe. Readiness exchanges are still quarantined
+  before generation (`run_pilot.sh:162–180`;
+  `suts/cwa-verification.env:9–14`). The exact status rejects redirects, 403, 404,
+  405 and arbitrary 5xx; this probe does not verify downstream availability.
+
+### Missing test-result server
+
+The original Compose and this override contain only SUT and proxy; no backend
+or stub is added. The Dockerfile still targets
+`http://cwa-testresult-server:8088`. Its sole Feign client method sends
+`POST /api/v1/app/result` with a hashed GUID
+(`dockerfiles/cwa-verification.yaml` services and `.dockerfile:17`, under EMB;
+`compose.override.cwa-verification.yaml:1–32`;
+`CWA_SRC/src/main/java/app/coronawarn/verification/client/TestResultServerClient.java:33–49`).
+
+| Active operation | When it calls the backend | Source under CWA_SRC |
+|---|---|---|
+| POST `/version/v1/testresult` | Non-fake request with an existing GUID-backed session; a DOB hash may cause a second call | `src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java:94–125` |
+| POST `/version/v1/tan` | Non-fake request with an existing GUID-backed session and unused TAN allowance | `src/main/java/app/coronawarn/verification/controller/ExternalTanController.java:100–129` |
+
+The teleTAN branches and `cwa-fake: 1` requests bypass these calls. Registration
+creates local sessions; teleTAN creation/verification use local services. The
+similarly named `InternalTestStateController` has profile
+`REMOVED_DUE_TO_CONFLICTS` and is **inactive** under `local,external,internal`
+(`CWA_SRC/src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java:97–99,134–151`;
+`ExternalTanController.java:103–105,127–129` in that directory;
+`ExternalTokenController.java:91–120`;
+`CWA_SRC/src/main/java/app/coronawarn/verification/service/AppSessionService.java:86–110,120–136`;
+`InternalTanController.java:100–123,141–163`;
+`InternalTestStateController.java:38–41,83–91`). Do not count the inactive
+controller as a third exposed backend-dependent operation.
+
+⚠️ With no matching Docker service/alias, expect DNS resolution failure, rather
+than an HTTP response from the missing backend. A resolved host with a closed
+port would instead cause connection refusal; a blocked connection or slow peer
+can time out. Configured connect/read timeouts are each 5000 ms, which does not
+prove a total elapsed bound for DNS or retries
+(`CWA_SRC/src/main/resources/application.yml:17–23`;
+`CWA_SRC/src/main/java/app/coronawarn/verification/client/TestResultServerClientConfig.java:69–82`).
+Client errors propagate unchanged through `TestResultServerService`; the generic
+controller exception handler maps unhandled failures to **500**, not an explicit
+502/503/504. The generator's own timeout can occur first
+(`CWA_SRC/src/main/java/app/coronawarn/verification/service/TestResultServerService.java:48–49`;
+`CWA_SRC/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java:52–55`;
+`run_pilot.sh:30–32`). Earlier invalid input or an unknown token can return 400
+without any backend call; do not label every failure on these paths ENV
+(`ExternalTestStateController.java:149–151`; `ExternalTanController.java:150–155`).
+
+**Recommendation:** retain the declared setup for the first diagnostic baseline
+and label only exchanges with log-confirmed missing-backend failures **ENV**.
+For deeper GUID-path coverage, review a deterministic backend stub as a separate,
+declared experiment condition with new controls and provenance. T17 implements
+no stub. This recommendation follows the conditional call sites and exception
+path above; a 500 alone does not establish ENV attribution.
+
+### First-run origin check and exact commands
+
+**Do this before interpreting any CWA analysis:** the spec's absolute
+`localhost:8080` server constrains authority as well as paths, while generation
+uses `http://mitmproxy:8080/`. The existing logger records the flow request's
+origin, and the checker enforces that authority. A local model check matched
+`localhost:8080` but rejected `mitmproxy:8080` and `sut-cwa-verification:8080`
+(`../../tools/conformance.py:125–137,157–180,381`;
+`../../tools/mitm_fulllog.py:39–46`;
+`09_collab/logs/T17_scratch/origin_check.json:1–24`).
+⚠️ Inspect actual captured origins and review an explicit deployment-authority
+calibration if needed before accepting violation/attribution results. T17 does
+not rewrite the source/oracle spec, exchange origins or checker. A complete smoke
+run alone does not resolve this analysis issue.
+
+Future execution by Claude, from `research/` (not executed in T17):
+
+```bash
+set -euo pipefail
+H="$PWD/08_experiments/E1_pilot/harness_v2"
+EMB="$PWD/08_experiments/_external/emb"
+unset HEALTH_PATH BASE_PATH AUTH_ROLE AUTH_HEADER ONLY_OPS PILOT_RUN_ID DATA_GEN
+export MAX_EXAMPLES=100 REQUEST_TIMEOUT_MS=10000
+export SCHEMA_CHECKS=response_headers_conformance
+"$H/prepare_dist.sh" cwa-verification
+# Source-derived POST/400 readiness is selected by the CWA config.
+"$H/run_pilot.sh" cwa-verification "$EMB/openapi-swagger/cwa-verification.json" baseline NONE 0 1 300
+```
+
+After confirming POST/400 readiness, header binding, origin matching, coverage
+and expected dependency failures, collect matched batches. Existing `FAULTS`
+subsets and `ORACLE_POOL=baseline` remain available; an empty eligible pool can
+abort a RESPONSE_ORACLE run (`run_batch.sh:42–53`; `run_pilot.sh`, manifest
+`operations_mutated` check):
+
+```bash
+export BUDGET_SECONDS=300 SEVERITY=30
+unset FAULTS
+ORACLE_POOL=baseline "$H/run_batch.sh" cwa-verification 1 2 3
+```
+
+Keep v2 scripts/configs fixed during data collection. Changes affect provenance
+hashes; never pair old and new harness snapshots (`analyse_run.sh:19–39`).

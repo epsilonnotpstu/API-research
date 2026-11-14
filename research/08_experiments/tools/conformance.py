@@ -150,8 +150,14 @@ def select_media(content, ctype):
 
 
 class Spec:
-    def __init__(self, spec, strict_additional=False):
+    def __init__(self, spec, strict_additional=False, deploy_origin=None, reject_statuses=(400, 422)):
         self.raw, self.strict = spec, strict_additional
+        # Statuses that mean "request rejected as invalid" for VALID_REJECTED. Default: 400/422. A SUT-specific
+        # set (e.g. market's deliberate 406 for validation errors) must be justified by code evidence.
+        self.reject = tuple(reject_statuses)
+        # Exchanges captured from the deployment under test (e.g. http://sut-x:8080) are matched by path
+        # only: absolute spec servers such as http://localhost:8080 are dev placeholders for that deployment.
+        self.deploy = authority(deploy_origin) if deploy_origin else None
         self.oas3 = specmut.is_oas3(spec)
         self.dialect = spec.get('openapi', False) if self.oas3 else False
         self.base = server_base((spec.get('servers') or [{}])[0])[0] if self.oas3 else spec.get('basePath', '').rstrip('/')
@@ -176,7 +182,8 @@ class Spec:
         for rx, template, names, route_method, route_origin in self.routes:
             if fallback and template != fallback[0]:
                 break  # A concrete path wins even when its method is undocumented.
-            if origin and route_origin and authority(origin) != route_origin:
+            if origin and route_origin and authority(origin) != route_origin \
+                    and not (self.deploy and authority(origin) == self.deploy):
                 continue
             m = rx.match(path)
             if m:
@@ -431,13 +438,13 @@ def check(spec, exchange):
         out.append(v('REQUEST_UNCHECKABLE', message='; '.join(problems.uncheckable)))
     if problems and 200 <= status < 300:
         out.extend(v('INVALID_ACCEPTED', ptr, msg, identity) for ptr, msg, identity in problems)
-    if not problems and not problems.uncheckable and status in (400, 422):
+    if not problems and not problems.uncheckable and status in spec.reject:
         out.append(v('VALID_REJECTED'))
     return out
 
 
-def main(spec_path, exchanges_path):
-    spec = Spec(specmut.load_spec(spec_path))
+def main(spec_path, exchanges_path, deploy_origin=None, reject_statuses=(400, 422)):
+    spec = Spec(specmut.load_spec(spec_path), deploy_origin=deploy_origin, reject_statuses=reject_statuses)
     with open(exchanges_path, encoding='utf-8') as f:
         for i, line in enumerate(f):
             for violation in check(spec, json.loads(line)):
@@ -446,4 +453,15 @@ def main(spec_path, exchanges_path):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:3])
+    # Usage: conformance.py SPEC EXCHANGES [--deploy-origin URL] [--reject-statuses 400,422]
+    args = sys.argv[1:]
+    deploy, reject = None, (400, 422)
+    if '--deploy-origin' in args:
+        i = args.index('--deploy-origin')
+        deploy = args[i + 1]
+        del args[i:i + 2]
+    if '--reject-statuses' in args:
+        i = args.index('--reject-statuses')
+        reject = tuple(int(x) for x in args[i + 1].split(','))
+        del args[i:i + 2]
+    main(args[0], args[1], deploy, reject)

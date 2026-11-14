@@ -213,6 +213,24 @@ class ReviewFixes(unittest.TestCase):
         e['request']['origin'] = 'https://else.test'
         self.assertIn('UNDOCUMENTED_OPERATION', kinds(d, e))
 
+    def test_R10b_deploy_origin_matches_absolute_dev_server(self):
+        d = doc()
+        d['servers'] = [{'url': 'http://localhost:8080'}]
+        e = ex(path='/x')
+        e['request']['origin'] = 'http://sut-cwa-verification:8080'
+        self.assertIn('UNDOCUMENTED_OPERATION', kinds(d, e))  # default: authority enforced
+        sp = c.Spec(d, deploy_origin='http://sut-cwa-verification:8080')
+        self.assertEqual(sp.match('/x', 'get', e['request']['origin']), ('/x', {}))
+        self.assertEqual(sp.match('/x', 'get', 'http://else.test:8080'), (None, {}))  # other origins still rejected
+
+    def test_R10c_sut_specific_reject_statuses(self):
+        d = doc()
+        e = ex(status=406)
+        self.assertNotIn('VALID_REJECTED', kinds(d, e))  # default oracle: only 400/422 count as rejection
+        sp = c.Spec(d, reject_statuses=(400, 406, 422))
+        self.assertIn('VALID_REJECTED', [v['kind'] for v in c.check(sp, e)])
+        self.assertIn('VALID_REJECTED', kinds(d, ex(status=400)))  # default unchanged
+
     def test_R11_path_parameter_refs_dedup_and_override(self):
         d = doc(params=[{'$ref': '#/components/parameters/Q'}])
         d['paths']['/x']['parameters'] = [{'$ref': '#/components/parameters/R'}]

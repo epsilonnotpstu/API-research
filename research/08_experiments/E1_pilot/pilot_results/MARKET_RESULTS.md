@@ -50,7 +50,13 @@
 1. **Replay mode-এ injected fault-এর label 100% সঠিক** — তবে এটা নকশাগত: manifest-এর operation-এ নতুন violation-কে manifest-এর label দেওয়া হয়। Attribution-এর আসল পরীক্ষা হলো fresh mode ও বাস্তব (non-injected) violation।
 2. **REQUEST_STRICT: replay ≫ fresh** (একটি ব্যতিক্রম: petstore s3)। কঠোর spec-এর ত্রুটি fuzzing traffic-এ প্রায়ই অদৃশ্য — R1-এর জন্য মূল empirical দাবির প্রার্থী।
 3. **REQUEST_LOOSE replay-এ সর্বদা 0।** কারণটা কাঠামোগত: spec শিথিল হলে পুরোনো traffic-এ নতুন violation হতে পারে না। এই fault class মূল্যায়নের metric হওয়া উচিত VANISHED (baseline-এর violation লুকানো), NEW নয়। ⚠️ পরের batch-এর আগে metric সংশোধন প্রস্তাব।
-4. **RESPONSE_ORACLE scout-এ seed-নির্ভর, অন্য দুটিতে স্থিতিশীল।** কারণ scout-এর 2xx-body operation কম। `ORACLE_POOL=baseline` দিয়ে scout পুনরায় চালানো পরের ধাপ।
+4. **RESPONSE_ORACLE scout-এ seed-নির্ভর ছিল, অন্য দুটিতে স্থিতিশীল।**
+   - মূল কারণ: scout-এর spec-এ 30টি operation শুধু schema-হীন `default` response ঘোষণা করে, তাই oracle mutation বসানোর জায়গা কম।
+   - **Pool batch** (`runs/scout-api/batches/20261114T063848Z_batch_17931`, `ORACLE_POOL=baseline`): pool-এ 7/5/5টি operation, প্রতি seed-এ 2টি mutated।
+     - Replay NEW **4/86/43** (আগে 90/0/0); fresh-এও একই।
+     - Unexplained 0; label match 133/133।
+   - শূন্য-ফলের seed-নির্ভরতা দূর হয়েছে। মাত্রার পার্থক্য রয়ে গেছে, কারণ কোন operation বাছাই হলো তার ওপর নির্ভর করে (`POST /v1|v2/activities` অনেক violation দেয়)।
+   - ⚠️ এখন থেকে RESPONSE_ORACLE-এর সংখ্যা "pool-সহ" ও "pool-ছাড়া" আলাদা করে রিপোর্ট করতে হবে।
 
 ### সীমা
 - একটি fuzzer (Schemathesis 3.39.16), budget 300 s, seed 3টি, severity একটিই।

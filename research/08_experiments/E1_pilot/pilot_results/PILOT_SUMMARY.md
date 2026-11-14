@@ -1,0 +1,125 @@
+# R1 pilot — চার SUT-এর সমন্বিত ফল (2026-11-14, Claude)
+
+এই নথি E1 (fault injection) আর E2 (baseline labelling) মিলিয়ে বর্তমান প্রমাণের সারাংশ। প্রতিটি সংখ্যার উৎস-ফাইল নিচে দেওয়া আছে।
+- ⚠️ চিহ্ন = অনুমান।
+- [H] = paper-এ দাবি করার আগে আরও যাচাই দরকার।
+
+## 1. Setup
+| | scout-api | swagger-petstore | market | cwa-verification |
+|---|---|---|---|---|
+| Spec | Swagger 2.0 | OpenAPI 3.0.4 | Swagger 2.0 | OpenAPI 3.0.1 |
+| Operation | 49 | 19 | 13 | 5 (সব POST) |
+| Request constraint (spec-এ) | 18 | 6 | 51 | 10 |
+| Auth | EMB admin header | নেই | EMB user header | নেই |
+| Line / branch coverage (baseline) | 29–32% / 16–19% | 72–73% / 60–61% | 35–36% / 3–4% | 43% / 9% |
+
+**সাধারণ setup:**
+- EMB commit 915859080da0…; Schemathesis 3.39.16 (Docker); mitmproxy 10.2.4 (পুরো exchange log); JaCoCo 0.8.12।
+- Budget 300 s, max examples 100, seed 1–3।
+- Fault মাপা হয়েছে `specmut` দিয়ে, চারটি class-এ।
+- **Main protocol:** positive data, এলোমেলো 30% operation, default oracle।
+- Harness: `E1_pilot/harness` (v1, scout Batch 2) এবং `E1_pilot/harness_v2` (বাকি সব)।
+- Coverage: `coverage/README.md`।
+
+## 2. Fault detection — replay mode
+উৎস: `all_runs_occurrence_metrics.csv` (`recount_all.py`)। Diagnostic batch বাদ: `20261114T025044Z_batch_1756007`, `…025723Z_batch_1771572`, `…081502Z_batch_102982`, `…093050Z_batch_195691`।
+
+মান = seed 1/2/3। **N** = NEW fingerprint, **V** = VANISHED, **I** = INCREASED, **D** = DECREASED (দুটোই occurrence স্তরে, mutated op-এ)।
+
+| Fault | Protocol | scout-api | petstore | market | cwa |
+|---|---|---|---|---|---|
+| REQUEST_STRICT | main | N 28/20/61 | N 11/6/30 | N 0/2/10 | V 0/2/1 |
+| RESPONSE_ORACLE | main | N 90/0/0 | N 4/12/5 | N 8/5/10 | 0/0/0 |
+| RESPONSE_ORACLE | baseline-2xx pool | N 4/86/43 | — | — | — |
+| METHOD_SEM | main | N 5/11/15, V 5/10/14 | N 10/7/7, V 12/8/10 | N 3/7/6, V 0/7/3 | N 2/2/2, V 2/2/2 |
+| REQUEST_LOOSE | main | 0 | 0 | 0 | 0 |
+| REQUEST_LOOSE | constraint pool + negative data + 100% | N 1/1/1, V 1/1/1 | I 1/1/1, V 0/0/1 | I 2/1/2 (SUT oracle); 0 (default) | N 2/2/2, I 2/3/2 |
+
+**প্রতিটি replay সারিতে দুটো জিনিস সবসময় 0:**
+- unexplained (NEW/VANISHED অপরিবর্তিত op-এ)।
+- অপরিবর্তিত op-এ occurrence-এর পরিবর্তন।
+
+আর NEW-এর manifest label match 100%। ⚠️ এটা নকশাগত, কারণ replay-তে mutated op-এর নতুন violation manifest-এর label পায়।
+
+## 3. Fresh mode (নতুন fuzzing run) — সতর্কতার সাথে পড়তে হবে
+| Fault (main) | scout | petstore | market | cwa |
+|---|---|---|---|---|
+| REQUEST_STRICT: fresh NEW (replay NEW-এর তুলনায়) | 0/2/0 (28/20/61) | 6/0/23 (11/6/30) | 2/0/0 (0/2/10) | 0 (0) |
+| REQUEST_STRICT: fresh VANISHED / DECREASED | V 0/2/1, D 12/11/13 | V 2/0/2 | V 4/1/3, D 0/4/0 | V 1/2/1 |
+
+- Main protocol-এ fresh unexplained প্রায় 0: মোট 8, সবগুলো petstore-এ (METHOD_SEM 1, LOOSE 1, STRICT 6)।
+- Negative data-য় fresh-এর noise অনেক বেড়ে যায়। scout LOOSE-এ অপরিবর্তিত op-এ পরিবর্তন 45–62। তাই fresh-এর occurrence metric ব্যাখ্যার জন্য একই seed-এ একাধিক baseline দিয়ে noise floor মাপা দরকার। এটা এখনো করা হয়নি।
+
+## 3b. Negative + positive data (`DATA_GEN=all`) — STRICT, ORACLE (baseline-2xx pool), METHOD_SEM
+প্রতিটি SUT-এর batch `runs/<sut>/batches/`-এ, `neg_all_<sut>.console.log` অনুযায়ী: 12 run আর 9 analysis করে, সব complete। মান = seed 1/2/3।
+
+| Fault | Mode | scout | petstore | market | cwa |
+|---|---|---|---|---|---|
+| REQUEST_STRICT | replay N | 31/20/53 | 11/4/31 | 0/2/6 | 0/0/0 (V 0/2/1) |
+| REQUEST_STRICT | **fresh N** | **26/23/55** | **11/7/21** | **1/4/6** | 0 (V 3/2/1) |
+| RESPONSE_ORACLE (pool) | replay N | 0/86/44 | 5/7/13 | 8/5/6 | 1/0/0 |
+| METHOD_SEM | replay N / V | 5/12/16 / 5/11/15 | 10/7/8 / 12/8/11 | 3/8/6 / 0/12/7 | 2/3/4 / 2/2/2 |
+| সব | replay unexplained, অপরিবর্তিত op-এ পরিবর্তন | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
+| সব | fresh: অপরিবর্তিত op-এ পরিবর্তন | 49–84 | 12–22 | 2–21 | 2–4 |
+
+**সংশোধন (2026-11-14):** negative data দিলে REQUEST_STRICT-এর fresh NEW প্রায় replay-এর সমান। তাই §5-এর H1 শর্তসাপেক্ষ: এটা positive-only generation-এর (Schemathesis default) ফল। তবে fresh-এর noise অনেক বেশি; replay নিখুঁত থাকে।
+
+## 4. Baseline violation-এর চূড়ান্ত label (E2)
+উৎস: `../../E2_labelling/FINAL_LABELS.md`, `final_labels_baseline_s1.csv`।
+
+| | n | SPEC (+PARTIAL) | IMPL | BOTH | TEST | UNDECIDABLE |
+|---|---|---|---|---|---|---|
+| scout-api | 99 | 31 | 32 | 17 | 1 | 18 |
+| swagger-petstore | 43 | 7 | 7 | 7 | 20 | 2 |
+| market | 13 | 4 | 2 | 6 | 1 | 0 |
+| cwa-verification | 6 | 2 | 0 | 0 | 4 | 0 |
+| **মোট** | **161** | **44** | **41** | **30** | **26** | **20** |
+
+- **Labeller:** A = Claude, B = Codex (blind), adjudication supervisor-এর।
+- **Pooled A–B agreement:** L1 80.7% (κ 0.73)। Codebook §10.1-এর BOTH-রীতি মেলালে 84.5% (κ 0.77)।
+
+## 5. দাবির প্রার্থী (paper-এর জন্য)
+1. **[H1, সংশোধিত] Positive-only fuzzing-এ spec-ত্রুটি প্রায়ই অদৃশ্য; replay সেগুলো দেখায়। Negative data দিলে fresh-ও দেখায়, তবে অনেক বেশি noise-সহ (§3b)।**
+   - REQUEST_STRICT, তিন seed-এর মোট NEW:
+
+     | SUT | Replay | Fresh |
+     |---|---|---|
+     | scout | 109 | 2 |
+     | petstore | 47 | 29 |
+     | market | 12 | 2 |
+     | cwa | 0 | 0 |
+
+   - Petstore-এ fresh-এর সংকেত তুলনামূলক বেশি। ⚠️ সম্ভবত এর spec-এ header constraint আছে, যা generator সরাসরি ব্যবহার করে।
+   - Fresh-এ বরং violation **হারায়** (market V 4/1/3, scout D 12/11/13)। ⚠️ মানে কঠোর spec থেকে generator "কম খারাপ" input পাঠায়, তাই IMPL-ত্রুটি আড়াল হয়।
+2. **[H2] একক-পক্ষের attribution অপর্যাপ্ত।** নির্ণয়যোগ্য baseline অমিলের 26% (30/115) BOTH: spec আর code দুটোই বদলাতে হয়।
+3. **[H3] Detectability fault class আর spec-এর গঠনের ওপর নির্ভর করে।**
+   - RESPONSE_ORACLE ধরা পড়ে কেবল 2xx body আর editable response schema থাকলে। scout-এর 30টি op schema-হীন `default` ঘোষণা করে।
+   - REQUEST_LOOSE ধরা পড়ে তিন শর্তে: negative traffic, checker-এর মূল্যায়িত constraint, প্রচলিত rejection status।
+4. **[H4] Fingerprint-স্তরের attribution metric সংকেত লুকায়।** শিথিলতার প্রভাব নতুন fingerprint হিসেবে নয়, পুরোনো fingerprint-এর বাড়তি occurrence হিসেবে আসে (`LOOSE_RESULTS.md` §6)।
+5. **[H5] Stateful fault per-operation attribution ভাঙে।** Petstore-এ `POST /user {}` (#952) থেকে পাঁচটি অন্য operation-এ 500।
+6. **[H6] Oracle নিজেই উল্লেখযোগ্য ত্রুটির উৎস।** Baseline-এর 16% (26/161) TEST:
+   - checker coverage (XML/form body),
+   - int64 format enforce না করা,
+   - server state না বোঝা (cwa token),
+   - fuzzer-এর probe।
+   - আর default oracle SUT-এর rejection convention (market 406) বোঝে না।
+
+## 6. সীমা (threats to validity)
+- **External validity:**
+  - চারটিই Java/Spring/Dropwizard SUT; একটি fuzzer; budget 300 s; seed 3টি।
+  - Coverage মাঝারি থেকে কম (branch 3–61%)।
+- **Construct validity:**
+  - fault তৈরি করা কৃত্রিম (`specmut`)।
+  - Replay-এর label match নকশাগত।
+  - একক হলো fingerprint, root cause নয়।
+- **Labelling:**
+  - দুটি LLM labeller আর একজন মানব adjudicator।
+  - 11টি label rule থেকে প্রয়োগ করা, item ধরে দেখা হয়নি।
+  - মানব inter-rater reliability নেই।
+- **Protocol:** negative data এখন চারটি fault class-এই প্রয়োগ হয়েছে (§3b)। Pool/severity এখনো fault-ভেদে আলাদা: LOOSE constraint pool 100%, ORACLE 2xx pool 30%, STRICT/METHOD_SEM এলোমেলো 30%।
+
+## 7. পরের ধাপ
+2. Fresh-এর noise floor: একই seed-এ বারবার baseline।
+3. Checker-এ int32/int64 format enforcement।
+4. Code mutation (E5): IMPL-এর ground truth।
+5. দ্বিতীয় fuzzer (EvoMaster)।

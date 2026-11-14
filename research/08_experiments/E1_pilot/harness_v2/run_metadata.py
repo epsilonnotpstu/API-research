@@ -53,7 +53,11 @@ def main():
                                if os.environ['PILOT_AUTH_SOURCE'] not in ('none', 'runtime-override') else None),
         'logger_max_body': int(os.environ['MITM_MAX_BODY']),
         'host_port': os.environ['HOST_PORT'], 'jacoco_port': os.environ['JACOCO_PORT'],
-        'sut_jar_sha256': sha(emb / 'dist' / f'{sut}-sut.jar'),
+        'sut_jar_sha256': sha(Path(os.environ.get('PILOT_SUT_JAR_PATH', str(emb / 'dist' / f'{sut}-sut.jar')))),
+        'code_mutation': ({'role': os.environ['PILOT_CODE_ROLE'],
+                           'source_tree_sha256': os.environ['PILOT_CODE_SOURCE_SHA256'],
+                           'manifest_sha256': sha(run / 'code.manifest.json')}
+                          if os.environ.get('PILOT_CODE_ROLE') else None),
         'jacoco_agent_sha256': sha(emb / 'dist' / 'jacocoagent.jar'),
         'jacoco_cli_sha256': sha(emb / 'dist' / 'jacococli.jar'),
         'images': images, 'file_sha256': files,

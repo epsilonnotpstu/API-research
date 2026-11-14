@@ -210,3 +210,50 @@
 | T3 LLM বনাম T2 triage | ৬১.৬% | ০.৩৫ |
 
 ⚠️ কোনোটিই ground truth নয়। মানব labeller-এর label এখনো বাকি।
+
+## 10. v0.4 সংযোজন — supervisor adjudication থেকে নিয়ম (2026-11-14)
+উৎস: `E2_labelling/batch2_AB_agreement.md` (scout, T15) এবং `E2_labelling/petstore_market_AB_agreement.md` (petstore/market, T16)।
+
+### 10.1 BOTH-এর রীতি (Q1)
+- Labeller সবসময় একটি **প্রাথমিক L1** দেবে (যেমন 5xx → IMPL, R1 অনুযায়ী) এবং আলাদা `both_candidate` flag দেবে। প্রতিটি দিকের প্রমাণ আলাদা থাকবে।
+- **চূড়ান্ত L1 = BOTH কেবল supervisor-এর adjudication-এ** নির্ধারিত হবে। Labeller সরাসরি BOTH লিখবে না।
+
+### 10.2 Open-schema বনাম কঠোর binding (T15)
+- Schema খোলা (`additionalProperties` অনুল্লিখিত), অথচ server অঘোষিত property প্রত্যাখ্যান করে, আর কোনো পক্ষেই intent-এর স্পষ্ট প্রমাণ নেই → **UNDECIDABLE** (policy-ambiguous)।
+
+### 10.3 Container বা framework policy বনাম খোলা spec (Q3)
+- বৈধ কিন্তু container-এর default নিরাপত্তা নীতিতে আটকানো input (যেমন Tomcat-এ `%5C`), যেখানে spec কোনো বাধা দেয় না → **UNDECIDABLE**।
+- কিন্তু সত্যিই অবৈধ HTTP (যেমন header-এ control character) → **TEST**।
+
+### 10.4 Aggregation: SPEC + TEST মিশ্রণ (Q2)
+- §9.1-এর টেবিলে নতুন সারি: **কিছু SPEC, বাকি TEST (checker বা generator-এর false positive) → SPEC_PARTIAL**।
+- Strict scoring-এ এটি UNDECIDABLE, lenient scoring-এ SPEC।
+- ⚠️ [H] প্রতিসম নিয়ম "কিছু IMPL, বাকি TEST → IMPL_PARTIAL" প্রস্তাবিত, এখনো সিদ্ধান্ত হয়নি।
+
+### 10.5 প্রস্তাবিত TEST L2 code (দুই labeller-ই স্বাধীনভাবে প্রস্তাব করেছে; চূড়ান্ত নাম বাকি)
+- `T-ORACLE-COVERAGE`: checker request body validate করতে পারেনি (XML, form, binary)।
+- `T-ORACLE-FORMAT`: checker int32/int64 format-এর সীমা enforce করে না, তাই অবৈধ input-কে বৈধ ধরে। B-র নাম `T-ORACLE-NUMERIC-FORMAT`।
+- `T-PROBE`: fuzzer-এর capability probe traffic। B-র নাম `T-PROBE-CONTAMINATION`।
+- `T-GEN-INVALID-HTTP`: generator অবৈধ HTTP পাঠিয়েছে। B-র নাম `T-TRANSPORT-INPUT`।
+
+### 10.6 চূড়ান্ত BOTH-এর নিয়ম (supervisor-অনুমোদিত, 2026-11-14)
+- **Spec-এ ঐচ্ছিক, অথচ অনুপস্থিত হলে code crash:**
+  - অনুপস্থিত জিনিসটি resource-এর key, create-এর body বা NOT NULL persistent field হলে → **BOTH** (spec-এরও required বলা উচিত ছিল)।
+  - Resource অস্তিত্বহীন বলে crash (404 প্রত্যাশিত), বা অনুপস্থিত মান server নিজে সামলাতে পারত (যেমন create-এ id তৈরি) → **IMPL**।
+- **Spec-এর type বা structure ভুল, আর code সেই ভুলকে 5xx-এ পরিণত করে** (যেমন market-এর `_links`) → **BOTH**।
+- **Spec নিজের ভেতরেই অসংগত** (request parameter-এ enum নেই, model-এ আছে), আর code অবৈধ মান সংরক্ষণ করে → **BOTH** (প্রাথমিক L1: IMPL)।
+
+### 10.7 BOTH নয় এমন ক্ষেত্র
+- Code ইচ্ছাকৃতভাবে একটি status দেয় যা spec ঘোষণা করে না, কিন্তু status-টি HTTP-অর্থে অনুপযুক্ত (যেমন validation-এ 406) → **SPEC / S-STATUS**। HTTP-অর্থের সমস্যা আলাদা note-এ থাকবে; code-ত্রুটি হিসেবে গণনা হবে না।
+- এক দিক ঠিক করলেই সমস্যা মেটে (যেমন JSON বলে plain text ফেরত: code-এ quote, অথবা spec-এ `text/plain`) → **IMPL** (§9.3)।
+- Spec-এর documented `default` server-এর প্রতিশ্রুতি; code সেটা না মানলে → **IMPL / I-REJECT-VALID**।
+
+### 10.8 SUT-ভিত্তিক rejection status (oracle variant; supervisor-এর সিদ্ধান্ত, 2026-11-14)
+- **Default oracle:** VALID_REJECTED জ্বলে কেবল 400/422-এ।
+- **SUT oracle:** code-এ স্পষ্ট প্রমাণ থাকলে (explicit validation handler) সেই SUT-এর জন্য অতিরিক্ত rejection status মানা যায়।
+  - যেমন market: 400, 406, 422 (`RestExceptionHandler.java:63-64,73-74`)।
+  - Config: `harness_v2/suts/<sut>.env`-এর `REJECT_STATUSES_DEFAULT`।
+- **রিপোর্টিং:** দুটো oracle-এর ফলই পাশাপাশি রিপোর্ট হবে।
+  - `analyse_run.sh`-এর default হলো SUT oracle।
+  - `ORACLE=default` দিলে analysis চলে generic oracle দিয়ে; output যায় `analysis-<mode>-default`-এ।
+- **আগের সংস্করণ:** 2026-11-14-এর আগের সব analysis (আর চূড়ান্ত label) default oracle দিয়ে করা।

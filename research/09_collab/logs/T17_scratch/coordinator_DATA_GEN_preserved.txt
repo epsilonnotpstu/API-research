@@ -1,0 +1,6 @@
+# DATA_GEN (positive|negative|all): unset keeps the argv of earlier batches (Schemathesis default = positive).
+# REQUEST_LOOSE can only show an effect if traffic violates the loosened constraint, i.e. with negative data.
+if [[ -n ${DATA_GEN:-} ]]; then
+    [[ $DATA_GEN =~ ^(positive|negative|all)$ ]] || { echo 'Invalid DATA_GEN' >&2; exit 2; }
+    schema_cmd+=(--data-generation-method "$DATA_GEN")
+fi

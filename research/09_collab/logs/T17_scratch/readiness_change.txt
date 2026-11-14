@@ -1,0 +1,7 @@
+    if [[ ${HEALTH_METHOD_DEFAULT:-GET} == POST ]]; then
+        # CWA disables actuator HTTP and exposes POST-only business routes.
+        # Empty body tests MVC binding without invoking the operation or dependencies.
+        if health_status=$(curl --silent --show-error --max-time 2 --request POST \
+            --header 'Content-Type: application/json' --data '' -o /dev/null --write-out '%{http_code}' \
+            "http://127.0.0.1:18080$HEALTH_PATH" 2>"$run_dir/health-error.txt") \
+            && [[ $health_status == "${HEALTH_STATUS_DEFAULT:?Set expected POST readiness status}" ]]; then ready=1; break; fi
