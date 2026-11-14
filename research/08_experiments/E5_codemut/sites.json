@@ -569,6 +569,31 @@
       "witness_plan": "Use GET /api/v3/user/login with no query parameters, captured JSON-compatible headers and clean equal state. Require control 200 and mutant 400 on the identical request, with request validity checked under unchanged OAS including T24 integer formats. Run fresh v2 pair and control-vs-control seeds 1-3, and apply EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1; report low per-run exposure and any new noise rather than assuming it cannot recur.",
       "pilot": true,
       "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/UserController.java:103; 08_experiments/_external/emb/openapi-swagger/swagger-petstore.json:#/paths/~1user~1login/get/parameters; 09_collab/logs/T25_scratch/petstore_operation_counts.csv (method=GET,template=/user/login; 24 rows, linked source exchanges/line lists and attribution paths); 09_collab/logs/T25_scratch/petstore_login_witnesses.json (48 file/line locators); 09_collab/reports/T25_report.md (seed/role counts and noise rule)"
+    },
+    {
+      "site_id": "petstore-reject-valid-v3",
+      "sut": "swagger-petstore",
+      "operator": "REJECT_VALID",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 103,
+      "before": "public ResponseContext loginUser(final RequestContext request, final String username, final String password) {",
+      "after": "public ResponseContext loginUser(final RequestContext request, final String username, final String password) {\n        if (username == null) {\n            return new ResponseContext()\n                    .status(Response.Status.BAD_REQUEST)\n                    .entity(\"No username provided. Try again?\");\n        }",
+      "operations": [
+        {
+          "path": "/user/login",
+          "method": "get"
+        }
+      ],
+      "expected_L1": "IMPL",
+      "expected_L2": "I-REJECT-VALID",
+      "expected_conformance_signal": [
+        "VALID_REJECTED"
+      ],
+      "source_sha256": "257a89219d5dadc1fa10006098d0fdb95a7e6668f0de7d43040a3d9ec4ede58e",
+      "conditions": "The unchanged OAS makes username optional. Keep username == null as the guard, but return ResponseContext.status(Response.Status.BAD_REQUEST).entity(...) exactly as the existing getUserByName null guard does (UserController.java:55-59); do not throw BadRequestException. Saved v2 seeds 1-3 have two 500 SERVER_ERROR occurrences per mutant login operation and no VALID_REJECTED; pair and noise validation PASS, with zero mapped-op NEW in noise. Historical request-valid/no-400 selection evidence remains in T25. ⚠️ Expected v3 output for absent username is 400/VALID_REJECTED via the codebase status mechanism; compilation, runtime behavior and fresh v3 noise results remain unverified. The non-null username path keeps the original handler body.",
+      "witness_plan": "Claude builds a fresh explicit petstore-reject-valid-v3 pair from the original pinned tree. Send identical GET /api/v3/user/login requests without username against control and mutant; require control 200, mutant 400 (not 500), request validity under the unchanged OAS, and VALID_REJECTED. Also send a non-null username to confirm the original path remains reachable. Run fresh pair and control-vs-control seeds 1-3 and apply EXPECTED_CHANGED_FP_ABSENT_BOTH_NOISE_RUNS_V1. Treat saved v2 500s as an operator-realisation failure, not successful REJECT_VALID evidence.",
+      "pilot": true,
+      "evidence": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/UserController.java:26,55-59,103-110; 08_experiments/_external/emb/openapi-swagger/swagger-petstore.json:#/paths/~1user~1login/get/parameters; 08_experiments/E5_codemut/work/petstore-reject-valid-v2_20261114T161810Z/analysis-s1-default/attribution.csv:11 (SERVER_ERROR); same bundle analysis-s2-default/attribution.csv:11 and analysis-s3-default/attribution.csv:13; 09_collab/logs/T25_scratch/T25b/v2_login_counts.json (V2-1-pair-mutant,V2-2-pair-mutant,V2-3-pair-mutant and all noise rows with physical exchange locators); 09_collab/reports/T25_report.md (T25b addendum)"
     }
   ]
 }

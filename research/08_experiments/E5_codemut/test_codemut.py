@@ -216,9 +216,9 @@ class CodeMutationTests(unittest.TestCase):
 
 
 class ReplacementSiteTests(unittest.TestCase):
-    """Exercise the shipped v2 entries against the original checkout bytes."""
+    """Exercise replacement entries against the original checkout bytes."""
 
-    IDS = ("market-response-field-v2", "petstore-reject-valid-v2")
+    IDS = ("market-response-field-v2", "petstore-reject-valid-v2", "petstore-reject-valid-v3")
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="v2-site-", dir=SCRATCH)
@@ -266,6 +266,21 @@ class ReplacementSiteTests(unittest.TestCase):
 
     def test_petstore_v2_applies_once_to_original_tree_copy(self):
         self.verify_copy("petstore-reject-valid-v2")
+
+    def test_petstore_v3_applies_once_to_original_tree_copy(self):
+        self.verify_copy("petstore-reject-valid-v3")
+
+    def test_petstore_v3_reuses_existing_null_username_400_return(self):
+        site = self.selected["petstore-reject-valid-v3"]
+        source = (self.source(site) / site["file"]).read_text()
+        existing_handler = source.split(
+            "public ResponseContext getUserByName(final RequestContext request, final String username) {\n", 1)[1]
+        existing_guard = existing_handler.split("\n\n        final User user =", 1)[0]
+        self.assertEqual(site["after"], site["before"] + "\n" + existing_guard)
+        self.assertIn("if (username == null)", existing_guard)
+        self.assertIn("return new ResponseContext()", existing_guard)
+        self.assertIn(".status(Response.Status.BAD_REQUEST)", existing_guard)
+        self.assertNotIn("throw", existing_guard)
 
     def test_v2_requires_all_catalogue_fields_and_explicit_selection(self):
         fields = set(self.sites[0])

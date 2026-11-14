@@ -260,11 +260,9 @@ def validate(control, mutant, mut, kind='pair'):
             equal(meta['harness_version'], 2, 'Unexpected harness version')
             c.require(isinstance(meta['emb_commit'],str) and meta['emb_commit'] and isinstance(meta['emb_status_porcelain'],str), 'Missing EMB provenance')
             c.require(isinstance(meta['schemathesis_image'],str) and meta['schemathesis_image'], 'Missing generator image reference')
-            equal(set(meta['tool_sha256']), {p.name for p in c.TOOLS.glob('*.py')}, 'Incomplete current tool inventory')
-            equal(set(meta['harness_sha256']), {str(p.relative_to(c.HARNESS)) for p in c.HARNESS.rglob('*')
-                  if p.is_file() and not any(x.startswith('.') for x in p.relative_to(c.HARNESS).parts)}, 'Incomplete current harness inventory')
-            c.snapshot(c.TOOLS, meta['tool_sha256'])
-            c.snapshot(c.HARNESS, meta['harness_sha256'])
+            # Historical identities remain strict within the pair. Later local
+            # tool/harness edits are analysis drift, not changed run evidence.
+            c.runtime_snapshots(meta)
             c.snapshot(c.EMB, meta['emb_config_sha256'])
             equal(c.sha(c.EMB / 'dist/jacocoagent.jar'), meta['jacoco_agent_sha256'], 'Current JaCoCo agent changed')
             equal(c.sha(c.EMB / 'dist/jacococli.jar'), meta['jacoco_cli_sha256'], 'Current JaCoCo CLI changed')

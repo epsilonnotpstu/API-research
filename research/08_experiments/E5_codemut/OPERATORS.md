@@ -282,3 +282,34 @@ fingerprint should exceed the saved noise floor, but only fresh v2 pair/noise
 runs can establish the measured result. Build and runtime mapper behavior are
 unverified (`sites.json`, both v2 `conditions` and `witness_plan`;
 `09_collab/reports/T25_report.md`, limitations).
+
+## T25b v3 — framework status mechanism
+
+The v2 `BadRequestException` realisation produced NEW SERVER_ERROR/500 on
+GET `/user/login` in seeds 1–3, with two 500s per mutant run and no
+VALID_REJECTED; each mutant run also contains two 200s. Both pair and noise
+validation passed, and mapped-op noise NEW was zero. This detects a failure,
+but does not realise the intended REJECT_VALID signal. Evidence:
+`work/petstore-reject-valid-v2_20261114T161810Z/analysis-s1-default/attribution.csv:11`,
+`analysis-s2-default/attribution.csv:11` and
+`analysis-s3-default/attribution.csv:13` in the same bundle;
+`09_collab/logs/T25_scratch/T25b/v2_login_counts.json`, all twelve role rows.
+
+`petstore-reject-valid-v3` is appended with the same login operation and
+`username == null` condition. It returns
+`new ResponseContext().status(Response.Status.BAD_REQUEST).entity(...)`,
+copying the existing null-username guard in
+`08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/UserController.java:55–59`.
+The original handler already imports Response (`:26`), and v3 preserves the
+original non-null path (`:103–110`). The v2 catalogue entry remains unchanged
+(`sites.json`, `petstore-reject-valid-v2` and `petstore-reject-valid-v3`).
+
+Lesson: implement an operator using the framework's demonstrated status
+mechanism; inspect existing handlers before choosing an exception or return
+type. Here, an exception named BadRequestException did not establish an HTTP
+400 response. ⚠️ V3 is expected to produce 400/VALID_REJECTED via the existing
+ResponseContext convention; successful compilation, runtime status and fresh
+v3 noise separation still require Claude's build/run. Use an explicit
+`--site petstore-reject-valid-v3`, identical absent-username control/mutant
+requests, and a non-null-username check (`sites.json`, v3 `witness_plan`;
+`09_collab/reports/T25_report.md`, T25b addendum).

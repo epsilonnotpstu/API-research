@@ -75,6 +75,35 @@
   - ⚠️ [H] এটা mutation-এর পরোক্ষ প্রভাব হতে পারে, যেমন বদলে যাওয়া state-এর কারণে পরের request-এর আচরণ পাল্টানো।
   - আবার n ছোট হওয়ার কারণেও হতে পারে। এখান থেকে সিদ্ধান্ত টানা যায় না।
 
+## 3c. বিকল্প site (T25; 2026-11-14)
+Build আর run করেছে Claude। প্রতিটির জন্য 3টি seed + noise floor। সব জোড়া PASS। Checker নতুনটা (int format চালু)।
+
+| Mutant | Mutated op-এ সংকেত | প্রত্যাশিত kind | Noise ছাড়ায় | মন্তব্য |
+|---|---|---|---|---|
+| market-response-field-v2 (`market-rest` Jackson mix-in, `price` WRITE_ONLY) | N 1/1/1 | **3/3** (RESPONSE_SCHEMA `/items/required` price, GET `/products`) | **3/3** | v1 (`market-core`) build-invalid ছিল; v2 compile হয় আর কাজ করে |
+| petstore-reject-valid-v2 (GET `/user/login`, `username == null` guard) | N 1/1/1 (SERVER_ERROR 500) | **0/3** | (সংকেত আছে; noise-এ mapped স্তরের NEW 0) | `throw new BadRequestException` inflector-এ 400 হয় না, 500 হয় |
+| petstore-reject-valid-v3 (একই guard, codebase-এর নিজস্ব `ResponseContext().status(BAD_REQUEST)`; T25b, run 2026-11-15) | N 1/1/1 | **3/3** (VALID_REJECTED 400, GET `/user/login`) | **3/3** (noise-এ fingerprint দুই repeat-এই অনুপস্থিত) | Operator-এর ত্রুটি ঠিক হয়েছে; এখন প্রত্যাশিত kind আসে |
+
+- **petstore-reject-valid-v2-এর শিক্ষা:**
+  - Fault ঢুকেছে, আর fuzzing সেটা ধরেছেও। কিন্তু operator-এর বাস্তবায়ন এই codebase-এর status ব্যবস্থার সাথে মেলেনি। Codebase 400 দেয় `ResponseContext().status(BAD_REQUEST)` দিয়ে।
+  - তাই REJECT_VALID এখানে কার্যত crash (I-CRASH) হয়ে গেছে।
+  - Ground truth L1 তবুও IMPL।
+  - v3 site (একই condition, codebase-এর নিজের 400 পদ্ধতিতে) T25b হিসেবে Codex-এর কাছে।
+- **E5-এর হিসাব এখন (v3 সহ, 2026-11-15):**
+  - 12টি build-valid mutant, 31টি বৈধ জোড়া-seed।
+  - Mutated op-এ সংকেত 31/31।
+  - প্রত্যাশিত kind 26/31।
+  - Noise ছাড়ায় **25/31** (§3b-এর নিয়মে)।
+    - petstore-reject-valid-v2-এর 3টি নিয়মের সংজ্ঞায় False, কারণ kind প্রত্যাশিত নয়।
+    - নতুন checker-এ petstore-reject-valid s2 এখন True: mutant-এ 1, noise-এ 0/0, আগে 24 ছিল।
+  - v2 আর v3 একই ত্রুটি-site-এর দুই বাস্তবায়ন। Site-প্রতি একটা গুনলে (v3 রেখে v2 বাদ দিলে): 11 mutant, 28 জোড়া-seed, প্রত্যাশিত kind 26/28, noise ছাড়ায় 25/28।
+- **Validator সংশোধন (T30, 2026-11-15):**
+  - আগে `validate_pair` run-এর সময়ের tools/ আর harness snapshot-কে বর্তমান ফাইলের সঙ্গে হুবহু মেলাত। ফলে যেকোনো পরে-আসা tool পরিবর্তনে পুরোনো সব run "stale" FAIL হতো।
+  - এখন run-time provenance কঠোর: জোড়ার দুই run-এর recorded snapshot হুবহু এক হতে হবে।
+  - Metric গোনা হয় **বর্তমান checker** দিয়ে, raw capture থেকে। Summary-তে drift column আছে: `analysis_tools_drift` none 12 / changed 112 / unknown 6।
+  - Legacy checker (`INT_FORMATS=False`) দিয়ে HEAD-এর 88/88 row হুবহু পুনরুৎপাদিত হয়েছে। তাই উপরের সব পরিবর্তন শুধু int-format নীতির ফল (24 row / 66 cell; `09_collab/logs/T30_scratch/metric_changes.csv`)।
+  - `e5_summary.csv`: 130 row = 120 PASS + 4 PASS_WITH_EXCLUSION + 6 FAIL। এই 6টি পুরোনো, ঐতিহাসিক cwa-র অসম্পূর্ণ seed।
+
 ## 4. পর্যবেক্ষণ
 1. **Detection নির্ভরযোগ্য।** প্রতিটি বৈধ জোড়া-seed-এ code fault mutated operation-এ নতুন violation বা বাড়তি occurrence তৈরি করে, আর প্রায় সবসময় প্রত্যাশিত kind-এ।
    - market-drop-null-এ সংকেত শুধু INCREASED, কারণ ওই fingerprint control-এই ছিল। এটা §6-এর "occurrence-স্তরের metric লাগে" কথার আরেকটা উদাহরণ।

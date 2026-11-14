@@ -1,0 +1,14 @@
+# T28 — EvoMaster schema oracle knob
+
+কাজ সম্পন্ন: অনুমোদিত পাঁচটি harness file সরাসরি edit করা হয়েছে। `EVOMASTER_SCHEMA_ORACLES` unset/empty হলে `true`; explicit `true`/`false` গ্রহণযোগ্য। EvoMaster branch-এ validated setting `PILOT_EVOMASTER_SCHEMA_ORACLES` হিসেবে export হয়; অন্য value-তে input value না ছাপিয়ে exit 2। Schemathesis default/explicit selection-এ non-empty knob exit 2 দেয়। Validation Docker command ও run-directory creation-এর আগে থাকে। Evidence: `08_experiments/E1_pilot/harness_v2/run_pilot.sh:19–36`।
+
+`build_evomaster_argv` এখন exported setting দিয়ে `--schemaOracles` তৈরি করে; existing EvoMaster golden test-এর expected list অপরিবর্তিত এবং PASS। Schemathesis golden fixture-ও অপরিবর্তিত ও PASS। `run.json`-এ শুধু EvoMaster run-এর জন্য `evomaster_schema_oracles` JSON bool লেখা হয়। Static validator-এ export/argv/metadata markers যোগ হয়েছে। Evidence: `08_experiments/E1_pilot/harness_v2/fuzzer_args.sh:16–22`, `run_metadata.py:78–92`, `static_validate.py:139–141`, `test_fuzzer_args.py:65–101,112–152,333–339` (শেষ চারটি path একই harness directory-তে)।
+
+যাচাই:
+
+- সব ৬টি harness shell file-এ `bash -n` PASS: `09_collab/logs/T28_scratch/bash_n.txt:1–6`।
+- `/usr/bin/python3 -I -B 08_experiments/E1_pilot/harness_v2/static_validate.py` PASS; এর অন্তর্ভুক্ত derecurse tests 13/13 এবং fuzzer tests 28/28 PASS: `09_collab/logs/T28_scratch/static_validate.txt:41–79`।
+- পৃথক `/usr/bin/python3 -I -B 08_experiments/E1_pilot/harness_v2/test_fuzzer_args.py` run-এ 28/28 PASS; knob default/empty/true/false, child-process export, invalid-value exit/redaction, Schemathesis rejection, উভয় golden argv, pinned source fragments ও metadata bool/absence যাচাই করা হয়েছে: `09_collab/logs/T28_scratch/test_fuzzer_args.txt:1–33`; test definitions: `08_experiments/E1_pilot/harness_v2/test_fuzzer_args.py:65–179,333–339`।
+- Freeze-এর `before`/`after` SHA-256 map সমান: ২৫টি existing protected file অপরিবর্তিত। এর মধ্যে `harness_v2/run_batch.sh`, golden fixture, proposals ও অন্য সব অনির্ধারিত harness file অন্তর্ভুক্ত। Task-এ উল্লিখিত `08_experiments/E1_pilot/run_batch.sh` before/after উভয় সময় অনুপস্থিত; `null` দিয়ে নথিভুক্ত, নতুন file বানানো হয়নি। Evidence: `09_collab/logs/T28_scratch/freeze.json` (`before`, `after`, `null_means`, `unchanged`)।
+
+সীমাবদ্ধতা: runtime smoke/batch চালানো হয়নি; Docker, Java, Maven, network, fuzzer বা external project code execute করা হয়নি। অনুমোদিত static validator শুধু external source/config পড়ে; execution boundary তার output-এও নথিভুক্ত: `09_collab/logs/T28_scratch/static_validate.txt:79`। Claude smoke test চালাবেন (`09_collab/tasks/T28.md:40`)। ⚠️ `EVOMASTER_SCHEMA_ORACLES=false` scout stall দূর করবে কি না, local static/unit checks থেকে প্রমাণিত নয়; runtime outcome এখনো খোলা প্রশ্ন। Supervisor-এর rerun setting হবে `FUZZER=evomaster EVOMASTER_SCHEMA_ORACLES=false`, baseline ও mutated run-এ একই setting (`09_collab/tasks/T28.md:9–10`)।

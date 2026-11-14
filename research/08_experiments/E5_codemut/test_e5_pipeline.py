@@ -38,6 +38,8 @@ class Fixture:
         self.harness = root / 'frozen-harness'; self.tools = root / 'trusted-tools'; self.emb = root / 'frozen-emb'
         self.harness.mkdir(); self.tools.mkdir(); (self.emb / 'dist').mkdir(parents=True)
         (self.harness / 'hash-only.txt').write_text('Not an executable harness fixture.\n')
+        for name in ('run_pilot.sh','run_metadata.py'):
+            (self.harness / name).write_text('# Non-executable provenance fixture\n')
         for name in ('attribute.py','conformance.py','specmut.py'):
             shutil.copyfile(HERE.parent / 'tools' / name, self.tools / name)
         (self.emb / 'dist/jacocoagent.jar').write_bytes(b'synthetic-agent')
@@ -137,7 +139,7 @@ class Fixture:
                 'harness_version':2,'emb_commit':'synthetic-commit','emb_status_porcelain':'','schemathesis_image':'synthetic-generator:1',
                 'images':{key:{'id':data['Id'],'repo_digests':data.get('RepoDigests',[]),'repo_tags':data.get('RepoTags',[])} for key,data in [('sut-market-image',image),('schema-image',generator),('mitmproxy-image',proxy)]},
                 'tool_sha256':{p.name:c.sha(p) for p in self.tools.glob('*.py')},
-                'harness_sha256':{'hash-only.txt':c.sha(self.harness / 'hash-only.txt')},
+                'harness_sha256':{p.name:c.sha(p) for p in self.harness.iterdir()},
                 'emb_config_sha256':{'compose.yaml':c.sha(self.emb / 'compose.yaml')},'limitations':['synthetic']}
         dump(run / 'run.json',meta); self.rehash_run(role)
 
@@ -252,8 +254,30 @@ class PairValidationTests(FixtureCase):
         meta = c.load(self.f.paths['mutant'] / 'run.json'); meta['code_mutation']['role'] = 'control'
         dump(self.f.paths['mutant'] / 'run.json',meta); self.assert_fail('mutant.treatment')
 
-    def test_current_tool_and_harness_drift_fail(self):
-        (self.f.tools / 'attribute.py').write_text('# changed\n'); self.assert_fail()
+    def test_current_tool_and_harness_drift_does_not_invalidate_recorded_pair(self):
+        (self.f.tools / 'attribute.py').write_text('# changed\n')
+        (self.f.harness / 'run_pilot.sh').unlink()
+        self.assertEqual(self.f.validate()['status'],'PASS')
+
+    def test_recorded_pair_snapshot_mismatch_fails(self):
+        for field in ('tool_sha256','harness_sha256'):
+            with self.subTest(field=field):
+                path=self.f.paths['mutant']/'run.json';original=c.load(path)
+                changed=copy.deepcopy(original);changed[field][next(iter(changed[field]))]='0'*64
+                dump(path,changed);self.assert_fail('pair.equal');dump(path,original)
+
+    def test_missing_empty_malformed_and_unsafe_recorded_snapshots_fail(self):
+        for field in ('tool_sha256','harness_sha256'):
+            for value in (None,{},[],{'../escape':'0'*64}):
+                with self.subTest(field=field,value=value):
+                    originals={run:c.load(run/'run.json') for run in self.f.paths.values()}
+                    for run,original in originals.items():
+                        changed=dict(original)
+                        if value is None:changed.pop(field)
+                        else:changed[field]=value
+                        dump(run/'run.json',changed)
+                    self.assert_fail()
+                    for run,original in originals.items():dump(run/'run.json',original)
 
     def test_runtime_auth_override_rejected(self):
         for role in self.f.paths: self.f.change_meta(role,'auth_source','runtime-override')
@@ -491,7 +515,59 @@ class SummaryTests(FixtureCase):
             record.pop('excluded_ops');record.pop('validation_status');record['pair_validation_sha256']=c.sha(report_path)
             record['pipeline_sha256'][str(HERE / 'summarise_e5.py')]='0'*64;dump(p,record)
         rows=summary.summarise([self.f.mut])
-        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['pipeline_snapshot_status']=='PRIOR_E5_PIPELINE_RECOMPUTED' for r in rows),rows)
+        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['pipeline_snapshot_status']=='PRIOR_SNAPSHOT_CURRENT_CHECKER_RECOMPUTED' for r in rows),rows)
+
+    def test_drift_is_reported_and_current_checker_metrics_are_recomputed(self):
+        before=self.prepare_analysis()
+        self.assertTrue(all(r['analysis_tools_drift']=='none' and r['analysis_harness_drift']=='none' for r in before))
+        path=self.f.tools/'conformance.py'
+        source=path.read_text()
+        self.assertIn('if status >= 500:',source)
+        path.write_text(source.replace('if status >= 500:', 'if status >= 599:'))
+        (self.f.tools/'new_analysis_tool.py').write_text('# Added after collection\n')
+        (self.f.harness/'new_harness.txt').write_text('Added after collection\n')
+        saved={p:c.sha(p) for p in self.f.mut.glob('analysis-s*/*') if p.is_file()}
+        rows=summary.summarise([self.f.mut])
+        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['validation_status']=='PASS' for r in rows),rows)
+        self.assertTrue(all(r['analysis_tools_drift']=='changed' and r['analysis_harness_drift']=='changed' for r in rows))
+        self.assertTrue(all(r['mutated_NEW']==1 and r['expected_signal_observed'] is False for r in rows),rows)
+        self.assertNotEqual(rows[0]['analysis_tool_sha256'],before[0]['analysis_tool_sha256'])
+        self.assertEqual(rows[0]['runtime_snapshot_sha256'],before[0]['runtime_snapshot_sha256'])
+        self.assertEqual(saved,{p:c.sha(p) for p in saved})
+
+    def test_pipeline_records_analysis_time_tools_after_collection_drift(self):
+        path=self.f.tools/'conformance.py';path.write_text(path.read_text()+'\n# Analysis-time revision\n')
+        rows=self.prepare_analysis()
+        record=c.load(self.f.mut/'analysis-s1-default/analysis.json')
+        self.assertEqual(record['tool_sha256'],c.tool_inventory())
+        self.assertTrue(all(r['analysis_tools_drift']=='changed' and r['analysis_status']=='COMPLETE' for r in rows))
+
+    def test_attribution_revision_can_change_current_output_schema(self):
+        self.prepare_analysis()
+        path=self.f.tools/'attribute.py'
+        with path.open('a') as stream:
+            stream.write('\n_previous_attribute = attribute\n'
+                         'def attribute(*args, **kwargs):\n'
+                         '    rows = _previous_attribute(*args, **kwargs)\n'
+                         '    for row in rows: row["analysis_revision"] = "new"\n'
+                         '    return rows\n')
+        rows=summary.summarise([self.f.mut])
+        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['mutated_NEW']==2 and
+                            r['analysis_tools_drift']=='changed' for r in rows),rows)
+
+    def test_tool_change_during_summary_fails(self):
+        self.prepare_analysis()
+        identity=summary.analysis_identity()
+        with patch.object(summary,'analysis_identity',side_effect=[identity,dict(identity,tools={})]):
+            with self.assertRaisesRegex(ValueError,'changed during summary'):summary.summarise([self.f.mut])
+
+    def test_unexecuted_harness_change_during_summary_keeps_initial_identity(self):
+        self.prepare_analysis()
+        identity=summary.analysis_identity()
+        with patch.object(summary,'analysis_identity',side_effect=[identity,dict(identity,harness={'later':'0'*64})]):
+            rows=summary.summarise([self.f.mut])
+        self.assertTrue(all(r['analysis_status']=='COMPLETE' and r['analysis_harness_drift']=='none' and
+                            r['analysis_harness_sha256']==c.canonical(identity['harness']) for r in rows))
 
     def test_prior_pipeline_exception_does_not_allow_unreviewed_code_changes(self):
         self.prepare_analysis();p=self.f.mut / 'analysis-s1-default/analysis.json';record=c.load(p)

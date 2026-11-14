@@ -7,7 +7,8 @@ approves external execution (`09_collab/PROTOCOL.md:12–14`;
 `09_collab/tasks/T19.md`, Constraints). The current harness remains unchanged.
 
 `OPERATORS.md` lists five families, the original 20 digest-pinned sites, two T25
-v2 additions and the ten first-batch choices (2–3 per SUT). `sites.json` rows use `site_id`;
+v2 additions, one T25b v3 addition and the ten first-batch choices (2–3 per SUT).
+`sites.json` rows use `site_id`;
 `exposure.json` rows use `evidence_id`. Captured operation traffic is evidence of
 HTTP exposure, not proof of reaching the edited branch (`OPERATORS.md:32–41`).
 
@@ -25,8 +26,8 @@ E5="$PWD/08_experiments/E5_codemut"
 ```
 
 Omit `--site` to choose by SHA-256 of `sut:operator:decimal_seed`, modulo the
-sorted matching pool. Market RESP_FIELD and Petstore REJECT_VALID now each have
-two sites; use explicit `--site` for the v2 replacements. `--source` accepts a
+sorted matching pool. Market RESP_FIELD has two sites and Petstore REJECT_VALID
+has three; use explicit `--site` for a replacement. `--source` accepts a
 separate checkout only if its target bytes match the pinned site; `--catalog`
 accepts reviewed JSON data (`codemut.py:102–119,239–259`; `sites.json`, all rows).
 
@@ -514,3 +515,13 @@ E5_TEST_SCRATCH="$PWD/09_collab/logs/T25_scratch" \
 
 The original checkout is read-only input for the v2 tests; outputs use the
 scratch directory (`test_codemut.py`, `ReplacementSiteTests`).
+
+## T25b v3 follow-up
+
+Saved Petstore v2 runs produced 500/SERVER_ERROR rather than the intended
+400/VALID_REJECTED on absent username. The appended `petstore-reject-valid-v3`
+keeps the operation/condition and copies the existing `ResponseContext` 400
+return convention; v2 remains intact. Use explicit `--site petstore-reject-valid-v3`.
+⚠️ V3 compilation/runtime/noise results are unverified. Source and saved-run
+evidence: `OPERATORS.md`, T25b v3 section; `09_collab/reports/T25_report.md`,
+T25b addendum; `sites.json`, v3 `conditions` and `witness_plan`.

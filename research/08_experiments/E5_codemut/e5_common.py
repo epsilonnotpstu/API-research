@@ -54,11 +54,35 @@ def safe_relative(name):
 
 
 def snapshot(directory, hashes):
-    require(isinstance(hashes, dict) and hashes, f'Empty hash inventory: {directory}')
+    hash_inventory(hashes)
     for name, digest in hashes.items():
-        require(re.fullmatch('[a-f0-9]{64}', str(digest)), f'Invalid digest for {name}')
         require(sha(Path(directory) / safe_relative(name)) == digest, f'Changed evidence: {directory}/{name}')
     return hashes
+
+
+def hash_inventory(hashes, required=()):
+    """Validate a recorded identity without requiring historical bytes locally."""
+    require(isinstance(hashes, dict) and hashes, 'Missing/empty hash inventory')
+    require(set(required) <= set(hashes), 'Missing core snapshot entries')
+    for name, digest in hashes.items():
+        require(safe_relative(name) == name, 'Noncanonical snapshot path')
+        require(isinstance(digest, str) and re.fullmatch('[a-f0-9]{64}', digest), f'Invalid digest for {name}')
+    return hashes
+
+
+def runtime_snapshots(meta):
+    return {'tools': hash_inventory(meta['tool_sha256'], ('conformance.py','attribute.py','specmut.py')),
+            'harness': hash_inventory(meta['harness_sha256'], ('run_pilot.sh','run_metadata.py'))}
+
+
+def tool_inventory():
+    return hash_inventory({p.name:sha(p) for p in sorted(TOOLS.glob('*.py'))},
+                          ('conformance.py','attribute.py','specmut.py'))
+
+
+def harness_inventory():
+    return hash_inventory({p.relative_to(HARNESS).as_posix():sha(p) for p in sorted(HARNESS.rglob('*'))
+                           if p.is_file() and not any(x.startswith('.') for x in p.relative_to(HARNESS).parts)})
 
 
 def inspection(path):

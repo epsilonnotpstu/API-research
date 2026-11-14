@@ -1,0 +1,84 @@
+T14/T17/T27 validation: 2026-11-14T22:02:57.356486+00:00
+PASS SHELL/INLINE_AST analyse_run.sh
+PASS SHELL/INLINE_AST common.sh
+PASS SHELL/INLINE_AST fuzzer_args.sh
+PASS SHELL/INLINE_AST prepare_dist.sh
+PASS SHELL/INLINE_AST run_batch.sh
+PASS SHELL/INLINE_AST run_pilot.sh
+PASS PYTHON_AST auth_header.py
+PASS PYTHON_AST derecurse.py
+PASS PYTHON_AST evomaster_guard.py
+PASS PYTHON_AST redact_auth.py
+PASS PYTHON_AST run_metadata.py
+PASS PYTHON_AST static_validate.py
+PASS PYTHON_AST test_derecurse.py
+PASS PYTHON_AST test_fuzzer_args.py
+PASS CONFIG:scout-api jar/paths/YAML/proxy/auth-shape; declared_operations=49; spec_version=2.0
+PASS CONFIG:swagger-petstore jar/paths/YAML/proxy/auth-shape; declared_operations=19; spec_version=3.0.4
+PASS CONFIG:market jar/paths/YAML/proxy/auth-shape; declared_operations=13; spec_version=2.0
+PASS CONFIG:cwa-verification jar/paths/YAML/proxy/auth-shape; declared_operations=5; spec_version=3.0.1
+PASS CWA_SOURCE pom-derived-jar/root-base/POST-empty-400/no-auth-fixture/JWT-disabled; static_derecurse_cuts=0; runtime unverified
+REVIEW CWA_ORIGIN absolute localhost server versus Docker proxy/upstream origins; verify authority matching before interpreting conformance results (README CWA section)
+PASS PRESERVED_FIXES loopback/locks/image-reuse/de-recursion/checks/timeout/no-shrink/provenance/exclusive-output
+PASS SOURCE_HARNESS_UNCHANGED 10 original file digests
+PASS SECRET_ABSENCE no EMB full fixed-header values or non-role tokens in v2 artifacts; public role identifiers permitted; values withheld
+BEGIN DERECURSE UNIT TESTS
+test_actual_sut_documents_static_transform (__main__.DerecurseTests.test_actual_sut_documents_static_transform) ... ok
+test_acyclic_shared_reference_is_unchanged (__main__.DerecurseTests.test_acyclic_shared_reference_is_unchanged) ... ok
+test_both_schema_namespaces_are_processed (__main__.DerecurseTests.test_both_schema_namespaces_are_processed) ... ok
+test_equal_basenames_do_not_alias (__main__.DerecurseTests.test_equal_basenames_do_not_alias) ... ok
+test_escaped_schema_names (__main__.DerecurseTests.test_escaped_schema_names) ... ok
+test_external_and_dangling_refs_are_untouched (__main__.DerecurseTests.test_external_and_dangling_refs_are_untouched) ... ok
+test_independent_cycles (__main__.DerecurseTests.test_independent_cycles) ... ok
+test_independent_cycles_in_both_namespaces (__main__.DerecurseTests.test_independent_cycles_in_both_namespaces) ... ok
+test_oas3_mutual_cycle (__main__.DerecurseTests.test_oas3_mutual_cycle) ... ok
+test_schema_ref_siblings_are_walked (__main__.DerecurseTests.test_schema_ref_siblings_are_walked) ... ok
+test_spec_without_schema_components (__main__.DerecurseTests.test_spec_without_schema_components) ... ok
+test_swagger_self_cycle (__main__.DerecurseTests.test_swagger_self_cycle) ... ok
+test_three_node_cycle_in_array_and_composition (__main__.DerecurseTests.test_three_node_cycle_in_array_and_composition) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.019s
+
+OK
+BEGIN FUZZER ARGV/ROUTING/REDACTION/PROVENANCE UNIT TESTS
+test_auth_both_fuzzers_shell_metacharacters_are_literal (__main__.ArgvTests.test_auth_both_fuzzers_shell_metacharacters_are_literal) ... ok
+test_default_invalid_data_gen_fails (__main__.ArgvTests.test_default_invalid_data_gen_fails) ... ok
+test_evomaster_golden (__main__.ArgvTests.test_evomaster_golden) ... ok
+test_input_default_empty_spec_derecursed_argv_mount_and_export (__main__.ArgvTests.test_input_default_empty_spec_derecursed_argv_mount_and_export) ... ok
+test_invalid_input_exit_2_without_echoing_value (__main__.ArgvTests.test_invalid_input_exit_2_without_echoing_value) ... ok
+test_invalid_schema_oracles_exit_2_without_echoing_value (__main__.ArgvTests.test_invalid_schema_oracles_exit_2_without_echoing_value) ... ok
+test_original_golden_argv_and_recording (__main__.ArgvTests.test_original_golden_argv_and_recording) ... ok
+test_pipeline_status_is_saved_before_if_completion (__main__.ArgvTests.test_pipeline_status_is_saved_before_if_completion) ... ok
+test_preexisting_shell_fragments_are_byte_identical (__main__.ArgvTests.test_preexisting_shell_fragments_are_byte_identical) ... ok
+test_schema_oracles_default_empty_true_false_argv_and_export (__main__.ArgvTests.test_schema_oracles_default_empty_true_false_argv_and_export) ... ok
+test_schemathesis_data_gen_variants (__main__.ArgvTests.test_schemathesis_data_gen_variants) ... ok
+test_schemathesis_rejects_nonempty_input (__main__.ArgvTests.test_schemathesis_rejects_nonempty_input) ... ok
+test_schemathesis_rejects_nonempty_schema_oracles (__main__.ArgvTests.test_schemathesis_rejects_nonempty_schema_oracles) ... ok
+test_seed_budget_timeout_are_forwarded (__main__.ArgvTests.test_seed_budget_timeout_are_forwarded) ... ok
+test_unset_and_explicit_default_selection (__main__.ArgvTests.test_unset_and_explicit_default_selection) ... ok
+test_shared_preparation_baseline_mutated_and_default_snapshot (__main__.GeneratorInputTests.test_shared_preparation_baseline_mutated_and_default_snapshot) ... ok
+test_all_four_current_schemas_match_the_proxy_base_path (__main__.GuardTests.test_all_four_current_schemas_match_the_proxy_base_path) ... ok
+test_base_path_override_mismatch_rejected (__main__.GuardTests.test_base_path_override_mismatch_rejected) ... ok
+test_baseline_pool_rejected (__main__.GuardTests.test_baseline_pool_rejected) ... ok
+test_default_root_and_trailing_slash (__main__.GuardTests.test_default_root_and_trailing_slash) ... ok
+test_invalid_seed_and_budget (__main__.GuardTests.test_invalid_seed_and_budget) ... ok
+test_missing_or_empty_outputs_fail (__main__.GuardTests.test_missing_or_empty_outputs_fail) ... ok
+test_path_and_operation_servers_rejected (__main__.GuardTests.test_path_and_operation_servers_rejected) ... ok
+test_schema_server_ambiguities_rejected (__main__.GuardTests.test_schema_server_ambiguities_rejected) ... ok
+test_supported_options_and_long_boundaries (__main__.GuardTests.test_supported_options_and_long_boundaries) ... ok
+test_unsupported_data_generation_never_silently_ignored (__main__.GuardTests.test_unsupported_data_generation_never_silently_ignored) ... ok
+test_default_metadata_has_unchanged_generator_fields (__main__.MetadataTests.test_default_metadata_has_unchanged_generator_fields) ... ok
+test_evomaster_identity_redacted_argv_and_nested_hashes (__main__.MetadataTests.test_evomaster_identity_redacted_argv_and_nested_hashes) ... ok
+test_input_metadata_hashes_actual_schema_and_preserves_limitations (__main__.MetadataTests.test_input_metadata_hashes_actual_schema_and_preserves_limitations) ... ok
+test_schema_oracles_metadata_is_boolean_and_evomaster_only (__main__.MetadataTests.test_schema_oracles_metadata_is_boolean_and_evomaster_only) ... ok
+test_timeout_metadata_is_incomplete (__main__.MetadataTests.test_timeout_metadata_is_incomplete) ... ok
+test_empty_auth_is_noop (__main__.RedactionTests.test_empty_auth_is_noop) ... ok
+test_streaming_and_saved_recursive_outputs (__main__.RedactionTests.test_streaming_and_saved_recursive_outputs) ... ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 1.446s
+
+OK
+PASS ALL STATIC CHECKS AND PERMITTED UNIT TESTS
+NOT EXECUTED: harness orchestration, Docker, Compose, Java, Schemathesis, EvoMaster, SUTs, network/downloads, builds, dependency installs, tool-pipeline execution.

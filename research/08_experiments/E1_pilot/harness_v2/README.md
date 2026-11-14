@@ -368,3 +368,18 @@ ORACLE_POOL=baseline "$H/run_batch.sh" cwa-verification 1 2 3
 
 Keep v2 scripts/configs fixed during data collection. Changes affect provenance
 hashes; never pair old and new harness snapshots (`analyse_run.sh:19–39`).
+
+
+`EVOMASTER_INPUT=spec|derecursed` selects EvoMaster's generator schema (unset or
+empty: `spec`). Non-empty values require `FUZZER=evomaster`; invalid values exit 2
+before Docker or run-directory creation. `spec` preserves the existing argv,
+mounts and schema snapshots. `derecursed` shares Schemathesis's generator-input
+preparation: baseline cuts back edges; mutated runs cut the original first, then
+repeat specmut with the same fault/severity/seed/only-ops and require equal selected
+operation sets. Only this mode mounts `generator-input.json` read-only at the
+existing `/work/spec.test.json` schema path. The oracle remains `spec.test.*`.
+`run.json` records EvoMaster's `evomaster_input` and `generator_input_sha256`
+(the actual generator schema bytes; null before the input exists). Derecursed
+metadata retains the generator/oracle constraint limitations. Runtime behavior
+requires a smoke run; offline schema reduction alone does not establish that a
+stall is resolved.

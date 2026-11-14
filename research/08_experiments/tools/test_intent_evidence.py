@@ -1,6 +1,6 @@
 """Synthetic search regressions; only own Python and read-only local git run.
 
-Run: /usr/bin/python3 -I -B 08_experiments/tools/test_intent_evidence.py
+Run this file with /usr/bin/python3 -I -B; imports the adjacent staged module.
 """
 import contextlib
 import io
@@ -325,6 +325,201 @@ assertThat(response.getStatus()).isEqualTo(200);''')
         self.handler()
         self.put('templates/api.html', '<h1>GET /api/products</h1>\n<th width="200">name</th>\n<pre>{"price": 400}</pre>')
         self.assertEqual(self.search(status=418)['independent_evidence'], 'none_found')
+
+    def test_prefix_stripped_helper_system_roles(self):
+        self.write_spec('/v1/system/roles')
+        self.put('C.java', '''@Path("/v1/system") class C {
+@GET @Path("roles") public Object roles() { return Response.status(418).build(); }
+}''')
+        self.put('src/test/SystemIntegrationTest.java', '''createRequest("system/roles").get();
+assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_OK);''')
+        result = ie.search(self.root, self.spec, 'GET', '/v1/system/roles', status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        hit = self.hits(result, 'E-TEST')[0]
+        self.assertEqual(hit['match'], 'suffix')
+        self.assertEqual(hit['matched_literal'], 'system/roles')
+        self.assertIn('weaker', hit['strength'])
+
+    def test_suffix_wildcard_matches_concrete_id(self):
+        self.assertEqual(ie.test_path_reference('get("pets/42")', '/v1/pets/{id}', ['/v1/pets/{id}']),
+                         {'match': 'suffix', 'matched_literal': 'pets/42', 'suffix_segments': 2})
+
+    def test_unique_single_segment_suffix(self):
+        self.handler()
+        self.put('tests/test_api.py', 'get("products").statusCode(200)')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        self.assertEqual(self.hits(result, 'E-TEST')[0]['suffix_segments'], 1)
+
+    def test_ambiguous_single_segment_suffix_is_rejected(self):
+        self.handler()
+        document = json.loads(self.spec.read_text())
+        document['paths']['/v2/products'] = document['paths']['/api/products']
+        self.spec.write_text(json.dumps(document))
+        self.put('tests/test_api.py', 'get("products").statusCode(200)')
+        self.assertFalse(self.hits(self.search(status=418), 'E-TEST'))
+
+    def test_parent_resource_makes_single_segment_ambiguous(self):
+        self.assertIsNone(ie.test_path_reference('get("products")', '/api/products',
+                          ['/api/products', '/api/products/{id}']))
+
+    def test_parameter_only_single_suffix_is_rejected(self):
+        self.assertIsNone(ie.test_path_reference('get("42")', '/v1/pets/{id}', ['/v1/pets/{id}']))
+
+    def module_fixture(self):
+        self.put('pom.xml', '<project/>')
+        self.put('rest/pom.xml', '<project/>')
+        self.put('web/build.gradle', '')
+        self.put('rest/src/main/C.java', '''@RequestMapping("/api") class C {
+@GetMapping("/products") public Object products() { return ResponseEntity.status(418).build(); }
+}''')
+
+    def test_other_module_test_cannot_vote(self):
+        self.module_fixture()
+        self.put('web/src/test/UITest.java', 'get("/api/products").statusCode(200);')
+        result = self.search(status=418)
+        hit = self.hits(result, 'E-TEST')[0]
+        self.assertEqual(result['independent_evidence'], 'none_found')
+        self.assertEqual(hit['module'], 'web')
+        self.assertEqual(hit['module_build_file'], 'web/build.gradle')
+        self.assertEqual(hit['module_scope'], 'other_module')
+        self.assertFalse(hit['independent'])
+        self.assertEqual(hit['support'], [])
+        self.assertNotIn('E-TEST', result['evidence_types_found'])
+
+    def test_same_module_test_votes(self):
+        self.module_fixture()
+        self.put('rest/src/test/CTest.java', 'get("/api/products").statusCode(200);')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        self.assertEqual(self.hits(result, 'E-TEST')[0]['module_scope'], 'handler_module')
+
+    def test_other_module_explicit_handler_class_can_vote(self):
+        self.module_fixture()
+        self.put('web/src/test/UITest.java', 'import rest.C;\nget("/api/products").statusCode(200);')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        self.assertEqual(self.hits(result, 'E-TEST')[0]['module_link_reason'], 'handler_class_reference')
+
+    def test_other_module_rest_base_path_can_vote(self):
+        self.module_fixture()
+        document = json.loads(self.spec.read_text())
+        document['basePath'] = '/api'
+        self.spec.write_text(json.dumps(document))
+        self.put('web/src/test/UITest.java', 'get("/api/products").statusCode(200);')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        self.assertEqual(self.hits(result, 'E-TEST')[0]['module_link_reason'], 'rest_base_path_reference')
+
+    def test_other_module_similar_base_and_commented_class_do_not_vote(self):
+        self.module_fixture()
+        document = json.loads(self.spec.read_text())
+        document['servers'] = [{'url': 'http://localhost/rest'}]
+        self.spec.write_text(json.dumps(document))
+        self.put('web/src/test/UITest.java', '// C is unrelated\nget("/api/products").statusCode(200);\nString base = "/restaurant";')
+        self.assertEqual(self.search(status=418)['independent_evidence'], 'none_found')
+
+    def test_repository_doc_outside_handler_module_still_votes(self):
+        self.module_fixture()
+        self.put('web/src/main/resources/templates/rest.html', 'GET /api/products returns 200')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        self.assertEqual(self.hits(result, 'E-DOC')[0]['module'], 'web')
+
+    def inflector_fixture(self, source='input', controller='PetsController'):
+        self.write_spec('/pet/{petId}', schema={'type': 'object', 'required': ['name'],
+                                              'properties': {'name': {'type': 'string'}}})
+        doc = json.loads(self.spec.read_text())
+        doc['paths']['/pet/{petId}']['get'].update(operationId='getPetById', **{'x-swagger-router-controller': controller})
+        if source == 'input':
+            self.spec.write_text(json.dumps(doc))
+        else:
+            self.put('src/main/resources/openapi.json', json.dumps(doc))
+        self.put('src/main/PetsController.java', '''package demo;
+class PetsController {
+public ResponseContext getPetById(RequestContext context, Long id) {
+Pet pet = loadPet(id);
+return new ResponseContext().status(200).entity(pet);
+}
+public ResponseContext other() { return new ResponseContext().status(418); }
+}''')
+        self.put('src/main/Pet.java', '''class Pet {
+@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+private String name;
+}''')
+
+    def test_inflector_input_controller_operation_and_dto_context(self):
+        self.inflector_fixture()
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        hits = self.hits(result, 'HANDLER')
+        self.assertTrue(any(h.get('operation_id') == 'getPetById' for h in hits))
+        self.assertTrue(any(h.get('field_behavior') == 'absent' for h in hits))
+        self.assertEqual(result['independent_evidence'], 'none_found')
+        self.assertFalse(any(h.get('statuses') == [418] for h in hits))
+
+    def test_inflector_project_resources_override_missing_input_route_keys(self):
+        self.inflector_fixture(source='resources')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        self.assertTrue(any(h.get('routing_source') == 'src/main/resources/openapi.json'
+                            for h in self.hits(result, 'HANDLER')))
+        self.assertFalse(self.hits(result, 'E-DOC'))
+
+    def test_inflector_fully_qualified_controller(self):
+        self.inflector_fixture(controller='demo.PetsController')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        self.assertTrue(self.hits(result, 'HANDLER'))
+
+    def test_inflector_wrong_controller_does_not_match_same_named_method(self):
+        self.inflector_fixture(controller='OtherController')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        self.assertFalse(self.hits(result, 'HANDLER'))
+
+    def test_inflector_config_tag_fallback_and_indentless_yaml(self):
+        self.inflector_fixture()
+        doc = json.loads(self.spec.read_text())
+        op = doc['paths']['/pet/{petId}']['get']
+        del op['x-swagger-router-controller']
+        op['tags'] = ['pets']
+        self.spec.write_text(json.dumps(doc))
+        self.put('inflector.yaml', 'controllerPackage: demo\nentityProcessors:\n- json\n- xml\nrootPath: /api\n')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        self.assertTrue(any(h.get('routing_basis') == 'inflector-config-tag-convention'
+                            for h in self.hits(result, 'HANDLER')))
+        self.assertEqual(result['warnings'], [])
+
+    def test_operation_id_and_tag_without_inflector_config_are_not_routing(self):
+        self.inflector_fixture()
+        doc = json.loads(self.spec.read_text())
+        op = doc['paths']['/pet/{petId}']['get']
+        del op['x-swagger-router-controller']
+        op['tags'] = ['pets']
+        self.spec.write_text(json.dumps(doc))
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}')
+        self.assertFalse(self.hits(result, 'HANDLER'))
+
+    def test_inflector_getter_write_only_field_context(self):
+        self.inflector_fixture()
+        self.put('src/main/Pet.java', '''class Pet {
+@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+public String getName() { return null; }
+}''')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        self.assertEqual(result['code_field_behavior'], ['absent'])
+
+    def test_xml_annotation_is_context_without_json_presence_claim(self):
+        self.inflector_fixture()
+        self.put('src/main/Pet.java', '''class Pet {
+@XmlElement(name = "id")
+public Long getId() { return null; }
+@XmlElement(name = "name")
+public String getName() { return null; }
+}''')
+        result = ie.search(self.root, self.spec, 'GET', '/pet/{petId}', field='name')
+        xml_hits = [h for h in self.hits(result, 'HANDLER') if 'XML annotation' in h['strength']]
+        self.assertEqual(len(xml_hits), 1)
+        self.assertIn('"name"', xml_hits[0]['snippet'])
+        self.assertEqual(result['code_field_behavior'], [])
+        self.assertEqual(result['independent_evidence'], 'none_found')
 
 
 if __name__ == '__main__':

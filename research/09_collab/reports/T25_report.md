@@ -242,3 +242,49 @@ Source: `09_collab/logs/T25_scratch/verification.json`, `source_proofs`-এর �
 | `PUT /pet` | P0339: 200×3; 400×30; 404×21; 500×49 | P0359: 200×6; 400×47; 404×10; 500×40 | P0479: 200×3; 400×41; 404×12; 500×47 | P0459: 200×5; 400×37; 404×8; 500×53 |
 | `PUT /user/{username}` | P0340: 400×59; 500×44 | P0360: 400×59; 500×44 | P0480: 400×59; 500×44 | P0460: 400×59; 500×44 |
 
+
+## T25b addendum — REJECT_VALID-এর framework status mechanism (2026-11-15)
+
+T25b অনুযায়ী `petstore-reject-valid-v3` append করা হয়েছে। আগের ২২টি site, বিশেষত v2, byte-prefix ও parsed-entry উভয় পরীক্ষায় অপরিবর্তিত; catalogue এখন ২৩টি। `codemut.py` অপরিবর্তিত। পুরোনো রিপোর্টের সব byte রাখা হয়েছে; এই addendum আগের v2 runtime-সংক্রান্ত অনুমানের পরবর্তী ফল জানায়। প্রমাণ: `09_collab/logs/T25_scratch/T25b/before_sites.json`, `before_T25_report.md`, `verification.json`-এর `old_entries_preserved`, `v2_entry_unchanged`, `old_report_preserved_as_byte_prefix`; `08_experiments/E5_codemut/sites.json`, `site_id=petstore-reject-valid-v3`।
+
+### Saved v2 outcome
+
+Saved bundle `08_experiments/E5_codemut/work/petstore-reject-valid-v2_20261114T161810Z/`-এর তিন seed-এর default pair/noise analysis ও validation পড়েছি। ছয়টি validation-ই PASS। `/user/login`-এ প্রতি mutant run-এ absent username-সহ দুটি request 500 দেয়, response body-তে `"code":500`; username-present আরও দুটি request 200 দেয়। Pair control এবং noise control/control_repeat-এ প্রতি seed-এ 200×2, 400/422/500 শূন্য। প্রমাণ: `09_collab/logs/T25_scratch/T25b/v2_login_counts.json`, নিচের `V2-*` row IDs; প্রতিটি row-র `exchanges`-এ original file, physical line, query-key presence এবং 500 body আছে। Saved files-এর hash: `v2_input_hashes.json` একই scratch directory-তে।
+
+| Seed | Pair control | V2 mutant | Noise control | Noise control_repeat |
+|---|---|---|---|---|
+| 1 | V2-1-pair-control: 200×2 | V2-1-pair-mutant: 200×2; 500×2 | V2-1-noise-control: 200×2 | V2-1-noise-control_repeat: 200×2 |
+| 2 | V2-2-pair-control: 200×2 | V2-2-pair-mutant: 200×2; 500×2 | V2-2-noise-control: 200×2 | V2-2-noise-control_repeat: 200×2 |
+| 3 | V2-3-pair-control: 200×2 | V2-3-pair-mutant: 200×2; 500×2 | V2-3-noise-control: 200×2 | V2-3-noise-control_repeat: 200×2 |
+
+প্রতিটি seed-এ mapped login operation-এর `SERVER_ERROR/500` fingerprint NEW, mutant occurrences ২; expected `VALID_REJECTED` নেই। Noise-এ login NEW=0। তাই wrong-kind failure ধরা পড়েছে; intended REJECT_VALID বাস্তবায়িত হয়নি। প্রমাণ: একই saved bundle-এর `analysis-s1-default/attribution.csv:11`, `analysis-s2-default/attribution.csv:11`, `analysis-s3-default/attribution.csv:13`; `noise-analysis-s1-default/attribution.csv:10`, `noise-analysis-s2-default/attribution.csv:9`, `noise-analysis-s3-default/attribution.csv:12`; exact extracted rows `09_collab/logs/T25_scratch/T25b/v2_login_attribution.json`। প্রথম 500 witness: `08_experiments/E1_pilot/runs/swagger-petstore/20261114T163702Z_892943_e5_petstore-reject-valid-v2_mutant_s1/exchanges.jsonl:1278`; s2 একই prefix-এর `_mutant_s2/exchanges.jsonl:1253`, s3 `_mutant_s3/exchanges.jsonl:1275`।
+
+Coordinator-এর finding হলো inserted `BadRequestException` swagger-inflector-এ intended 400 হিসেবে mapped হয়নি (`09_collab/tasks/T25b.md`, Finding)। Saved 500 response ও missing expected kind এই observed outcome নিশ্চিত করে; exception mapper-এর internals নতুন করে execute বা instrument করা হয়নি। আগের T25-এর counterfactual Python 400 model কেবল oracle readiness ছিল—Java exception handling-এর প্রমাণ ছিল না (`09_collab/logs/T25_scratch/oracle_models.json`, `login_counterfactual_400`)।
+
+### V3 correction ও source evidence
+
+Operation GET `/user/login` এবং guard `username == null` অপরিবর্তিত রেখে v3 `throw`-এর পরিবর্তে existing null-username handler-এর return block ব্যবহার করে:
+
+```java
+if (username == null) {
+    return new ResponseContext()
+            .status(Response.Status.BAD_REQUEST)
+            .entity("No username provided. Try again?");
+}
+```
+
+এই block হুবহু original `getUserByName`-এর convention: `08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/UserController.java:55–59`; `Response` import `:26`। অন্য guard-ও explicit 400 return করে (`:36–40,73–77,89–93,121–125`)। Login anchor `:103`, আগের handler body `:104–110` কপিতে বজায় থাকে; v3 নতুন dependency/import যোগ করে না। Spec-এ username optional: `08_experiments/_external/emb/openapi-swagger/swagger-petstore.json`, `#/paths/~1user~1login/get/parameters`। Exact edit/manifest: `09_collab/logs/T25_scratch/T25b/v3-source-proof/patch.diff:1–14`, `manifest.json`-এর `before`, `after`, `operations`, `source_sha256`।
+
+শিক্ষা: operator-এর realisation বাছার সময় existing handlers পড়ে framework-এর demonstrated status mechanism ব্যবহার করতে হবে। Exception-এর নাম `BadRequestException` হলেই কাঙ্ক্ষিত HTTP 400 outcome প্রতিষ্ঠিত হয় না; এই codebase-এ explicit `ResponseContext` return-এর source example আছে এবং v2-এর throwing realisation-এ observed status 500। প্রমাণ: আগের দুই অনুচ্ছেদের original source ও saved attribution/exchange locators; `08_experiments/E5_codemut/OPERATORS.md`, T25b v3 section।
+
+⚠️ [H] নতুন return convention-এ absent username request 400/VALID_REJECTED হওয়া উচিত; expected labels `IMPL / I-REJECT-VALID`, `pilot: true`। Source convention থেকে runtime outcome অনুমান করা হচ্ছে; v3 compile/run/noise result এখনো মাপা হয়নি। Future witness-এ identical absent-username request-এর control 200 এবং mutant 400 চাই, 500 নয়; non-null username-এ original path-ও check করতে হবে। Fresh pair/noise seeds ১–৩ নিয়ে noise rule পুনরায় চালাতে হবে। তিনটি Petstore REJECT_VALID site থাকায় explicit `--site petstore-reject-valid-v3` প্রয়োজন। প্রমাণ: `08_experiments/E5_codemut/sites.json`, v3 `conditions`, `witness_plan`; `README.md`, T25b v3 follow-up; `codemut.py:102–119` একই E5 directory-তে।
+
+### Tests, preservation ও সীমা
+
+সব **১২৬/১২৬ E5 tests PASS**, failure/error/skip শূন্য; আগের ১২৪টি test বজায় আছে। দুটি নতুন method v3 original-tree copy application এবং existing null-username 400-return convention-এর সঙ্গে exact মিল পরীক্ষা করে। Existing replacement-site hash drift, ambiguous/missing anchor, field completeness এবং second-application/output refusal পরীক্ষায় v3-ও যোগ হয়েছে; আগের ২৯টি codemut test method-এর AST অপরিবর্তিত। প্রমাণ: `08_experiments/E5_codemut/test_codemut.py`, `ReplacementSiteTests.IDS`, `test_petstore_v3_applies_once_to_original_tree_copy`, `test_petstore_v3_reuses_existing_null_username_400_return`, existing `test_v2_*` methods; `09_collab/logs/T25_scratch/T25b/tests.txt` শেষ summary; `test_results.json`; `verification.json`-এর test/preservation fields।
+
+Original source hash `257a89219d5dadc1fa10006098d0fdb95a7e6668f0de7d43040a3d9ec4ede58e`; exact before-match ১। Retained ৩৭টি file-এর মধ্যে শুধু `src/main/java/io/swagger/petstore/controller/UserController.java` বদলেছে। Source proof-এ byte/mode inventory এবং unchanged original source পরীক্ষা হয়েছে। প্রমাণ: `09_collab/logs/T25_scratch/T25b/v3-source-proof/manifest.json`, `source_files`, `source_sha256`, `mutated_file_sha256`; `verification.json`, `exact_before_matches`, `retained_source_files`, `changed_files`।
+
+T25-এর write scope-এই কাজ হয়েছে; scratch output `09_collab/logs/T25_scratch/T25b/`-এ। Snapshot করা ৮১টি protected file ও saved v2 evidence-এর ৩০টি input hash অপরিবর্তিত; এগুলি selected-file checks, পুরো active runs tree-র freeze নয়। Java/Maven/Docker/network/build/SUT execution বা forbidden path write করা হয়নি; blind package/key খোলা হয়নি। প্রমাণ: `09_collab/tasks/T25b.md`; `09_collab/tasks/T25.md`, Write scope; `09_collab/logs/T25_scratch/T25b/protected_before.json`, `v2_input_hashes.json`, `verification.json`; execution record `09_collab/logs/T25b.log`।
+
+খোলা প্রশ্ন: v3-এর build ও actual 400 mapping, exact-request causal witness এবং fresh noise separation Claude-র execution-এ যাচাই করতে হবে। এই follow-up source correction ও Python tests সরবরাহ করে; successful runtime REJECT_VALID দাবি করে না (`sites.json`, v3 `witness_plan`; `09_collab/logs/T25_scratch/T25b/verification.json`, `java_compile=not_run`, `sut_execution=not_run`)।

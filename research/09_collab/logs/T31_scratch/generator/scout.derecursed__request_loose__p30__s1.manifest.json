@@ -1,0 +1,888 @@
+{
+  "source_spec": "/home/afridi/Documents/API research/research/09_collab/logs/T31_scratch/scout.derecursed.json",
+  "source_sha256": "8405843de815dde12169457a531f8fede19a892349824aceac6090225195c746",
+  "format": "swagger2",
+  "fault": "REQUEST_LOOSE",
+  "severity": 30,
+  "seed": 1,
+  "operations_total": 45,
+  "only_ops": {
+    "file": "/home/afridi/Documents/API research/research/08_experiments/E1_pilot/runs/scout-api/batches/20261114T214527Z_batch_1003519/eligible_loose_s1.json",
+    "sha256": "90de2aedeb6be999381846af918b60a6fc184b110f715745d5f4f2f144e51899"
+  },
+  "operations_mutated": 14,
+  "mutations": [
+    {
+      "path": "/v1/activities",
+      "method": "post",
+      "operationId": "create_1",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1activities/post/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/ActivityProperties",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1activities/post/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "date_published": {
+              "type": "string"
+            },
+            "date_created": {
+              "type": "string"
+            },
+            "date_updated": {
+              "type": "string"
+            },
+            "description_material": {
+              "type": "string"
+            },
+            "description_introduction": {
+              "type": "string"
+            },
+            "description_prepare": {
+              "type": "string"
+            },
+            "description_main": {
+              "type": "string"
+            },
+            "description_safety": {
+              "type": "string"
+            },
+            "description_notes": {
+              "type": "string"
+            },
+            "age_min": {
+              "type": "integer"
+            },
+            "age_max": {
+              "type": "integer"
+            },
+            "participants_min": {
+              "type": "integer"
+            },
+            "participants_max": {
+              "type": "integer"
+            },
+            "time_min": {
+              "type": "integer"
+            },
+            "time_max": {
+              "type": "integer"
+            },
+            "featured": {
+              "type": "boolean"
+            },
+            "source": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "xml": {
+                "wrapped": true
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "group": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "media_file": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "mime_type": {
+                        "type": "string"
+                      },
+                      "uri": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "capture_date": {
+                        "type": "string"
+                      },
+                      "copy_right": {
+                        "type": "string"
+                      },
+                      "author": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "activities_count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            },
+            "media_files": {
+              "type": "array",
+              "xml": {
+                "name": "mediaFiles",
+                "wrapped": true
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "mime_type": {
+                    "type": "string"
+                  },
+                  "uri": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "capture_date": {
+                    "type": "string"
+                  },
+                  "copy_right": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "author": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "email_address": {
+                  "type": "string"
+                },
+                "authorization_level": {
+                  "type": "integer"
+                },
+                "identities": {
+                  "type": "array",
+                  "xml": {
+                    "wrapped": true
+                  },
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "date_created": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "user": {
+                        "type": "object",
+                        "x-derecursed-from": "#/definitions/User"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "activity": {
+              "type": "object",
+              "x-derecursed-from": "#/definitions/Activity"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v1~1activities/post/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v1/activities/{id}",
+      "method": "get",
+      "operationId": "get_1",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1activities~1{id}/get/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v1/activities/{id}/rating",
+      "method": "post",
+      "operationId": "postRating_1",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1activities~1{id}~1rating/post/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1activities~1{id}~1rating/post/parameters/1/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/ActivityRatingAttrs",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1activities~1{id}~1rating/post/parameters/1/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "rating": {
+              "type": "integer"
+            },
+            "favourite": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v1~1activities~1{id}~1rating/post/parameters/1/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v1/categories",
+      "method": "get",
+      "operationId": "all_1",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1categories/get/parameters/2/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v1/media_files",
+      "method": "post",
+      "operationId": "create",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1media_files/post/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/MediaFile",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1media_files/post/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "mime_type": {
+              "type": "string"
+            },
+            "uri": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "capture_date": {
+              "type": "string"
+            },
+            "copy_right": {
+              "type": "string"
+            },
+            "author": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v1~1media_files/post/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v1/system_messages",
+      "method": "post",
+      "operationId": "create",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1system_messages/post/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/SystemMessage",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1system_messages/post/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "valid_to": {
+              "type": "string"
+            },
+            "valid_from": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v1~1system_messages/post/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v1/system_messages/{id}",
+      "method": "put",
+      "operationId": "update",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1system_messages~1{id}/put/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1system_messages~1{id}/put/parameters/1/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/SystemMessage",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v1~1system_messages~1{id}/put/parameters/1/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            },
+            "valid_to": {
+              "type": "string"
+            },
+            "valid_from": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v1~1system_messages~1{id}/put/parameters/1/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v1/users/profile",
+      "method": "get",
+      "operationId": "profile",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1users~1profile/get/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v1/users/{id}",
+      "method": "get",
+      "operationId": "get",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v1~1users~1{id}/get/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v2/activities/{id}",
+      "method": "patch",
+      "operationId": "patch",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v2~1activities~1{id}/patch/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v2~1activities~1{id}/patch/parameters/1/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/ActivityProperties",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v2~1activities~1{id}/patch/parameters/1/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "date_published": {
+              "type": "string"
+            },
+            "date_created": {
+              "type": "string"
+            },
+            "date_updated": {
+              "type": "string"
+            },
+            "description_material": {
+              "type": "string"
+            },
+            "description_introduction": {
+              "type": "string"
+            },
+            "description_prepare": {
+              "type": "string"
+            },
+            "description_main": {
+              "type": "string"
+            },
+            "description_safety": {
+              "type": "string"
+            },
+            "description_notes": {
+              "type": "string"
+            },
+            "age_min": {
+              "type": "integer"
+            },
+            "age_max": {
+              "type": "integer"
+            },
+            "participants_min": {
+              "type": "integer"
+            },
+            "participants_max": {
+              "type": "integer"
+            },
+            "time_min": {
+              "type": "integer"
+            },
+            "time_max": {
+              "type": "integer"
+            },
+            "featured": {
+              "type": "boolean"
+            },
+            "source": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "xml": {
+                "wrapped": true
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "group": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "media_file": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "mime_type": {
+                        "type": "string"
+                      },
+                      "uri": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "capture_date": {
+                        "type": "string"
+                      },
+                      "copy_right": {
+                        "type": "string"
+                      },
+                      "author": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "activities_count": {
+                    "type": "integer"
+                  }
+                }
+              }
+            },
+            "media_files": {
+              "type": "array",
+              "xml": {
+                "name": "mediaFiles",
+                "wrapped": true
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "mime_type": {
+                    "type": "string"
+                  },
+                  "uri": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "capture_date": {
+                    "type": "string"
+                  },
+                  "copy_right": {
+                    "type": "string"
+                  },
+                  "author": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "author": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "email_address": {
+                  "type": "string"
+                },
+                "authorization_level": {
+                  "type": "integer"
+                },
+                "identities": {
+                  "type": "array",
+                  "xml": {
+                    "wrapped": true
+                  },
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "date_created": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "user": {
+                        "type": "object",
+                        "x-derecursed-from": "#/definitions/User"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "activity": {
+              "type": "object",
+              "x-derecursed-from": "#/definitions/Activity"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v2~1activities~1{id}/patch/parameters/1/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/v2/activities/{id}/rating",
+      "method": "delete",
+      "operationId": "deleteRating",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v2~1activities~1{id}~1rating/delete/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v2/tags",
+      "method": "get",
+      "operationId": "all",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v2~1tags/get/parameters/2/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v2/tags/{id}",
+      "method": "delete",
+      "operationId": "delete",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v2~1tags~1{id}/delete/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        }
+      ]
+    },
+    {
+      "path": "/v2/tags/{id}",
+      "method": "put",
+      "operationId": "update",
+      "fault": "REQUEST_LOOSE",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-LOOSE",
+      "edits": [
+        {
+          "pointer": "/paths/~1v2~1tags~1{id}/put/parameters/0/format",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "int64",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v2~1tags~1{id}/put/parameters/1/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/Tag",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1v2~1tags~1{id}/put/parameters/1/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "id": {
+              "type": "integer"
+            },
+            "group": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "media_file": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "mime_type": {
+                  "type": "string"
+                },
+                "uri": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "capture_date": {
+                  "type": "string"
+                },
+                "copy_right": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                }
+              }
+            },
+            "activities_count": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1v2~1tags~1{id}/put/parameters/1/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    }
+  ]
+}
