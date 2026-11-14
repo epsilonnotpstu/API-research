@@ -80,6 +80,7 @@
 
 ## 5. দাবির প্রার্থী (paper-এর জন্য)
 1. **[H1, সংশোধিত] Positive-only fuzzing-এ spec-ত্রুটি প্রায়ই অদৃশ্য; replay সেগুলো দেখায়। Negative data দিলে fresh-ও দেখায়, তবে অনেক বেশি noise-সহ (§3b)।**
+   - **Noise floor (2026-11-14):** baseline replicate দিয়ে মাপলে fresh-এর mutated-op সংকেত 51/61 run-এ noise ছাড়ায়। অপরিবর্তিত op-এর পরিবর্তন প্রায় পুরোটাই noise। ব্যতিক্রম: cwa STRICT/ORACLE, আর market LOOSE (সেখানে শুধু occurrence-স্তরে)। `NOISE_FLOOR_SPEC.md`।
    - REQUEST_STRICT, তিন seed-এর মোট NEW:
 
      | SUT | Replay | Fresh |
@@ -142,8 +143,8 @@
 - **Protocol:** negative data এখন চারটি fault class-এই প্রয়োগ হয়েছে (§3b)। Pool/severity এখনো fault-ভেদে আলাদা: LOOSE constraint pool 100%, ORACLE 2xx pool 30%, STRICT/METHOD_SEM এলোমেলো 30%।
 
 ## 7. পরের ধাপ
-2. Fresh-এর noise floor: spec-mutation run-এর জন্য (E5-এর জন্য করা হয়েছে, 2026-11-14)।
-3. Checker-এ int32/int64 format enforcement।
+2. ~~Fresh-এর noise floor (spec mutation)~~ — হয়েছে, বিদ্যমান replicate থেকে: 51/61 run-এ সংকেত noise ছাড়ায় (`NOISE_FLOOR_SPEC.md`)।
+3. ~~Checker-এ int32/int64 format enforcement~~ — হয়েছে: scout/petstore-এর হাজার হাজার ভুয়া VALID_REJECTED occurrence বাদ গেছে; label বদল নেই (`CHECKER_INT_FORMATS.md`)।
 4. ~~E5 blind labelling আর E5 noise floor~~ — হয়েছে (H7, H8)। বাকি:
    - ~~codebook v0.5 মেনে blind labelling আবার করা; E005-এর সংশোধন~~ — হয়েছে (H8, v2)।
    - Attribution-পদ্ধতিতে নিয়মবদ্ধ intent-প্রমাণ খোঁজার ধাপ (test → docs → history)।

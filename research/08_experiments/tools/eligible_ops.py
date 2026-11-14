@@ -19,17 +19,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import copy  # noqa: E402
 from specmut import load_spec, operations, mutate_response, mutate_loose, LOOSE_KEYS  # noqa: E402
 
-# Constraints our checker evaluates; 'format' (e.g. int64) is not enforced by conformance.py.
+# Constraints our checker evaluates. Generic 'format' is excluded: conformance.py asserts only some formats.
 CHECKED_LOOSE_KEYS = (set(LOOSE_KEYS) - {'format'}) | {'required'}
+# Formats conformance.py asserts (custom checks; int32/int64 since 2026-11-14 unless --no-int-formats).
+# Removing one of these is a checker-visible loosening (T24 F2). Other formats (email, uuid, ...) stay excluded.
+CHECKED_FORMATS = {'date', 'date-time', 'int32', 'int64'}
+LEGACY_CHECKED_FORMATS = set()  # pre-2026-11-14 pools ignored every format (reproduces recorded pools)
 
 
-def loose_effective(spec, path, method):
+def loose_effective(spec, path, method, legacy_formats=False):
     """True if REQUEST_LOOSE would remove at least one request constraint the checker evaluates."""
     s = copy.deepcopy(spec)
     edits = []
     mutate_loose(s, path, method, s['paths'][path][method], edits)
-    return any(e['pointer'].rsplit('/', 1)[-1] in CHECKED_LOOSE_KEYS and e.get('before') not in (None, False)
-               for e in edits)
+    formats = LEGACY_CHECKED_FORMATS if legacy_formats else CHECKED_FORMATS
+    def checked(e):
+        key = e['pointer'].rsplit('/', 1)[-1]
+        if key == 'format':
+            return e.get('before') in formats
+        return key in CHECKED_LOOSE_KEYS and e.get('before') not in (None, False)
+    return any(checked(e) for e in edits)
 
 
 def oracle_mutable(spec, path, method):
@@ -59,16 +68,19 @@ def main():
                     help='do not require a 2xx response schema that RESPONSE_ORACLE can edit')
     ap.add_argument('--fault', choices=('RESPONSE_ORACLE', 'REQUEST_LOOSE'), default='RESPONSE_ORACLE',
                     help='REQUEST_LOOSE: spec-only pool of operations with a checker-evaluated request constraint')
+    ap.add_argument('--legacy-formats', action='store_true',
+                    help='REQUEST_LOOSE: ignore all format removals (pools recorded before 2026-11-14)')
     ap.add_argument('--out', required=True)
     a = ap.parse_args()
     run = Path(a.run_dir)
     spec_file = next(run.glob('spec.original.*'))
     spec = load_spec(str(spec_file))
     if a.fault == 'REQUEST_LOOSE':
-        ops = sorted((p, m) for p, m, _ in operations(spec) if loose_effective(spec, p, m))
+        ops = sorted((p, m) for p, m, _ in operations(spec) if loose_effective(spec, p, m, a.legacy_formats))
         Path(a.out).write_text(json.dumps({'source_run': run.name, 'spec': spec_file.name, 'fault': a.fault,
             'criterion': 'REQUEST_LOOSE removes >=1 checker-evaluated request constraint (' +
-                         ', '.join(sorted(CHECKED_LOOSE_KEYS)) + ')',
+                         ', '.join(sorted(CHECKED_LOOSE_KEYS)) + '; formats: ' +
+                         (', '.join(sorted(CHECKED_FORMATS)) if not a.legacy_formats else 'none (legacy)') + ')',
             'operations': [list(k) for k in ops]}, indent=2), encoding='utf-8')
         print(f'{len(ops)} eligible operations -> {a.out}')
         return

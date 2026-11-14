@@ -1,0 +1,3 @@
+Created the [proposed diff](08_experiments/E1_pilot/harness_v2/proposals/harness.evomaster.proposed.diff), base hashes, README, and [Bengali report](09_collab/reports/T27_report.md). All 37 tests, static validation, and six shell syntax checks pass. Existing harness files remain unchanged.
+
+Full T27 is **blocked**: E5 forces `DATA_GEN=all` and requires Schemathesis artifacts, while T27 forbids E5 edits. Recorded the blocker and stopped per protocol.

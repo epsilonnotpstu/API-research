@@ -94,6 +94,10 @@ class LoosePool(unittest.TestCase):
         spec['paths']['/items/{id}']['parameters'][0]['format'] = 'int64'
         spec['paths']['/items']['post']['parameters'] = [
             {'name': 'body', 'in': 'body', 'schema': {'type': 'object', 'properties': {'a': {'type': 'string', 'maxLength': 3}}}}]
+        # int64 is asserted by conformance.py since 2026-11-14 (T24 F2): eligible; legacy pools ignore formats
+        self.assertTrue(eligible_ops.loose_effective(spec, '/items/{id}', 'get'))
+        self.assertFalse(eligible_ops.loose_effective(spec, '/items/{id}', 'get', legacy_formats=True))
+        spec['paths']['/items/{id}']['parameters'][0]['format'] = 'uuid'  # not asserted -> not eligible
         self.assertFalse(eligible_ops.loose_effective(spec, '/items/{id}', 'get'))
         self.assertFalse(eligible_ops.loose_effective(spec, '/items', 'get'))
         self.assertTrue(eligible_ops.loose_effective(spec, '/items', 'post'))

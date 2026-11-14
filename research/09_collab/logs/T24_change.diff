@@ -1,0 +1,76 @@
+diff --git a/research/08_experiments/tools/conformance.py b/research/08_experiments/tools/conformance.py
+index 98d8ac5..bc3d583 100644
+--- a/research/08_experiments/tools/conformance.py
++++ b/research/08_experiments/tools/conformance.py
+@@ -37,6 +37,27 @@ def _date_time(value):
+     return bool(datetime.datetime.fromisoformat(normalized))
+ 
+ 
++# OpenAPI integer formats (OAS 2/3 data types). Draft4's checker ignores them, so an out-of-range
++# value (e.g. a path id beyond signed int64) counted as a *valid* request and its 400 as VALID_REJECTED
++# (E5 blind v2 item E014). INT_FORMATS=False (CLI --no-int-formats) reproduces pre-2026-11-14 analyses.
++INT_FORMATS = True
++INT_RANGES = {'int32': (-2 ** 31, 2 ** 31 - 1), 'int64': (-2 ** 63, 2 ** 63 - 1)}
++
++
++def _int_format(name):
++    lo, hi = INT_RANGES[name]
++
++    def check(value):
++        if not INT_FORMATS or isinstance(value, bool) or not isinstance(value, int):
++            return True
++        return lo <= value <= hi
++    FORMAT_CHECKER.checks(name)(check)
++
++
++for _name in INT_RANGES:
++    _int_format(_name)
++
++
+ def is_31(version):
+     return isinstance(version, str) and version.startswith('3.1')
+ 
+@@ -453,9 +474,12 @@ def main(spec_path, exchanges_path, deploy_origin=None, reject_statuses=(400, 42
+ 
+ 
+ if __name__ == '__main__':
+-    # Usage: conformance.py SPEC EXCHANGES [--deploy-origin URL] [--reject-statuses 400,422]
++    # Usage: conformance.py SPEC EXCHANGES [--deploy-origin URL] [--reject-statuses 400,422] [--no-int-formats]
+     args = sys.argv[1:]
+     deploy, reject = None, (400, 422)
++    if '--no-int-formats' in args:
++        args.remove('--no-int-formats')
++        INT_FORMATS = False
+     if '--deploy-origin' in args:
+         i = args.index('--deploy-origin')
+         deploy = args[i + 1]
+diff --git a/research/08_experiments/tools/test_review_fixes.py b/research/08_experiments/tools/test_review_fixes.py
+index 8254bd5..c7cabc3 100644
+--- a/research/08_experiments/tools/test_review_fixes.py
++++ b/research/08_experiments/tools/test_review_fixes.py
+@@ -231,6 +231,25 @@ class ReviewFixes(unittest.TestCase):
+         self.assertIn('VALID_REJECTED', [v['kind'] for v in c.check(sp, e)])
+         self.assertIn('VALID_REJECTED', kinds(d, ex(status=400)))  # default unchanged
+ 
++    def test_R10d_integer_formats_bound_request_validity(self):
++        big = str(2 ** 63)  # one beyond signed int64 (E5 blind v2 item E014)
++        d64 = doc(params=[param({'type': 'integer', 'format': 'int64'}, required=True)])
++        self.assertNotIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [big]})))
++        self.assertIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [str(2 ** 63 - 1)]})))
++        self.assertIn('INVALID_ACCEPTED', kinds(d64, ex(status=200, query={'q': [big]})))
++        d32 = doc(params=[param({'type': 'integer', 'format': 'int32'}, required=True)])
++        self.assertNotIn('VALID_REJECTED', kinds(d32, ex(status=400, query={'q': [str(2 ** 31)]})))
++        self.assertIn('VALID_REJECTED', kinds(d32, ex(status=400, query={'q': [str(-2 ** 31)]})))
++        # response bodies: out-of-range integer is a schema violation; booleans/non-integers untouched
++        r = doc({'type': 'object', 'properties': {'id': {'type': 'integer', 'format': 'int32'}}})
++        self.assertIn('RESPONSE_SCHEMA', kinds(r, ex(body=json.dumps({'id': 2 ** 31}))))
++        self.assertEqual(kinds(r, ex(body=json.dumps({'id': 7}))), [])
++        self.assertEqual(c.FORMAT_CHECKER.conforms(True, 'int32'), True)
++        self.assertEqual(c.FORMAT_CHECKER.conforms('x', 'int64'), True)
++        # legacy switch reproduces pre-2026-11-14 behaviour
++        with patch.object(c, 'INT_FORMATS', False):
++            self.assertIn('VALID_REJECTED', kinds(d64, ex(status=400, query={'q': [big]})))
++
+     def test_R11_path_parameter_refs_dedup_and_override(self):
+         d = doc(params=[{'$ref': '#/components/parameters/Q'}])
+         d['paths']['/x']['parameters'] = [{'$ref': '#/components/parameters/R'}]

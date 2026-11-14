@@ -1,14 +1,16 @@
-"""Synthetic Java fixtures only; no real SUT copies, compilers, or builds."""
+"""Synthetic safety fixtures and read-only pinned-source copies; no Java execution."""
 import copy
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 
 HERE = Path(__file__).resolve().parent
+SCRATCH = Path(os.environ.get('E5_TEST_SCRATCH', str(HERE.parent.parent / '09_collab/logs/T25_scratch')))
 SPEC = importlib.util.spec_from_file_location("codemut_under_test", HERE / "codemut.py")
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
@@ -16,8 +18,8 @@ SPEC.loader.exec_module(MODULE)
 
 class CodeMutationTests(unittest.TestCase):
     def setUp(self):
-        # All test writes remain within the task's allowed E5 directory.
-        self.temp = tempfile.TemporaryDirectory(prefix=".test-", dir=HERE)
+        # Keep temporary copies inside the explicitly assigned test scratch path.
+        self.temp = tempfile.TemporaryDirectory(prefix=".test-", dir=SCRATCH)
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.source = self.root / "original"
@@ -211,6 +213,113 @@ class CodeMutationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["execution"], "not_run")
         self.assertTrue((self.root / "cli/patch.diff").exists())
+
+
+class ReplacementSiteTests(unittest.TestCase):
+    """Exercise the shipped v2 entries against the original checkout bytes."""
+
+    IDS = ("market-response-field-v2", "petstore-reject-valid-v2")
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="v2-site-", dir=SCRATCH)
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.catalogue = json.loads((HERE / "sites.json").read_text())
+        self.sites = self.catalogue["sites"]
+        self.selected = {s["site_id"]: s for s in self.sites if s["site_id"] in self.IDS}
+        self.assertEqual(set(self.selected), set(self.IDS))
+
+    def source(self, site):
+        return MODULE.EMB / self.catalogue["roots"][site["sut"]]
+
+    def mutate(self, source, output, site):
+        return MODULE.mutate(source, output, site["sut"], site["operator"],
+                             self.sites, site_id=site["site_id"])
+
+    def verify_copy(self, site_id):
+        site = self.selected[site_id]
+        source = self.source(site)
+        original = (source / site["file"]).read_bytes()
+        before_inventory = MODULE.inventory(source)
+        self.assertEqual(hashlib.sha256(original).hexdigest(), site["source_sha256"])
+        self.assertEqual(original.count(site["before"].encode()), 1)
+        self.assertEqual(original[:original.index(site["before"].encode())].count(b"\n") + 1, site["line"])
+        out = self.root / "copy"
+        manifest = self.mutate(source, out, site)
+        expected = original.replace(site["before"].encode(), site["after"].encode(), 1)
+        self.assertEqual((out / "source" / site["file"]).read_bytes(), expected)
+        self.assertEqual(MODULE.inventory(source), before_inventory)
+        after_inventory = MODULE.inventory(out / "source")
+        self.assertEqual(set(after_inventory), set(before_inventory))
+        self.assertEqual([p for p in before_inventory if before_inventory[p] != after_inventory[p]], [site["file"]])
+        self.assertEqual(manifest["site_id"], site_id)
+        self.assertEqual(manifest["source_sha256"], site["source_sha256"])
+        self.assertEqual(manifest["mutated_file_sha256"], hashlib.sha256(expected).hexdigest())
+        self.assertEqual(manifest["operations"], site["operations"])
+        self.assertEqual(manifest["expected_conformance_signal"], site["expected_conformance_signal"])
+        self.assertEqual(manifest["validation"]["java_compile"], "not_run")
+        self.assertFalse(manifest["validation"]["fault_observed"])
+        return out
+
+    def test_market_v2_applies_once_to_original_tree_copy(self):
+        self.verify_copy("market-response-field-v2")
+
+    def test_petstore_v2_applies_once_to_original_tree_copy(self):
+        self.verify_copy("petstore-reject-valid-v2")
+
+    def test_v2_requires_all_catalogue_fields_and_explicit_selection(self):
+        fields = set(self.sites[0])
+        MODULE.validate_sites(self.sites)
+        for site in self.selected.values():
+            with self.subTest(site=site["site_id"]):
+                self.assertEqual(set(site), fields)
+                self.assertTrue(site["pilot"])
+                self.assertEqual(MODULE.select_site(self.sites, site["sut"], site["operator"], 1, site["site_id"]), site)
+                self.assertTrue(site["conditions"] and site["witness_plan"] and site["evidence"])
+
+    def test_v2_source_digest_drift_refused_before_copy(self):
+        for site in self.selected.values():
+            with self.subTest(site=site["site_id"]):
+                source = self.root / site["site_id"]
+                file = source / site["file"]
+                file.parent.mkdir(parents=True)
+                file.write_bytes((self.source(site) / site["file"]).read_bytes() + b"\n// source drift\n")
+                out = self.root / (site["site_id"] + "-out")
+                with self.assertRaisesRegex(MODULE.MutationError, "digest"):
+                    self.mutate(source, out, site)
+                self.assertFalse(out.exists())
+
+    def test_v2_ambiguous_anchor_refused_even_with_matching_digest(self):
+        for original_site in self.selected.values():
+            with self.subTest(site=original_site["site_id"]):
+                site = copy.deepcopy(original_site)
+                data = (self.source(site) / site["file"]).read_bytes() + b"\n" + site["before"].encode()
+                site["source_sha256"] = hashlib.sha256(data).hexdigest()
+                with self.assertRaisesRegex(MODULE.MutationError, "exactly once"):
+                    MODULE.edit_bytes(data, site)
+
+    def test_v2_missing_anchor_refused_even_with_matching_digest(self):
+        for original_site in self.selected.values():
+            with self.subTest(site=original_site["site_id"]):
+                site = copy.deepcopy(original_site)
+                data = (self.source(site) / site["file"]).read_bytes().replace(site["before"].encode(), b"// removed anchor", 1)
+                site["source_sha256"] = hashlib.sha256(data).hexdigest()
+                with self.assertRaisesRegex(MODULE.MutationError, "exactly once"):
+                    MODULE.edit_bytes(data, site)
+
+    def test_v2_existing_output_and_second_application_refused(self):
+        for site in self.selected.values():
+            with self.subTest(site=site["site_id"]):
+                out = self.root / site["site_id"]
+                self.mutate(self.source(site), out, site)
+                frozen = (out / "manifest.json").read_bytes()
+                with self.assertRaisesRegex(MODULE.MutationError, "must not exist"):
+                    self.mutate(self.source(site), out, site)
+                self.assertEqual((out / "manifest.json").read_bytes(), frozen)
+                second = self.root / (site["site_id"] + "-second")
+                with self.assertRaisesRegex(MODULE.MutationError, "digest"):
+                    self.mutate(out / "source", second, site)
+                self.assertFalse(second.exists())
 
 
 if __name__ == "__main__":

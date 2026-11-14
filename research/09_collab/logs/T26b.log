@@ -1,0 +1,739 @@
+2026-11-14T16:16:50.046236Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/deploy/SKILL.md: missing YAML frontmatter delimited by ---
+2026-11-14T16:16:50.046277Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/prepare/SKILL.md: missing YAML frontmatter delimited by ---
+2026-11-14T16:16:50.046286Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/scaffold/SKILL.md: missing YAML frontmatter delimited by ---
+OpenAI Codex v0.160.1
+--------
+workdir: /home/afridi/Documents/API research/research
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1dac5-84f8-73f3-af91-e13c667b12d7
+--------
+user
+Execute 09_collab/tasks/T26b.md exactly (follow-up to your T26 work). Task file: tasks/T26b.md
+warning: This session was recorded with model `gpt-5.6-sol` but is resuming with `gpt-6.1-sol`. Consider switching back to `gpt-5.6-sol` as it may affect Codex performance.
+2026-11-14T16:16:53.409210Z ERROR codex_models_manager::manager: failed to refresh available models: request timed out
+exec
+/usr/bin/zsh -lc "cat 09_collab/tasks/T26.md; sed -n '390,690p' 08_experiments/tools/intent_evidence.py" in /home/afridi/Documents/API research/research
+ succeeded in 0ms:
+# T26 — `intent_evidence.py`: systematic intent-evidence search for attribution (Codex, write + tests)
+
+Read `09_collab/PROTOCOL.md` first. Effort: high.
+
+## Why
+- Codebook v0.5 §11 accepts an intent-based SPEC (or IMPL) argument only with **independent intent evidence**:
+  - a test that asserts the status or field;
+  - documentation, README or API guide;
+  - a commit or issue;
+  - the same policy at several independent sites.
+- In a blind study (results not yet available to you), two labellers diverged on one item only because one of them found a documentation file (an HTML template describing the REST API) and the other did not.
+- We want a deterministic search step that every labeller runs, and every labeller cites.
+
+## Deliverable: `08_experiments/tools/intent_evidence.py`
+- **CLI:**
+  ```
+  intent_evidence.py SOURCE_DIR SPEC --method GET --path /products [--status 418] [--field name] [--json]
+  ```
+- **Steps, in this order.** Each hit records `category`, `file:line`, a ≤160-char snippet and a `strength` note.
+  1. **HANDLER:** locate the handler(s) for method+path.
+     - JAX-RS: `@Path`, `@GET` and friends, class + method paths.
+     - Spring: `@RequestMapping` / `@GetMapping`… with class prefixes.
+     - Report the files and lines that set the status in question (`Response.status(...)`, `ResponseEntity.status`, `@ResponseStatus`, `HttpStatus.X`, numeric literals) or that serialise or ignore the field (`@JsonProperty`, `@JsonIgnore`, `WRITE_ONLY`/`READ_ONLY`).
+     - HANDLER hits are **not** independent evidence; they are context.
+  2. **E-TEST:** test sources (`src/test/**`, `*Test*.java`, `*IT.java`, other languages' test dirs) that reference the path (literal or path segments) **and** either assert a status (`assertEquals(200`, `.statusCode(`, `status().isOk()`, `HttpStatus.`…) or mention the field.
+     - Report the asserted value.
+     - Mark agreement or contradiction with the observed status or field and with the spec.
+  3. **E-DOC:** non-code documentation that mentions the path or field: `README*`, `*.md`, `*.adoc`, `*.txt`, `docs/**`, HTML templates (`templates/**`, `*.html`), Javadoc on the handler, OpenAPI annotations (`@ApiResponse`, `@Operation`).
+     - Extract the status codes or field names mentioned near the path (window ±10 lines).
+  4. **E-CONSIST:** other handlers or exception mappers that produce the same status for analogous situations (the same `HttpStatus`/numeric code in ≥2 independent classes), or the same field annotation pattern on ≥2 DTOs.
+     - Report the count of independent sites.
+  5. **E-HISTORY:** if `SOURCE_DIR` is inside a git work tree, run `git log -S<literal> --oneline` limited to the handler file (read-only).
+     - Otherwise report `unavailable` explicitly.
+     - Never fetch anything over the network.
+- **Output:** a summary verdict field with one of these values:
+  - `independent_evidence: supports_code` (an independent source agrees with the code's behaviour);
+  - `supports_spec` (an independent source agrees with the spec, contradicting the code);
+  - `conflicting`;
+  - `none_found`.
+  - Also list which §11.1 evidence types were found.
+- **Constraints:** standard library only; deterministic ordering; must run on large trees in < 30 s (skip `target/`, `node_modules/`, `.git/`, binaries).
+
+## Tests: `08_experiments/tools/test_intent_evidence.py`
+- **Synthetic mini-trees in a temp dir.** Cover:
+  - JAX-RS and Spring routing with class prefixes;
+  - a test asserting 200 vs code returning 418 → `supports_spec`;
+  - a doc template listing 200 → `supports_spec`;
+  - the same 406 in two exception handlers → E-CONSIST count 2 → `supports_code`;
+  - a `WRITE_ONLY` annotation with no other evidence → `none_found`;
+  - a missing git repo → E-HISTORY `unavailable`.
+- **Smoke run (read-only) on the original EMB sources** under `08_experiments/_external/emb/jdk_8_maven/cs/rest/original/` (scout-api, market) and `jdk_11_maven/.../cwa-verification`, if present.
+  - Pick 3 real operations.
+  - Put the output in `09_collab/logs/T26_scratch/`.
+  - Do not edit those sources.
+
+## Write scope
+- Only `tools/intent_evidence.py`, `tools/test_intent_evidence.py`, `09_collab/reports/T26_report.md` (Bengali; technical terms in English), `09_collab/logs/T26_scratch/`, and one board Log line.
+- **Forbidden:**
+  - Editing any other file in `tools/`, or anything in `harness_v2/`.
+  - Writing to `E1_pilot/runs/`, `_external/` or `E5_codemut/`.
+  - Opening `E2_labelling/e5_blind*` or `E5_codemut/blind_key*`.
+  - Docker, Java, Maven, network.
+- All existing tool tests must still pass.
+  - Commands are in `09_collab/logs/T10_scratch/commands.txt`; `test_review_fixes.py` now has 31 tests.
+- Mark inferences with ⚠️.
+
+
+def search(source, spec_path, method, path, status=None, field=None, budget=25.0):
+    start_time = time.monotonic()
+    deadline = start_time + budget
+    root = Path(source).resolve()
+    if not root.is_dir():
+        raise ValueError('SOURCE_DIR must be a directory')
+    spec = spec_context(load_spec(spec_path), method.upper(), path, field, status)
+    files, warnings = [], []
+    stats = {'text_files': 0, 'skipped_binary_or_encoding': 0, 'skipped_large': 0,
+             'skipped_symlink': 0, 'skipped_dirs': 0, 'complete': True}
+    def remaining():
+        left = deadline - time.monotonic()
+        if left <= 0:
+            stats['complete'] = False
+            raise TimeoutError('Search time budget exhausted; results are partial')
+        return left
+
+    try:
+        for directory, dirs, names in os.walk(root, followlinks=False):
+            remaining()
+            keep = [d for d in dirs if d not in SKIP and not Path(directory, d).is_symlink()]
+            stats['skipped_dirs'] += len(dirs) - len(keep)
+            dirs[:] = sorted(keep)
+            for name in sorted(names):
+                remaining()
+                full = Path(directory, name)
+                relative = full.relative_to(root)
+                if full.is_symlink():
+                    stats['skipped_symlink'] += 1
+                    continue
+                suffix = full.suffix.lower()
+                doc = suffix in DOC or name.lower().startswith('readme') or bool(
+                    set(relative.parts[:-1]) & {'docs', 'templates'})
+                if suffix not in CODE and not doc:
+                    continue
+                try:
+                    if full.stat().st_size > 2_000_000:
+                        stats['skipped_large'] += 1
+                        continue
+                    raw = full.read_bytes()
+                    if b'\0' in raw:
+                        stats['skipped_binary_or_encoding'] += 1
+                        continue
+                    text = raw.decode('utf-8-sig')
+                except UnicodeError:
+                    stats['skipped_binary_or_encoding'] += 1
+                    continue
+                except OSError as exc:
+                    stats['complete'] = False
+                    warnings.append(f'{relative}: {exc.strerror}')
+                    continue
+                file = {'path': relative.as_posix(), 'text': text, 'lines': text.splitlines(),
+                        'offsets': [0] + [m.end() for m in re.finditer('\n', text)],
+                        'test': is_test(relative), 'doc': doc and suffix not in CODE,
+                        'mask': mask_java(text) if suffix == '.java' else '', 'classes': []}
+                file['clean_lines'] = (strip_comments(text) if suffix in {'.java', '.kt', '.js', '.ts', '.cs'}
+                                       else re.sub(r'(?m)^\s*#.*$', '', text)).splitlines()
+                file['routes'] = java_units(file) if suffix == '.java' and not file['test'] else []
+                files.append(file)
+                stats['text_files'] += 1
+    except TimeoutError as exc:
+        warnings.append(str(exc))
+
+    hits = []
+    matched = [(f, r) for f in files for r in f['routes']
+               if method.upper() in r['methods'] and route_equal(r['path'], path)]
+    code_fields = set()
+
+    def add(category, f, line, strength, **extra):
+        snippet = f['lines'][line - 1].strip() if 0 < line <= len(f['lines']) else ''
+        hit = {'category': category, 'location': f"{f['path']}:{line}",
+               'file': f['path'], 'line': line, 'snippet': snippet[:160],
+               'strength': '⚠️ ' + strength, **extra}
+        if hit not in hits:
+            hits.append(hit)
+
+    def lineno(f, offset):
+        return bisect.bisect_right(f['offsets'], offset)
+
+    # 1. Routing and explicit behavior are context, never independent evidence.
+    for f, r in matched:
+        line = lineno(f, r['body'])
+        add('HANDLER', f, line, 'context only; lexical method/path match',
+            route=r['path'], methods=r['methods'], independent=False)
+        first, last = lineno(f, r['start']), lineno(f, r['end'] - 1)
+        for n in range(first, last + 1):
+            raw = f['clean_lines'][n - 1]
+            # Exclude documentation annotations/comments from code behavior.
+            offset = f['offsets'][n - 1]
+            in_doc = any(a <= offset < b for name, a, b, _ in r['annotations']
+                         if name in {'ApiResponse', 'ApiResponses', 'Operation'})
+            values = codes(raw) if not in_doc and f['mask'][offset:offset + len(raw)].strip() else []
+            if values:
+                add('HANDLER', f, n, 'context only; explicit status expression, not runtime proof',
+                    statuses=values, independent=False)
+    # Field annotations are restricted to selected handler/response DTO references.
+    referenced = ' '.join(f['text'][r['start']:r['end']] for f, r in matched)
+    for f in files:
+        if not field or f['test'] or not f['mask']:
+            continue
+        relevant = any(f is mf for mf, _ in matched) or any(
+            re.search(r'\b' + re.escape(c['name']) + r'\b', referenced) for c in f['classes'])
+        if not relevant:
+            continue
+        for name, a, b, _ in annotations(f['text'], f['mask']):
+            if name not in {'JsonProperty', 'JsonIgnore'}:
+                continue
+            end = min((x for x in [f['mask'].find(';', b), f['mask'].find('{', b)] if x >= 0), default=b)
+            window = f['text'][a:end]
+            value = field_value(window, field)
+            if value:
+                code_fields.add(value)
+                add('HANDLER', f, lineno(f, a), 'context only; response DTO link and serialization are lexical inferences',
+                    field=field, field_behavior=value, independent=False)
+
+    def comparison(values, behavior=None):
+        directions = set()
+        code_agreement, spec_agreement = [], []
+        for v in values:
+            agrees_code = None if status is None else v == status
+            agrees_spec = str(v) in spec['statuses'] or f'{v // 100}XX' in spec['statuses']
+            if not agrees_spec and 'default' in spec['statuses']:
+                agrees_spec = None
+            code_agreement.append('unknown' if agrees_code is None else 'agrees' if agrees_code else 'contradicts')
+            spec_agreement.append('unknown' if agrees_spec is None else 'agrees' if agrees_spec else 'contradicts')
+            if agrees_code:
+                directions.add('supports_code')
+            elif agrees_code is False and agrees_spec:
+                directions.add('supports_spec')
+        if behavior:
+            cb = next(iter(code_fields)) if len(code_fields) == 1 else None
+            sb = spec['field_policy'][0] if len(spec['field_policy']) == 1 else None
+            code_agreement.append('unknown' if cb is None else 'agrees' if cb == behavior else 'contradicts')
+            spec_agreement.append('unknown' if sb not in {'present', 'absent'} else 'agrees' if sb == behavior else 'contradicts')
+            if cb == behavior:
+                directions.add('supports_code')
+            elif cb and sb == behavior:
+                directions.add('supports_spec')
+        return {'code_agreement': sorted(set(code_agreement)) or ['unknown'],
+                'spec_agreement': sorted(set(spec_agreement)) or ['unknown'],
+                'support': sorted(directions)}
+
+    # 2. Require the path AND assertion/field in the same local window.
+    for f in files:
+        if not f['test']:
+            continue
+        for i, raw in enumerate(f['clean_lines']):
+            assertion = bool(re.search(r'assert|expect|statusCode|status\s*\(\s*\)|HttpStatus\.', raw, re.I))
+            values = codes(raw) if assertion else []
+            mentions = bool(field and re.search(r'\b' + re.escape(field) + r'\b', raw))
+            if not values and not mentions:
+                continue
+            window = '\n'.join(f['clean_lines'][max(0, i - 10):i + 11])
+            if not path_reference(window, path):
+                continue
+            behavior = field_value(raw, field) if assertion else None
+            add('E-TEST', f, i + 1, 'candidate independent test; path within ±10 lines; verify scenario and assertion',
+                asserted_values=values, field=field if mentions else None, field_behavior=behavior,
+                independent=True, **comparison(values, behavior))
+
+    # 3. Non-code docs, handler Javadoc and OpenAPI documentation annotations.
+    doc_ranges = []
+    for f in files:
+        if f['doc'] and Path(root / f['path']).resolve() != Path(spec_path).resolve():
+            doc_ranges.append((f, 0, len(f['text']), False))
+    for f, r in matched:
+        prefix = f['text'][r['start']:r['body']]
+        for doc in re.finditer(r'/\*\*[\s\S]*?\*/', prefix):
+            doc_ranges.append((f, r['start'] + doc.start(), r['start'] + doc.end(), True))
+        for name, a, b, _ in r['annotations']:
+            if name in {'ApiResponse', 'ApiResponses', 'Operation'}:
+                doc_ranges.append((f, a, b, True))
+    for f, begin, end, linked in doc_ranges:
+        first, last = lineno(f, begin), lineno(f, max(begin, end - 1))
+        anchors = [i for i in range(first - 1, last) if linked or path_reference(f['lines'][i], path)
+                   or (field and re.search(r'\b' + re.escape(field) + r'\b', f['lines'][i]))]
+        candidates = set()
+        for anchor in anchors:
+            candidates.update(range(max(first - 1, anchor - 10), min(last, anchor + 11)))
+        for i in sorted(candidates):
+            raw = f['lines'][i]
+            visible = html.unescape(re.sub(r'<[^>]+>', ' ', raw)) if f['doc'] else raw
+            # HTML dimensions and JSON example prices/ids are not HTTP statuses.
+            visible = re.sub(r'"(?!status(?:Code)?"|responseCode")\w+"\s*:\s*[1-5]\d\d\b', '', visible)
+            values = codes(visible, prose=True)
+            mentions = bool(field and re.search(r'\b' + re.escape(field) + r'\b', raw))
+            if not values and not mentions and i not in anchors:
+                continue
+            # Documentation field mentions are not presence assertions.
+            add('E-DOC', f, i + 1, 'candidate independent documentation; ±10-line proximity; verify scenario',
+                statuses=values, field=field if mentions else None,
+                independent=True, **comparison(values))
+
+    # 4. Count distinct classes, excluding tests and the input specification.
+    sites = {}
+    for f in files:
+        if f['test'] or not f['mask']:
+            continue
+        for cls in f['classes']:
+            for n in range(lineno(f, cls['start']), lineno(f, cls['end'] - 1) + 1):
+                offset = f['offsets'][n - 1]
+                if not (cls['start'] <= offset + len(f['lines'][n - 1]) and offset < cls['end']):
+                    continue
+                # Keep enum/response expressions, never bare unrelated numbers.
+                raw = f['clean_lines'][n - 1]
+                owners = [c for c in f['classes'] if c['start'] <= offset + len(raw) and offset < c['end']]
+                if owners and cls is not min(owners, key=lambda c: c['end'] - c['start']):
+                    continue
+                if not f['mask'][offset:offset + len(raw)].strip():
+                    continue
+                handler = any(r['class'] == cls['name'] and r['start'] <= offset < r['end'] for r in f['routes'])
+                mapper = bool(re.search(r'Exception|ErrorHandler|Mapper', cls['name']) or
+                              re.search(r'\b(?:ExceptionMapper|@ExceptionHandler)\b', f['text'][cls['start']:cls['end']]))
+                if status in codes(raw) and (handler or mapper):
+                    sites.setdefault(('status', str(status)), {})[(f['path'], cls['name'])] = (f, n)
+        if field:
+            for name, a, b, raw in annotations(f['text'], f['mask']):
+                if name not in {'JsonIgnore', 'JsonProperty'}:
+                    continue
+                end = min((x for x in [f['mask'].find(';', b), f['mask'].find('{', b)] if x >= 0), default=b)
+                behavior = field_value(f['text'][a:end], field)
+                owners = [c for c in f['classes'] if c['start'] < a < c['end']]
+                if behavior and owners:
+                    cls = min(owners, key=lambda c: c['end'] - c['start'])
+                    pattern = 'WRITE_ONLY' if 'WRITE_ONLY' in raw else 'READ_ONLY' if 'READ_ONLY' in raw else name
+                    sites.setdefault(('field', pattern, behavior), {})[(f['path'], cls['name'])] = (f, lineno(f, a))
+    for key, group in sorted(sites.items()):
+        if len(group) < 2:
+            continue
+        values = [status] if key[0] == 'status' else []
+        behavior = key[2] if key[0] == 'field' else None
+        for (filename, cls), (f, n) in sorted(group.items()):
+            add('E-CONSIST', f, n, 'candidate independent class sites; analogy of situations requires review',
+                independent=True, independent_sites=len(group), site_class=cls,
+                pattern=list(key), statuses=values, field_behavior=behavior,
+                **comparison(values, behavior))
+
+    # 5. Git is read-only, local, timeout bounded, with external diff disabled.
+    history = {'availability': 'unavailable', 'reason': 'not inside a git work tree'}
+    env = dict(os.environ, GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0',
+               GIT_PAGER='cat', GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull)
+    def git(args):
+        remaining()
+        return subprocess.run(['git', '--no-pager', '-C', str(root), *args],
+                              capture_output=True, text=True, encoding='utf-8', errors='replace',
+                              timeout=max(0.01, min(3, remaining())), env=env, check=False)
+    try:
+        probe = git(['rev-parse', '--is-inside-work-tree'])
+        if probe.returncode == 0 and probe.stdout.strip() == 'true':
+            history = {'availability': 'available', 'reason': 'local git history searched', 'queries': []}
+            literals = [str(status)] if status is not None else []
+            if field:
+                literals.append(field)
+            if not literals:
+                literals.append(path)
+            for filename in sorted({f['path'] for f, _ in matched}):
+                f = next(f for f, _ in matched if f['path'] == filename)
+                r = next(r for mf, r in matched if mf is f)
+                for literal in literals:
+                    log = git(['--literal-pathspecs', 'log', '--no-ext-diff', '--no-textconv',
+                               '--format=%h %s', '-S' + literal, '--oneline', '--', filename])
+                    history['queries'].append({'file': filename, 'literal': literal,
+                                               'returncode': log.returncode})
+                    if log.returncode:
+                        history['availability'] = 'unavailable'
+                        history['reason'] = 'git log failed'
+                    for commit in log.stdout.splitlines():
+                        add('E-HISTORY', f, lineno(f, r['body']),
+                            'candidate commit; pickaxe occurrence does not prove intent; inspect commit',
+                            independent=True, commit=commit[:160], literal=literal, support=[])
+            if not matched:
+                history['reason'] = 'git available; no matched handler file to search'
+        elif probe.returncode and 'not a git repository' not in probe.stderr:
+            history['reason'] = probe.stderr.strip()[:200] or 'git probe failed'
+    except (OSError, subprocess.TimeoutExpired, TimeoutError) as exc:
+        history = {'availability': 'unavailable', 'reason': str(exc)[:200]}
+    hits.sort(key=lambda h: (CATEGORIES.index(h['category']), h['file'], h['line'],
+                             json.dumps(h, sort_keys=True)))
+    support = {s for h in hits if h.get('independent') for s in h.get('support', [])}
+    verdict = 'conflicting' if len(support) > 1 else next(iter(support), 'none_found')
+    if not matched:
+        warnings.append('No Java handler located; routing constants/imports/inheritance may require manual inspection')
+    return {'operation': {'method': method.upper(), 'path': path}, 'observed_status': status,
+            'field': field, 'spec': {'file': str(spec_path), **spec},
+            'code_field_behavior': sorted(code_fields), 'independent_evidence': verdict,
+            'evidence_types_found': [c for c in CATEGORIES[1:] if any(h['category'] == c for h in hits)],
+            'hits': hits, 'history': history, 'scan': stats, 'warnings': warnings,
+            'limitations': ['Lexical candidate search; verify branch/scenario and DTO linkage before attribution.',
+                            'Input specification is comparison context, never independent documentation.',
+                            'Field mentions alone and git pickaxe matches do not establish intent.',
+                            'No runtime field presence is supplied by --field; annotation behavior is tentative.',
+                            'Files over 2 MB, symlinks, binaries, build/vendor directories are skipped.']}
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('source_dir')
+    parser.add_argument('spec')
+    parser.add_argument('--method', required=True, type=str.upper, choices=sorted(METHODS))
+
+exec
+/usr/bin/zsh -lc "sed -n '1,110p' 08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/controller/PetController.java; sed -n '1,125p' 08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/java/io/swagger/petstore/model/Pet.java; sed -n '1,55p' 08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/webapp/openapi.yaml; rg --files 08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src | rg 'inflector|yaml|json'; sed -n '1,85p' 08_experiments/tools/test_intent_evidence.py" in /home/afridi/Documents/API research/research
+ succeeded in 0ms:
+/**
+ * Copyright 2018 SmartBear Software
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.swagger.petstore.controller;
+
+import io.swagger.oas.inflector.models.RequestContext;
+import io.swagger.oas.inflector.models.ResponseContext;
+import io.swagger.petstore.data.PetData;
+import io.swagger.petstore.model.Category;
+import io.swagger.petstore.model.Pet;
+import io.swagger.petstore.model.Tag;
+import io.swagger.petstore.notification.Notifier;
+import io.swagger.petstore.notification.NullNotifier;
+import io.swagger.petstore.utils.Util;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.File;
+import java.util.List;
+
+@javax.annotation.Generated(value = "class io.swagger.codegen.languages.JavaInflectorServerCodegen", date = "2017-04-08T15:48:56.501Z")
+public class PetController {
+
+    private static PetData petData = new PetData();
+    private Notifier notifier = new NullNotifier();
+
+    public PetController() {
+        if (System.getenv("notifierClass") != null) {
+            try {
+                notifier = (Notifier) this.getClass().forName(System.getenv("notifierClass")).newInstance();
+            } catch (Exception e) {
+                //
+            }
+        }
+    }
+
+    public ResponseContext findPetsByStatus(final RequestContext request, final String status) {
+        if (status == null) {
+            notifier.notify(new RuntimeException("No status provided"));
+            return new ResponseContext()
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("No status provided. Try again?");
+        }
+
+        final List<Pet> petByStatus = petData.findPetByStatus(status);
+
+        if (petByStatus == null) {
+            notifier.notify(new RuntimeException("Pets not found"));
+            return new ResponseContext().status(Response.Status.NOT_FOUND).entity("Pets not found");
+        }
+
+        notifier.notify(new RuntimeException("Pets not found"));
+        return new ResponseContext()
+                .contentType(Util.getMediaType(request))
+                .entity(petByStatus);
+    }
+
+    public ResponseContext getPetById(final RequestContext request, final Long petId) {
+        if (petId == null) {
+            notifier.notify(new RuntimeException("No petId provided"));
+            return new ResponseContext()
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("No petId provided. Try again?");
+        }
+
+        final Pet pet = petData.getPetById(petId);
+
+        if (pet != null) {
+            return new ResponseContext()
+                    .contentType(Util.getMediaType(request))
+                    .entity(pet);
+        }
+
+        notifier.notify(new RuntimeException("Pets not found"));
+        return new ResponseContext().status(Response.Status.NOT_FOUND).entity("Pet not found");
+    }
+
+    public ResponseContext updatePetWithForm(final RequestContext request, final Long petId, final String name, final String status) {
+        if (petId == null) {
+            notifier.notify(new RuntimeException("No petId provided"));
+            return new ResponseContext()
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("No Pet provided. Try again?");
+        }
+
+        if (name == null) {
+            notifier.notify(new RuntimeException("No name provided"));
+            return new ResponseContext()
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("No Name provided. Try again?");
+        }
+
+        final MediaType outputType = Util.getMediaType(request);
+        final Pet existingPet = petData.getPetById(petId);
+
+        if (existingPet == null) {
+            notifier.notify(new RuntimeException("No pet provided"));
+/**
+ * Copyright 2018 SmartBear Software
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.swagger.petstore.model;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
+
+@XmlRootElement(name = "Pet")
+public class Pet {
+    private Long id;
+    private Category category;
+    private String name;
+    private List<String> photoUrls = new ArrayList<>();
+    private List<Tag> tags = new ArrayList<>();
+    private String status;
+
+    @XmlElement(name = "id")
+    public long getId() {
+        return id;
+    }
+
+    public void setId(final Long id) {
+        this.id = id;
+    }
+
+    @XmlElement(name = "category")
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(final Category category) {
+        this.category = category;
+    }
+
+    @XmlElement(name = "name")
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    @XmlElementWrapper(name = "photoUrls")
+    @XmlElement(name = "photoUrl")
+    public List<String> getPhotoUrls() {
+        return photoUrls;
+    }
+
+    public void setPhotoUrls(final List<String> photoUrls) {
+        this.photoUrls = photoUrls;
+    }
+
+    @XmlElementWrapper(name = "tags")
+    @XmlElement(name = "tag")
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(final List<Tag> tags) {
+        this.tags = tags;
+    }
+
+    @XmlElement(name = "status")
+    @Schema(description = "pet status in the store", allowableValues = "available,pending,sold")
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(final String status) {
+        this.status = status;
+    }
+}
+openapi: 3.0.4
+info:
+  title: Swagger Petstore - OpenAPI 3.0
+  description: |-
+    This is a sample Pet Store Server based on the OpenAPI 3.0 specification.  You can find out more about
+    Swagger at [https://swagger.io](https://swagger.io). In the third iteration of the pet store, we've switched to the design first approach!
+    You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    That way, with time, we can improve the API in general, and expose some of the new features in OAS3.
+
+    Some useful links:
+    - [The Pet Store repository](https://github.com/swagger-api/swagger-petstore)
+    - [The source API definition for the Pet Store](https://github.com/swagger-api/swagger-petstore/blob/master/src/main/resources/openapi.yaml)
+  termsOfService: https://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.27-SNAPSHOT
+externalDocs:
+  description: Find out more about Swagger
+  url: https://swagger.io
+servers:
+  - url: https://petstore3.swagger.io/api/v3
+tags:
+  - name: pet
+    description: Everything about your Pets
+    externalDocs:
+      description: Find out more
+      url: https://swagger.io
+  - name: store
+    description: Access to Petstore orders
+    externalDocs:
+      description: Find out more about our store
+      url: https://swagger.io
+  - name: user
+    description: Operations about user
+paths:
+  /pet:
+    put:
+      tags:
+        - pet
+      summary: Update an existing pet.
+      description: Update an existing pet by Id.
+      operationId: updatePet
+      requestBody:
+        description: Update an existent pet in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/x-www-form-urlencoded:
+08_experiments/_external/emb/jdk_8_maven/cs/rest/original/swagger-petstore/src/main/webapp/openapi.yaml
+"""Synthetic search regressions; only own Python and read-only local git run.
+
+Run: /usr/bin/python3 -I -B 08_experiments/tools/test_intent_evidence.py
+"""
+import contextlib
+import io
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import intent_evidence as ie
+
+
+class IntentEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.spec = self.root / 'contract.json'
+        self.write_spec()
+
+    def put(self, name, text):
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding='utf-8')
+        return path
+
+    def write_spec(self, path='/api/products', statuses=('200',), schema=None):
+        self.spec.write_text(json.dumps({'openapi': '3.0.3', 'paths': {path: {
+            'get': {'responses': {s: {'description': 'response', 'content': {
+                'application/json': {'schema': schema or {}}}} for s in statuses}}}}}))
+
+    def handler(self, framework='spring', status=418, extra=''):
+        if framework == 'spring':
+            return self.put('src/main/C.java', f'''@RequestMapping("/api")
+public class C {{
+ {extra}
+ @GetMapping("/products")
+ public Object products() {{ return ResponseEntity.status({status}).build(); }}
+}}''')
+        return self.put('src/main/C.java', f'''@Path("/api")
+public class C {{
+ {extra}
+ @GET @Path("products")
+ public Object products() {{ return Response.status({status}).build(); }}
+}}''')
+
+    def search(self, **kwargs):
+        return ie.search(self.root, self.spec, 'GET', '/api/products', **kwargs)
+
+    def hits(self, result, category):
+        return [h for h in result['hits'] if h['category'] == category]
+
+    def test_spring_class_prefix(self):
+        self.handler()
+        result = self.search(status=418)
+        self.assertTrue(self.hits(result, 'HANDLER'))
+        self.assertEqual(result['independent_evidence'], 'none_found')
+        self.assertTrue(any(h.get('statuses') == [418] for h in self.hits(result, 'HANDLER')))
+
+    def test_jaxrs_class_prefix(self):
+        self.handler('jaxrs')
+        result = self.search(status=418)
+        self.assertTrue(self.hits(result, 'HANDLER'))
+        self.assertTrue(all(not h['independent'] for h in self.hits(result, 'HANDLER')))
+
+    def test_asserted_200_against_code_418(self):
+        self.handler()
+        self.put('src/test/CIT.java', 'get("/api/products").then().statusCode(200);')
+        result = self.search(status=418)
+        self.assertEqual(result['independent_evidence'], 'supports_spec')
+        hit = self.hits(result, 'E-TEST')[0]
+        self.assertEqual(hit['asserted_values'], [200])
+        self.assertEqual(hit['code_agreement'], ['contradicts'])
+        self.assertEqual(hit['spec_agreement'], ['agrees'])
+
+    def test_html_template_documentation(self):
+        self.handler()
+        self.put('src/main/resources/templates/rest.html',
+                 '<h2>GET /api/products</h2>\n<table><tr><td>200</td><td>OK</td></tr></table>')
+
+ERROR: You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Nov 15th, 2026 12:25 AM.
+ERROR: You’ve hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Nov 15th, 2026 12:25 AM.
+tokens used
+261,440
