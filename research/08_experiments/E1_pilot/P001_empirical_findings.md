@@ -61,8 +61,8 @@
 **প্রভাব:**
 - PATTERN ধরনের **৫টি fault-ই** এই pattern থেকে এসেছে।
 - এর ৩টি developer “confirmed” করেছেন, কিন্তু একটিও fixed নয়।
-- Implementation সঠিক; ত্রুটি spec-এর escape-এ।
-- ⇒ Codebook অনুযায়ী **SPEC / S-RESP-TYPE**।
+- ⚠️ Pattern-এর স্পষ্ট উদ্দেশ্য (দশমিক সংখ্যা) “ত্রুটি spec-এর escape-এ” — এই **hypothesis**-কে জোরালোভাবে সমর্থন করে। তবে এটি implementation-এর সঠিকতার স্বাধীন প্রমাণ নয়; intended format-এর authoritative documentation (E-DOC) এখনো দেখা হয়নি। *(সংশোধন 2026-11-13, Codex T4 review S01)*
+- ⇒ Codebook অনুযায়ী প্রস্তাবিত label **SPEC / S-RESP-TYPE** (confidence ৩ — শুধু pattern-এর unsatisfiability-এর জন্য)।
 
 ⚠️ **অনিশ্চয়তা:** Double-escape-টি Amadeus-এর প্রকাশিত spec-এ ছিল, নাকি P001-এর format রূপান্তরের সময় ঢুকেছে — অজানা।
 - দুই ক্ষেত্রেই এটি “spec নিজেই ত্রুটির উৎস”-এর বাস্তব উদাহরণ।
@@ -82,12 +82,15 @@
 
 **মূল ফলাফল:**
 
-1. **Instrument নির্ভরযোগ্য:**
-   - Spec-ভিত্তিক verdict-এ (F_OAS, F_400, 5xx) আমাদের checker P001-এর validator-এর রায় ৮৫–১০০% পুনরুৎপাদন করে।
-   - ⇒ R1-এর experiment-এ ব্যবহারযোগ্য।
+1. **Category-level re-detection — নির্ভুলতা বা agreement নয়:** *(সংশোধন 2026-11-13, Codex T4 review R01)*
+   - উপরের সংখ্যাগুলো মানে: প্রতিটি fault-এ আমাদের checker **একই oracle category-র অন্তত একটি** violation দিয়েছে।
+   - এগুলো P001-এর **নির্দিষ্ট message বা constraint**-এর সাথে মিল বোঝায় না। উদাহরণ: LanguageTool-এর একটি fault-এ P001 undeclared property ও missing `sentence` দুটোই পেয়েছে; আমাদের default checker কেবল missing `sentence` পেয়েছে।
+   - Sample-এ কেবল fault-এর প্রতিনিধি আছে, **negative control (conforming exchange) নেই**। তাই false-positive হার বা specificity মাপা যায়নি।
+   - ⇒ Instrument ব্যবহারযোগ্য হওয়ার প্রাথমিক সংকেত, কিন্তু নির্ভরযোগ্যতার প্রমাণ নয়। Constraint-level agreement ও negative control যোগ করা বাকি (T4 R01-এর প্রস্তাব)।
 2. **Strictness-এর প্রশ্ন:**
-   - ADDITIONAL_PROPERTIES-এর ২৭টি fault-এর মধ্যে default mode-এ ১৮টি পুনরুৎপাদিত হয়েছে, strict mode-এ ২৭টিই।
-   - বাকি **৯টি (F_OAS-এর ১২%) কেবল OpenAPI-র ডিফল্টের চেয়ে কঠোর ব্যাখ্যায় violation।**
+   - **সংশোধিত (2026-11-13, T4 R01; Claude পুনঃযাচাই):** undeclared-property message-টি নিজে পুনরুৎপাদিত হয়েছে default mode-এ **০/২৭**, strict mode-এ **২৭/২৭**। আগের “১৮/২৭” ছিল broad hit — অন্য violation দিয়ে গোনা, তাই ভুল।
+   - ⇒ **২৭/৭৩ (৩৭%)** F_OAS fault-এ অন্তত একটি message কেবল strict পাঠে violation।
+   - এর মধ্যে **৯/৭৩ (১২%)** পুরোপুরি strict-only — এদের একমাত্র message undeclared property, ফলে OpenAPI-র ডিফল্ট semantics-এ এগুলো F_OAS-ই নয়।
    - তিনটি spec-এ (LanguageTool, Foursquare, YouTube Search) `additionalProperties: false` একবারও নেই।
    - ⚠️ অনুমান: P001-এর validator undeclared property-কে ত্রুটি ধরত। RESTest-এর configuration পড়ে নিশ্চিত করতে হবে।
    - **R1-এর জন্য তাৎপর্য:**
@@ -102,6 +105,21 @@
 4. **অবশিষ্ট miss (F_OAS ২টি, strict-এ):**
    - Marvel-এ path parameter-এর random মানে `/` থাকায় path মেলেনি → UNDOCUMENTED_OPERATION।
    - একটিতে composition-এর ভিন্ন ব্যাখ্যা।
+
+
+### 3a. Constraint-স্তরের agreement (T10 v2, 2026-11-13; `p001_results_v2/summary.json`)
+- **একক:** প্রতিটি fault-এর ভেতরে অনন্য (validator keyword, normalized instance location, property)। ৭৩টি F_OAS fault-এ মোট **২৯৯টি constraint**।
+
+| মাপ | Default | Strict |
+|---|---|---|
+| মিলেছে এমন constraint | ১২২/২৯৯ (৪১%) | ২০১/২৯৯ (৬৭%) |
+| অন্তত একটি constraint মিলেছে এমন fault | ৬৩/৭৩ | ৭২/৭৩ |
+| সব constraint মিলেছে এমন fault | ৪৪/৭৩ (৬০%) | ৬২/৭৩ (৮৫%) |
+| Undeclared-property constraint | ০/২৭ | ২৭/২৭ |
+
+- ⇒ Category-স্তরের হার (৮৫–৯৭%) থেকে constraint-স্তরের হার উল্লেখযোগ্যভাবে কম।
+- R1-এর experiment-এ constraint-স্তরের সংখ্যাই রিপোর্ট করতে হবে।
+- Negative control এখনো নেই।
 
 ## 4. Instrument-এর উন্নতি (এই বিশ্লেষণের সময় ধরা পড়ে সংশোধিত)
 

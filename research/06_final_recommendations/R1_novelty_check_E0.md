@@ -185,3 +185,27 @@
 **পরবর্তী:**
 - E1-এ নির্বাচিত SUT-এর spec format তালিকা করা (EMB ও P018-এর API)।
 - তারপর (ক) বা (খ) বেছে নেওয়া।
+
+## 7. Addendum — Codex T9 literature watch ও Claude-এর যাচাই (2026-11-13)
+
+Codex-এর report (`09_collab/reports/T9_litwatch.md`): ২৯টি query, ১৮টি candidate। সিদ্ধান্ত **Conditional GO**।
+
+**নতুন ঘনিষ্ঠ কাজ ও আমার যাচাই:**
+
+| কাজ | কী করে | R1-এর সাথে overlap | যাচাই-স্তর |
+|---|---|---|---|
+| **FDRRestTest** (Huo, Li; ESEM 2026, LIPIcs 10.4230/LIPIcs.ESEM.2026.20) | Failed request-এর ৭-category diagnosis (missing dependency, malformed parameter, unsatisfied constraint, stale state, auth, unsupported route, server/undiagnosable) | **Partial, test-side:** repair মানে **request/test repair** — value substitution, prerequisite insertion, reordering। Spec repair বা spec-বনাম-implementation attribution নেই | **Claude পূর্ণ PDF পাঠ** (§3.5 “Failure Diagnosis and Repair Loop”)। এরাও Scout API-কে pilot হিসেবে ব্যবহার করেছে |
+| **DualMine** (arXiv 2609.27806) | Spec-derived constraint-কে runtime execution দিয়ে supported/contradicted/unresolved বলে; constraint weaken বা specialize করে | **Partial, ঘনিষ্ঠ:** runtime-spec reconciliation আছে, কিন্তু output একটি constraint set; failure-origin label বা OpenAPI patch নেই | Codex HTML §IV পাঠ; Claude-এর পূর্ণ পাঠ বাকি |
+| **Beeceptor contract drift** (commercial) | Traffic বনাম OpenAPI drift → AI patch; intentional নাকি bug, তা মানুষ ঠিক করে | **Strong (repair capability):** “প্রথম runtime spec repair” দাবি করা যাবে না | Vendor documentation |
+| RESTberus, Agent4Spec | Downstream service attribution; syntactic spec repair | Partial | Codex abstract বা method পাঠ |
+
+**সংশোধন:**
+- Codex RESTifAI-এর “Table 4, domain experts” দাবি v1 HTML-এ খুঁজে পায়নি।
+- Claude এটি arXiv PDF-এর pdftotext (L601–637) থেকে পড়েছিল: *“we classified the failed generated test cases with domain-experts into Bug, Enhancement and Invalid”*। দাবি বহাল আছে।
+
+**R1-এর অবস্থান (সংকীর্ণ ও প্রতিরক্ষাযোগ্য):**
+- Intended contract বনাম runtime আচরণের অমিলে সিদ্ধান্ত: **spec defect / implementation fault / insufficient evidence (abstain)**।
+- সেই সিদ্ধান্তের ভিত্তিতে repair বা abstention-এর **মূল্যায়ন**।
+- এখানে DualMine-এর ঝুঁকিটা সরাসরি পরীক্ষা করতে হবে: runtime আচরণকে সত্য ধরে নিলে ভুল implementation ঢাকা পড়তে পারে।
+- Baseline-এ DualMine-ধাঁচের “runtime-wins” নীতি অন্তর্ভুক্ত করতে হবে।
+- ⚠️ এটি snippet ও partial-read-ভিত্তিক সিদ্ধান্ত। DualMine পূর্ণ পাঠ বাকি।

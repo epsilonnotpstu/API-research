@@ -1,0 +1,19 @@
+root_cause_id,description,fix_site,items
+RC01,⚠️ A Schemathesis null-byte setup probe is included as an undocumented API operation.,test,B001
+RC02,⚠️ Missing Activity lookup is dereferenced by activity mutation/deletion or rating-key construction.,code,B002;B003;B007;B008;B009;B019;B020;B022;B066;B067;B071;B072;B073;B083;B084;B086
+RC03,"⚠️ Missing MediaFile lookup reaches unchecked update, delete, or download code.",code,B023;B024;B028;B033
+RC04,⚠️ Missing SystemMessage lookup reaches unchecked update or ORM deletion.,code,B034;B035;B039
+RC05,⚠️ Missing Tag lookup reaches unchecked tag/category update or ORM deletion.,code,B044;B045;B049;B087;B088;B092
+RC06,⚠️ Missing User lookup reaches unchecked update or ORM deletion.,code,B054;B055;B059
+RC07,"⚠️ Absent JSON request bodies reach unchecked resource, model, or persistence calls.",code,B015;B016;B020;B023;B024;B029;B030;B034;B035;B040;B041;B044;B045;B050;B051;B054;B055;B061;B062;B079;B080;B084;B087;B088;B093;B094
+RC08,⚠️ Required persistent fields are not validated before dereference or NOT NULL database enforcement.,code,B020;B029;B030;B040;B041;B044;B045;B050;B051;B054;B055;B061;B062;B084;B087;B088;B093;B094
+RC09,"⚠️ Client-supplied generated IDs reach persist as updates to nonexistent rows, causing stale-state failures.",code,B040;B041;B061;B062
+RC10,⚠️ Favourites POST dereferences an absent id list instead of validating the request.,code,B098
+RC11,⚠️ The explicitly unsupported my_favourites filter throws WebApplicationException without a non-500 status.,code,B014;B077
+RC12,⚠️ Empty activity-search tokens reach charAt(0) without an emptiness guard.,code,B014;B077
+RC13,⚠️ Mutation operations document only 200 and omit the consistently observed JSON-binding 400 response.,spec,B005;B011;B017;B026;B031;B037;B042;B047;B052;B057;B063;B069;B075;B081;B090;B095
+RC14,⚠️ Mutation operations omit the 404 response observed when path IDs cannot bind to Java long.,spec,B004;B010;B025;B036;B046;B056;B068;B074;B089
+RC15,⚠️ User creation omits the 403 authorization rejection explicitly implemented and required by developer test source.,spec,B065
+RC16,⚠️ Required path parameter id is declared on profile/favourites routes that contain no id placeholder.,spec,B060;B097;B099
+RC17,⚠️ Activity search declares unrestricted strings where the explicit parser requires numeric lists.,spec,B013;B078
+RC18,[H] Open request schemas and JSON binding disagree; unknown-property/date/range intent and repair site remain unresolved.,,B006;B012;B018;B021;B027;B032;B038;B043;B048;B053;B058;B064;B070;B076;B082;B085;B091;B096

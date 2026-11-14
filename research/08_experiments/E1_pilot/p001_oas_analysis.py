@@ -9,6 +9,7 @@ Outputs (to OUT_DIR):
   oas_violation_types.csv   violation-message types per OAS-disconformity fault (multi-label)
   developer_response.csv    reported / confirmed / fixed by P001 oracle category
   replay_agreement.csv      does tools/conformance.py reproduce P001's verdict per fault?
+  constraint_agreement.csv  direct keyword/location/property matches to P001 messages
   summary.json              headline counts
 
 Usage: python3 p001_oas_analysis.py P001_DIR OUT_DIR
@@ -58,26 +59,26 @@ OUR_KIND_FOR = {'F_OAS': {'RESPONSE_SCHEMA', 'UNDOCUMENTED_STATUS', 'RESPONSE_CO
 
 
 def message_types(fail_reason):
-    text = str(fail_reason).split(':', 1)[-1]
+    text = str(fail_reason).removeprefix('OAS disconformity:')
     types = set()
     for msg in filter(None, (m.strip() for m in text.split(' --- '))):
         types.add(next((t for t, rx in MESSAGE_TYPES if re.search(rx, msg, re.I)), 'OTHER'))
     return types
 
 
-def kv(cell):
+def kv(cell, decode=True):
     if not isinstance(cell, str):
         return {}
     out = {}
     for part in filter(None, cell.split(';')):
         k, _, v = part.partition('=')
-        out[unquote_plus(k)] = unquote_plus(v)
+        out[unquote_plus(k) if decode else k] = unquote_plus(v) if decode else v
     return out
 
 
 def exchange(row, spec):
     path = row['path']
-    for k, v in kv(row['pathParameters']).items():
+    for k, v in kv(row['pathParameters'], decode=False).items():
         path = path.replace('{' + k + '}', v)
     body = row['responseBody'] if isinstance(row['responseBody'], str) else ''
     return {'request': {'method': row['httpMethod'], 'path': spec.base + path,
@@ -87,6 +88,57 @@ def exchange(row, spec):
             'response': {'status': int(row['statusCode']),
                          'headers': {'content-type': row['outputContentType_y']} if isinstance(row['outputContentType_y'], str) else {},
                          'body': {'text': body, 'truncated': False}}}
+
+
+KEYWORDS_FOR = {
+    'MISSING_REQUIRED': 'required', 'ADDITIONAL_PROPERTIES': 'additionalProperties',
+    'TYPE_NULL': 'type', 'TYPE_MISMATCH': 'type', 'PATTERN': 'pattern',
+    'ENUM': 'enum', 'FORMAT': 'format', 'STATUS_UNDEFINED': 'UNDOCUMENTED_STATUS',
+    'CONTENT_TYPE': 'RESPONSE_CONTENT_TYPE', 'NO_BODY': 'RESPONSE_PARSE', 'PARSE': 'RESPONSE_PARSE',
+}
+
+
+def source_constraints(reason):
+    """Conservative message-to-keyword/location mapping, with property identity.
+
+    P001 [item] and our array indices normalize to '*'. Multiple source messages
+    at that normalized location represent one constraint, not independent faults.
+    Unmapped messages remain explicit and cannot count as full agreement.
+    """
+    constraints = {}
+    for message in str(reason).removeprefix('OAS disconformity:').split(' --- '):
+        message = message.strip()
+        if not message:
+            continue
+        typ = next(iter(message_types(message)))
+        if typ == 'OTHER' and re.search(r'failed to match at least one required schema', message, re.I):
+            typ = 'COMPOSITION'
+        match = re.search(r"\[Path '([^']*)'\]", message)
+        location = match.group(1).replace('[item]', '*') if match else '/'
+        keyword = KEYWORDS_FOR.get(typ, 'UNMAPPED:' + typ)
+        if typ == 'COMPOSITION':
+            keyword = 'oneOf' if 'exactly one' in message else 'anyOf' if 'at least one' in message else 'allOf'
+        elif typ == 'NUMERIC_RANGE':
+            minimum = 'minimum' in message.lower() or ('maximum' not in message.lower() and 'lower' in message.lower())
+            keyword = ('exclusive' if 'not strictly' in message else '') + ('Minimum' if minimum else 'Maximum')
+            keyword = keyword[0].lower() + keyword[1:]
+        elif typ == 'LENGTH':
+            keyword = ('min' if 'short' in message.lower() else 'max') + ('Items' if 'array' in message.lower() else 'Length')
+        props = ['']
+        if typ in ('MISSING_REQUIRED', 'ADDITIONAL_PROPERTIES'):
+            tail = message.split('properties', 1)[-1]
+            props = re.findall(r'"([^"\n]*)"', tail) or ['UNMAPPED_PROPERTY']
+        for prop in props:
+            key = (keyword, location or '/', prop)
+            constraints.setdefault(key, []).append(message)
+    return constraints
+
+
+def constraint_matches(source, violations):
+    """Only emitted findings count; nested composition candidate causes do not."""
+    observed = {(v.get('keyword', v['kind']), v.get('instance_location', '/'), v.get('property', ''))
+                for v in violations if v['kind'] in OUR_KIND_FOR['F_OAS']}
+    return {key: key in observed for key in source}
 
 
 def main(p001_dir, out_dir):
@@ -121,7 +173,7 @@ def main(p001_dir, out_dir):
     dev.to_csv(out / 'developer_response.csv', index=False)
 
     # 3. replay agreement with tools/conformance.py
-    agree = []
+    agree, constraint_rows = [], []
     cache = {}
     for r in df.itertuples():
         key = r.api_file.lower()
@@ -129,22 +181,39 @@ def main(p001_dir, out_dir):
             continue
         row = {'api': r.api_file, 'testCaseId': r.testCaseId, 'p001_oracle': r.oracle,
                'p001_types': ';'.join(sorted(message_types(r.failReason))) if r.oracle == 'F_OAS' else ''}
+        source = source_constraints(r.failReason) if r.oracle == 'F_OAS' else {}
+        details = {k: {'api': r.api_file, 'testCaseId': r.testCaseId, 'keyword': k[0],
+                       'instance_location': k[1], 'property': k[2], 'source_messages': json.dumps(msgs),
+                       'message_count': len(msgs)} for k, msgs in source.items()}
+        row['constraint_total'] = len(source)
         for mode, strict in (('default', False), ('strict', True)):
             if (key, mode) not in cache:
                 cache[(key, mode)] = conformance.Spec(specmut.load_spec(str(specs[key])), strict_additional=strict)
             spec = cache[(key, mode)]
             try:
-                kinds = {v['kind'] for v in conformance.check(spec, exchange(r._asdict(), spec))}
+                violations = conformance.check(spec, exchange(r._asdict(), spec))
+                kinds = {v['kind'] for v in violations}
                 err = ''
             except Exception as exc:  # keep going; report
-                kinds, err = set(), repr(exc)[:120]
+                violations, kinds, err = [], set(), repr(exc)[:120]
             row[f'our_kinds_{mode}'] = ';'.join(sorted(kinds))
-            row[f'reproduced_{mode}'] = bool(kinds & OUR_KIND_FOR.get(r.oracle, set()))
+            row[f'category_redetected_{mode}'] = bool(kinds & OUR_KIND_FOR.get(r.oracle, set()))
+            matches = constraint_matches(source, violations)
+            row[f'constraint_matched_{mode}'] = sum(matches.values())
+            row[f'constraint_agreed_any_{mode}'] = bool(source) and any(matches.values())
+            row[f'constraint_agreed_all_{mode}'] = bool(source) and all(matches.values())
+            for constraint_key, matched in matches.items():
+                details[constraint_key][f'matched_{mode}'] = matched
+                details[constraint_key][f'evidence_{mode}'] = json.dumps([
+                    {'pointer': v['pointer'], 'fingerprint': v['fingerprint']}
+                    for v in violations if (v.get('keyword', v['kind']), v.get('instance_location', '/'), v.get('property', '')) == constraint_key])
             row[f'error_{mode}'] = err
         agree.append(row)
+        constraint_rows.extend(details.values())
     ag = pd.DataFrame(agree)
     ag.to_csv(out / 'replay_agreement.csv', index=False)
-    by_oracle = ag.groupby('p001_oracle')[['reproduced_default', 'reproduced_strict']].agg(['sum', 'size']).reset_index()
+    pd.DataFrame(constraint_rows).to_csv(out / 'constraint_agreement.csv', index=False)
+    by_oracle = ag.groupby('p001_oracle')[['category_redetected_default', 'category_redetected_strict']].agg(['sum', 'size']).reset_index()
     by_oracle.columns = ['_'.join(c).strip('_') for c in by_oracle.columns]
     oas_ag = ag[ag.p001_oracle == 'F_OAS']
     addl = oas_ag[oas_ag.p001_types.str.contains('ADDITIONAL_PROPERTIES')]
@@ -154,11 +223,18 @@ def main(p001_dir, out_dir):
         'oas_faults_by_message_type': dict(type_counts.most_common()),
         'oas_faults_multi_type': int((oas['types'].map(len) > 1).sum()),
         'developer_response': dev.to_dict(orient='records'),
-        'replay_reproduced_by_oracle': by_oracle.to_dict(orient='records'),
+        'category_redetected_by_oracle': by_oracle.to_dict(orient='records'),
+        'constraint_agreement_oas': {
+            'unit': 'Within-fault unique (keyword, normalized instance location, property); array indices -> *; root -> /; directly emitted errors only',
+            'faults': int(len(oas_ag)), 'unique_constraints_within_fault': int(oas_ag.constraint_total.sum()),
+            **{f'{metric}_{mode}': int(oas_ag[f'{metric}_{mode}'].sum())
+               for mode in ('default', 'strict') for metric in ('constraint_matched', 'constraint_agreed_any', 'constraint_agreed_all')},
+        },
         'replay_errors': int((ag['error_default'] != '').sum() + (ag['error_strict'] != '').sum()),
         'additional_properties_faults': {'n': int(len(addl)),
-                                         'reproduced_default': int(addl.reproduced_default.sum()),
-                                         'reproduced_strict': int(addl.reproduced_strict.sum())},
+                                         **{f'category_redetected_{mode}': int(addl[f'category_redetected_{mode}'].sum()) for mode in ('default', 'strict')},
+                                         **{f'property_constraint_agreed_any_{mode}': int(len({d['testCaseId'] for d in constraint_rows
+                                             if d['keyword'] == 'additionalProperties' and d[f'matched_{mode}']})) for mode in ('default', 'strict')}},
     }
     (out / 'summary.json').write_text(json.dumps(summary, indent=1, default=int))
     print(json.dumps(summary, indent=1, default=int))

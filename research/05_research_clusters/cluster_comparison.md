@@ -1,5 +1,8 @@
 # Cluster Comparison — PHASE D4
 
+> **হালনাগাদ 2026-11-13 — P038 সমস্যার সমাধান:** সঠিক paper (Ponce et al. 2025, IST 188:107870, author-hosted copy) এখন `paper/P038.pdf`-এ আছে। এর বিশ্লেষণ `04_paper_analysis/P038_analysis.md`-এ (৭৪টি study, confidence High)। এই নথিতে যেখানে P038-কে “substitute”, “P038*” বা “Ghani 2019” বলা হয়েছে, তা ঐতিহাসিক — সেগুলো এখন আর প্রযোজ্য নয়। T9-এর evidence strength এখন **মাঝারি** (`05_research_clusters/cluster_T9_microservices.md`)।
+
+
 **তারিখ:** 2026-10-19 · বিস্তারিত: `cluster_T*.md`; gap: `research_gap_register.csv`, `gap_validation.md`; paper-স্তরের final table: `final_paper_cluster_table.md`
 ⚠️ = অনুমান। Difficulty ও Evidence Strength বিশ্লেষকের মূল্যায়ন (নিচে মানদণ্ড)।
 
@@ -15,7 +18,7 @@
 | **T6** Docs/design | P026–P028 (+১১) | Controlled experiment, linting, ML classifier | LLM consumer অপরীক্ষিত; Java-কেন্দ্রিক smell | G4 | LLM-as-consumer design-rule experiment | RESTRuler, APIs.guru, P026 material | নিম্ন-মাঝারি | মাঝারি-উচ্চ |
 | **T7** API misuse | P029–P031 (+৫) | Pattern mining, SLR, LLM taxonomy, repair | Precision <১২%; web client অনুপস্থিত | G8 weakened; REST client misuse (C) | Spec-constrained client check | MUBench, Dr.Fix | মাঝারি | উচ্চ (ভেতরে), novelty কম |
 | **T8** LLM tool/MCP | P032–P036 (+৬) | Fine-tuning, RAG, mining, generation + repair | Execution মূল্যায়ন বিরল; সংখ্যায় অসঙ্গতি; preprint | G4, G3 (C); G7 weakened | Spec-mutation agent testbed; MCP authz | ToolBench, APIBench, CloudAPIBench, MCP SDK | মাঝারি | মাঝারি |
-| **T9** Microservices | P037, P038* (+৪) | Dataset, ML anomaly detection, review | P038 substitute; anomaly = 4xx | G13 (C), G2 (ভাগ করা) | Spec-aware log oracle | LO2, LogLead | উচ্চ (infra) | **নিম্ন** |
+| **T9** Microservices | P037, P038 (+৪) | SLR (৭৪ study), dataset, ML anomaly detection | Lab-only TRL ৩–৪; security testing অনুপস্থিত; anomaly = 4xx | G13 (C), G2 (ভাগ করা), MSA security (A) | Spec-aware log oracle; R1-এর TrainTicket সম্প্রসারণ | LO2, LogLead, TrainTicket | উচ্চ (infra) | **মাঝারি** |
 
 **মানদণ্ড:**
 - **Difficulty:** infrastructure, ground-truth খরচ ও প্রয়োজনীয় দক্ষতার সমন্বিত বিচার।

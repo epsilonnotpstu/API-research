@@ -78,6 +78,20 @@
   - Dockerfile `dist/<sut>-sut.jar` আশা করে। Build-এর পর jar নাম বদলে `dist/`-এ রাখতে হবে, সঙ্গে `jacocoagent.jar`।
   - ⚠️ EMB-এর অফিশিয়াল পথ `scripts/dist-docker.py` সব SUT build করে। এটি ভারী, এবং disk-এ মাত্র প্রায় ৪১ GB খালি।
 
+
+### Supervisor-এর build (2026-11-13)
+- scout-api build সম্পন্ন: `_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/target/scout-api-sut.jar` (৩৪.৭ MB, root-owned — Docker build থেকে)।
+- Runtime ফাইল sparse-checkout-এ যোগ: `scripts/dockerize/data/additional_files/scout-api/` (`init_db.sql`, `scout_api_evomaster.yml`; H2 in-memory DB, port 8080)।
+- Spec: Swagger 2.0, `basePath: /api`, auth নেই।
+- বাকি: `dist/` layout + jacocoagent → harness (Codex T5) → execution (T7; supervisor allow rule-এর পরে)। সমন্বয়: `../09_collab/COLLAB_BOARD.md`।
+
+### Pilot ফল (2026-11-14)
+- `E1_pilot/pilot_results/BATCH1_RESULTS.md`, `BATCH2_RESULTS.md` (scout-api), `PETSTORE_RESULTS.md` (swagger-petstore)। Market চলমান।
+- Harness: `E1_pilot/harness/` (v1, শুধু scout-api), `E1_pilot/harness_v2/` (scout-api, swagger-petstore, market)।
+  - `run_batch.sh SUT [seeds]`, options `SCHEMA_CHECKS`, `BUDGET_SECONDS`, `ORACLE_POOL=baseline`।
+- নতুন tool: `tools/eligible_ops.py` (baseline-এ body-সহ 2xx পাওয়া operation) → `specmut.py --only-ops`। Test: `tools/test_only_ops.py`।
+- Labelling: `E2_labelling/batch2_baseline_s1_blind.csv` (labeller B-এর জন্য, label ছাড়া)।
+
 ## পরবর্তী ধাপ (অনুমতি পেলে)
 
 1. Pilot SUT build → `dockerfiles/<sut>.yaml` দিয়ে চালানো। mitmproxy log ও JaCoCo সহ।
