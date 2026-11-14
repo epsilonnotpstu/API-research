@@ -12,7 +12,14 @@ Output (labeller-visible): ../E2_labelling/e5_blind/
   K??/spec.json                   the spec the oracle used
   K??/r<seed>/exchanges.jsonl, compose.log
 Key (labeller-hidden): blind_key.csv in this directory.
+
+v2 options (2026-11-14): --out/--key/--salt choose a separate package; --example-rule discriminating
+picks, for every item, an example exchange that is transport-clean (no control bytes in path/query/headers)
+and, for INCREASED items, whose request was answered by the control WITHOUT that fingerprint
+(SAME_REQ_DIFF_OUTCOME) or does not occur in the control (NOVEL_REQ); requests that also produced the
+fingerprint in the control are never chosen (fixes v1 item E005). The basis is recorded in the key only.
 """
+import argparse
 import csv
 import glob
 import hashlib
@@ -22,10 +29,16 @@ import shutil
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT = HERE.parent / 'E2_labelling' / 'e5_blind'
+ap = argparse.ArgumentParser()
+ap.add_argument('--out', default=str(HERE.parent / 'E2_labelling' / 'e5_blind'))
+ap.add_argument('--key', default=str(HERE / 'blind_key.csv'))
+ap.add_argument('--salt', default='e5-blind-2026-11-14')
+ap.add_argument('--example-rule', choices=['first', 'discriminating'], default='first')
+args = ap.parse_args()
+OUT = Path(args.out)
 SKIP = {'target', '.git', '.idea', 'node_modules'}
-if OUT.exists():
-    raise SystemExit(f'{OUT} exists; refusing to overwrite')
+if OUT.exists() or Path(args.key).exists():
+    raise SystemExit(f'{OUT} or {args.key} exists; refusing to overwrite')
 
 pairs = {}
 for vf in sorted(glob.glob(str(HERE / 'work' / '*' / 'pair-validation-s*.json'))):
@@ -38,7 +51,48 @@ for vf in sorted(glob.glob(str(HERE / 'work' / '*' / 'pair-validation-s*.json'))
         pairs.setdefault(pdir, []).append((v['seed'], v, att))
 
 items, key = [], []
-rng = random.Random('e5-blind-2026-11-14')
+rng = random.Random(args.salt)
+
+
+def load_ex(run):
+    return [json.loads(l) for l in open(Path(run) / 'exchanges.jsonl')]
+
+
+def req_key(x):
+    q = x['request']
+    return json.dumps([q['method'], q['path'], sorted((k, v) for k, v in (q.get('query') or {}).items()),
+                       (q.get('body') or {}).get('base64', '')], sort_keys=True, default=str)
+
+
+def clean(x):
+    q = x['request']
+    parts = [q['path']] + [str(v) for v in (q.get('query') or {}).values()] + [str(v) for v in (q.get('headers') or {}).values()]
+    return not any(ord(c) < 0x20 or ord(c) == 0x7f for p in parts for c in p)
+
+
+def pick(fp, mut_viol, mut_ex, ctl_fps_by_key, grew):
+    cands = [x for x in mut_viol if x['fingerprint'] == fp]
+    if args.example_rule == 'first':
+        return cands[0], 'FIRST'
+    tiers = {}
+    for x in cands:
+        k = req_key(mut_ex[x['exchange']])
+        if not grew:
+            t = 'NEW_FP'
+        elif k in ctl_fps_by_key:
+            if fp in ctl_fps_by_key[k]:
+                continue  # control produced the same violation for this request: not discriminating
+            t = 'SAME_REQ_DIFF_OUTCOME'
+        else:
+            t = 'NOVEL_REQ'
+        c = clean(mut_ex[x['exchange']])
+        tiers.setdefault((t, c), x)
+    for t in ('NEW_FP', 'SAME_REQ_DIFF_OUTCOME', 'NOVEL_REQ'):
+        for c in (True, False):
+            if (t, c) in tiers:
+                return tiers[(t, c)], t + ('' if c else '+UNCLEAN')
+    return cands[0], 'NO_DISCRIMINATING_EXAMPLE'
+
 pair_dirs = sorted(pairs)
 pkg_names = {p: f'K{i:02d}' for i, p in enumerate(rng.sample(pair_dirs, len(pair_dirs)), 1)}
 for pdir in pair_dirs:
@@ -46,9 +100,16 @@ for pdir in pair_dirs:
     for seed, v, att in sorted(pairs[pdir], key=lambda t: t[0]):
         rows = list(csv.DictReader(open(att, newline='')))
         mut_viol = [json.loads(l) for l in open(att.parent / 'mutant.violations.jsonl')]
-        first_ex = {}
-        for x in mut_viol:
-            first_ex.setdefault(x['fingerprint'], x)
+        meta = json.load(open(att.parent / 'analysis.json'))
+        mut_ex = load_ex(meta['mutant_run']) if args.example_rule != 'first' else None
+        ctl_fps_by_key = {}
+        if args.example_rule != 'first':
+            ctl_ex = load_ex(meta['control_run'])
+            for x in ctl_ex:
+                ctl_fps_by_key.setdefault(req_key(x), set())
+            for l in open(att.parent / 'control.violations.jsonl'):
+                x = json.loads(l)
+                ctl_fps_by_key[req_key(ctl_ex[x['exchange']])].add(x['fingerprint'])
         excluded = {(e['method'].upper(), e['path']) for e in v.get('excluded_ops', []) or []}
         for r in rows:
             fp = r['fingerprint']
@@ -64,13 +125,13 @@ for pdir in pair_dirs:
             else:
                 continue
             seen.add(fp)
-            ex = first_ex.get(fp, {})
+            ex, basis = pick(fp, mut_viol, mut_ex, ctl_fps_by_key, grew)
             items.append({'package': pkg_names[pdir], 'run': f'r{seed}', 'kind': r['kind'], 'method': r['method'],
                           'template': r['template'], 'status': r['http_status'], 'pointer': r['pointer'],
                           'message': ex.get('message', ''), 'example_exchange': ex.get('exchange', '')})
             key.append({'role': role, 'pair': pdir.name, 'seed': seed, 'change': r['status'] + ('+INCREASED' if grew else ''),
                         'control_occ': r['baseline_occurrences'], 'mutant_occ': r['mutated_occurrences'],
-                        'fingerprint': fp})
+                        'fingerprint': fp, 'example_basis': basis})
 order = rng.sample(range(len(items)), len(items))
 for n, i in enumerate(order, 1):
     items[i]['item_id'] = key[i]['item_id'] = f'E{n:03d}'
@@ -94,8 +155,9 @@ with open(OUT / 'items.csv', 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=cols)
     w.writeheader()
     w.writerows(sorted(items, key=lambda x: x['item_id']))
-with open(HERE / 'blind_key.csv', 'w', newline='') as f:
-    w = csv.DictWriter(f, fieldnames=['item_id', 'role', 'pair', 'seed', 'change', 'control_occ', 'mutant_occ', 'fingerprint'])
+with open(args.key, 'w', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=['item_id', 'role', 'pair', 'seed', 'change', 'control_occ', 'mutant_occ', 'fingerprint']
+                       + (['example_basis'] if args.example_rule != 'first' else []), extrasaction='ignore')
     w.writeheader()
     w.writerows(sorted(key, key=lambda x: x['item_id']))
 roles = [k['role'] for k in key]

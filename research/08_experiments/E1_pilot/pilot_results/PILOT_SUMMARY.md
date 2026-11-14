@@ -120,7 +120,12 @@
    - WRONG_STATUS: 0/2। দুই labeller-ই codebook §10.7 উল্লেখ করেছে।
    - RESP_FIELD annotation: B2 0/2।
    - প্রত্যাশিত-kind target-এ মোট: B1 7/10, B2 5/10।
-   - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md`।
+   - **Codebook v0.5 (§11, স্বাধীন intent-প্রমাণ বাধ্যতামূলক) দিয়ে আবার করা হয়েছে:** নতুন labeller C1/C2, pre-registered, primary n=9।
+     - ভুল দিকের (SPEC/TEST) attribution: B1 2, B2 4 → **C1 0, C2 0**।
+     - IMPL* 7/6। বাকিগুলো UNDECIDABLE+both।
+     - WRONG_STATUS-এ labeller-রা test আর documentation-এ intent-প্রমাণ খুঁজে পেয়ে IMPL দিয়েছে।
+     - খরচ: annotation fault-এ বিরত থাকা।
+   - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md` (v1 + v2)।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**
@@ -140,7 +145,7 @@
 2. Fresh-এর noise floor: spec-mutation run-এর জন্য (E5-এর জন্য করা হয়েছে, 2026-11-14)।
 3. Checker-এ int32/int64 format enforcement।
 4. ~~E5 blind labelling আর E5 noise floor~~ — হয়েছে (H7, H8)। বাকি:
-   - codebook v0.5 মেনে blind labelling আবার করা।
-   - INCREASED item-এর জন্য নতুন exchange-এর উদাহরণ (E005-এর সংশোধন)।
+   - ~~codebook v0.5 মেনে blind labelling আবার করা; E005-এর সংশোধন~~ — হয়েছে (H8, v2)।
+   - Attribution-পদ্ধতিতে নিয়মবদ্ধ intent-প্রমাণ খোঁজার ধাপ (test → docs → history)।
    - market-এর বিকল্প RESP_FIELD site।
 5. দ্বিতীয় fuzzer (EvoMaster)।
