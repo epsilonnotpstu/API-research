@@ -1,0 +1,23 @@
+B1-এর blind labelling সম্পন্ন: `labels_B1.csv`-তে `items.csv`-এর একই ক্রমে ২৯টি item আছে। Codebook-এর শিরোনামে v0.3 থাকলেও §10-এর v0.4 সংযোজনসহ §§5, 9 ও 10 অনুসরণ করেছি (`../../R1_triage_codebook.md`, §§5, 9–10)। প্রতিটি item-এর spec pointer, deployed source এবং representative request/response মিলিয়েছি; crash-এর ক্ষেত্রে প্রাসঙ্গিক log-ও দেখেছি। Exchange locator সর্বত্র **১-ভিত্তিক physical line number**; অর্থাৎ `example_exchange + 1`। প্রথম দিকের exploratory Python পাঠে Unicode-aware `splitlines()` ভুলভাবে কিছু record ভাগ করেছিল; চূড়ান্ত সিদ্ধান্ত ও locator-এর জন্য file iteration দিয়ে সব representative আবার পড়েছি।
+
+প্রাথমিক L1 distribution নিচে; item তালিকা থেকে হিসাব (`labels_B1.csv`, E001–E029):
+
+| L1 | সংখ্যা | item |
+|---|---:|---|
+| IMPL | 18 | E001, E003, E004, E006, E008, E009, E011, E012, E015–E020, E024, E025, E027, E029 |
+| SPEC | 7 | E002, E013, E014, E021–E023, E028 |
+| TEST | 3 | E005, E010, E026 |
+| UNDECIDABLE | 1 | E007 |
+
+Confidence 3: ১৮টি; 2: ১০টি; 1: ১টি। `SPEC_PARTIAL`, `IMPL_PARTIAL`, ENV বা সরাসরি BOTH ব্যবহার করিনি। একমাত্র `both_candidate=true` হলো E019: implementation-এ `@Valid` ছাড়া request নিয়ে null `keyType`-এ switch crash করে; অন্যদিকে spec-এ essential `key`/`keyType` required নয়, অথচ model-এ `@NotNull` আছে (`K06/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:80,91`; `K06/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47,59`; `K06/spec.json#/components/schemas/RegistrationTokenRequest`; `K06/r1/compose.log:10353–10356`)। দুই দিকের সিদ্ধান্ত supervisor adjudication-এর জন্য রেখেছি (§10.1, §10.6)।
+
+কঠিন সিদ্ধান্ত ও সীমা:
+
+- **Coercion:** ⚠️ E002-এর arbitrary Boolean text ও E013/E028-এর empty optional integer-কে R3 অনুযায়ী SPEC/S-REQ-STRICT, confidence 2 দিয়েছি। Source-এ typed binding ও default/no-limit ব্যবহার আছে, আলাদা lexical rejection নেই; traffic-এ acceptance দেখা যায়। Runtime coercion-এর অভ্যন্তরীণ code এখানে নেই, তাই intent অনুমাননির্ভর (`labels_B1.csv`, E002/E013/E028-এর locator; `K01/source/data-access/src/main/java/se/devscout/scoutapi/dao/ActivityDao.java:142`)।
+- **Response mapping:** ⚠️ K09-এর WRITE_ONLY annotation supplied/seeded name আড়াল করে; response contract এবং named data ধরে E008/E011/E027-কে IMPL/I-RESP-CONTRACT, confidence 2 দিয়েছি। Intentional privacy policy-এর স্বাধীন প্রমাণ পাইনি (`K09/source/src/main/java/io/swagger/petstore/model/Pet.java:55`; `K09/source/src/main/java/io/swagger/petstore/data/PetData.java:46`; `K09/r1/exchanges.jsonl:4,210`)। E007-এ unnamed XML-created resource অপরিবর্তিত ফেরে; validation যোগ করা নাকি response requirement শিথিল করা intended—স্থির করতে পারিনি (`K05/r1/exchanges.jsonl:171,421`; `K05/spec.json#/components/schemas/Pet/required`)।
+- **Oracle/generator:** E005-এর header-এ raw 0x12 ও Tomcat rejection আছে; তাই TEST। E010/E026-এর orderId signed int64-এর বাইরে; তাই সঠিক 400-কে checker ভুলভাবে VALID_REJECTED বলেছে। §10.5-এর অননুমোদিত নামগুলো `proposed_L2`-তে রেখেছি, L2 ফাঁকা (`K05/r2/exchanges.jsonl:410`; `K05/r1/exchanges.jsonl:962,1062`; `../../tools/conformance.py:89,247`)। E009/E024/E025-এর controls percent-encoded path-এ; এগুলোকে raw-header invalidity ধরা হয়নি (`K02/r1/exchanges.jsonl:983,3185,4085`)।
+- **Status/crash:** ইচ্ছাকৃত 418-কে §10.7 অনুযায়ী SPEC/S-STATUS দিয়েছি; HTTP meaning-এর অসংগতি আলাদা। Crash-এর undocumented 500 নিজে থেকেই দ্বিতীয় spec defect নয়—E012/E029 একই missing-product crash-এর দুই oracle item (`K02/source/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:32`; `K04/source/market-rest/src/main/java/market/rest/ProductsRestController.java:38`; `K08/r1/compose.log:24830–24833`)। E004-এর log-এ proxy-তে পুনরাবৃত্ত 500 মেলে, সংশ্লিষ্ট exception stack পাইনি; নির্দিষ্ট exception-wrapping কারণ দাবি করিনি (`K05/r1/compose.log:2023–2030`)।
+
+শুধু সরবরাহকৃত source/spec/traffic/log এবং অনুমোদিত codebook/checker পড়ে সিদ্ধান্ত দিয়েছি; Docker, Java, Maven, network বা external project code চালাইনি। নতুন execution দিয়ে defect reproduce বা পূর্ণ oracle totals পুনর্গণনা করিনি। নিজের Python দিয়ে ২৯টি row, item order, columns, enum/flag/confidence, rationale ≤৩০ শব্দ, representative method/status এবং ১৫৭টি evidence locator-এর অস্তিত্ব/line bounds/JSON pointer যাচাই করেছি। এই structural যাচাই attribution-এর ground truth নয়।
+
+**Boundary incident:** TASK.md পড়ার পর প্রাথমিক `rg --files` অনুসন্ধান ভুলক্রমে নিষিদ্ধ `../../../09_collab/`-তেও গিয়েছিল। এতে `09_collab/logs/T21_B1.log` ও `09_collab/logs/T21_B1.pid`-এর নাম তালিকাভুক্ত হয়েছিল; ফাইলদুটি খুলিনি। এটি listing নিষেধের লঙ্ঘন, এখানে নথিবদ্ধ করলাম। COLLAB_BOARD.md, অন্য labeller-এর output বা নিষিদ্ধ project copy পড়িনি; পরবর্তী access অনুমোদিত সীমানায় সীমাবদ্ধ রেখেছি।

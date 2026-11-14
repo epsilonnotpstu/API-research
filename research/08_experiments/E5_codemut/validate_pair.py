@@ -2,6 +2,8 @@
 
 Usage: validate_pair.py CONTROL_RUN MUTANT_RUN MUT_DIR
 Writes MUT_DIR/pair-validation-s<seed>.json; exits 1 on any failed check.
+With --kind noise, the second run must use the original control image/JAR/tree
+and CODE_ROLE=control; writes noise-pair-validation-s<seed>.json instead.
 """
 import argparse
 import copy
@@ -209,14 +211,15 @@ def junit_error_set(root):
             for case in root.iter('testcase') for error in case.iter('error')}
 
 
-def validate(control, mutant, mut):
+def validate(control, mutant, mut, kind='pair'):
+    _, second = c.layout(kind)
     control, mutant, mut = (Path(p).resolve() for p in (control, mutant, mut))
     checks = Checks(); inputs = {}; junit_errors = {}; notes = []; excluded_ops = []
     def build():
         inputs['manifest'], inputs['images'] = build_checks(mut, checks)
     checks.run('build.manifest_and_base', build)
     metas = {}
-    for role, run in [('control', control), ('mutant', mutant)]:
+    for role, run in [('control', control), (second, mutant)]:
         def read_metadata(role=role, run=run):
             meta = c.load(run / 'run.json')
             c.require(isinstance(meta, dict), 'run.json must be an object')
@@ -225,7 +228,7 @@ def validate(control, mutant, mut):
     seed = metas.get('control', {}).get('seed')
     if type(seed) is not int or seed < 0:
         seed = 'unknown'
-    for role, run in [('control', control), ('mutant', mutant)]:
+    for role, run in [('control', control), (second, mutant)]:
         def artifacts(role=role, run=run):
             meta = metas[role]
             c.require(run != mut and mut not in run.parents and run not in mut.parents, 'Overlapping run/build directories')
@@ -271,13 +274,14 @@ def validate(control, mutant, mut):
         checks.run(role + '.completion_snapshots_tools', artifacts)
 
         def treatment(role=role, run=run):
-            meta = metas[role]; m = inputs['manifest']; built = inputs['images'][role]
+            meta = metas[role]; m = inputs['manifest']; built = inputs['images']['control' if kind == 'noise' else role]
             equal(meta['sut'], m['sut'], 'SUT differs from code manifest')
             equal(c.sha(run / 'code.manifest.json'), c.sha(mut / 'manifest.json'), 'Copied code manifest differs')
-            key = 'source_tree_sha256' if role == 'control' else 'mutated_tree_sha256'
-            equal(meta['code_mutation'], {'role': role, 'source_tree_sha256': m[key], 'manifest_sha256': c.sha(mut / 'manifest.json')}, 'Role/tree/manifest provenance differs')
-            c.require(meta['sut_image'] in (built['Id'], (mut / f'tag-{role}.txt').read_text().strip()), 'Selected SUT image reference differs')
-            equal(meta['sut_jar_sha256'], c.sha(mut / f'context-{role}/dist/{m["sut"]}-sut.jar'), 'Selected JAR hash differs')
+            build_role = 'control' if kind == 'noise' else role
+            key = 'source_tree_sha256' if build_role == 'control' else 'mutated_tree_sha256'
+            equal(meta['code_mutation'], {'role': build_role, 'source_tree_sha256': m[key], 'manifest_sha256': c.sha(mut / 'manifest.json')}, 'Role/tree/manifest provenance differs')
+            c.require(meta['sut_image'] in (built['Id'], (mut / f'tag-{build_role}.txt').read_text().strip()), 'Selected SUT image reference differs')
+            equal(meta['sut_jar_sha256'], c.sha(mut / f'context-{build_role}/dist/{m["sut"]}-sut.jar'), 'Selected JAR hash differs')
             image = c.inspection(run / f'sut-{m["sut"]}-image.json')
             container = c.inspection(run / f'sut-{m["sut"]}-container.json')
             equal(image['Id'], built['Id'], 'Run SUT image differs from built image')
@@ -287,7 +291,7 @@ def validate(control, mutant, mut):
             equal(container['Config']['Image'], image['Id'], 'SUT container was not pinned to immutable ID')
             equal(c.load(run / 'compose.code-image.json'), {'services': {meta['sut_service']: {'image': image['Id']}}}, 'Compose E5 image override differs')
             equal(image['Config']['Labels']['org.r1.jar_sha256'], meta['sut_jar_sha256'], 'Run JAR label differs')
-            equal(c.sha(mut / f'context-{role}/dist/jacocoagent.jar'), meta['jacoco_agent_sha256'], 'Context JaCoCo agent differs from run')
+            equal(c.sha(mut / f'context-{build_role}/dist/jacocoagent.jar'), meta['jacoco_agent_sha256'], 'Context JaCoCo agent differs from run')
             for image_key in ('schema-image', 'mitmproxy-image', f'sut-{m["sut"]}-image'):
                 actual = c.inspection(run / (image_key + '.json'))
                 c.require(c.image_id(actual['Id']), 'Missing immutable collected image ID')
@@ -298,8 +302,8 @@ def validate(control, mutant, mut):
         checks.run(role + '.treatment_image_chain', treatment)
 
     def paired_junit():
-        c.require(set(junit_errors) == {'control','mutant'}, 'Missing parsed JUnit evidence')
-        difference = junit_errors['control'] ^ junit_errors['mutant']
+        c.require(set(junit_errors) == {'control',second}, 'Missing parsed JUnit evidence')
+        difference = junit_errors['control'] ^ junit_errors[second]
         if difference:
             manifest = inputs['manifest']
             mutated = {(op['method'].upper(),op['path']) for op in manifest['operations']}
@@ -324,7 +328,7 @@ def validate(control, mutant, mut):
     checks.run('pair.equal_junit_errors', paired_junit)
 
     def pair_metadata():
-        a, b = metas['control'], metas['mutant']
+        a, b = metas['control'], metas[second]
         equal(set(a), set(b), 'Metadata key set differs')
         c.require({'sut','seed','tool_sha256','harness_sha256','emb_config_sha256','auth_source_sha256',
                    'health_path','base_path','request_timeout_ms','hypothesis_phases','schema_checks',
@@ -356,16 +360,16 @@ def validate(control, mutant, mut):
                 c.require(not va.intersection(vb), 'Shared proxy volume')
     checks.run('pair.equal_scenario_runtime_and_provenance', pair_metadata)
     evidence = {}
-    for prefix, directory in [('control', control), ('mutant', mutant)]:
+    for prefix, directory in [('control', control), (second, mutant)]:
         for p in directory.iterdir() if directory.is_dir() else []:
             if p.is_file() and p.name in ('run.json','code.manifest.json','exchanges.jsonl','spec.original.json','spec.test.json','generator-input.json'):
                 try: evidence[f'{prefix}/{p.name}'] = c.sha(p)
                 except (OSError, ValueError): pass
-    return {'format': 'e5-pair-validation-v1', 'status': ('PASS_WITH_EXCLUSION' if excluded_ops else 'PASS') if checks.passed else 'FAIL', 'seed': seed,
-            'control_run': str(control), 'mutant_run': str(mutant), 'mut_dir': str(mut),
+    return {**({'kind':'noise'} if kind == 'noise' else {}), 'format': 'e5-pair-validation-v1', 'status': ('PASS_WITH_EXCLUSION' if excluded_ops else 'PASS') if checks.passed else 'FAIL', 'seed': seed,
+            'control_run': str(control), (second + '_run'): str(mutant), 'mut_dir': str(mut),
             'checks': checks.rows, 'input_sha256': evidence, 'notes': notes, 'excluded_ops':excluded_ops,
             'junit_errors':{role:[{'testcase_name':name,'error_text':text} for name,text in sorted(junit_errors.get(role,set()))]
-                            for role in ('control','mutant')},
+                            for role in ('control',second)},
             'limitations': ['Saved evidence and current snapshots only; no Docker/build execution.',
                             'Fresh containers and no SUT mounts do not prove equal business state or identical traces.',
                             'Generator container is ephemeral; its launch settings are evidenced by frozen harness and argv.',
@@ -377,13 +381,16 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('control_run', type=Path); parser.add_argument('mutant_run', type=Path); parser.add_argument('mut_dir', type=Path)
     parser.add_argument('--report-staging-dir', type=Path, help='Stage the atomic report outside MUT_DIR (same filesystem)')
+    parser.add_argument('--kind', choices=('pair','noise'), default='pair')
     args = parser.parse_args(argv)
     try:
-        report = validate(args.control_run, args.mutant_run, args.mut_dir)
+        report = validate(args.control_run, args.mutant_run, args.mut_dir, args.kind)
     except (OSError, ValueError, KeyError, TypeError) as error:
-        report = {'format': 'e5-pair-validation-v1', 'status': 'FAIL', 'seed': 'unknown',
+        report = {**({'kind':'noise'} if args.kind == 'noise' else {}),
+                  'format': 'e5-pair-validation-v1', 'status': 'FAIL', 'seed': 'unknown',
                   'checks': [{'check':'input', 'status':'FAIL', 'detail':str(error)}]}
-    dest = args.mut_dir / ('pair-validation-s' + str(report['seed']) + '.json')
+    prefix, _ = c.layout(args.kind)
+    dest = args.mut_dir / (prefix + 'pair-validation-s' + str(report['seed']) + '.json')
     c.atomic_json(dest, report, staging_dir=args.report_staging_dir)
     print(str(dest) + ': ' + report['status'])
     return 0 if report['status'] in ('PASS','PASS_WITH_EXCLUSION') else 1

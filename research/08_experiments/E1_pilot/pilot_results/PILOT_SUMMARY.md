@@ -107,9 +107,20 @@
 7. **[H7] Code fault (E5) fresh fuzzing-এ নির্ভরযোগ্যভাবে ধরা পড়ে, কিন্তু মোট গণনায় নয়।**
    - 9টি mutant, 22টি বৈধ জোড়া-seed।
    - Mutated op-এ সংকেত 22/22; প্রত্যাশিত kind 20/22।
-   - অপরিবর্তিত op-এর noise বড়।
-   - Attribution label-এর মূল্যায়ন এখনো বাকি।
-   - উৎস: `../../E5_codemut/E5_RESULTS.md`।
+   - অপরিবর্তিত op-এর noise বড়, কিন্তু control বনাম control-এর সমান মাপের। অর্থাৎ ওটা fuzzing-এর অনির্দেশ্যতা।
+   - **Noise floor (44টি control-repeat run):** সংকেত noise ছাড়ায় 18/22 জোড়া-seed-এ, 7/9 mutant-এ।
+     - ব্যতিক্রম market-drop-null: শুধু INCREASED, আর noise-ও একই মাপের।
+     - ব্যতিক্রম petstore-reject-valid: fingerprint noise-এও আছে।
+   - Mapped op-এ কাকতালীয় "প্রত্যাশিত kind" 3/22 noise run-এ।
+   - Attribution label-এর মূল্যায়ন: H8 দেখুন।
+   - উৎস: `../../E5_codemut/E5_RESULTS.md` §3b।
+
+8. **[H8] শুধু code-এর ভিত্তিতে intent-বিচার ইচ্ছাকৃত-দেখতে code fault-কে SPEC বলে।** Blind E5 labelling (দুটি নতুন Codex session):
+   - Crash, guard আর validation fault: IMPL 5/5।
+   - WRONG_STATUS: 0/2। দুই labeller-ই codebook §10.7 উল্লেখ করেছে।
+   - RESP_FIELD annotation: B2 0/2।
+   - প্রত্যাশিত-kind target-এ মোট: B1 7/10, B2 5/10।
+   - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md`।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**
@@ -126,7 +137,10 @@
 - **Protocol:** negative data এখন চারটি fault class-এই প্রয়োগ হয়েছে (§3b)। Pool/severity এখনো fault-ভেদে আলাদা: LOOSE constraint pool 100%, ORACLE 2xx pool 30%, STRICT/METHOD_SEM এলোমেলো 30%।
 
 ## 7. পরের ধাপ
-2. Fresh-এর noise floor: একই seed-এ বারবার baseline।
+2. Fresh-এর noise floor: spec-mutation run-এর জন্য (E5-এর জন্য করা হয়েছে, 2026-11-14)।
 3. Checker-এ int32/int64 format enforcement।
-4. E5-এর NEW violation-এর blind A/B labelling: attribution কি code fault-কে IMPL বলে? E5-এর জন্য noise floor।
+4. ~~E5 blind labelling আর E5 noise floor~~ — হয়েছে (H7, H8)। বাকি:
+   - codebook v0.5 মেনে blind labelling আবার করা।
+   - INCREASED item-এর জন্য নতুন exchange-এর উদাহরণ (E005-এর সংশোধন)।
+   - market-এর বিকল্প RESP_FIELD site।
 5. দ্বিতীয় fuzzer (EvoMaster)।

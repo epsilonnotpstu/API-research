@@ -17,6 +17,12 @@ JARS = {'scout-api': 'api/target/scout-api-sut.jar', 'swagger-petstore': 'target
 LEDGER_FIELDS = ['seed', 'role', 'run_dir', 'harness_exit', 'status']
 
 
+def layout(kind='pair'):
+    require(kind in ('pair', 'noise'), 'Unknown E5 comparison kind')
+    prefix = 'noise-' if kind == 'noise' else ''
+    return prefix, ('control_repeat' if kind == 'noise' else 'mutant')
+
+
 def require(condition, message):
     if not condition:
         raise ValueError(message)
@@ -76,7 +82,8 @@ def atomic_json(path, value, staging_dir=None):
     tmp.replace(path)
 
 
-def ledger(path):
+def ledger(path, kind='pair'):
+    _, treatment = layout(kind)
     with Path(path).open(newline='', encoding='utf-8') as stream:
         reader = csv.DictReader(stream, delimiter='\t')
         require(reader.fieldnames == LEDGER_FIELDS, 'Unexpected runs.tsv header')
@@ -85,26 +92,27 @@ def ledger(path):
     for row in rows:
         require(None not in row and all(v is not None for v in row.values()), 'Malformed runs.tsv row')
         require(re.fullmatch(r'0|[1-9][0-9]*', row['seed']), 'Invalid ledger seed')
-        require(row['role'] in ('control', 'mutant'), 'Invalid ledger role')
+        require(row['role'] in ('control', treatment), 'Invalid ledger role')
         key = (int(row['seed']), row['role'])
         require(key not in seen, 'Duplicate ledger seed/role'); seen.add(key)
         require(Path(row['run_dir']).is_absolute(), 'Ledger paths must be absolute')
     return rows
 
 
-def paired_rows(path, allow_incomplete=False):
-    rows = ledger(path); groups = {}
+def paired_rows(path, allow_incomplete=False, kind='pair'):
+    _, treatment = layout(kind)
+    rows = ledger(path, kind); groups = {}
     require(len({r['run_dir'] for r in rows}) == len(rows), 'Reused run directory')
     for row in rows:
         groups.setdefault(int(row['seed']), []).append(row)
     pairs = {}
     for seed, group in groups.items():
-        ready = {r['role'] for r in group} == {'control','mutant'} and all(r['harness_exit'] == '0' and r['status'] == 'COMPLETE' for r in group)
+        ready = {r['role'] for r in group} == {'control',treatment} and all(r['harness_exit'] == '0' and r['status'] == 'COMPLETE' for r in group)
         if not ready:
             require(allow_incomplete, 'Failed/pending/incomplete run pair')
             continue
         pairs[seed] = {r['role']:Path(r['run_dir']).resolve() for r in group}
-    require(pairs, 'No complete control/mutant pair in ledger')
+    require(pairs, 'No complete comparison in ledger')
     return pairs
 
 
