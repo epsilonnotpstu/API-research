@@ -7,6 +7,7 @@
 - কারণ: SPEC component-এর ভিত্তি শুধু একটা code guard, স্বাধীন intent-প্রমাণ নেই (codebook v0.6 §11.4, §12.4; T36 pilot)।
 - পরিবর্তন করা হয়েছে `swagger-petstore_adjudication.csv`-এ, আগের note সংরক্ষিত।
 - C005 (SPEC → UNDECIDABLE) এখনো Claude-এর provisional same-class সিদ্ধান্ত। সেটা শুধু `final_labels_baseline_s1_v06.csv`-এ আছে।
+- **P014 IMPL → SPEC** (supervisor-delegated, Claude, 2026-11-15): upstream developer commit `9fb97b1` (2025-08-04) spec-এ `status` required করেছে, আর guard রেখে দিয়েছে। প্রমাণ T41 (`E4_triage/future_oracle/`)।
 
 **পদ্ধতি:**
 - Labeller A (Claude) ও B (Codex, blind) source code, log আর exchange দেখে label দিয়েছে।
@@ -24,10 +25,10 @@
 | SUT | n | SPEC | SPEC_PARTIAL | IMPL | BOTH | TEST | UNDECIDABLE | PENDING |
 |---|---|---|---|---|---|---|---|---|
 | scout-api | 99 | 31 | 0 | 32 | 17 | 1 | 18 | 0 |
-| swagger-petstore | 43 | 4 | 0 | 7 | 7 | 20 | 5 | 0 |
+| swagger-petstore | 43 | 5 | 0 | 6 | 7 | 20 | 5 | 0 |
 | market | 13 | 4 | 0 | 2 | 6 | 1 | 0 | 0 |
 | cwa-verification | 6 | 1 | 1 | 0 | 0 | 4 | 0 | 0 |
-| **মোট** | **161** | **40** | **1** | **41** | **30** | **26** | **23** | **0** |
+| **মোট** | **161** | **41** | **1** | **40** | **30** | **26** | **23** | **0** |
 
 ## Labeller A–B agreement (adjudication-এর আগে, L1)
 | SUT | n | Agreement | κ |
@@ -43,8 +44,8 @@
 
 ## পড়ার নিয়ম ও প্রাথমিক পর্যবেক্ষণ
 - **Decidable defect** (SPEC + SPEC_PARTIAL + IMPL + BOTH) মোট 112টি (2026-11-14-এ ছিল 115):
-  - SPEC-দিক: 41 (37%)।
-  - IMPL: 41 (37%)।
+  - SPEC-দিক: 42 (37.5%)।
+  - IMPL: 40 (35.7%)।
   - BOTH: 30 (27%)।
 - ⚠️ [H] চার SUT-এর baseline-এ প্রতি চারটি নির্ণয়যোগ্য অমিলের একটিতে spec আর code দুটোই বদলাতে হয়। তাই শুধু "spec নাকি code" — এই এক-কথার attribution অপর্যাপ্ত। এটা R1-এর একটি প্রধান empirical দাবির প্রার্থী।
 - **TEST 26টি (16%)** আমাদের নিজেদের tooling-এর সীমা: checker-এর coverage, int64 format, fuzzer-এর probe। এটা পরিমাপের নির্ভরযোগ্যতার একটা আলাদা ফল।
