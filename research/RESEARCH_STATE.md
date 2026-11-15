@@ -1,7 +1,9 @@
 # RESEARCH_STATE
 
-**শেষ হালনাগাদ:** 2026-10-19 (Claude)
-**বর্তমান phase:** ✅ **PHASE C, D, E সম্পন্ন** — supervisor-এর সিদ্ধান্তের অপেক্ষা (`06_final_recommendations/research_execution_roadmap.md` §14)
+**শেষ হালনাগাদ:** 2026-11-15 (Claude)
+**বর্তমান phase:** Literature phase A–E সম্পন্ন। এখন R1-এর execution চলছে (§9)।
+- E0, E1, E2 সম্পন্ন, আর code-mutation ground truth (E5_codemut)-ও।
+- **এখন roadmap E4: triage মূল্যায়ন (RQ2)।** প্রথম কাজ SPEC-দিকের held-out blind set (`08_experiments/E4_triage/E4_PLAN.md`)।
 
 ---
 
@@ -120,3 +122,17 @@
   - `Txx`: কোনো task-এর শেষ পদক্ষেপ।
   - Codex-এর প্রতিটি launch-এর log যাবে `09_collab/logs/Txx.log`-এ।
   - Codex session `~/.codex/sessions/`-এ থাকে, তাই `codex exec resume <id>` দিয়ে আগের session চালিয়ে যাওয়া যায় (T16 এভাবে T15-এর session-এ চালানো হয়েছে)।
+
+## 9. R1 execution stage (2026-11-15)
+| Roadmap ধাপ | অবস্থা | মূল artifact |
+|---|---|---|
+| E0 novelty | ✅ | `06_final_recommendations/R1_novelty_check_E0.md` |
+| E1 SUT + fuzzing | ✅ চার SUT, Schemathesis + EvoMaster, specmut-এর চার fault class | `08_experiments/E1_pilot/pilot_results/PILOT_SUMMARY.md`, `FUZZER_COMPARE.md`, `NOISE_FLOOR_SPEC.md`, `STRICT_ABLATION.md` |
+| E2 pilot labelling | ✅ 161টি fingerprint, A–B κ 0.73, codebook v0.6.1 | `08_experiments/E2_labelling/FINAL_LABELS.md`, `08_experiments/R1_triage_codebook.md` |
+| (অতিরিক্ত) code-mutation GT + blind LLM labelling | ✅ v1–v3; v3 = codebook v0.6-এর held-out মূল্যায়ন | `08_experiments/E5_codemut/E5_RESULTS.md`, `E5_BLIND_RESULTS.md` |
+| E3 Respector spec তুলনা | ⏭️ হয়নি | — |
+| **E4 triage মূল্যায়ন (RQ2)** | ▶️ শুরু: SPEC-দিকের held-out set (T40), M0/M1/M2 পদ্ধতি | `08_experiments/E4_triage/E4_PLAN.md` |
+| E5 (roadmap) LLM triage + patch (RQ3), E6 scale-up | ⏳ | — |
+
+- সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`।
+- Board: `09_collab/COLLAB_BOARD.md`।
