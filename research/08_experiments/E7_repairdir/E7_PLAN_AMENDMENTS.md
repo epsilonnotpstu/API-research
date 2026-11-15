@@ -27,3 +27,9 @@
   - Per-item direction Claude দেখেননি।
   - Miner hypothesis জানে না।
 - **Analysis অপরিবর্তিত।** T45 আর T46-এর item দুটোই set=`new`।
+
+## A3 — Post-hoc proposition-only control (added 2026-11-16 after the primary result was known; NOT confirmatory)
+**Reason:** the propositions were written by the miner, who knew each fix direction (hypothesis-blind, but direction-aware). Coder judgements could be carried by the proposition wording rather than by reading the code.
+**Design:** one fresh Codex coder P1 (gpt-6.1-sol, high) codes the same 70 items from `E2_labelling/e7_proponly/items.csv` only (identical definitions, no source files).
+**Analysis (fixed before P1 runs):** on set=new, SPEC/IMPL only: (i) P1 divergence_kind × truth table, Fisher one-sided, OR; (ii) Cohen's κ between P1 and the final C1/C2 code; (iii) the same for contract_specificity. P1 UNCLEAR items are reported and excluded from (i).
+**Interpretation rule:** if P1 reproduces the association (ACCIDENTAL arm SPEC rate ≤ 0.10 and Fisher p < 0.05), report that the E7 effect cannot be attributed to code reading and may be carried by direction-aware proposition wording; the practical triage claim then requires propositions written by a direction-blind author. If P1 does not reproduce it (p ≥ 0.05 or κ < 0.40 with the final code), report that code reading adds information beyond the proposition text.
