@@ -152,7 +152,7 @@
    - Scout-এ EvoMaster-এর জন্য derecursed input লেগেছে (recursive schema inline হওয়ায় stall; T31)।
    - **STRICT keyword ablation (market; `STRICT_ABLATION.md`):**
      - Required edit EvoMaster-এর সংকেত দমায়: required ছাড়া 2/3 INVALID_ACCEPTED, শুধু required 0/3।
-     - Schemathesis-এর required-only 3/3 "সংকেত" সবই collateral 500। এর উৎস SUT-এর আগে থেকে থাকা defect, generator সেই পথে traffic ঠেলে দিয়েছে।
+     - Schemathesis-এ required edit নিরপেক্ষ: মিলানো settings-এ required-only 0/3, no-required 3/3। Settings-অমিলের `[checks=all]` run-এ, যেখানে baseline ছোট, required-only 3/3 "সংকেত" সবই ছিল SUT-এর আগে থেকে থাকা defect-এর collateral 500। অর্থাৎ collateral exposure নির্ভর করে baseline coverage-এর ওপর।
      - ⇒ Fresh-mode সংকেত fault class-এর প্রত্যাশিত kind দিয়ে আলাদা করতে হবে। STRICT-কে keyword family অনুযায়ী চালাতে হবে।
 
 ## 6. সীমা (threats to validity)

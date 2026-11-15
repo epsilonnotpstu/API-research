@@ -27,8 +27,11 @@ SERVICE = {'scout-api': 'sut-scout-api', 'swagger-petstore': 'sut-swagger-petsto
            'cwa-verification': 'sut-cwa-verification'}
 _cache = {}
 # Mechanism-expected kinds per spec fault class (Claude, 2026-11-15; fixed from mutator semantics in tools/specmut.py
-# BEFORE looking at per-kind results; motivated by the STRICT ablation's collateral-exposure finding). A NEW of any
-# other kind on a mutated op is 'collateral' (e.g. a pre-existing SUT defect reached via changed generator input).
+# BEFORE looking at per-kind results; motivated by the STRICT ablation's collateral-exposure finding). This is a
+# CANONICAL, mechanism-compatible kind filter, not a causal adjudication (T39 F3): a NEW of another kind is only
+# 'outside the filter' — trace-confirmed collateral only where a trace exists (market STRICT required-only, T35).
+# METHOD_SEM's set is a canonical subset: a fresh target-verb contract mismatch (RESPONSE_SCHEMA, INVALID_ACCEPTED,
+# RESPONSE_CONTENT_TYPE) can also come from the method swap and is not included (T39 F2).
 EXPECTED_KINDS = {
     'REQUEST_LOOSE': {'VALID_REJECTED'},
     'REQUEST_STRICT': {'INVALID_ACCEPTED'},

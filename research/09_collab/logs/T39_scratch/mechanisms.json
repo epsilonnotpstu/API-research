@@ -1,0 +1,494 @@
+{
+  "spot_check_groups": 4,
+  "cases": [
+    {
+      "case": "loose_rejected_newly_valid",
+      "fault": "REQUEST_LOOSE",
+      "baseline": [],
+      "replay": [
+        {
+          "kind": "VALID_REJECTED",
+          "method": "GET",
+          "status": 400,
+          "pointer": ""
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "VALID_REJECTED",
+          "method": "GET",
+          "status": 400,
+          "pointer": ""
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "VALID_REJECTED",
+          "method": "GET",
+          "http_status": 400,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "VALID_REJECTED",
+          "method": "GET",
+          "http_status": 400,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "loose_different_traffic_surviving_type_error",
+      "fault": "REQUEST_LOOSE",
+      "baseline": [],
+      "replay": [],
+      "fresh": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/properties/name/type"
+        }
+      ],
+      "replay_diff": [],
+      "fresh_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/name/type",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "loose_replay_identity_shift",
+      "fault": "REQUEST_LOOSE",
+      "baseline": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/properties/name/type"
+        }
+      ],
+      "replay": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/properties/name/allOf/0/type"
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/properties/name/allOf/0/type"
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/name/allOf/0/type",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/name/type",
+          "status": "VANISHED",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/name/allOf/0/type",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/name/type",
+          "status": "VANISHED",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "strict_maxlength",
+      "fault": "REQUEST_STRICT",
+      "baseline": [],
+      "replay": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/maxLength"
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/requestBody/maxLength"
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/maxLength",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/requestBody/maxLength",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "oracle_500_and_response_schema",
+      "fault": "RESPONSE_ORACLE",
+      "baseline": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        }
+      ],
+      "replay": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/additionalProperties"
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/required"
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/additionalProperties"
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "status": 200,
+          "pointer": "/required"
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/additionalProperties",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/required",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "PERSISTENT",
+          "op_mutated": true
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/additionalProperties",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "/required",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "PERSISTENT",
+          "op_mutated": true
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "oracle_default_covers_removed_500",
+      "fault": "RESPONSE_ORACLE",
+      "baseline": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        }
+      ],
+      "replay": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "status": 500,
+          "pointer": ""
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "PERSISTENT",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "GET",
+          "http_status": 500,
+          "pointer": "",
+          "status": "PERSISTENT",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "method_response_and_request_contract",
+      "fault": "METHOD_SEM",
+      "baseline": [],
+      "replay": [
+        {
+          "kind": "UNDOCUMENTED_OPERATION",
+          "method": "GET",
+          "status": 200,
+          "pointer": ""
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "POST",
+          "status": 200,
+          "pointer": "/properties/id/type"
+        },
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "POST",
+          "status": 200,
+          "pointer": "/requestBody/properties/id/type"
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "POST",
+          "status": 405,
+          "pointer": ""
+        },
+        {
+          "kind": "VALID_REJECTED",
+          "method": "POST",
+          "status": 400,
+          "pointer": ""
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "UNDOCUMENTED_OPERATION",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "INVALID_ACCEPTED",
+          "method": "POST",
+          "http_status": 200,
+          "pointer": "/requestBody/properties/id/type",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "RESPONSE_SCHEMA",
+          "method": "POST",
+          "http_status": 200,
+          "pointer": "/properties/id/type",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "VALID_REJECTED",
+          "method": "POST",
+          "http_status": 400,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "UNDOCUMENTED_STATUS",
+          "method": "POST",
+          "http_status": 405,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    },
+    {
+      "case": "method_documented_error_and_bad_response_media",
+      "fault": "METHOD_SEM",
+      "baseline": [],
+      "replay": [
+        {
+          "kind": "UNDOCUMENTED_OPERATION",
+          "method": "GET",
+          "status": 200,
+          "pointer": ""
+        }
+      ],
+      "fresh": [
+        {
+          "kind": "SERVER_ERROR",
+          "method": "POST",
+          "status": 500,
+          "pointer": ""
+        },
+        {
+          "kind": "RESPONSE_CONTENT_TYPE",
+          "method": "POST",
+          "status": 200,
+          "pointer": ""
+        }
+      ],
+      "replay_diff": [
+        {
+          "kind": "UNDOCUMENTED_OPERATION",
+          "method": "GET",
+          "http_status": 200,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ],
+      "fresh_diff": [
+        {
+          "kind": "RESPONSE_CONTENT_TYPE",
+          "method": "POST",
+          "http_status": 200,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        },
+        {
+          "kind": "SERVER_ERROR",
+          "method": "POST",
+          "http_status": 500,
+          "pointer": "",
+          "status": "NEW",
+          "op_mutated": true
+        }
+      ]
+    }
+  ]
+}
