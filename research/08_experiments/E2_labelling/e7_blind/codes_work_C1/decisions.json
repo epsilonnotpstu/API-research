@@ -1,0 +1,632 @@
+[
+  [
+    1,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "TreeApi.java:139",
+    "HttpTreeApi.java:303",
+    "The inherited @NotNull explicitly requires expectedHash; the OpenAPI query annotation omits required."
+  ],
+  [
+    2,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "CreateRefundService.java:49",
+    "CreatePaymentRefundRequest.java:20",
+    "The service explicitly consumes the supplied refundable amount with a fallback. The request field explicitly declares READ_ONLY."
+  ],
+  [
+    3,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "RestV2TreeResource.java:160;SingleReferenceResponse.java:34",
+    "HttpTreeApi.java:180",
+    "The handler explicitly builds a reference wrapper; the operation's 200 annotation declares Reference."
+  ],
+  [
+    4,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "TimeSeriesProfileInstanceController.java:145;Controllers.java:460",
+    "TimeSeriesProfileInstanceController.java:105",
+    "Both dates use requiredInstant before retrieval. Dedicated query descriptions promise default years."
+  ],
+  [
+    5,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "GlobalConfigurationApiResource.java:115",
+    "GlobalConfigurationApiResource.java:109;GlobalConfigurationApiResourceSwagger.java:39",
+    "The handler explicitly serializes one property object; the list wrapper comes from a response schema shared with collection retrieval."
+  ],
+  [
+    6,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "GroupsResourceImpl.java:2147;HttpStatusCodeMap.java:158",
+    "openapi.json:136;openapi.json:256",
+    "⚠️ A missing status is dereferenced without a status guard; unmapped exceptions fall back to 500. The transition schema and operation explicitly require status and document 400."
+  ],
+  [
+    7,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "ModifySubjectsResponse.java:77;PolicyPersistenceActor.java:1164",
+    "ditto-api-2.yml:1983;ditto-api-2.yml:1991",
+    "The successful modification factory explicitly selects NO_CONTENT. The contract separately documents 201 with Subjects for creation and bodyless 204 for updates; the two documented cases should not be conflated."
+  ],
+  [
+    8,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "MandatesResource.java:99;SearchMandateResponse.java:16",
+    "MandatesResource.java:90",
+    "Search explicitly returns SearchMandateResponse with results and pagination; the operation's success annotation instead specifies MandateResponse."
+  ],
+  [
+    9,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "SecretController.java:64",
+    "microcks-openapi-v1.10.yaml:324",
+    "An explicit GET search mapping requires name by @RequestParam default. The contract claim derives from absence of this operation."
+  ],
+  [
+    10,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "HttpBridge.java:209;HttpBridge.java:218;EmbeddedFormat.java:19",
+    "openapi.json:77",
+    "⚠️ Unsupported format conversion occurs before the try block, so its exception escapes the guarded response path. The operation explicitly documents 422 for invalid configuration."
+  ],
+  [
+    11,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "PaymentEndpoint.java:31;StripeSessionCreator.java:58",
+    "payment-openapi.yaml:33",
+    "⚠️ The endpoint supplies null to a request-dependent URL builder, causing a dereference rather than a designed response. Dedicated prose promises successful session creation."
+  ],
+  [
+    12,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "DeviceManagementPackages.java:64",
+    "DeviceManagementPackages.java:63",
+    "The handler explicitly returns DevicePackages from getInstalled; the operation annotation explicitly specifies DeviceSnapshots."
+  ],
+  [
+    13,
+    "ACCIDENTAL",
+    "GENERIC",
+    3,
+    "LookupApiController.java:80",
+    "LookupApi.java:82",
+    "⚠️ The nullable argument is streamed without a guard. Optionality comes from the generated binding's required=false declaration without dedicated omission handling prose."
+  ],
+  [
+    14,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "Project.java:87;Project.java:231",
+    "catwatch_rest_api.yaml:398",
+    "The project model explicitly chooses Integer for score. The contract claim comes from the reusable Project schema's field type."
+  ],
+  [
+    15,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "ImportJob.java:39;application.properties:3",
+    "microcks-openapi-v1.10.yaml:2191",
+    "⚠️ Date fields and an explicit Jackson timestamps setting produce epoch milliseconds. The contract's int32 claim is a reusable model-schema declaration."
+  ],
+  [
+    16,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "OutletController.java:120;Controllers.java:339",
+    "OutletController.java:104",
+    "The handler explicitly requires office; dedicated contract prose promises the user session id as its default."
+  ],
+  [
+    17,
+    "DELIBERATE",
+    "SPECIFIC",
+    2,
+    "UtilityApi.kt:80;UtilityApi.kt:84",
+    "openapi.json:477",
+    "⚠️ An explicit requireNotNull guard throws for absent device_response. The fold handles typed failures, leaving this exception outside the JSON 400 recovery path documented for the operation."
+  ],
+  [
+    18,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "BridgeResourceImpl.java:394;MqttBridge.java:235",
+    "hivemq-edge-openapi-2025.1-SNAPSHOT.yaml:4554",
+    "⚠️ A nullable Boolean is passed to primitive boolean without a fallback, causing unboxing failure. The property explicitly permits null."
+  ],
+  [
+    19,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "SubmodelRepositoryApiHTTPController.java:185",
+    "SubmodelRepositoryHTTPApi.java:333",
+    "After creation, the handler explicitly constructs a status-only CREATED response. The operation explicitly specifies a JSON SubmodelElement in 201."
+  ],
+  [
+    20,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "BlobController.java:154;Controllers.java:86",
+    "BlobController.java:134",
+    "The override branch reads the wrong identifier constant, CLOB_ID. Dedicated prose explicitly assigns override behavior to the blob identifier query parameter."
+  ],
+  [
+    21,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "GroupsResourceImpl.java:886;GroupsResourceImpl.java:1045;GroupsResourceImpl.java:1067",
+    "openapi.json:2192;openapi.json:2209",
+    "Existing-artifact update helpers omit metadata arguments, losing submitted headers. Dedicated header descriptions specify the artifact metadata."
+  ],
+  [
+    22,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    2,
+    "handler.go:421;manager.go:102;manager.go:247",
+    "api.json#/paths/~1admin~1identities/post/responses/409",
+    "⚠️ Duplicate errors are forwarded without a conflict conversion; the supplied error wrapper has no explicit status mapping. The operation documents 409; the external writer's final status cannot be independently proven here."
+  ],
+  [
+    23,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "HostsResource.java:135",
+    "rhsm-subscriptions-api-spec.yaml:434",
+    "⚠️ Optional.of rejects absent dates before the intended fallback. The operation marks both dates optional and specifically describes their applicability to OpenShift metrics products."
+  ],
+  [
+    24,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "TimeSeriesRecentController.java:185",
+    "TimeSeriesRecentController.java:119",
+    "The handler explicitly selects RecentValue for formatting a list. The operation's 200 annotation explicitly specifies a JSON array of Tsv."
+  ],
+  [
+    25,
+    "ACCIDENTAL",
+    "GENERIC",
+    3,
+    "InMemoryAasService.java:96;AasRepositoryApiHTTPController.java:158",
+    "AasRepositoryHTTPApi.java:197",
+    "⚠️ The list append lacks duplicate detection, so duplicates reach the ordinary 201 response. The 409 text is repeated generic resource-creation boilerplate, including unrelated resource kinds."
+  ],
+  [
+    26,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "IcebergExceptionMapper.java:180",
+    "iceberg-rest-catalog-open-api.yaml:1713",
+    "The mapper explicitly assigns BAD_REQUEST to CommitStateUnknownException. Dedicated commit-state prose and an example specify 500."
+  ],
+  [
+    27,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "KeycloakConfigController.java:73",
+    "microcks-openapi-v1.7.yaml:1304",
+    "The annotated boolean field explicitly emits true. Dedicated contract prose describes a public-client name, reinforcing the string declaration."
+  ],
+  [
+    28,
+    "DELIBERATE",
+    "SPECIFIC",
+    2,
+    "ToolsApiServiceImpl.java:911;ToolsApiServiceImpl.java:924;ToolsApiServiceImpl.java:928;ToolsApiServiceImpl.java:941",
+    "openapi.yaml:91",
+    "Explicit noContent responses target 204 when version lookup fails in workflow/tool branches. The contract's 404 describes unavailable descriptor types; these conditions differ, so the artifacts do not establish a like-for-like failure."
+  ],
+  [
+    29,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "EnumParamConverterProvider.java:75",
+    "rhsm-subscriptions-api-v1-spec.yaml:145;rhsm-subscriptions-api-v1-spec.yaml:233;rhsm-subscriptions-api-v1-spec.yaml:467",
+    "An explicit unmatched-value branch throws IllegalArgumentException. Contract enum membership comes from a shared schema, and 400 uses a reusable generic error response."
+  ],
+  [
+    30,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "LoanAccountData.java:113;LoansApiResource.java:226",
+    "LoansApiResourceSwagger.java:1094",
+    "The implementation model explicitly declares BigDecimal. The contract integer follows the documentation model's Java field type, with no dedicated integer constraint prose."
+  ],
+  [
+    31,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "SearchRefundsResults.java:53",
+    "SearchRefundsResults.java:21",
+    "⚠️ The getter relies on ordinary bean naming without a serialization rename. The documentation annotation explicitly names the property _links."
+  ],
+  [
+    32,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "GroupMembersResource.java:136;GroupMemberEntity.java:39",
+    "GroupMembersResource.java:83;MemberEntity.java:43",
+    "The handler explicitly aggregates roles into a string map. The list-of-RoleEntity claim is inherited from the reused MemberEntity response model."
+  ],
+  [
+    33,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "SecretController.java:84",
+    "microcks-openapi-v1.10.yaml:394",
+    "The handler explicitly binds a Secret with @RequestBody, whose default requires it. The contract claim derives from an absent requestBody declaration."
+  ],
+  [
+    34,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "ApiServletRouteConfiguration.java:342",
+    "WaterContractController.java:90",
+    "The registered route explicitly uses water-user. The operation annotation explicitly declares the plural water-users route."
+  ],
+  [
+    35,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "AasRepositoryApiHTTPController.java:181",
+    "AasRepositoryHTTPApi.java:226",
+    "After updating Asset Information, the handler explicitly returns OK. The operation explicitly documents 204 for this update."
+  ],
+  [
+    36,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "ExternalTanController.java:145",
+    "api-docs.json:52;api-docs.json:270",
+    "⚠️ The scheduled callback explicitly supplies a Tan response body. The contract exposes a generated asynchronous wrapper schema rather than a dedicated wire-body statement."
+  ],
+  [
+    37,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "ExternalTokenController.java:89;AppSessionService.java:97",
+    "api-docs.json:58",
+    "The GUID branch returns the service's explicitly created response. The operation documents successful generation as 200."
+  ],
+  [
+    38,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "HttpBridge.java:471;HttpSourceBridgeEndpoint.java:62",
+    "openapi.json:644",
+    "⚠️ Connection caching reuses the first endpoint and converter without reconsidering later request media types. The operation explicitly offers JSON and binary request content."
+  ],
+  [
+    39,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "SubmodelRepositoryApiHTTPController.java:246",
+    "SubmodelRepositoryHTTPApi.java:392",
+    "After storing the upload, the handler explicitly returns OK. The operation explicitly declares 204 for successful upload."
+  ],
+  [
+    40,
+    "ACCIDENTAL",
+    "GENERIC",
+    3,
+    "DirectDebitEventsResource.java:71;DateValidator.java:9",
+    "swagger.json:173",
+    "⚠️ Validation permits blank dates, then both nullable parameters are unconditionally parsed. Optionality is conveyed by required=false with no dedicated omission behavior."
+  ],
+  [
+    41,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "RatingEndpoint.java:31;RatingEndpoint.java:38",
+    "rating-openapi.yaml:22",
+    "The explicit class route plus POST mapping selects /api/v1/rating/product. The contract declares /api/v1/products/rating."
+  ],
+  [
+    42,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "BasinController.java:209",
+    "BasinController.java:168",
+    "The JSON branch explicitly formats a singleton list. The operation's response annotation declares one Basin without an array."
+  ],
+  [
+    43,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "IcebergExceptionMapper.java:180",
+    "iceberg-rest-catalog-open-api.yaml:1092",
+    "The mapper explicitly assigns BAD_REQUEST to CommitStateUnknownException. Dedicated table-commit prose and an example specify 500."
+  ],
+  [
+    44,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "RoleResource.java:108",
+    "RoleResource.java:100",
+    "The handler explicitly returns void after deleting the role. The operation's 204 annotation explicitly specifies application/json RoleEntity content."
+  ],
+  [
+    45,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "HttpSourceBridgeEndpoint.java:193;HttpBridgeError.java:48",
+    "openapi.json:665;openapi.json:1542",
+    "An explicit error branch inserts error JSON into offsets. The contract offsets-entry model comes from reusable OffsetRecordSent schemas; this coding does not assume undeclared extra properties are forbidden."
+  ],
+  [
+    46,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "ExternalEventConfigurationCommand.java:29;ExternalEventConfigurationCommandFromApiJsonDeserializer.java:53",
+    "ExternalEventConfigurationApiResourceSwagger.java:44",
+    "Deserialization explicitly targets a command with Map<String, Boolean>. The nested-map claim derives from the Swagger documentation model's declared field type."
+  ],
+  [
+    47,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "RoleWritePlatformServiceJpaRepositoryImpl.java:156",
+    "RolesApiResourceSwagger.java:186",
+    "The service explicitly reads a Boolean map and unboxes each selected permission. The string claim comes from documentation-model fields rather than dedicated value-type prose."
+  ],
+  [
+    48,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "ProtocolAdaptersResourceImpl.java:432",
+    "ProtocolAdaptersApi.java:350",
+    "A dedicated empty-tags branch explicitly returns bodyless OK. The operation explicitly documents a JSON DomainTagModelList response."
+  ],
+  [
+    49,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "Payment.java:18",
+    "swagger.json:746",
+    "The implementation explicitly names the property payment_id with @JsonProperty. The camel-case name derives from the reusable response model schema."
+  ],
+  [
+    50,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "HttpJsonMessageConverter.java:96",
+    "openapi.json:1473",
+    "⚠️ The converter explicitly handles a null Kafka value with a null JSON value. Non-null string expectations derive from a reusable schema and absent nullable declaration."
+  ],
+  [
+    51,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "TreeApi.java:151",
+    "HttpTreeApi.java:342",
+    "The inherited deletion declaration explicitly requires expectedHash with @NotNull. Its OpenAPI query annotation omits required."
+  ],
+  [
+    52,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "HashingService.java:37;HashingService.java:68;RegistrationTokenRequestValidator.java:64",
+    "VerificationController.java:118",
+    "⚠️ The regex's dollar anchor and find permit a final line feed as a side effect, without a branch allowing it. Dedicated operation prose requires a SHA-256 hashed GUID."
+  ],
+  [
+    53,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "TreeApi.java:173",
+    "HttpTreeApi.java:449",
+    "The inherited merge declaration explicitly requires expectedHash with @NotNull. Its OpenAPI query annotation omits required."
+  ],
+  [
+    54,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "GetProductsRequestValidator.java:13;GetProductsRequestValidator.java:64",
+    "product-openapi.yaml:87",
+    "⚠️ Lowercasing before lookup conflicts with camel-case entries in the allowed set. Dedicated parameter prose explicitly allows averageRating and reviewsCount."
+  ],
+  [
+    55,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "HttpJsonMessageConverter.java:96;JsonUtils.java:32",
+    "openapi.json:1473",
+    "⚠️ The converter explicitly parses bytes into JSON nodes and inserts them directly, preserving objects. The string expectation derives from the reusable ConsumerRecord schema."
+  ],
+  [
+    56,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "ToolsApiServiceImpl.java:924",
+    "openapi.yaml:71;openapi.yaml:86",
+    "⚠️ The ZIP response builder supplies a stream and disposition header but omits a response media type. Operation prose and content declarations explicitly specify ZIP output."
+  ],
+  [
+    57,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "GroupsResourceImpl.java:1020;GroupsResourceImpl.java:1319;GroupsResourceImpl.java:1348;GroupsResourceImpl.java:1385",
+    "openapi.json:1434",
+    "⚠️ The existing-artifact helper drops dryRun and hardcodes false in version creation. This is failed flag propagation; dedicated dryRun prose promises no changes."
+  ],
+  [
+    58,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "PetController.java:50",
+    "openapi.yaml:128",
+    "A dedicated null-status guard explicitly constructs 400. The optional query parameter also has an explicit available default."
+  ],
+  [
+    59,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "RequestJsonParser.java:99",
+    "swagger.json#/paths/~1v1~1payments/post/parameters/0;swagger.json:1134",
+    "The parser explicitly validates ISO codes en/cy. The operation references CreateCardPaymentRequest, whose reusable language schema instead enumerates ENGLISH/WELSH, despite ISO-code prose and example."
+  ],
+  [
+    60,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "ForecastSpecController.java:164",
+    "ForecastSpecController.java:141",
+    "The retrieval code reads DESIGNATOR rather than DESIGNATOR_MASK, a wrong-parameter lookup. Dedicated parameter prose describes designator-mask filtering."
+  ],
+  [
+    61,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "DirectDebitSearchPaymentsParams.java:27",
+    "swagger.json:227",
+    "The validator explicitly enables CASE_INSENSITIVE. The operation's query parameter declares the lowercase pattern as a dedicated constraint."
+  ],
+  [
+    62,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "DeviceManagementRequestsJson.java:101",
+    "DeviceManagementRequestsJson.java:66",
+    "The JSON handler explicitly constructs JsonGenericResponseMessage from the generic service response. The operation annotation explicitly names DeviceCommandOutput."
+  ],
+  [
+    63,
+    "DELIBERATE",
+    "SPECIFIC",
+    3,
+    "RatingEndpoint.java:31;RatingEndpoint.java:48",
+    "rating-openapi.yaml:47",
+    "The class route and GET suffix explicitly select /api/v1/rating/product/{productId}. The contract explicitly declares /api/v1/products/rating/{productId}."
+  ],
+  [
+    64,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "GlobalConfigurationProperty.java:81",
+    "GlobalConfigurationApiResourceSwagger.java:49",
+    "The update logic explicitly reads and updates the numeric value parameter. The description name derives from the documentation model's numeric field declaration."
+  ],
+  [
+    65,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "TreeApi.java:161",
+    "HttpTreeApi.java:389",
+    "The inherited transplant declaration explicitly requires expectedHash with @NotNull. Its OpenAPI query annotation omits required."
+  ],
+  [
+    66,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "handler.go:158",
+    "api.json#/paths/~1admin~1identities/get/responses/200;api.json:32",
+    "An explicit identifier-search branch writes one identity and returns. The array expectation comes from the shared identity-list response schema."
+  ],
+  [
+    67,
+    "ACCIDENTAL",
+    "GENERIC",
+    3,
+    "DeviceEvents.java:81;DeviceEvents.java:104;DeviceEvents.java:143",
+    "deviceEvent-scopeId-deviceId.yaml:41;openapi.yaml:449",
+    "⚠️ The handler binds both sorting parameters but never applies them before execution. The contract reuses shared sorting parameter declarations."
+  ],
+  [
+    68,
+    "DELIBERATE",
+    "GENERIC",
+    3,
+    "RequestJsonParser.java:148",
+    "swagger.json#/paths/~1v1~1payments/post/parameters/0;swagger.json:1161;swagger.json:1476",
+    "The parser explicitly converts submitted metadata entries directly into a map. The operation references a request schema using reusable ExternalMetadata, whose metadata property introduces another nested map."
+  ],
+  [
+    69,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "OfficeController.java:94;ApiServlet.java:63",
+    "OfficeController.java:61",
+    "⚠️ The handler formats the selected representation but omits setting its media type, leaving the application default. The operation explicitly lists representation media types."
+  ],
+  [
+    70,
+    "ACCIDENTAL",
+    "SPECIFIC",
+    3,
+    "HttpBridge.java:560",
+    "openapi.json:1464",
+    "⚠️ The metrics handler sends scrape text with status 200 but never sets Content-Type. The operation explicitly declares text/plain."
+  ]
+]
