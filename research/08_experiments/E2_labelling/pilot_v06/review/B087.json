@@ -1,0 +1,257 @@
+{
+  "item_id": "B087",
+  "created_utc": "2026-11-15T02:11:25.363265+00:00",
+  "decision_precedes_final_join": true,
+  "operation": {
+    "method": "PUT",
+    "template": "/v1/categories/{id}",
+    "status": 500
+  },
+  "target": {
+    "kind": "SERVER_ERROR",
+    "message": "SERVER_ERROR",
+    "violation_path": "",
+    "observed_field_direction": "not a response-field query",
+    "representative_exchange_locator": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/exchanges.jsonl:4104",
+    "all_exchange_lines": [
+      4104,
+      4105,
+      4106,
+      4107,
+      4108,
+      4109,
+      4111,
+      4113,
+      4114,
+      4115,
+      4116,
+      4124,
+      4125,
+      4126,
+      4127,
+      4128,
+      4129,
+      4132,
+      4133,
+      4134,
+      4135,
+      4147,
+      4153,
+      4154,
+      4155,
+      4156,
+      4160,
+      4161,
+      4163,
+      4178,
+      4179,
+      4180,
+      4181,
+      4183,
+      4184,
+      4185,
+      4186,
+      4187,
+      4189,
+      4195,
+      4197,
+      4198,
+      4201,
+      4202,
+      4203
+    ],
+    "observed_response_group_count": 45
+  },
+  "prior_exposure": {
+    "previous_baseline_labelling": "known (T15/T16/T18 same model family/task history)",
+    "previous_final_label": "possible from previous tasks; exact item final label not recalled before decision",
+    "stratum_order_leaks_label": true,
+    "T33_worked_example_excluded": true,
+    "other_incidents_locator": "09_collab/logs/T36_scratch/incident.json:1"
+  },
+  "manifest_locator": "09_collab/logs/T36_scratch/search/B087.manifest.json:1",
+  "search_mandatory": true,
+  "search_gate_rule": "§11.4.1 / §12.1 Q2: unresolved intent or intent-dependent spec-side candidate",
+  "search_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "source_root": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api",
+  "source_revision": "915859080da033fc36feae54bab3ad4a7b04e872",
+  "source_revision_locator": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/run.json:$.emb_commit",
+  "spec_sha256": "c8a539fcd9b9beb41f7943a83de192688718be725d24511613ed606e3f6c6b08",
+  "tool_sha256": "0ecb3ebfaaaa0b922a74f9e469595979e0f70af713296eeaff603d99479c056f",
+  "coverage_inventory_locator": "09_collab/logs/T36_scratch/coverage_inventory.json:$.\"scout-api\"",
+  "raw_verdict": "none_found",
+  "hits": [
+    {
+      "hit_index": 0,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B087.json:$.hits[0]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:82",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "Implementation route/DTO/return is context only and cannot be its own independent intent evidence.",
+      "direction": "none",
+      "tool_independent_hypothesis": false,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Implementation route/DTO/return is context only and cannot be its own independent intent evidence."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Questioned code/spec, generated echo, or import history; not independent."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "7bbd560e33e758f676410b6a77b8cedcf49b8da933bfadb5583272fd976f07ed",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:70-85"
+    }
+  ],
+  "manual_additions": [
+    {
+      "locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:81-88",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "Null persisted target and copying absent fields are separate crash paths.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Null persisted target and copying absent fields are separate crash paths."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Target constraint/scenario linkage reviewed: Null persisted target and copying absent fields are separate crash paths."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Implementation/context or unverified normative provenance; not an independent vote."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/data-access/src/main/java/se/devscout/scoutapi/model/Tag.java:35-45",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "Persistent name/group constraints corroborate the second branch.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Persistent name/group constraints corroborate the second branch."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Target constraint/scenario linkage reviewed: Persistent name/group constraints corroborate the second branch."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Implementation/context or unverified normative provenance; not an independent vote."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    },
+    {
+      "locator": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/compose.log:216715",
+      "category": "E-LOG",
+      "disposition": "context",
+      "reason": "GRP NOT NULL SQL failure occurs in a distinct captured request; no change to final label is made.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "GRP NOT NULL SQL failure occurs in a distinct captured request; no change to final label is made."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Target constraint/scenario linkage reviewed: GRP NOT NULL SQL failure occurs in a distinct captured request; no change to final label is made."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Implementation/context or unverified normative provenance; not an independent vote."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    }
+  ],
+  "manual_fallback": {
+    "performed": true,
+    "manifest_locator": "09_collab/logs/T36_scratch/fallback_manifest.json:1",
+    "local_history": "Available shallow EMB import only; patches reviewed, not treated as fixes.",
+    "docs_scope": "No top-level Scout README/CHANGELOG; only explicit source paths used after discarded scope incident.",
+    "new_independent_evidence": false
+  },
+  "reviewed_verdict": "none_found",
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "confidence": 3,
+    "both_candidate": true,
+    "rationale": "⚠️ Missing target causes null dereference; another saved branch violates NOT NULL group. Primary IMPL is certain; optional persistent-field branch merits an additional BOTH-candidate review under §10.6.",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "",
+    "root_cause_id": "SCOUT_CATEGORY_UPDATE",
+    "message_decisions": [
+      {
+        "constraint": "non-gateway 500 on absent target",
+        "L1": "IMPL"
+      },
+      {
+        "constraint": "optional persistent group omitted then SQL NOT NULL crash",
+        "L1": "SPEC_candidate",
+        "exchange_lines": [
+          4135
+        ]
+      }
+    ],
+    "documented_exception": "R1 primary is unaffected by none_found; possible second defect is a review signal under §10.6, not a direct BOTH assignment.",
+    "coverage_gap_unresolved": false,
+    "coverage_decision": "All relevant local source/tests/docs/config and available local history reviewed. Binary UI assets/build output are irrelevant. Shallow history limits upstream intent knowledge; no missing local candidate patch remains."
+  },
+  "unresolved_hits_do_not_support_decisive_intent": false,
+  "effort": {
+    "tool_seconds": 0.7895911509986036,
+    "raw_hit_count": 1,
+    "manual_addition_count": 3,
+    "manual_active_seconds": null,
+    "timing_note": "Manual reasoning shared source-family context; per-item active time was not independently instrumented. Do not interpret generation time as review effort."
+  }
+}

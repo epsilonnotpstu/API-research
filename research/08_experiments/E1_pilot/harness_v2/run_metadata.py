@@ -78,6 +78,8 @@ def main():
                          'transport-error and truncation coverage require review',
                          'locally built SUT may have only image ID, no registry digest'],
     }
+    if os.environ.get('STRICT_KEYWORDS'):
+        data['strict_keywords'] = sorted(os.environ['STRICT_KEYWORDS'].split(','))
     if fuzzer == 'evomaster':
         # Legacy image key identifies the selected generator for unchanged analysis.
         # Do not claim that Schemathesis ran in an EvoMaster collection.

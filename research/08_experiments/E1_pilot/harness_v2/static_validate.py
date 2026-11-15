@@ -138,6 +138,11 @@ def main():
     fuzzer_args = (HERE / "fuzzer_args.sh").read_text()
     assert 'export PILOT_EVOMASTER_SCHEMA_ORACLES=${EVOMASTER_SCHEMA_ORACLES:-true}' in run
     assert 'export PILOT_EVOMASTER_INPUT=${EVOMASTER_INPUT:-spec}' in run
+    assert 'build_strict_args "$fault"' in run
+    assert run.index('build_strict_args "$fault"') < run.index('for tool in docker')
+    assert run.count('"${only_args[@]}" "${strict_args[@]}" --out') == 2
+    assert 'build_strict_args() {' in fuzzer_args
+    assert "data['strict_keywords']" in (HERE / 'run_metadata.py').read_text()
     assert 'build_derecursed_generator_input() {' in run
     assert run.count('build_derecursed_generator_input\n') == 2
     assert '"${evomaster_mounts[@]}"' in run
@@ -152,6 +157,9 @@ def main():
                    'redact_auth.py', 'run_metadata.py', 'jacococli.jar'):
         assert marker in run + fuzzer_args, marker
     batch = (HERE / "run_batch.sh").read_text()
+    assert batch.index('build_strict_args REQUEST_STRICT') < batch.index('mkdir -p "$runs/batches"')
+    assert 'STRICT_KEYWORDS= PILOT_RUN_ID="$id"' in batch
+    assert 'STRICT_KEYWORDS requires FAULTS=REQUEST_STRICT' in batch
     assert 'PILOT_RUN_ID="$id"' in batch and 'baseline=$LAST_RUN' in batch
     assert 'HEALTH_METHOD_DEFAULT:-GET' in run and 'HEALTH_STATUS_DEFAULT:?' in run
     assert '--only-ops' in run and 'pull failed; using local copy' in run

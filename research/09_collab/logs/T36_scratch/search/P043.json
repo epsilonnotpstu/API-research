@@ -1,0 +1,137 @@
+{
+  "operation": {
+    "method": "PUT",
+    "path": "/user/{username}"
+  },
+  "observed_status": 400,
+  "field": null,
+  "spec": {
+    "file": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T021748Z_batch_1701236_baseline_NONE_p0_s1/spec.original.json",
+    "path": "/user/{username}",
+    "statuses": [
+      "200",
+      "400",
+      "404",
+      "default"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1user~1{username}/put"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:139",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 139,
+      "snippet": "public ResponseContext updateUser(final RequestContext request, final String username, final User user) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/user/{username}",
+      "methods": [
+        "PUT"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T021748Z_batch_1701236_baseline_NONE_p0_s1/spec.original.json",
+      "operation_id": "updateUser",
+      "controller": "io.swagger.petstore.controller.UserController",
+      "inflector_config": "inflector.yaml"
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:142",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 142,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:148",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 148,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:155",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 155,
+      "snippet": "return new ResponseContext().status(Response.Status.NOT_FOUND).entity(\"User not found\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        404
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:168",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 168,
+      "snippet": "final String password, final String phone, final Integer userStatus) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/user/{username}",
+      "methods": [
+        "PUT"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T021748Z_batch_1701236_baseline_NONE_p0_s1/spec.original.json",
+      "operation_id": "updateUser",
+      "controller": "io.swagger.petstore.controller.UserController",
+      "inflector_config": "inflector.yaml"
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+        "literal": "400",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 29,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 1,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

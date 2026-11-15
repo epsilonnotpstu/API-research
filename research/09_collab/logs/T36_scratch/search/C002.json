@@ -1,0 +1,473 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/version/v1/registrationToken"
+  },
+  "observed_status": 400,
+  "field": null,
+  "spec": {
+    "file": "08_experiments/E1_pilot/runs/cwa-verification/20261114T084828Z_batch_118863_baseline_NONE_p0_s1/spec.original.json",
+    "path": "/version/v1/registrationToken",
+    "statuses": [
+      "201",
+      "400",
+      "500"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1version~1v1~1registrationToken/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "conflicting",
+  "evidence_types_found": [
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:81",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 81,
+      "snippet": "@RequestHeader(value = \"cwa-fake\", required = false) String fake) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/version/v1/registrationToken",
+      "methods": [
+        "POST"
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:120",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 120,
+      "snippet": "throw new VerificationServerException(HttpStatus.BAD_REQUEST, \"The teleTAN verification failed\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:123",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 123,
+      "snippet": "throw new VerificationServerException(HttpStatus.BAD_REQUEST,",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:63",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 63,
+      "snippet": "/**",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:64",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 64,
+      "snippet": "* This method generates a registrationToken by a hashed guid or a teleTAN.",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:65",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 65,
+      "snippet": "*",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:66",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 66,
+      "snippet": "* @param request {@link RegistrationTokenRequest}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:67",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 67,
+      "snippet": "* @param fake    flag for fake request",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:68",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 68,
+      "snippet": "* @return RegistrationToken - the created registration token {@link RegistrationToken}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:69",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 69,
+      "snippet": "*/",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:70",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 70,
+      "snippet": "@Operation(",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:71",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 71,
+      "snippet": "summary = \"Get registration Token\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:72",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 72,
+      "snippet": "description = \"Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        256
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:73",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 73,
+      "snippet": "@ApiResponses(value = {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:74",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 74,
+      "snippet": "@ApiResponse(responseCode = \"201\", description = \"registration token generated.\"),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:75",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 75,
+      "snippet": "@ApiResponse(responseCode = \"400\", description = \"GUID/TeleTAN already exists.\")})",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        400
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java:154",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 154,
+      "snippet": "throw new VerificationServerException(HttpStatus.BAD_REQUEST,",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 3,
+      "site_class": "ExternalTanController",
+      "pattern": [
+        "status",
+        "400"
+      ],
+      "statuses": [
+        400
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:123",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 123,
+      "snippet": "throw new VerificationServerException(HttpStatus.BAD_REQUEST,",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 3,
+      "site_class": "ExternalTokenController",
+      "pattern": [
+        "status",
+        "400"
+      ],
+      "statuses": [
+        400
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java:83",
+      "file": "src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java",
+      "line": 83,
+      "snippet": "return ResponseEntity.badRequest().build();",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 3,
+      "site_class": "VerificationExceptionHandler",
+      "pattern": [
+        "status",
+        "400"
+      ],
+      "statuses": [
+        400
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-HISTORY",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:81",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+      "line": 81,
+      "snippet": "@RequestHeader(value = \"cwa-fake\", required = false) String fake) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate commit; pickaxe occurrence does not prove intent; inspect commit",
+      "independent": true,
+      "commit": "9158590 Merge branch 'develop' of https://github.com/WebFuzzing/EMB",
+      "literal": "400",
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "literal": "400",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 67,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 1,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

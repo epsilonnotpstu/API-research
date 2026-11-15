@@ -1,0 +1,65 @@
+{
+  "operation": {
+    "method": "PUT",
+    "path": "/v1/categories/{id}"
+  },
+  "observed_status": 400,
+  "field": null,
+  "spec": {
+    "file": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/spec.original.json",
+    "path": "/v1/categories/{id}",
+    "statuses": [
+      "200"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1v1~1categories~1{id}/put"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:82",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java",
+      "line": 82,
+      "snippet": "public Tag update(@Auth @ApiParam(hidden = true) AuthResult authResult, @Context HttpServletResponse response, @PathParam(\"id\") long id, Tag updatedTag) {",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/v1/categories/{id}",
+      "methods": [
+        "PUT"
+      ],
+      "independent": false
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java",
+        "literal": "400",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 130,
+    "skipped_binary_or_encoding": 12,
+    "skipped_large": 1,
+    "skipped_symlink": 0,
+    "skipped_dirs": 4,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+  "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+  "format": "swagger2",
+  "fault": "REQUEST_STRICT",
+  "severity": 30,
+  "seed": 2,
+  "operations_total": 13,
+  "only_ops": null,
+  "operations_mutated": 4,
+  "mutations": [
+    {
+      "path": "/customer/cart",
+      "method": "get",
+      "operationId": "getCartUsingGET",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1customer~1cart/get/parameters/0/maxLength",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "path": "/customer/cart",
+      "method": "put",
+      "operationId": "addItemUsingPUT",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1customer~1cart/put/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/CartItemDTOReq",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1customer~1cart/put/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "_links": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deprecation": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "href": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "hreflang": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "media": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "profile": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "rel": {
+                    "type": "object",
+                    "title": "LinkRelation"
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "maxLength": 1
+                  }
+                },
+                "title": "Link"
+              }
+            },
+            "productId": {
+              "type": "integer",
+              "format": "int64",
+              "maximum": 0
+            },
+            "quantity": {
+              "type": "integer",
+              "format": "int32",
+              "maximum": 0
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1customer~1cart/put/parameters/0/schema/title",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "CartItemDTOReq"
+        },
+        {
+          "pointer": "/paths/~1customer~1cart/put/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        },
+        {
+          "pointer": "/paths/~1customer~1cart/put/parameters/1/maxLength",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": 1
+        }
+      ]
+    },
+    {
+      "path": "/customer/orders/{orderId}",
+      "method": "get",
+      "operationId": "getOrderUsingGET",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1customer~1orders~1{orderId}/get/parameters/0/maxLength",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": 1
+        },
+        {
+          "pointer": "/paths/~1customer~1orders~1{orderId}/get/parameters/1/maximum",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": 0
+        }
+      ]
+    },
+    {
+      "path": "/products/{productId}",
+      "method": "get",
+      "operationId": "getProductUsingGET",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1products~1{productId}/get/parameters/0/maximum",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": 0
+        }
+      ]
+    }
+  ],
+  "strict_keywords": [
+    "maxLength",
+    "maximum"
+  ],
+  "selected_no_edit": []
+}

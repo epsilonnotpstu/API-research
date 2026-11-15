@@ -21,6 +21,18 @@ export SCHEMA_CHECKS=${SCHEMA_CHECKS:-all}
 budget=${BUDGET_SECONDS:-300}
 severity=${SEVERITY:-30}
 [[ $budget =~ ^[1-9][0-9]*$ && $severity =~ ^[1-9][0-9]?$|^100$ ]] || { echo 'Invalid budget/severity' >&2; exit 2; }
+# Non-empty STRICT_KEYWORDS requires exactly FAULTS=REQUEST_STRICT. Validate
+# before creating any batch output; the comparison baseline runs without the knob.
+source "$HERE/fuzzer_args.sh"
+build_strict_args REQUEST_STRICT
+if [[ -n ${STRICT_KEYWORDS:-} ]]; then
+    strict_fault_count=0
+    for strict_fault in ${FAULTS:-REQUEST_LOOSE REQUEST_STRICT RESPONSE_ORACLE METHOD_SEM}; do
+        [[ $strict_fault == REQUEST_STRICT ]] || { echo 'STRICT_KEYWORDS requires FAULTS=REQUEST_STRICT' >&2; exit 2; }
+        strict_fault_count=$((strict_fault_count + 1))
+    done
+    [[ $strict_fault_count == 1 ]] || { echo 'STRICT_KEYWORDS requires FAULTS=REQUEST_STRICT' >&2; exit 2; }
+fi
 spec="$EMB_DIR/$SPEC_SOURCE"
 runs="$EXP/E1_pilot/runs/$sut"
 batch_id="$(date -u +%Y%m%dT%H%M%SZ)_batch_$$"
@@ -33,7 +45,11 @@ run_one() {
     id="${batch_id}_${mode}_${fault}_p${percent}_s${seed}"
     # Exact path reserved by run_pilot's exclusive mkdir; never guess from old runs.
     LAST_RUN="$runs/$id"
-    PILOT_RUN_ID="$id" "$HERE/run_pilot.sh" "$sut" "$spec" "$mode" "$fault" "$percent" "$seed" "$budget"
+    if [[ $mode == baseline && -n ${STRICT_KEYWORDS:-} ]]; then
+        STRICT_KEYWORDS= PILOT_RUN_ID="$id" "$HERE/run_pilot.sh" "$sut" "$spec" "$mode" "$fault" "$percent" "$seed" "$budget"
+    else
+        PILOT_RUN_ID="$id" "$HERE/run_pilot.sh" "$sut" "$spec" "$mode" "$fault" "$percent" "$seed" "$budget"
+    fi
     printf '%s\t%s\t%s\t%s\n' "$seed" "$mode" "$fault" "$LAST_RUN" >>"$batch_dir/runs.tsv"
 }
 for seed in "${seeds[@]}"; do
