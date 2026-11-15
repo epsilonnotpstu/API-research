@@ -172,4 +172,4 @@
 5. ~~দ্বিতীয় fuzzer (EvoMaster)~~ — হয়েছে (H9)। বাকি:
    - ~~Schemathesis-এর same-seed replicate দিয়ে একই trajectory বিশ্লেষণ~~ — হয়েছে। Schemathesis-এর replicate নিজেরাই অনেক সরে যায় (positional median 0.26–0.72)।
    - কোন reference উপযুক্ত, তা নির্ধারণে আরও replicate দরকার (T34 F1)।
-   - market STRICT-এ 500-পথের code-level কারণ।
+   - ~~market STRICT-এ 500-পথের code-level কারণ~~ — হয়েছে (T35)। Mutation `_links`-কে required করেছিল, আর SUT-এর HAL deserializer array রূপের `_links`-এ 500 দেয়। এটা multi-keyword STRICT edit-এর interaction।

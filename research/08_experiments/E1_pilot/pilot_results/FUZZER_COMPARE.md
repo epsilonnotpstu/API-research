@@ -165,6 +165,14 @@
        - Schemathesis-এর ভাঙা request 2xx পায় (2/65/198), ফলে INVALID_ACCEPTED NEW হয়।
        - EvoMaster-এর **baseline** traffic-এর ভাঙা request 2xx পেয়েছিল (81/280/667); replay NEW সেখান থেকেই আসে।
      - তাই পার্থক্যটা "constraint ভাঙে কিনা" নয়, বরং ভাঙা request SUT-এর কোন পথে যায় (সফল 2xx নাকি 500)।
+     - **500-এর code-level কারণ (T35, `09_collab/reports/T35_report.md`):**
+       - EvoMaster-এর 753টি violating request সবই `PUT /customer/contacts`, আর প্রতিটির body-তে `_links` একটা **array**।
+       - Market-এর HAL deserializer (Spring HATEOAS) এখানে `JsonParseException` ("Expected relation name") দেয়, আর generic `RestExceptionHandler` সেটাকে 500 বানায়।
+       - STRICT mutation আগে-optional `_links`-কে **required** করেছে, তাই mutated spec থেকে EvoMaster প্রতিটি body-তে `_links` পাঠায়। Baseline-এর 2xx PUT-গুলোতে `_links` অনুপস্থিত (155/155)।
+       - তাই phone/address-এর breach এই 500-এর কারণ নয়। কারণটা spec-এর array রূপ আর SUT-এর HAL-এর মধ্যে আগে থেকেই থাকা অমিল, যা baseline-এও array request-এ দেখা যায়। Required edit সেই পথে traffic ঠেলে দিয়েছে।
+       - Schemathesis-এর 2xx violation অন্য operation-এ, তাই "একই breach, ভিন্ন status" এমন সরাসরি জোড়া এই corpus-এ নেই।
+       - Claude-এর spot-check: s1-এ 392, s3-এ 361টি array-`_links` PUT, সব 500 + HAL message।
+       - ⚠️ Edit-ধরে ablation করা হয়নি।
        - ⚠️ T32-এর আরেকটা পর্যবেক্ষণ: কিছু STRICT edit original pattern-এর সঙ্গে মিলিয়ে অসম্ভব (যেমন phone regex ≥12 char কিন্তু `maxLength=1`)। এর প্রভাব generator-ভেদে আলাদা হতে পারে; causal কারণ যাচাই হয়নি।
      - R1-এর জন্য তাৎপর্য: fresh-only মূল্যায়ন generator-এর পথ এবং SUT-এর আচরণের ওপর নির্ভর করে। Replay mode একই baseline traffic-এ oracle বদলায়, তাই এই নির্ভরতা থেকে মুক্ত।
    - **petstore METHOD_SEM:** EvoMaster 3/3; Schemathesis-এর সংকেত শুধু `REQUEST_UNCHECKABLE`, তাই checkable 0/3।
@@ -200,4 +208,5 @@
 - Trajectory metric literal। Volatile-field normalization নেই, আর response body তুলনা করা হয়নি।
 - Schemathesis-এর same-seed replicate-এর trajectory মাপা হয়েছে। কিন্তু controlled ঘরের সংকেত-নিয়মে Schemathesis-এর জন্য cross-seed reference-ই রাখা হয়েছে, দুই fuzzer-কে একই নিয়মে তুলনা করতে।
 - Mapped fingerprint পরিবর্তন cause প্রমাণ করে না। Labelling ছাড়া এটা "detection" নয়।
-- "Spec মেনে চলা generator" ব্যাখ্যাটা T32-এ সরাসরি যাচাই করে খণ্ডিত হয়েছে; market STRICT-এ 500-পথের কারণ (code-level) খোলা।
+- "Spec মেনে চলা generator" ব্যাখ্যাটা T32-এ সরাসরি যাচাই করে খণ্ডিত হয়েছে।
+- Market STRICT-এর 500-পথ T35-এ ব্যাখ্যা হয়েছে: required `_links` আর HAL parse 500। এখান থেকে একটা সাধারণ শিক্ষা: একাধিক keyword-এর STRICT edit (required + maxLength একসঙ্গে) একক constraint-এর causal প্রভাব হিসেবে পড়া যায় না।
