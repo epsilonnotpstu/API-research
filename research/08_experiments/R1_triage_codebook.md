@@ -1,4 +1,4 @@
-# R1 Triage Codebook — v0.3 (খসড়া)
+# R1 Triage Codebook — v0.6 (খসড়া; v0.4–v0.6 সংযোজন §10–§12)
 
 **তারিখ:** 2026-11-09 · **উদ্দেশ্য:** OpenAPI conformance failure-কে **উৎস (attribution)** অনুযায়ী label করার নিয়ম।
 - Manual labelling (বাস্তব failure) ও injected ground truth (§5) — দুটোতেই একই scheme।
@@ -278,3 +278,25 @@ Baseline-এর সব S-STATUS label (`E2_labelling/*_adjudication.csv`) §11.1
 - **scout 400/404 (25টি):** Dropwizard/JAX-RS framework-এর default আচরণ; সব operation-এ একই নীতি, কোনো একক code লাইন নয়।
 - **scout 403 (B065):** labeller B test source-কে প্রমাণ হিসেবে উল্লেখ করেছে।
 - **market 406 (M003, M005, M007, M012):** দুটো আলাদা handler (`RestExceptionHandler.java:63-64,73-74`)।
+
+## 12. v0.6 — §11.4 intent-evidence search procedure গৃহীত (2026-11-15)
+**সিদ্ধান্তের কর্তৃত্ব:** supervisor সিদ্ধান্তটা Claude-কে অর্পণ করেছেন ("tomar bichare jeita vlo hoy seitai answer hisabe nao", 2026-11-15)। প্রতিটি সিদ্ধান্ত `09_collab/COLLAB_BOARD.md`-এ লেখা আছে, supervisor পরে বদলাতে পারবেন।
+- **Normative text:** `E2_labelling/proposals/CODEBOOK_11_4_PROPOSAL.md` §11.4.1–§11.4.6 (Codex T33)।
+  - এখানে reference হিসেবে গৃহীত, নিচের সিদ্ধান্ত আর সংশোধন সহ।
+  - Proposal file-এর "DRAFT / NOT ADOPTED" শিরোনাম ঐতিহাসিক। গৃহীত অবস্থার উৎস এই §12।
+- Proposal-এর ⚠️ চিহ্নিত procedure-বাক্যগুলো এখন নিয়ম। ⚠️ চিহ্নিত তথ্যগত inference-গুলো inference-ই থাকবে।
+
+### 12.1 §11.4.7-এর সাত প্রশ্নের উত্তর
+| # | প্রশ্ন | সিদ্ধান্ত | কারণ |
+|---|---|---|---|
+| 1 | Tool verdict → label mapping | **A**: raw string অক্ষত থাকবে। Reviewed direction দিয়ে map: implementation-এর আচরণ intended হলে SPEC হতে পারে, spec-এর আচরণ intended হলে IMPL হতে পারে (§11.4.3 সারণি)। **B পরে:** tool-এর পরের version-এ attribution-নিরপেক্ষ নাম (`supports_observed_behavior` / `supports_spec_behavior`), versioned migration-সহ। | T33/T26 প্রমাণ: raw `supports_spec` = spec-এর আচরণের পক্ষে। Literal mapping (C) উল্টো label দিত। |
+| 2 | Mandatory search-এর পরিসর | **A**: সব intent-ভিত্তিক SPEC/SPEC_PARTIAL আর অমীমাংসিত SPEC↔IMPL candidate। Deterministic structural/TEST/ENV rule-এ ছাড় (§11.4.1)। | H8: ভুল দিকের attribution আসে intent-নির্ভর সিদ্ধান্তে। সব L1-এ search (C) খরচ বাড়ায়, কিন্তু deterministic rule-এ তথ্য যোগ করে না। |
+| 3 | "একাধিক স্বাধীন site"-এর threshold | **A**: policy আর scenario-র স্বাধীনতা প্রধান। Market-এর বিদ্যমান same-class two-handler precedent বহাল। নতুন same-class ক্ষেত্রে Claude provisional সিদ্ধান্ত দেবেন, `adjudication_flag=same_class_policy` সহ; supervisor review করবেন। | Class boundary একা স্বাধীনতার মাপ নয়। আবার labeller-এর হাতে পুরো ছাড় (C) দিলে drift হয়। |
+| 4 | Handler-এর Javadoc/`@ApiResponse` | **A**: স্বাধীন ধরা হবে কেবল আলাদা normative provenance আর branch linkage যাচাই হলে। প্রশ্নবিদ্ধ line বা spec-এর পুনরুক্তি স্বাধীন নয়। | `@ApiResponse` প্রায়ই spec-generator-এর উৎস, তাই spec-এর সঙ্গে circular। |
+| 5 | conflict/none_found | **A**: scenario-filtered প্রকৃত conflict হলে default UNDECIDABLE + `both_candidate=true`। Documented exception (§11.4.3) আর locator বাধ্যতামূলক। | §11.1-এর abstention নীতির সঙ্গে সঙ্গত। B অন্য প্রতিষ্ঠিত rule-কে উপেক্ষা করত। |
+| 6 | CSV format | **A**: বিদ্যমান E2 column + পাঁচটি intent field (§11.4.4)। Raw JSON আর review record immutable; একই hash ও scenario-তে reuse। পুরোনো file rewrite হবে না। | Audit trail লাগে, আবার পুরোনো label sheet স্থির থাকা দরকার। |
+| 7 | Validation ও stopping rule | **A**, তিন ধাপে। (i) Non-blind pilot: baseline-এর পূর্বনির্ধারিত নমুনায় procedure আর reporting (T36)। (ii) Coverage gap ম্যানুয়ালি না মিটলে intent-based label defer। (iii) **Held-out মূল্যায়ন = E5 code-mutant blind labelling v3 (v0.6 দিয়ে)**, কারণ সেখানে ground truth (IMPL) জানা। | E5-এ injected ground truth আছে, তাই §11.4 আসলে ভুল দিকের attribution কমায় কিনা, তা সরাসরি মাপা যায়। Current smoke-এর ভিত্তিতে সরাসরি adoption (B) যাচাইহীন। |
+
+### 12.2 কার্যকর হওয়ার পরিধি
+- **নতুন labelling-এ প্রযোজ্য:** T36 pilot আর E5 v3 blind labelling।
+- **পুরোনো চূড়ান্ত label:** স্বয়ংক্রিয়ভাবে বদলাবে না। T36 pilot যেখানে ভিন্ন সিদ্ধান্ত দেখাবে, সেগুলো review proposal হিসেবে আসবে (§11.4.1 শেষ সারি)।
