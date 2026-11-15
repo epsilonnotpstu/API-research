@@ -1,0 +1,60 @@
+diff --git a/build.gradle.kts b/build.gradle.kts
+index a9d329b..25dcb10 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -36,11 +36,11 @@ spotless {
+ 
+ dependencies {
+   annotationProcessor("org.springframework.boot", "spring-boot-configuration-processor")
+   checkstyle(libs.stylecheck)
+   implementation(libs.jetbrains.annotations)
+-  implementation(libs.springdoc.openapi.ui)
++  implementation(libs.springdoc.openapi.starter.webmvc.ui)
+   implementation("org.springframework.boot", "spring-boot-starter-data-mongodb")
+   implementation("org.springframework.boot", "spring-boot-starter-validation")
+   implementation("org.springframework.boot", "spring-boot-starter-web")
+   testImplementation("org.springframework.boot", "spring-boot-starter-test") {
+     exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index e5f95eb..b641104 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -8,7 +8,7 @@ spotless = { id = "com.diffplug.spotless", version = "6.12.0" }
+ spring-boot = { id = "org.springframework.boot", version = "3.0.1" }
+ spring-dependency-management = { id = "io.spring.dependency-management", version = "1.1.0" }
+ 
+ [libraries]
+ jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version = "23.1.0" }
+-springdoc-openapi-ui = { group = "org.springdoc", name = "springdoc-openapi-ui", version = "1.6.14" }
++springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version = "2.0.2" }
+ stylecheck = { group = "ca.stellardrift", name = "stylecheck", version = "0.2.0" }
+diff --git a/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java b/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
+index e102d69..5e09064 100644
+--- a/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
++++ b/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
+@@ -29,11 +29,11 @@ import io.swagger.v3.oas.models.media.Schema;
+ import io.swagger.v3.oas.models.servers.Server;
+ import java.net.URL;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.TreeMap;
+-import org.springdoc.core.customizers.OpenApiCustomiser;
++import org.springdoc.core.customizers.OpenApiCustomizer;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
+ 
+ @Configuration
+ class OpenAPIConfiguration {
+@@ -51,11 +51,11 @@ class OpenAPIConfiguration {
+     return api;
+   }
+ 
+   @Bean
+   @SuppressWarnings("rawtypes") // nothing we can do, the API exposes it raw
+-  OpenApiCustomiser sortSchemasAlphabetically() {
++  OpenApiCustomizer sortSchemasAlphabetically() {
+     return openApi -> {
+       final Map<String, Schema> schemas = openApi.getComponents().getSchemas();
+       openApi.getComponents().setSchemas(new TreeMap<>(schemas));
+     };
+   }

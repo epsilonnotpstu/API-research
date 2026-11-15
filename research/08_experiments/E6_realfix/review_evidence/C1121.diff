@@ -1,0 +1,445 @@
+diff --git a/quartz-manager-parent/quartz-manager-starter-api/pom.xml b/quartz-manager-parent/quartz-manager-starter-api/pom.xml
+index d30e3b1..63d327f 100644
+--- a/quartz-manager-parent/quartz-manager-starter-api/pom.xml
++++ b/quartz-manager-parent/quartz-manager-starter-api/pom.xml
+@@ -15,11 +15,11 @@
+ 	<url>https://github.com/fabioformosa/quartz-manager</url>
+ 	<properties>
+ 		<main.basedir>${basedir}/../..</main.basedir>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+-          <springfox.version>2.9.2</springfox.version>
++        <openapi.version>1.5.12</openapi.version>
+         <java.version>1.8</java.version>
+ 	</properties>
+   
+ 	<dependencies>
+         <dependency>
+@@ -139,11 +139,16 @@
+       
+          <!-- OAS -->
+           <dependency>
+             <groupId>org.springdoc</groupId>
+             <artifactId>springdoc-openapi-ui</artifactId>
+-            <version>1.5.12</version>
++            <version>${openapi.version}</version>
++          </dependency>
++          <dependency>
++            <groupId>org.springdoc</groupId>
++            <artifactId>springdoc-openapi-security</artifactId>
++            <version>${openapi.version}</version>
+           </dependency>
+           <dependency>
+             <groupId>io.swagger.core.v3</groupId>
+             <artifactId>swagger-annotations</artifactId>
+             <version>2.1.11</version>
+diff --git a/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/SchedulerController.java b/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/SchedulerController.java
+index 8d5cb21..5798662 100644
+--- a/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/SchedulerController.java
++++ b/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/SchedulerController.java
+@@ -3,10 +3,11 @@ package it.fabioformosa.quartzmanager.controllers;
+ import io.swagger.v3.oas.annotations.Operation;
+ import io.swagger.v3.oas.annotations.media.Content;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ import io.swagger.v3.oas.annotations.responses.ApiResponse;
+ import io.swagger.v3.oas.annotations.responses.ApiResponses;
++import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+ import it.fabioformosa.quartzmanager.dto.SchedulerConfigParam;
+ import it.fabioformosa.quartzmanager.dto.SchedulerDTO;
+ import it.fabioformosa.quartzmanager.dto.TriggerStatus;
+ import it.fabioformosa.quartzmanager.enums.SchedulerStates;
+ import it.fabioformosa.quartzmanager.services.SchedulerService;
+@@ -31,10 +32,11 @@ import java.util.Map;
+  * also methods to set new config and start/stop/resume the scheduler.
+  *
+[REDACTED personal attribution]
+  */
+ @RestController
++@SecurityRequirement(name = "basic-auth")
+ @RequestMapping("/quartz-manager/scheduler")
+ public class SchedulerController {
+ 
+   private final Logger log = LoggerFactory.getLogger(SchedulerController.class);
+ 
+diff --git a/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/TriggerController.java b/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/TriggerController.java
+index 99d846e..0c93ccd 100644
+--- a/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/TriggerController.java
++++ b/quartz-manager-parent/quartz-manager-starter-api/src/main/java/it/fabioformosa/quartzmanager/controllers/TriggerController.java
+@@ -3,10 +3,11 @@ package it.fabioformosa.quartzmanager.controllers;
+ import io.swagger.v3.oas.annotations.Operation;
+ import io.swagger.v3.oas.annotations.media.Content;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ import io.swagger.v3.oas.annotations.responses.ApiResponse;
+ import io.swagger.v3.oas.annotations.responses.ApiResponses;
++import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+ import it.fabioformosa.quartzmanager.dto.SchedulerConfigParam;
+ import it.fabioformosa.quartzmanager.dto.TriggerDTO;
+ import it.fabioformosa.quartzmanager.services.SchedulerService;
+ import lombok.extern.slf4j.Slf4j;
+ import org.quartz.SchedulerException;
+@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.*;
+ 
+ import javax.validation.Valid;
+ 
+ @Slf4j
+ @RequestMapping(TriggerController.TRIGGER_CONTROLLER_BASE_URL)
++@SecurityRequirement(name = "basic-auth")
+ @RestController
+ public class TriggerController {
+ 
+   static public final String TRIGGER_CONTROLLER_BASE_URL = "/quartz-manager/triggers";
+ 
+diff --git a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/configuration/WebSecurityConfigJWT.java b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/configuration/WebSecurityConfigJWT.java
+index 429ecb6..b56dffe 100644
+--- a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/configuration/WebSecurityConfigJWT.java
++++ b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/configuration/WebSecurityConfigJWT.java
+@@ -102,11 +102,11 @@ public class WebSecurityConfigJWT extends WebSecurityConfigurerAdapter {
+         //    http.csrf().ignoringAntMatchers("/api/login", "/api/signup") //
+         //    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) //
+     }
+ 
+     @Override
+-    public void configure(WebSecurity web) throws Exception {
++    public void configure(WebSecurity web) {
+         web.ignoring()//
+         .antMatchers(HttpMethod.GET, PATTERNS_SWAGGER_UI) //
+         .antMatchers(HttpMethod.GET, WEBJAR_PATH + "/css/**", WEBJAR_PATH + "/js/**", WEBJAR_PATH + "/img/**", WEBJAR_PATH + "/lib/**", WEBJAR_PATH + "/assets/**");
+     }
+ 
+@@ -144,11 +144,11 @@ public class WebSecurityConfigJWT extends WebSecurityConfigurerAdapter {
+         JwtAuthenticationSuccessHandler jwtAuthenticationSuccessHandler = new JwtAuthenticationSuccessHandlerImpl(contextPath, jwtSecurityProps, jwtTokenHelper, objectMapper);
+         return jwtAuthenticationSuccessHandler;
+     }
+ 
+     @Bean
+-    public JwtTokenAuthenticationFilter jwtAuthenticationTokenFilter() throws Exception {
++    public JwtTokenAuthenticationFilter jwtAuthenticationTokenFilter() {
+         return new JwtTokenAuthenticationFilter(jwtTokenHelper(), userDetailsService);
+     }
+ 
+     @Bean
+     public JwtTokenHelper jwtTokenHelper() {
+diff --git a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenAuthenticationFilter.java b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenAuthenticationFilter.java
+index 346bb2f..c84ca6f 100644
+--- a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenAuthenticationFilter.java
++++ b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenAuthenticationFilter.java
+@@ -1,105 +1,103 @@
+-package it.fabioformosa.quartzmanager.security.helpers.impl;
+-
+-import java.io.IOException;
+-import java.util.ArrayList;
+-import java.util.Arrays;
+-import java.util.List;
+-import java.util.stream.Collectors;
+-
+-import javax.servlet.FilterChain;
+-import javax.servlet.ServletException;
+-import javax.servlet.http.HttpServletRequest;
+-import javax.servlet.http.HttpServletResponse;
+-
+-import org.slf4j.Logger;
+-import org.slf4j.LoggerFactory;
+-import org.springframework.security.core.context.SecurityContextHolder;
+-import org.springframework.security.core.userdetails.UserDetails;
+-import org.springframework.security.core.userdetails.UserDetailsService;
+-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+-import org.springframework.security.web.util.matcher.OrRequestMatcher;
+-import org.springframework.security.web.util.matcher.RequestMatcher;
+-import org.springframework.web.filter.OncePerRequestFilter;
+-
+-
+-/**
+- *   It finds the jwtToken into the request, it validates it and sets an @Authentication into the @SecurityContextHolder.
+- *   If the request has a path included into the paths that must be skipped, it sets an anonymous authentication
+- *
+- *   It delegates the jwtToken retrieve to the @JwtTokenHelper that applies several strategies.
+- *
+- */
+-public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
+-
+-  private static final Logger log = LoggerFactory.getLogger(JwtTokenAuthenticationFilter.class);
+-
+-  private static final String ROOT_MATCHER = "/";
+-  private static final String FAVICON_MATCHER = "/favicon.ico";
+-  private static final String HTML_MATCHER = "/**/*.html";
+-  private static final String CSS_MATCHER = "/**/*.css";
+-  private static final String JS_MATCHER = "/**/*.js";
+-  private static final String IMG_MATCHER = "/images/*";
+-  private static final String LOGIN_MATCHER = "/api/login";
+-  private static final String LOGOUT_MATCHER = "/api/logout";
+-
+-  private static List<String> PATH_TO_SKIP = Arrays.asList(
+-      ROOT_MATCHER,
+-      HTML_MATCHER,
+-      FAVICON_MATCHER,
+-      CSS_MATCHER,
+-      JS_MATCHER,
+-      IMG_MATCHER,
+-      LOGIN_MATCHER,
+-      LOGOUT_MATCHER
+-      );
+-
+-  private final JwtTokenHelper jwtTokenHelper;
+-  private final UserDetailsService userDetailsService;
+-
+-
+-  public JwtTokenAuthenticationFilter(JwtTokenHelper jwtTokenHelper, UserDetailsService userDetailsService) {
+-    super();
+-    this.jwtTokenHelper = jwtTokenHelper;
+-    this.userDetailsService = userDetailsService;
+-  }
+-
+-  @Override
+-  public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+-
+-    String jwtToken = jwtTokenHelper.retrieveToken(request);
+-    if (jwtToken != null) {
+-      log.debug("Found a jwtToken into the request {}", request.getPathInfo());
+-      try {
+-        String username = jwtTokenHelper.getUsernameFromToken(jwtToken);
+-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+-
+-        JwtTokenBasedAuthentication authentication = new JwtTokenBasedAuthentication(userDetails);
+-        authentication.setToken(jwtToken);
+-
+-        SecurityContextHolder.getContext().setAuthentication(authentication);
+-      } catch (Exception e) {
+-        log.error("Authentication failed! an expected error occurred authenticating the request {}", request.getRequestURL());
+-        //        SecurityContextHolder.getContext().setAuthentication(new AnonAuthentication());
+-        //        log.error("Switched to Anonymous Authentication, "
+-        //            + "because an error occurred setting authentication in security context holder due to " + e.getMessage(), e);
+-      }
+-    }
+-    else if(skipPathRequest(request, PATH_TO_SKIP)) {
+-      log.debug("Detected a path to be skipped from authentication, so activated anonymous auth for {}", request.getRequestURL());
+-      SecurityContextHolder.getContext().setAuthentication(new AnonAuthentication());
+-    }
+-    else
+-      log.debug("Not found any jwtToken and the request hasn't a path to be skipped from auth. Path: {}", request.getRequestURL());
+-
+-    chain.doFilter(request, response);
+-  }
+-
+-  private boolean skipPathRequest(HttpServletRequest request, List<String> pathsToSkip ) {
+-    if(pathsToSkip == null)
+-      pathsToSkip = new ArrayList<String>();
+-    List<RequestMatcher> matchers = pathsToSkip.stream().map(path -> new AntPathRequestMatcher(path)).collect(Collectors.toList());
+-    OrRequestMatcher compositeMatchers = new OrRequestMatcher(matchers);
+-    return compositeMatchers.matches(request);
+-  }
+-
+-}
+\ No newline at end of file
++package it.fabioformosa.quartzmanager.security.helpers.impl;
++
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.security.core.context.SecurityContextHolder;
++import org.springframework.security.core.userdetails.UserDetails;
++import org.springframework.security.core.userdetails.UserDetailsService;
++import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
++import org.springframework.security.web.util.matcher.OrRequestMatcher;
++import org.springframework.security.web.util.matcher.RequestMatcher;
++import org.springframework.web.filter.OncePerRequestFilter;
++
++import javax.servlet.FilterChain;
++import javax.servlet.ServletException;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++import java.io.IOException;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.stream.Collectors;
++
++
++/**
++ *   It finds the jwtToken into the request, it validates it and sets an @Authentication into the @SecurityContextHolder.
++ *   If the request has a path included into the paths that must be skipped, it sets an anonymous authentication
++ *
++ *   It delegates the jwtToken retrieve to the @JwtTokenHelper that applies several strategies.
++ *
++ */
++public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
++
++  private static final Logger log = LoggerFactory.getLogger(JwtTokenAuthenticationFilter.class);
++
++  private static final String ROOT_MATCHER = "/";
++  private static final String FAVICON_MATCHER = "/favicon.ico";
++  private static final String HTML_MATCHER = "/**/*.html";
++  private static final String CSS_MATCHER = "/**/*.css";
++  private static final String JS_MATCHER = "/**/*.js";
++  private static final String IMG_MATCHER = "/images/*";
++  private static final String LOGIN_MATCHER = "/api/login";
++  private static final String LOGOUT_MATCHER = "/api/logout";
++
++  private static List<String> PATH_TO_SKIP = Arrays.asList(
++      ROOT_MATCHER,
++      HTML_MATCHER,
++      FAVICON_MATCHER,
++      CSS_MATCHER,
++      JS_MATCHER,
++      IMG_MATCHER,
++      LOGIN_MATCHER,
++      LOGOUT_MATCHER
++      );
++
++  private final JwtTokenHelper jwtTokenHelper;
++  private final UserDetailsService userDetailsService;
++
++
++  public JwtTokenAuthenticationFilter(JwtTokenHelper jwtTokenHelper, UserDetailsService userDetailsService) {
++    super();
++    this.jwtTokenHelper = jwtTokenHelper;
++    this.userDetailsService = userDetailsService;
++  }
++
++  @Override
++  public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
++    String jwtToken = jwtTokenHelper.retrieveToken(request);
++    if (jwtToken != null) {
++      log.debug("Found a jwtToken into the request {}", request.getPathInfo());
++      try {
++        String username = jwtTokenHelper.verifyTokenAndExtractUsername(jwtToken);
++        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
++
++        JwtTokenBasedAuthentication authentication = new JwtTokenBasedAuthentication(userDetails);
++        authentication.setToken(jwtToken);
++
++        SecurityContextHolder.getContext().setAuthentication(authentication);
++      } catch (Exception e) {
++        log.error("Authentication failed! an expected error occurred authenticating the request {} due to {}", request.getRequestURL(), e.getMessage(), e);
++        //        SecurityContextHolder.getContext().setAuthentication(new AnonAuthentication());
++        //        log.error("Switched to Anonymous Authentication, "
++        //            + "because an error occurred setting authentication in security context holder due to " + e.getMessage(), e);
++      }
++    }
++    else if(skipPathRequest(request, PATH_TO_SKIP)) {
++      log.debug("Detected a path to be skipped from authentication, so activated anonymous auth for {}", request.getRequestURL());
++      SecurityContextHolder.getContext().setAuthentication(new AnonAuthentication());
++    }
++    else
++      log.debug("Not found any jwtToken and the request hasn't a path to be skipped from auth. Path: {}", request.getRequestURL());
++
++    chain.doFilter(request, response);
++  }
++
++  private boolean skipPathRequest(HttpServletRequest request, List<String> pathsToSkip ) {
++    if(pathsToSkip == null)
++      pathsToSkip = new ArrayList<String>();
++    List<RequestMatcher> matchers = pathsToSkip.stream().map(path -> new AntPathRequestMatcher(path)).collect(Collectors.toList());
++    OrRequestMatcher compositeMatchers = new OrRequestMatcher(matchers);
++    return compositeMatchers.matches(request);
++  }
++
++}
+diff --git a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenHelper.java b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenHelper.java
+index b796f0b..fdaaf0c 100644
+--- a/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenHelper.java
++++ b/quartz-manager-parent/quartz-manager-starter-security/src/main/java/it/fabioformosa/quartzmanager/security/helpers/impl/JwtTokenHelper.java
+@@ -1,26 +1,24 @@
+ package it.fabioformosa.quartzmanager.security.helpers.impl;
+ 
++import io.jsonwebtoken.Claims;
++import io.jsonwebtoken.Jwts;
++import io.jsonwebtoken.SignatureAlgorithm;
++import it.fabioformosa.quartzmanager.security.configuration.properties.JwtSecurityProperties;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import javax.servlet.http.Cookie;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
+ import java.nio.charset.StandardCharsets;
+ import java.time.LocalDateTime;
+ import java.time.ZoneId;
+ import java.util.Base64;
+ import java.util.Date;
+ import java.util.Map;
+ 
+-import javax.servlet.http.Cookie;
+-import javax.servlet.http.HttpServletRequest;
+-import javax.servlet.http.HttpServletResponse;
+-
+-import org.slf4j.Logger;
+-import org.slf4j.LoggerFactory;
+-
+-import io.jsonwebtoken.Claims;
+-import io.jsonwebtoken.Jwts;
+-import io.jsonwebtoken.SignatureAlgorithm;
+-import it.fabioformosa.quartzmanager.security.configuration.properties.JwtSecurityProperties;
+-
+ /**
+  *
+[REDACTED personal attribution]
+  *
+  */
+@@ -45,11 +43,11 @@ public class JwtTokenHelper {
+         this.jwtSecurityProps = jwtSecurityProps;
+     }
+ 
+     public Boolean canTokenBeRefreshed(String token) {
+         try {
+-            final Date expirationDate = getClaimsFromToken(token).getExpiration();
++            final Date expirationDate = verifyAndGetClaimsFromToken(token).getExpiration();
+             // String username = getUsernameFromToken(token);
+             // UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+             return expirationDate.compareTo(generateCurrentDate()) > 0;
+         } catch (Exception e) {
+             return false;
+@@ -73,11 +71,11 @@ public class JwtTokenHelper {
+         return Jwts.builder().setIssuer(appName).setSubject(username).setIssuedAt(generateCurrentDate())
+                 .setExpiration(generateExpirationDate())
+                 .signWith(SIGNATURE_ALGORITHM, base64EncodeSecretKey(jwtSecurityProps.getSecret())).compact();
+     }
+ 
+-    private Claims getClaimsFromToken(String token) {
++    private Claims verifyAndGetClaimsFromToken(String token) {
+         Claims claims;
+         try {
+             claims = Jwts.parser().setSigningKey(base64EncodeSecretKey(jwtSecurityProps.getSecret()))
+                     .parseClaimsJws(token).getBody();
+         } catch (Exception e) {
+@@ -107,38 +105,37 @@ public class JwtTokenHelper {
+ 
+     private long getCurrentTimeMillis() {
+         return LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toInstant().toEpochMilli();
+     }
+ 
+-    public String getUsernameFromToken(String token) {
++    public String verifyTokenAndExtractUsername(String token) {
+         String username;
+         try {
+-            final Claims claims = getClaimsFromToken(token);
++            final Claims claims = verifyAndGetClaimsFromToken(token);
+             username = claims.getSubject();
+         } catch (Exception e) {
+-            username = null;
+             log.error("Error getting claims from jwt token due to " + e.getMessage(), e);
+             throw e;
+         }
+         return username;
+     }
+ 
+     public String refreshToken(String token) {
+         String refreshedToken;
+         try {
+-            final Claims claims = getClaimsFromToken(token);
++            final Claims claims = verifyAndGetClaimsFromToken(token);
+             claims.setIssuedAt(generateCurrentDate());
+             refreshedToken = generateToken(claims);
+         } catch (Exception e) {
+             log.error("Error refreshing jwt token due to " + e.getMessage(), e);
+             refreshedToken = null;
+         }
+         return refreshedToken;
+     }
+ 
+     public String retrieveToken(HttpServletRequest request) {
+-        if (jwtSecurityProps.getCookieStrategy().isEnabled() == true) {
++        if (jwtSecurityProps.getCookieStrategy().isEnabled()) {
+             Cookie authCookie = getCookieValueByName(request, jwtSecurityProps.getCookieStrategy().getCookie());
+             if (authCookie != null)
+                 return authCookie.getValue();
+         }
+ 

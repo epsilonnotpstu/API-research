@@ -1,0 +1,72 @@
+[parent contract] 20bb204294574fe8203fe5d6d7af248f348c0399:src/main/java/uk/gov/pay/api/resources/MandatesResource.java:90
+80:     @GET
+81:     @Timed
+82:     @Path("/v1/directdebit/mandates/")
+83:     @Produces(APPLICATION_JSON)
+84:     @ApiOperation(
+85:             value = "Search mandates",
+86:             notes = "Searches for mandates with the parameters provided. " +
+87:                     "The Authorisation token needs to be specified in the 'Authorization' header " +
+88: [REDACTED credential-related line]
+89:     @ApiResponses(value = {
+90:             @ApiResponse(code = 200, message = "OK", response = MandateResponse.class),
+91:             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+92:             @ApiResponse(code = 404, message = "Not found", response = MandateError.class),
+93:             @ApiResponse(code = 422, message = "Invalid parameters: from_date, to_date, state, page, display_size. See Public API documentation for the correct data formats", response = PaymentError.class),
+94:             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+95:             @ApiResponse(code = 500, message = "Downstream system error", response = MandateError.class)})
+96:     public Response searchMandates(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+97:                                    @Valid @BeanParam DirectDebitSearchMandatesParams mandateSearchParams) {
+98:         LOGGER.info("Mandate search request - [ {} ]", mandateSearchParams.toString());
+99:         SearchMandateResponse searchMandatesResponse = mandateSearchService.search(account, mandateSearchParams);
+100:         
+101:         LOGGER.info("Mandate search returned: [ {} ]", searchMandatesResponse);
+102:         return Response.ok().entity(searchMandatesResponse).build();
+
+[parent implementation] 20bb204294574fe8203fe5d6d7af248f348c0399:src/main/java/uk/gov/pay/api/resources/MandatesResource.java:99
+96:     public Response searchMandates(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+97:                                    @Valid @BeanParam DirectDebitSearchMandatesParams mandateSearchParams) {
+98:         LOGGER.info("Mandate search request - [ {} ]", mandateSearchParams.toString());
+99:         SearchMandateResponse searchMandatesResponse = mandateSearchService.search(account, mandateSearchParams);
+100:         
+101:         LOGGER.info("Mandate search returned: [ {} ]", searchMandatesResponse);
+102:         return Response.ok().entity(searchMandatesResponse).build();
+103:     }
+104:     
+
+[parent implementation] 20bb204294574fe8203fe5d6d7af248f348c0399:src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java:16
+9: public class SearchMandateResponse {
+10:     @JsonProperty("total")
+11:     private final int total;
+12:     @JsonProperty("count")
+13:     private final int count;
+14:     @JsonProperty("page")
+15:     private final int page;
+16:     @JsonProperty("results")
+17:     private final List<MandateResponse> mandates;
+18:     @JsonProperty("_links")
+19:     private final SearchNavigationLinks links;
+20: 
+21:     private SearchMandateResponse(SearchMandateResponseBuilder builder) {
+
+[fix contract] 7b237c5fab445c24308cf4113e707bf76e256450:src/main/java/uk/gov/pay/api/resources/MandatesResource.java:90
+87:                     "The Authorisation token needs to be specified in the 'Authorization' header " +
+88: [REDACTED credential-related line]
+89:     @ApiResponses(value = {
+90:             @ApiResponse(code = 200, message = "OK", response = SearchMandateResponse.class),
+91:             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+92:             @ApiResponse(code = 404, message = "Not found", response = MandateError.class),
+93:             @ApiResponse(code = 422, message = "Invalid parameters: from_date, to_date, state, page, display_size. See Public API documentation for the correct data formats", response = PaymentError.class),
+94:             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+95:             @ApiResponse(code = 500, message = "Downstream system error", response = MandateError.class)})
+
+[fix implementation] 7b237c5fab445c24308cf4113e707bf76e256450:src/main/java/uk/gov/pay/api/resources/MandatesResource.java:99
+96:     public Response searchMandates(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+97:                                    @Valid @BeanParam DirectDebitSearchMandatesParams mandateSearchParams) {
+98:         LOGGER.info("Mandate search request - [ {} ]", mandateSearchParams.toString());
+99:         SearchMandateResponse searchMandatesResponse = mandateSearchService.search(account, mandateSearchParams);
+100:         
+101:         LOGGER.info("Mandate search returned: [ {} ]", searchMandatesResponse);
+102:         return Response.ok().entity(searchMandatesResponse).build();
+103:     }
+104:     

@@ -1,0 +1,840 @@
+diff --git a/pom.xml b/pom.xml
+index 1b94cf4..48dd549 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -9,10 +9,12 @@
+   <artifactId>swagger-petstore-v2</artifactId>
+   <packaging>war</packaging>
+   <name>swagger-petstore-v2</name>
+   <version>1.0.4-SNAPSHOT</version>
+   <properties>
++    <maven.compiler.source>1.8</maven.compiler.source>
++    <maven.compiler.target>1.8</maven.compiler.target>
+     <swagger-version>1.5.24</swagger-version>
+     <logback-version>1.0.1</logback-version>
+     <servlet-api-version>2.5</servlet-api-version>
+     <scala-test-version>2.1.3</scala-test-version>
+     <jersey-version>1.13</jersey-version>
+diff --git a/src/main/java/io/swagger/sample/data/PetData.java b/src/main/java/io/swagger/sample/data/PetData.java
+index 61868df..03563b2 100644
+--- a/src/main/java/io/swagger/sample/data/PetData.java
++++ b/src/main/java/io/swagger/sample/data/PetData.java
+@@ -21,73 +21,62 @@ import io.swagger.sample.model.Pet;
+ import io.swagger.sample.model.Tag;
+ 
+ import java.util.*;
+ 
+ public class PetData {
+-  static List<Pet> pets = new ArrayList<Pet>();
+-  static List<Category> categories = new ArrayList<Category>();
++
++  public static final Long MAX_SIZE = 1000L;
++
++  static Map<Long, Pet> pets = Collections.synchronizedMap(new LinkedHashMap<Long, Pet>());
++  static Map<Long, Category> categories = Collections.synchronizedMap(new LinkedHashMap<Long, Category>());
+ 
+   static {
+-    categories.add(createCategory(1, "Dogs"));
+-    categories.add(createCategory(2, "Cats"));
+-    categories.add(createCategory(3, "Rabbits"));
+-    categories.add(createCategory(4, "Lions"));
++    categories.put(1L, createCategory(1, "Dogs"));
++    categories.put(2L, createCategory(2, "Cats"));
++    categories.put(3L, createCategory(3, "Rabbits"));
++    categories.put(4L, createCategory(4, "Lions"));
+ 
+-    pets.add(createPet(1, categories.get(1), "Cat 1", new String[] {
++    pets.put(1L, createPet(1, categories.get(2L), "Cat 1", new String[] {
+         "url1", "url2" }, new String[] { "tag1", "tag2" }, "available"));
+-    pets.add(createPet(2, categories.get(1), "Cat 2", new String[] {
++    pets.put(2L, createPet(2, categories.get(2L), "Cat 2", new String[] {
+         "url1", "url2" }, new String[] { "tag2", "tag3" }, "available"));
+-    pets.add(createPet(3, categories.get(1), "Cat 3", new String[] {
++    pets.put(3L, createPet(3, categories.get(2L), "Cat 3", new String[] {
+         "url1", "url2" }, new String[] { "tag3", "tag4" }, "pending"));
+ 
+-    pets.add(createPet(4, categories.get(0), "Dog 1", new String[] {
++    pets.put(4L, createPet(4, categories.get(1L), "Dog 1", new String[] {
+         "url1", "url2" }, new String[] { "tag1", "tag2" }, "available"));
+-    pets.add(createPet(5, categories.get(0), "Dog 2", new String[] {
++    pets.put(5L, createPet(5, categories.get(1L), "Dog 2", new String[] {
+         "url1", "url2" }, new String[] { "tag2", "tag3" }, "sold"));
+-    pets.add(createPet(6, categories.get(0), "Dog 3", new String[] {
++    pets.put(6L, createPet(6, categories.get(1L), "Dog 3", new String[] {
+         "url1", "url2" }, new String[] { "tag3", "tag4" }, "pending"));
+ 
+-    pets.add(createPet(7, categories.get(3), "Lion 1", new String[] {
++    pets.put(7L, createPet(7, categories.get(4L), "Lion 1", new String[] {
+         "url1", "url2" }, new String[] { "tag1", "tag2" }, "available"));
+-    pets.add(createPet(8, categories.get(3), "Lion 2", new String[] {
++    pets.put(8L, createPet(8, categories.get(4L), "Lion 2", new String[] {
+         "url1", "url2" }, new String[] { "tag2", "tag3" }, "available"));
+-    pets.add(createPet(9, categories.get(3), "Lion 3", new String[] {
++    pets.put(9L, createPet(9, categories.get(4L), "Lion 3", new String[] {
+         "url1", "url2" }, new String[] { "tag3", "tag4" }, "available"));
+ 
+-    pets.add(createPet(10, categories.get(2), "Rabbit 1", new String[] {
++    pets.put(10L, createPet(10, categories.get(3L), "Rabbit 1", new String[] {
+         "url1", "url2" }, new String[] { "tag3", "tag4" }, "available"));
+   }
+ 
+   public Pet getPetById(long petId) {
+-    for (Pet pet : pets) {
+-      if (pet.getId() == petId) {
+-        return pet;
+-      }
+-    }
+-    return null;
++    return pets.get(Long.valueOf(petId));
+   }
+ 
+   public boolean deletePet(long petId) {
+-    if(pets.size() > 0) {
+-      for (int i = pets.size() - 1; i >= 0; i--) {
+-        Pet pet = pets.get(i);
+-        if(pet.getId() == petId) {
+-          pets.remove(i);
+-          return true;
+-        }
+-      }
+-    }
+-    return false;
++    return pets.remove(Long.valueOf(petId)) == null ? false : true;
+   }
+ 
+   public List<Pet> findPetByStatus(String status) {
+     List<Pet> result = new java.util.ArrayList<Pet>();
+     if(status == null) {
+       return result;
+     }
+     String[] statuses = status.split(",");
+-    for (Pet pet : pets) {
++    for (Pet pet : pets.values()) {
+       for (String s : statuses) {
+         if (s.equals(pet.getStatus())) {
+           result.add(pet);
+         }
+       }
+@@ -98,13 +87,13 @@ public class PetData {
+   public List<Pet> findPetByTags(String tags) {
+     List<Pet> result = new java.util.ArrayList<Pet>();
+ 
+     if(tags == null) {
+       return result;
+-    }    
++    }
+     String[] tagList = tags.split(",");
+-    for (Pet pet : pets) {
++    for (Pet pet : pets.values()) {
+       if (null != pet.getTags()) {
+         for (Tag tag : pet.getTags()) {
+           for (String tagListString : tagList) {
+             if (tagListString.equals(tag.getName()))
+               result.add(pet);
+@@ -114,33 +103,32 @@ public class PetData {
+     }
+     return result;
+   }
+ 
+   public Pet addPet(Pet pet) {
+-    if(pet.getId() == 0) {
++    if(pet.getId() <1) {
+       long maxId = 0;
+-      for (int i = pets.size() - 1; i >= 0; i--) {
+-        if(pets.get(i).getId() > maxId) {
+-          maxId = pets.get(i).getId();
++      for (Long petId: pets.keySet()) {
++        if(petId > maxId) {
++          maxId = petId;
+         }
+       }
+-      pet.setId(maxId + 1);
++      long newId = maxId > Long.MAX_VALUE -1 ? maxId : maxId + 1;
++      pet.setId(newId);
+     }
+-    if (pets.size() > 0) {
+-      for (int i = pets.size() - 1; i >= 0; i--) {
+-        if (pets.get(i).getId() == pet.getId()) {
+-          pets.remove(i);
+-        }
+-      }
++    pets.put(pet.getId(), pet);
++    if (pets.size() > MAX_SIZE) {
++      Long id = pets.keySet().iterator().next();
++      pets.remove(id);
+     }
+-    pets.add(pet);
++
+     return pet;
+   }
+ 
+   public Map<String, Integer> getInventoryByStatus() {
+     Map<String, Integer> output = new HashMap<String, Integer>();
+-    for(Pet pet : pets) {
++    for(Pet pet : pets.values()) {
+       String status = pet.getStatus();
+       if(status != null && !"".equals(status)) {
+         Integer count = output.get(status);
+         if(count == null)
+           count = new Integer(1);
+@@ -185,6 +173,6 @@ public class PetData {
+     Category category = new Category();
+     category.setId(id);
+     category.setName(name);
+     return category;
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/io/swagger/sample/data/StoreData.java b/src/main/java/io/swagger/sample/data/StoreData.java
+index e4415bc..4c692f7 100644
+--- a/src/main/java/io/swagger/sample/data/StoreData.java
++++ b/src/main/java/io/swagger/sample/data/StoreData.java
+@@ -16,69 +16,69 @@
+ 
+ package io.swagger.sample.data;
+ 
+ import io.swagger.sample.model.Order;
+ 
++import java.util.Collections;
+ import java.util.Date;
+-import java.util.List;
+-import java.util.ArrayList;
++import java.util.LinkedHashMap;
++import java.util.Map;
+ 
+ public class StoreData {
+-  static List<Order> orders = new ArrayList<Order>();
++
++  static Map<Long, Order> orders = Collections.synchronizedMap(new LinkedHashMap<Long, Order>());
+ 
+   static {
+-    orders.add(createOrder(1, 1, 2, new Date(), "placed"));
+-    orders.add(createOrder(2, 1, 2, new Date(), "delivered"));
+-    orders.add(createOrder(3, 2, 2, new Date(), "placed"));
+-    orders.add(createOrder(4, 2, 2, new Date(), "delivered"));
+-    orders.add(createOrder(5, 3, 2, new Date(), "placed"));
+-    orders.add(createOrder(6, 3, 2, new Date(), "placed"));
+-    orders.add(createOrder(7, 3, 2, new Date(), "placed"));
+-    orders.add(createOrder(8, 3, 2, new Date(), "placed"));
+-    orders.add(createOrder(9, 3, 2, new Date(), "placed"));
+-    orders.add(createOrder(10, 3, 2, new Date(), "placed"));
++    orders.put(1L, createOrder(1, 1, 2, new Date(), "placed"));
++    orders.put(2L, createOrder(2, 1, 2, new Date(), "delivered"));
++    orders.put(3L, createOrder(3, 2, 2, new Date(), "placed"));
++    orders.put(4L, createOrder(4, 2, 2, new Date(), "delivered"));
++    orders.put(5L, createOrder(5, 3, 2, new Date(), "placed"));
++    orders.put(6L, createOrder(6, 3, 2, new Date(), "placed"));
++    orders.put(7L, createOrder(7, 3, 2, new Date(), "placed"));
++    orders.put(8L, createOrder(8, 3, 2, new Date(), "placed"));
++    orders.put(9L, createOrder(9, 3, 2, new Date(), "placed"));
++    orders.put(10L, createOrder(10, 3, 2, new Date(), "placed"));
+   }
+ 
+   public Order findOrderById(long orderId) {
+-    for (Order order : orders) {
+-      if (order.getId() == orderId) {
+-        return order;
+-      }
+-    }
+-    return null;
++
++    return orders.get(Long.valueOf(orderId));
++
+   }
+ 
+   public Order placeOrder(Order order) {
+-    if (orders.size() > 0) {
+-      for (int i = orders.size() - 1; i >= 0; i--) {
+-        if (orders.get(i).getId() == order.getId()) {
+-          orders.remove(i);
++    if(order.getId() <1) {
++      long maxId = 0;
++      for (Long orderId: orders.keySet()) {
++        if(orderId > maxId) {
++          maxId = orderId;
+         }
+       }
++      long newId = maxId > Long.MAX_VALUE -1 ? maxId : maxId + 1;
++      order.setId(newId);
++    }
++    orders.put(order.getId(), order);
++    if (orders.size() > PetData.MAX_SIZE) {
++      Long id = orders.keySet().iterator().next();
++      orders.remove(id);
+     }
+-    orders.add(order);
++
+     return order;
+   }
+ 
+   public boolean deleteOrder(long orderId) {
+-    if (orders.size() > 0) {
+-      for (int i = orders.size() - 1; i >= 0; i--) {
+-        if (orders.get(i).getId() == orderId) {
+-          orders.remove(i);
+-          return true;
+-        }
+-      }
+-    }
+-    return false;
++    return orders.remove(Long.valueOf(orderId)) == null ? false : true;
+   }
+ 
++
+   private static Order createOrder(long id, long petId, int quantity,
+       Date shipDate, String status) {
+     Order order = new Order();
+     order.setId(id);
+     order.setPetId(petId);
+     order.setQuantity(quantity);
+     order.setShipDate(shipDate);
+     order.setStatus(status);
+     return order;
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/io/swagger/sample/data/UserData.java b/src/main/java/io/swagger/sample/data/UserData.java
+index d0bc2ed..7f3d4d7 100644
+--- a/src/main/java/io/swagger/sample/data/UserData.java
++++ b/src/main/java/io/swagger/sample/data/UserData.java
+@@ -16,62 +16,70 @@
+ 
+ package io.swagger.sample.data;
+ 
+ import io.swagger.sample.model.User;
+ 
+-import java.util.List;
+-import java.util.ArrayList;
++import java.util.Collections;
++import java.util.LinkedHashMap;
++import java.util.Map;
+ 
+ public class UserData {
+-  static List<User> users = new ArrayList<User>();
++  static Map<Long, User> users = Collections.synchronizedMap(new LinkedHashMap<Long, User>());
+ 
+   static {
+-    users.add(createUser(1, "user1", "first name 1", "last name 1",
++    users.put(1L, createUser(1, "user1", "first name 1", "last name 1",
+         "[REDACTED email]", "123-456-7890", 1));
+-    users.add(createUser(2, "user2", "first name 2", "last name 2",
++    users.put(2L, createUser(2, "user2", "first name 2", "last name 2",
+         "[REDACTED email]", "123-456-7890", 2));
+-    users.add(createUser(3, "user3", "first name 3", "last name 3",
++    users.put(3L, createUser(3, "user3", "first name 3", "last name 3",
+         "[REDACTED email]", "123-456-7890", 3));
+-    users.add(createUser(4, "user4", "first name 4", "last name 4",
++    users.put(4L, createUser(4, "user4", "first name 4", "last name 4",
+         "[REDACTED email]", "123-456-7890", 1));
+-    users.add(createUser(5, "user5", "first name 5", "last name 5",
++    users.put(5L, createUser(5, "user5", "first name 5", "last name 5",
+         "[REDACTED email]", "123-456-7890", 2));
+-    users.add(createUser(6, "user6", "first name 6", "last name 6",
++    users.put(6L, createUser(6, "user6", "first name 6", "last name 6",
+         "[REDACTED email]", "123-456-7890", 3));
+-    users.add(createUser(7, "user7", "first name 7", "last name 7",
++    users.put(7L, createUser(7, "user7", "first name 7", "last name 7",
+         "[REDACTED email]", "123-456-7890", 1));
+-    users.add(createUser(8, "user8", "first name 8", "last name 8",
++    users.put(8L, createUser(8, "user8", "first name 8", "last name 8",
+         "[REDACTED email]", "123-456-7890", 2));
+-    users.add(createUser(9, "user9", "first name 9", "last name 9",
++    users.put(9L, createUser(9, "user9", "first name 9", "last name 9",
+         "[REDACTED email]", "123-456-7890", 3));
+-    users.add(createUser(10, "user10", "first name 10", "last name 10",
++    users.put(10L, createUser(10, "user10", "first name 10", "last name 10",
+         "[REDACTED email]", "123-456-7890", 1));
+-    users.add(createUser(11, "user?10", "first name ?10", "last name ?10",
++    users.put(11L, createUser(11, "user?10", "first name ?10", "last name ?10",
+         "[REDACTED email]", "123-456-7890", 1));
+ 
+   }
+ 
+   public User findUserByName(String username) {
+-    for (User user : users) {
++    for (User user : users.values()) {
+       if (user.getUsername().equals(username)) {
+         return user;
+       }
+     }
+     return null;
+   }
+ 
+   public void addUser(User user) {
+     if(user.getUsername() == null)
+       return;
+-    if (users.size() > 0) {
+-      for (int i = users.size() - 1; i >= 0; i--) {
+-        if (users.get(i).getUsername().equals(user.getUsername())) {
+-          users.remove(i);
++    if(user.getId() <1) {
++      long maxId = 0;
++      for (Long userId: users.keySet()) {
++        if(userId > maxId) {
++          maxId = userId;
+         }
+       }
++      long newId = maxId > Long.MAX_VALUE -1 ? maxId : maxId + 1;
++      user.setId(newId);
++    }
++    users.put(user.getId(), user);
++    if (users.size() > PetData.MAX_SIZE) {
++      Long id = users.keySet().iterator().next();
++      users.remove(id);
+     }
+-    users.add(user);
+   }
+ 
+   public boolean removeUser(String username) {
+     if (users.size() > 0) {
+       for (int i = users.size() - 1; i >= 0; i--) {
+@@ -95,6 +103,6 @@ public class UserData {
+[REDACTED credential-related line]
+     user.setPhone(phone);
+     user.setUserStatus(userStatus);
+     return user;
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/io/swagger/sample/resource/PetResource.java b/src/main/java/io/swagger/sample/resource/PetResource.java
+index d50e50e..367700c 100644
+--- a/src/main/java/io/swagger/sample/resource/PetResource.java
++++ b/src/main/java/io/swagger/sample/resource/PetResource.java
+@@ -20,10 +20,11 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
+ import com.sun.jersey.multipart.FormDataParam;
+ import io.swagger.annotations.*;
+ import io.swagger.sample.data.PetData;
+ import io.swagger.sample.exception.NotFoundException;
+ import io.swagger.sample.model.Pet;
++import io.swagger.util.Json;
+ import org.apache.commons.io.IOUtils;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ 
+ import javax.ws.rs.*;
+@@ -41,25 +42,26 @@ import java.util.List;
+     @AuthorizationScope(scope = "read:pets", description = "read your pets")
+   })
+ }, tags = "pet")
+ @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+ public class PetResource {
+-  private Logger LOGGER = LoggerFactory.getLogger(PetResource.class);
++  private static Logger LOGGER = LoggerFactory.getLogger(PetResource.class);
+   static PetData petData = new PetData();
+ 
+   @GET
+   @Path("/{petId}")
+-  @ApiOperation(value = "Find pet by ID", 
+-    notes = "Returns a single pet", 
++  @ApiOperation(value = "Find pet by ID",
++    notes = "Returns a single pet",
+     response = Pet.class,
+     authorizations = @Authorization(value = "api_key")
+   )
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid ID supplied"),
+     @ApiResponse(code = 404, message = "Pet not found") })
+   public Response getPetById(
+       @ApiParam(value = "ID of pet to return") @PathParam("petId") Long petId)
+       throws NotFoundException {
++    LOGGER.debug("getPetById {}", petId);
+     Pet pet = petData.getPetById(petId);
+     if (null != pet)
+       return Response.ok().entity(pet).build();
+     else
+       throw new NotFoundException(404, "Pet not found");
+@@ -71,12 +73,13 @@ public class PetResource {
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid ID supplied"),
+           @ApiResponse(code = 404, message = "Pet not found") })
+   public Response deletePet(
+     @ApiParam() @HeaderParam("api_key") String apiKey,
+     @ApiParam(value = "Pet id to delete", required = true)@PathParam("petId") Long petId) {
++    LOGGER.debug("deletePet {}", petId);
+     if (petData.deletePet(petId)) {
+-      return Response.ok().build();
++      return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(petId))).build();
+     } else {
+      return Response.status(Response.Status.NOT_FOUND).build();
+     }
+   }
+ 
+@@ -89,14 +92,14 @@ public class PetResource {
+   public Response uploadFile(
+     @ApiParam(value = "ID of pet to update", required = true) @PathParam("petId") Long petId,
+     @ApiParam(value = "Additional data to pass to server") @FormDataParam("additionalMetadata") String testString,
+     @ApiParam(value = "file to upload") @FormDataParam("file") InputStream inputStream,
+     @ApiParam(value = "file detail") @FormDataParam("file") FormDataContentDisposition fileDetail) {
+-    LOGGER.debug("testString: " + testString);
+     try {
++      LOGGER.debug("uploadFile {} {}", petId, testString);
+       String uploadedFileLocation = "./" + fileDetail.getFileName();
+-      System.out.println("uploading to " + uploadedFileLocation);
++      LOGGER.info("uploading to " + uploadedFileLocation);
+       IOUtils.copy(inputStream, new FileOutputStream(uploadedFileLocation));
+       String msg = "additionalMetadata: " + testString + "\nFile uploaded to " + uploadedFileLocation + ", " + (new java.io.File(uploadedFileLocation)).length() + " bytes";
+       io.swagger.sample.model.ApiResponse output = new io.swagger.sample.model.ApiResponse(200, msg);
+       return Response.status(200).entity(output).build();
+     }
+@@ -109,10 +112,18 @@ public class PetResource {
+   @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+   @ApiOperation(value = "Add a new pet to the store")
+   @ApiResponses(value = { @ApiResponse(code = 405, message = "Invalid input") })
+   public Response addPet(
+       @ApiParam(value = "Pet object that needs to be added to the store", required = true) Pet pet) {
++    try {
++      LOGGER.info("addPet ID {} STATUS {}", pet.getId(), pet.getStatus());
++      if (LOGGER.isDebugEnabled()) {
++        LOGGER.debug("addPet {}", Json.mapper().writeValueAsString(pet));
++      }
++    } catch (Throwable e) {
++      e.printStackTrace();
++    }
+     Pet updatedPet = petData.addPet(pet);
+     return Response.ok().entity(updatedPet).build();
+   }
+ 
+   @PUT
+@@ -121,37 +132,47 @@ public class PetResource {
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid ID supplied"),
+       @ApiResponse(code = 404, message = "Pet not found"),
+       @ApiResponse(code = 405, message = "Validation exception") })
+   public Response updatePet(
+       @ApiParam(value = "Pet object that needs to be added to the store", required = true) Pet pet) {
++    try {
++      LOGGER.info("updatePet ID {} STATUS {}", pet.getId(), pet.getStatus());
++      if (LOGGER.isDebugEnabled()) {
++        LOGGER.debug("updatePet {}", Json.mapper().writeValueAsString(pet));
++      }
++    } catch (Throwable e) {
++      e.printStackTrace();
++    }
+     Pet updatedPet = petData.addPet(pet);
+     return Response.ok().entity(updatedPet).build();
+   }
+ 
+   @GET
+   @Path("/findByStatus")
+-  @ApiOperation(value = "Finds Pets by status", 
++  @ApiOperation(value = "Finds Pets by status",
+     notes = "Multiple status values can be provided with comma separated strings",
+-    response = Pet.class, 
++    response = Pet.class,
+     responseContainer = "List")
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid status value") })
+   public Response findPetsByStatus(
+       @ApiParam(value = "Status values that need to be considered for filter", required = true, defaultValue = "available", allowableValues = "available,pending,sold", allowMultiple = true) @QueryParam("status") String status) {
++    LOGGER.debug("findPetsByStatus {}", status);
+     List<Pet> pets = petData.findPetByStatus(status);
+     return Response.ok(pets.toArray(new Pet[pets.size()])).build();
+   }
+ 
+   @GET
+   @Path("/findByTags")
+   @ApiOperation(value = "Finds Pets by tags",
+     notes = "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
+-    response = Pet.class, 
++    response = Pet.class,
+     responseContainer = "List")
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid tag value") })
+   @Deprecated
+   public Response findPetsByTags(
+       @ApiParam(value = "Tags to filter by", required = true, allowMultiple = true) @QueryParam("tags") String tags) {
++    LOGGER.debug("findPetsByTags {}", tags);
+     List<Pet> pets = petData.findPetByTags(tags);
+     return Response.ok(pets.toArray(new Pet[pets.size()])).build();
+   }
+ 
+   @POST
+@@ -163,18 +184,19 @@ public class PetResource {
+     @ApiResponse(code = 405, message = "Invalid input")})
+   public Response  updatePetWithForm (
+    @ApiParam(value = "ID of pet that needs to be updated", required = true)@PathParam("petId") Long petId,
+    @ApiParam(value = "Updated name of the pet", required = false)@FormParam("name") String name,
+    @ApiParam(value = "Updated status of the pet", required = false)@FormParam("status") String status) {
++    LOGGER.info("updatePetWithForm {} {}", petId, name);
+     Pet pet = petData.getPetById(petId);
+     if(pet != null) {
+       if(name != null && !"".equals(name))
+         pet.setName(name);
+       if(status != null && !"".equals(status))
+         pet.setStatus(status);
+       petData.addPet(pet);
+-      return Response.ok().build();
++      return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(petId))).build();
+     }
+     else
+       return Response.status(404).build();
+   }
+ }
+diff --git a/src/main/java/io/swagger/sample/resource/PetStoreResource.java b/src/main/java/io/swagger/sample/resource/PetStoreResource.java
+index 99f8ccd..d346c46 100644
+--- a/src/main/java/io/swagger/sample/resource/PetStoreResource.java
++++ b/src/main/java/io/swagger/sample/resource/PetStoreResource.java
+@@ -19,10 +19,13 @@ package io.swagger.sample.resource;
+ import io.swagger.annotations.*;
+ import io.swagger.sample.data.PetData;
+ import io.swagger.sample.data.StoreData;
+ import io.swagger.sample.model.Order;
+ import io.swagger.sample.exception.NotFoundException;
++import io.swagger.util.Json;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
+ 
+ import javax.ws.rs.core.Response;
+ import javax.ws.rs.core.MediaType;
+ import javax.ws.rs.*;
+ 
+@@ -31,15 +34,17 @@ import javax.ws.rs.*;
+ @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+ public class PetStoreResource {
+   static StoreData storeData = new StoreData();
+   static PetData petData = new PetData();
+ 
++  private static Logger LOGGER = LoggerFactory.getLogger(PetStoreResource.class);
++
+   @GET
+   @Path("/inventory")
+   @Produces({MediaType.APPLICATION_JSON})
+-  @ApiOperation(value = "Returns pet inventories by status", 
+-    notes = "Returns a map of status codes to quantities", 
++  @ApiOperation(value = "Returns pet inventories by status",
++    notes = "Returns a map of status codes to quantities",
+     response = Integer.class,
+     responseContainer = "map",
+     authorizations = @Authorization(value = "api_key")
+   )
+   public java.util.Map<String, Integer> getInventory() {
+@@ -55,10 +60,11 @@ public class PetStoreResource {
+       @ApiResponse(code = 404, message = "Order not found") })
+   public Response getOrderById(
+       @ApiParam(value = "ID of pet that needs to be fetched", allowableValues = "range[1,10]", required = true)
+       @PathParam("orderId") Long orderId)
+       throws NotFoundException {
++    LOGGER.debug("getOrderById {}", orderId);
+     Order order = storeData.findOrderById(orderId);
+     if (null != order) {
+       return Response.ok().entity(order).build();
+     } else {
+       throw new NotFoundException(404, "Order not found");
+@@ -70,10 +76,18 @@ public class PetStoreResource {
+   @ApiOperation(value = "Place an order for a pet", consumes = "application/json")
+   @ApiResponses({ @ApiResponse(code = 400, message = "Invalid Order") })
+   public Order placeOrder(
+       @ApiParam(value = "order placed for purchasing the pet",
+         required = true) Order order) {
++    try {
++      LOGGER.info("placeOrder ID {} STATUS {}", order.getId(), order.getStatus());
++      if (LOGGER.isDebugEnabled()) {
++        LOGGER.debug("placeOrder {}", Json.mapper().writeValueAsString(order));
++      }
++    } catch (Throwable e) {
++      e.printStackTrace();
++    }
+     storeData.placeOrder(order);
+     return storeData.placeOrder(order);
+   }
+ 
+   @DELETE
+@@ -83,12 +97,13 @@ public class PetStoreResource {
+   @ApiResponses(value = { @ApiResponse(code = 400, message = "Invalid ID supplied"),
+       @ApiResponse(code = 404, message = "Order not found") })
+   public Response deleteOrder(
+       @ApiParam(value = "ID of the order that needs to be deleted", allowableValues = "range[1,infinity]", required = true)
+       @PathParam("orderId") Long orderId) {
++    LOGGER.debug("deleteOrder {}", orderId);
+     if (storeData.deleteOrder(orderId)) {
+-      return Response.ok().entity("").build();
++      return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(orderId))).build();
+     } else {
+-      return Response.status(Response.Status.NOT_FOUND).entity("Order not found").build();
++      return Response.status(Response.Status.NOT_FOUND).entity(new io.swagger.sample.model.ApiResponse(Response.Status.NOT_FOUND.getStatusCode(), String.valueOf("Order Not Found"))).build();
+     }
+   }
+ }
+diff --git a/src/main/java/io/swagger/sample/resource/UserResource.java b/src/main/java/io/swagger/sample/resource/UserResource.java
+index f6dc822..38c48ff 100644
+--- a/src/main/java/io/swagger/sample/resource/UserResource.java
++++ b/src/main/java/io/swagger/sample/resource/UserResource.java
+@@ -19,10 +19,13 @@ package io.swagger.sample.resource;
+ import io.swagger.annotations.*;
+ import io.swagger.sample.data.UserData;
+ import io.swagger.sample.exception.ApiException;
+ import io.swagger.sample.exception.NotFoundException;
+ import io.swagger.sample.model.User;
++import io.swagger.util.Json;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
+ 
+ import javax.ws.rs.*;
+ import javax.ws.rs.core.MediaType;
+ import javax.ws.rs.core.Response;
+ import java.util.Date;
+@@ -31,40 +34,66 @@ import java.util.Date;
+ @Api(value="/user", description = "Operations about user")
+ @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+ public class UserResource {
+   static UserData userData = new UserData();
+ 
++  private static Logger LOGGER = LoggerFactory.getLogger(UserResource.class);
++
+   @POST
+   @ApiOperation(value = "Create user",
+     notes = "This can only be done by the logged in user.",
+     position = 1, consumes = "application/json")
+   public Response createUser(
+       @ApiParam(value = "Created user object", required = true) User user) {
++    try {
++      LOGGER.info("createUser ID {} STATUS {}", user.getId(), user.getUsername());
++      if (LOGGER.isDebugEnabled()) {
++        LOGGER.debug("createUser {}", Json.mapper().writeValueAsString(user));
++      }
++    } catch (Throwable e) {
++      e.printStackTrace();
++    }
+     userData.addUser(user);
+-    return Response.ok().entity("").build();
++    return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(user.getId()))).build();
+   }
+ 
+   @POST
+   @Path("/createWithArray")
+   @ApiOperation(value = "Creates list of users with given input array",
+     position = 2, consumes = "application/json")
+   public Response createUsersWithArrayInput(@ApiParam(value = "List of user object", required = true) User[] users) {
++      try {
++        LOGGER.info("createUsersWithArrayInput");
++        if (LOGGER.isDebugEnabled()) {
++          LOGGER.debug("createUsersWithArrayInput {}", Json.mapper().writeValueAsString(users));
++        }
++      } catch (Throwable e) {
++        e.printStackTrace();
++      }
+       for (User user : users) {
+           userData.addUser(user);
+       }
+-      return Response.ok().entity("").build();
++      return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf("ok"))).build();
+   }
+ 
+   @POST
+   @Path("/createWithList")
+   @ApiOperation(value = "Creates list of users with given input array",
+     position = 3, consumes = "application/json")
+   public Response createUsersWithListInput(@ApiParam(value = "List of user object", required = true) java.util.List<User> users) {
++      try {
++        LOGGER.info("createUsersWithListInput");
++        if (LOGGER.isDebugEnabled()) {
++          LOGGER.debug("createUsersWithListInput {}", Json.mapper().writeValueAsString(users));
++        }
++      } catch (Throwable e) {
++        e.printStackTrace();
++      }
+       for (User user : users) {
+           userData.addUser(user);
+       }
+-      return Response.ok().entity("").build();
++      return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf("ok"))).build();
+   }
+ 
+   @PUT
+   @Path("/{username}")
+   @ApiOperation(value = "Updated user",
+@@ -74,12 +103,20 @@ public class UserResource {
+       @ApiResponse(code = 400, message = "Invalid user supplied"),
+       @ApiResponse(code = 404, message = "User not found") })
+   public Response updateUser(
+       @ApiParam(value = "name that need to be updated", required = true) @PathParam("username") String username,
+       @ApiParam(value = "Updated user object", required = true) User user) {
++    try {
++      LOGGER.info("updateUser ID {} STATUS {}", user.getId(), user.getUsername());
++      if (LOGGER.isDebugEnabled()) {
++        LOGGER.debug("updateUser {}", Json.mapper().writeValueAsString(user));
++      }
++    } catch (Throwable e) {
++      e.printStackTrace();
++    }
+     userData.addUser(user);
+-    return Response.ok().entity("").build();
++    return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(user.getId()))).build();
+   }
+ 
+   @DELETE
+   @Path("/{username}")
+   @ApiOperation(value = "Delete user",
+@@ -88,12 +125,13 @@ public class UserResource {
+   @ApiResponses(value = {
+       @ApiResponse(code = 400, message = "Invalid username supplied"),
+       @ApiResponse(code = 404, message = "User not found") })
+   public Response deleteUser(
+       @ApiParam(value = "The name that needs to be deleted", required = true) @PathParam("username") String username) {
++    LOGGER.debug("deleteUser {}", username);
+     if (userData.removeUser(username)) {
+-          return Response.ok().entity("").build();
++          return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf(username))).build();
+       } else {
+           return Response.status(Response.Status.NOT_FOUND).build();
+       }
+   }
+ 
+@@ -106,10 +144,11 @@ public class UserResource {
+       @ApiResponse(code = 400, message = "Invalid username supplied"),
+       @ApiResponse(code = 404, message = "User not found") })
+   public Response getUserByName(
+       @ApiParam(value = "The name that needs to be fetched. Use user1 for testing. ", required = true) @PathParam("username") String username)
+     throws ApiException {
++    LOGGER.debug("getUserByName {}", username);
+     User user = userData.findUserByName(username);
+     if (null != user) {
+       return Response.ok().entity(user).build();
+     } else {
+       throw new NotFoundException(404, "User not found");
+@@ -127,22 +166,25 @@ public class UserResource {
+     })
+[REDACTED credential-related line]
+   public Response loginUser(
+       @ApiParam(value = "The user name for login", required = true) @QueryParam("username") String username,
+[REDACTED credential-related line]
+-
++    LOGGER.debug("loginUser {}", username);
+[REDACTED credential-related line]
+     Date date = new Date(System.currentTimeMillis() + 3600000);
+     return Response.ok()
+       .header("X-Expires-After", date.toString())
+       .header("X-Rate-Limit", String.valueOf(5000))
+-      .entity("logged in user session:" + System.currentTimeMillis())
++      .entity(new io.swagger.sample.model.ApiResponse(200, "logged in user session:" + System.currentTimeMillis()))
+       .build();
+   }
+ 
++
++
+   @GET
+   @Path("/logout")
+   @ApiOperation(value = "Logs out current logged in user session",
+     position = 7)
+   public Response logoutUser() {
+-    return Response.ok().entity("").build();
++    return Response.ok().entity(new io.swagger.sample.model.ApiResponse(200, String.valueOf("ok"))).build();
+   }
+ }
+diff --git a/src/main/resources/logback.xml b/src/main/resources/logback.xml
+index bbe56b8..02d7833 100644
+--- a/src/main/resources/logback.xml
++++ b/src/main/resources/logback.xml
+@@ -1,12 +1,12 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+-<configuration> 
++<configuration>
+   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+     <layout class="ch.qos.logback.classic.PatternLayout">
+       <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+     </layout>
+   </appender>
+-  <logger name="io.swagger" level="ERROR"/>
++  <logger name="io.swagger" level="INFO"/>
+   <root level="ERROR">
+     <appender-ref ref="STDOUT" />
+   </root>
+ </configuration>

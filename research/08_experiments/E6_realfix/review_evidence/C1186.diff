@@ -1,0 +1,119 @@
+diff --git a/src/main/java/io/swagger/petstore/resource/DefinitionResource.java b/src/main/java/io/swagger/petstore/resource/DefinitionResource.java
+index 23d36e2..73a1a79 100644
+--- a/src/main/java/io/swagger/petstore/resource/DefinitionResource.java
++++ b/src/main/java/io/swagger/petstore/resource/DefinitionResource.java
+@@ -51,24 +51,11 @@ import io.swagger.v3.oas.annotations.tags.Tags;
+                         description = "Everything about your Pets",
+                         externalDocs = @ExternalDocumentation(
+                                 description = "Find out more",
+                                 url = "https://swagger.io"
+                         )
+-                ),
+-                @Tag(
+-                        name = "store",
+-                        description = "Access to Petstore orders",
+-                        externalDocs = @ExternalDocumentation(
+-                                description = "Find out more about our store",
+-                                url = "https://swagger.io"
+-                        )
+-                ),
+-                @Tag(
+-                        name = "user",
+-                        description = "Operations about user"
+                 )
+-
+         }
+ )
+ @SecuritySchemes(
+         {
+                 @SecurityScheme(
+diff --git a/src/main/java/io/swagger/petstore/resource/PetResource.java b/src/main/java/io/swagger/petstore/resource/PetResource.java
+index be3b13a..33697e0 100644
+--- a/src/main/java/io/swagger/petstore/resource/PetResource.java
++++ b/src/main/java/io/swagger/petstore/resource/PetResource.java
+@@ -27,11 +27,11 @@ public class PetResource {
+     static PetData petData = new PetData();
+ 
+     @GET
+     @Path("/{petId}")
+     @Operation(summary = "Find pet by it's identifier.",
+-            tags = {"pets"},
++            tags = {"pet"},
+             description = "Returns a pet when 0 < ID <= 10.  ID > 10 or non-integers will simulate API error conditions.",
+             security = {
+                     @SecurityRequirement(name = "petstore_auth", scopes = {"write:pets", "read:pets"}),
+                     @SecurityRequirement(name = "api_key", scopes = {})
+             },
+@@ -207,11 +207,11 @@ public class PetResource {
+     }
+ 
+ /*  @GET
+   @Path("/findByStatus")
+   @Operation(summary = "Finds Pets by status",
+-          tags = {"pets"},
++          tags = {"pet"},
+     description = "Multiple status values can be provided with comma seperated strings",
+           responses = {
+                   @ApiResponse(
+                           content = @Content(mediaType = "application/json",
+                                   schema = @Schema(implementation = Pet.class))),
+@@ -235,11 +235,11 @@ public class PetResource {
+   }
+ 
+   @GET
+   @Path("/findByTags")
+   @Operation(summary = "Finds Pets by tags",
+-          tags = {"pets"},
++          tags = {"pet"},
+     description = "Muliple tags can be provided with comma seperated strings. Use tag1, tag2, tag3 for testing.",
+     responses = {
+             @ApiResponse(description = "Pets matching criteria",
+               content = @Content(mediaType = "application/json",
+               schema = @Schema(implementation = Pet.class))
+diff --git a/src/main/webapp/code-first/openapi.json b/src/main/webapp/code-first/openapi.json
+index fb65673..addfc6d 100644
+--- a/src/main/webapp/code-first/openapi.json
++++ b/src/main/webapp/code-first/openapi.json
+@@ -27,20 +27,10 @@
+     "description" : "Everything about your Pets",
+     "externalDocs" : {
+       "description" : "Find out more",
+       "url" : "https://swagger.io"
+     }
+-  }, {
+-    "name" : "store",
+-    "description" : "Access to Petstore orders",
+-    "externalDocs" : {
+-      "description" : "Find out more about our store",
+-      "url" : "https://swagger.io"
+-    }
+-  }, {
+-    "name" : "user",
+-    "description" : "Operations about user"
+   } ],
+   "paths" : {
+     "/pet" : {
+       "put" : {
+         "tags" : [ "pet" ],
+diff --git a/src/main/webapp/code-first/openapi.yaml b/src/main/webapp/code-first/openapi.yaml
+index cbe97e7..d7d2c57 100644
+--- a/src/main/webapp/code-first/openapi.yaml
++++ b/src/main/webapp/code-first/openapi.yaml
+@@ -23,17 +23,10 @@ tags:
+ - name: pet
+   description: Everything about your Pets
+   externalDocs:
+     description: Find out more
+     url: https://swagger.io
+-- name: store
+-  description: Access to Petstore orders
+-  externalDocs:
+-    description: Find out more about our store
+-    url: https://swagger.io
+-- name: user
+-  description: Operations about user
+ paths:
+   /pet:
+     put:
+       tags:
+       - pet

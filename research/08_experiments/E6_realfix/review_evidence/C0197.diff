@@ -1,0 +1,1271 @@
+diff --git a/src/main/java/market/domain/Contacts.java b/src/main/java/market/domain/Contacts.java
+index e6c1048..f31a780 100644
+--- a/src/main/java/market/domain/Contacts.java
++++ b/src/main/java/market/domain/Contacts.java
+@@ -112,10 +112,21 @@ public class Contacts implements Serializable {
+ 		private UserAccount userAccount;
+ 		private String phone;
+ 		private String address;
+ 		private String cityAndRegion;
+ 
++		public Builder() {
++		}
++
++		public Builder(Contacts contacts) {
++			id = contacts.id;
++			userAccount = contacts.userAccount;
++			phone = contacts.phone;
++			address = contacts.address;
++			cityAndRegion = contacts.cityAndRegion;
++		}
++
+ 		public Contacts build() {
+ 			Contacts contacts = new Contacts();
+ 			contacts.id = id;
+ 			contacts.userAccount = userAccount;
+ 			contacts.phone = phone;
+diff --git a/src/main/java/market/domain/Region.java b/src/main/java/market/domain/Region.java
+index ed4f52a..52062c1 100644
+--- a/src/main/java/market/domain/Region.java
++++ b/src/main/java/market/domain/Region.java
+@@ -108,10 +108,21 @@ public class Region implements Serializable {
+ 		private String name;
+ 		private String subtitle;
+ 		private String description;
+ 		private String color;
+ 
++		public Builder() {
++		}
++
++		public Builder(Region region) {
++			id = region.id;
++			name = region.name;
++			subtitle = region.subtitle;
++			description = region.description;
++			color = region.color;
++		}
++
+ 		public Region build() {
+ 			Region region = new Region();
+ 			region.id = id;
+ 			region.name = name;
+ 			region.subtitle = subtitle;
+diff --git a/src/main/java/market/domain/UserAccount.java b/src/main/java/market/domain/UserAccount.java
+index ee6ef04..322f14a 100644
+--- a/src/main/java/market/domain/UserAccount.java
++++ b/src/main/java/market/domain/UserAccount.java
+@@ -165,7 +165,11 @@ public class UserAccount implements Serializable {
+ 
+ 		public Builder setRoles(Set<Role> roles) {
+ 			this.roles = roles;
+ 			return this;
+ 		}
++
++		public Long getId() {
++			return id;
++		}
+ 	}
+ }
+diff --git a/src/test/java/market/domain/CartTest.java b/src/test/java/market/domain/CartTest.java
+index f13b748..1188c22 100644
+--- a/src/test/java/market/domain/CartTest.java
++++ b/src/test/java/market/domain/CartTest.java
+@@ -1,7 +1,8 @@
+ package market.domain;
+ 
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ 
+ import java.util.List;
+ 
+diff --git a/src/test/java/market/service/CartServiceTest.java b/src/test/java/market/service/CartServiceTest.java
+index bf5e9db..fec84e4 100644
+--- a/src/test/java/market/service/CartServiceTest.java
++++ b/src/test/java/market/service/CartServiceTest.java
+@@ -1,14 +1,12 @@
+ package market.service;
+ 
+ import market.dao.CartDAO;
+-import market.domain.Cart;
+-import market.domain.CartItem;
+-import market.domain.Product;
+-import market.domain.UserAccount;
++import market.domain.*;
+ import market.exception.UnknownEntityException;
+ import market.service.impl.CartServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
+@@ -19,20 +17,14 @@ import java.util.Optional;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
+ import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.mockito.ArgumentMatchers.any;
+-import static org.mockito.Mockito.never;
+-import static org.mockito.Mockito.times;
+-import static org.mockito.Mockito.verify;
+-import static org.mockito.Mockito.when;
++import static org.mockito.Mockito.*;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class CartServiceTest {
+-	private static final long ACCOUNT_ID = 50L;
+-	private static final String ACCOUNT_EMAIL = "[REDACTED email]";
+-	private static final long PRODUCT_ID = 10L;
+ 
+ 	@Mock
+ 	private CartDAO cartDAO;
+ 	@Mock
+ 	private UserAccountService userAccountService;
+@@ -44,63 +36,66 @@ public class CartServiceTest {
+ 	private Product product;
+ 	private UserAccount userAccount;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
++		UserAccount.Builder accountBuilder = FixturesFactory.account(cart);
++
+ 		cart = new Cart();
+-		cart.setId(ACCOUNT_ID);
+-
+-		product = new Product.Builder()
+-			.setId(PRODUCT_ID)
+-			.setPrice(100.0)
+-			.build();
+-		userAccount = new UserAccount.Builder()
+-			.setId(ACCOUNT_ID)
+-			.setEmail(ACCOUNT_EMAIL)
+[REDACTED credential-related line]
+-			.setName("Name")
+-			.setActive(true)
+-			.setCart(cart)
+-			.build();
++		cart.setId(accountBuilder.getId());
++
++		Region region = FixturesFactory.region().build();
++		Distillery distillery = FixturesFactory.distillery(region).build();
++		product = FixturesFactory.product(distillery).build();
++		userAccount = accountBuilder.build();
+ 		cart.setUserAccount(userAccount);
+ 
+ 		cartService = new CartServiceImpl(cartDAO, userAccountService, productService);
+ 	}
+ 
+ 	@Test
+ 	public void getCartOrCreate_ExistingCart() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
+ 
+-		Cart createdCart = cartService.getCartOrCreate(ACCOUNT_EMAIL);
++		Cart createdCart = cartService.getCartOrCreate(userAccount.getEmail());
+ 
+ 		verify(cartDAO, never()).save(any(Cart.class));
+ 		assertThat(createdCart, equalTo(cart));
+ 	}
+ 
+ 	@Test
+ 	public void getCartOrCreate_AbsentCart() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.empty());
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.empty());
+ 
+-		Cart createdCart = cartService.getCartOrCreate(ACCOUNT_EMAIL);
++		Cart createdCart = cartService.getCartOrCreate(userAccount.getEmail());
+ 
+ 		verify(cartDAO).save(any(Cart.class));
+ 		assertThat(createdCart, equalTo(cart));
+ 	}
+ 
+ 	@Test
+ 	public void addToCart_Normal() throws UnknownEntityException {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.getProduct(PRODUCT_ID)).thenReturn(product);
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.getProduct(product.getId()))
++			.thenReturn(product);
+ 		int quantity = 3;
+ 		cart.update(product, quantity);
+ 
+-		Cart updatedCart = cartService.addToCart(ACCOUNT_EMAIL, product.getId(), quantity);
++		Cart updatedCart = cartService.addToCart(userAccount.getEmail(), product.getId(), quantity);
+ 
+ 		verify(cartDAO).save(cart);
+ 		assertThat(updatedCart.getItemsCount(), equalTo(1));
+ 		assertThat(updatedCart.getItemsCost(), equalTo(quantity * product.getPrice()));
+ 		List<CartItem> cartItems = updatedCart.getCartItems();
+@@ -109,42 +104,51 @@ public class CartServiceTest {
+ 		assertThat(cartItems.get(0).getQuantity(), equalTo(quantity));
+ 	}
+ 
+ 	@Test
+ 	public void addToCart_UnavailableProduct() throws UnknownEntityException {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.getProduct(PRODUCT_ID)).thenReturn(product);
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.getProduct(product.getId()))
++			.thenReturn(product);
+ 		product.setAvailable(false);
+ 
+-		Cart updatedCart = cartService.addToCart(ACCOUNT_EMAIL, product.getId(), 3);
++		Cart updatedCart = cartService.addToCart(userAccount.getEmail(), product.getId(), 3);
+ 
+ 		verify(cartDAO, never()).save(any(Cart.class));
+ 		assertThat(updatedCart.isEmpty(), equalTo(true));
+ 	}
+ 
+ 	@Test
+ 	public void addToCart_AbsentProduct() throws UnknownEntityException {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.getProduct(PRODUCT_ID)).thenThrow(UnknownEntityException.class);
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.getProduct(product.getId())).thenThrow(UnknownEntityException.class);
+ 
+-		assertThrows(UnknownEntityException.class, () -> cartService.addToCart(ACCOUNT_EMAIL, product.getId(), 3));
++		assertThrows(UnknownEntityException.class, () -> cartService.addToCart(userAccount.getEmail(), product.getId(), 3));
+ 		verify(cartDAO, never()).save(any(Cart.class));
+ 	}
+ 
+ 	@Test
+ 	public void addAllToCart_Normal() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.findOne(PRODUCT_ID)).thenReturn(Optional.of(product));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.findOne(product.getId()))
++			.thenReturn(Optional.of(product));
+ 		int quantity = 3;
+ 		cart.update(product, quantity);
+ 		CartItem cartItem = new CartItem(cart, product, quantity);
+ 
+-		Cart updatedCart = cartService.addAllToCart(ACCOUNT_EMAIL, Collections.singletonList(cartItem));
++		Cart updatedCart = cartService.addAllToCart(userAccount.getEmail(), Collections.singletonList(cartItem));
+ 
+ 		verify(cartDAO).save(cart);
+ 		assertThat(updatedCart.getItemsCount(), equalTo(1));
+ 		assertThat(updatedCart.getItemsCost(), equalTo(quantity * product.getPrice()));
+ 		List<CartItem> cartItems = updatedCart.getCartItems();
+@@ -153,72 +157,87 @@ public class CartServiceTest {
+ 		assertThat(cartItems.get(0).getQuantity(), equalTo(quantity));
+ 	}
+ 
+ 	@Test
+ 	public void addAllToCart_UnavailableProduct() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.findOne(PRODUCT_ID)).thenReturn(Optional.of(product));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.findOne(product.getId()))
++			.thenReturn(Optional.of(product));
+ 		product.setAvailable(false);
+ 		CartItem cartItem = new CartItem(cart, product, 3);
+ 
+-		Cart updatedCart = cartService.addAllToCart(ACCOUNT_EMAIL, Collections.singletonList(cartItem));
++		Cart updatedCart = cartService.addAllToCart(userAccount.getEmail(), Collections.singletonList(cartItem));
+ 
+ 		verify(cartDAO, never()).save(any(Cart.class));
+ 		assertThat(updatedCart.isEmpty(), equalTo(true));
+ 	}
+ 
+ 	@Test
+ 	public void addAllToCart_AbsentProduct() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
+-		when(productService.findOne(PRODUCT_ID)).thenReturn(Optional.empty());
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
++		when(productService.findOne(product.getId()))
++			.thenReturn(Optional.empty());
+ 		CartItem cartItem = new CartItem(cart, product, 3);
+ 
+-		Cart updatedCart = cartService.addAllToCart(ACCOUNT_EMAIL, Collections.singletonList(cartItem));
++		Cart updatedCart = cartService.addAllToCart(userAccount.getEmail(), Collections.singletonList(cartItem));
+ 
+ 		verify(cartDAO, never()).save(any(Cart.class));
+ 		assertThat(updatedCart.isEmpty(), equalTo(true));
+ 	}
+ 
+ 	@Test
+ 	public void setDelivery() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
+ 
+-		Cart updatedCart = cartService.setDelivery(ACCOUNT_EMAIL, true);
++		Cart updatedCart = cartService.setDelivery(userAccount.getEmail(), true);
+ 
+ 		verify(cartDAO, times(1)).save(any(Cart.class));
+ 		assertThat(updatedCart.isDeliveryIncluded(), equalTo(true));
+ 
+-		updatedCart = cartService.setDelivery(ACCOUNT_EMAIL, false);
++		updatedCart = cartService.setDelivery(userAccount.getEmail(), false);
+ 
+ 		verify(cartDAO, times(2)).save(any(Cart.class));
+ 		assertThat(updatedCart.isDeliveryIncluded(), equalTo(false));
+ 	}
+ 
+ 	@Test
+ 	public void clearCart_EmptyCart() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
+ 
+-		Cart clearedCart = cartService.clearCart(ACCOUNT_EMAIL);
++		Cart clearedCart = cartService.clearCart(userAccount.getEmail());
+ 
+ 		verify(cartDAO).save(cart);
+ 		assertThat(clearedCart.isEmpty(), equalTo(true));
+ 	}
+ 
+ 	@Test
+ 	public void clearCart_FullCart() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(cartDAO.save(any(Cart.class))).thenReturn(cart);
+-		when(cartDAO.findById(ACCOUNT_ID)).thenReturn(Optional.of(cart));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(cartDAO.save(any(Cart.class)))
++			.thenReturn(cart);
++		when(cartDAO.findById(userAccount.getId()))
++			.thenReturn(Optional.of(cart));
+ 		cart.update(product, 3);
+ 
+-		Cart clearedCart = cartService.clearCart(ACCOUNT_EMAIL);
++		Cart clearedCart = cartService.clearCart(userAccount.getEmail());
+ 
+ 		verify(cartDAO).save(cart);
+ 		assertThat(clearedCart.isEmpty(), equalTo(true));
+ 	}
+ }
+diff --git a/src/test/java/market/service/ContactsServiceTest.java b/src/test/java/market/service/ContactsServiceTest.java
+index a53009e..fe21bb2 100644
+--- a/src/test/java/market/service/ContactsServiceTest.java
++++ b/src/test/java/market/service/ContactsServiceTest.java
+@@ -2,10 +2,11 @@ package market.service;
+ 
+ import market.dao.ContactsDAO;
+ import market.domain.Contacts;
+ import market.domain.UserAccount;
+ import market.service.impl.ContactsServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -18,14 +19,10 @@ import static org.mockito.Mockito.any;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class ContactsServiceTest {
+-	private static final long ACCOUNT_ID = 50L;
+-	private static final String ACCOUNT_EMAIL = "[REDACTED email]";
+-	private static final String CONTACTS_PHONE = "some_phone";
+-	private static final String CONTACTS_ADDRESS = "some_address";
+ 
+ 	@Mock
+ 	private ContactsDAO contactsDAO;
+ 	@Mock
+ 	private UserAccountService userAccountService;
+@@ -33,52 +30,47 @@ public class ContactsServiceTest {
+ 	@Captor
+ 	private ArgumentCaptor<Contacts> contactsCaptor;
+ 
+ 	private ContactsService contactsService;
+ 	private Contacts contacts;
++	private UserAccount userAccount;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		contacts = new Contacts.Builder()
+-			.setPhone(CONTACTS_PHONE)
+-			.setAddress(CONTACTS_ADDRESS)
+-			.build();
+-		UserAccount userAccount = new UserAccount.Builder()
+-			.setId(ACCOUNT_ID)
+-			.setEmail(ACCOUNT_EMAIL)
+[REDACTED credential-related line]
+-			.setName("Name")
+-			.setActive(true)
++		contacts = FixturesFactory.contacts().build();
++		userAccount = FixturesFactory.account()
+ 			.setContacts(contacts)
+ 			.build();
+ 		contacts.setUserAccount(userAccount);
+ 
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
+ 
+ 		contactsService = new ContactsServiceImpl(contactsDAO, userAccountService);
+ 	}
+ 
+ 	@Test
+ 	public void getContacts() {
+-		when(contactsDAO.findByUserAccount(any(UserAccount.class))).thenReturn(contacts);
++		when(contactsDAO.findByUserAccount(any(UserAccount.class)))
++			.thenReturn(contacts);
+ 
+-		Contacts retrievedContacts = contactsService.getContacts(ACCOUNT_EMAIL);
++		Contacts retrievedContacts = contactsService.getContacts(userAccount.getEmail());
+ 
+ 		verify(contactsDAO).findByUserAccount(any(UserAccount.class));
+ 		assertThat(retrievedContacts, equalTo(contacts));
+ 	}
+ 
+ 	@Test
+ 	public void updateUserContacts() {
+-		Contacts changedContacts = new Contacts.Builder()
+-			.setUserAccount(contacts.getUserAccount())
+-			.setPhone(CONTACTS_PHONE + "_changed")
+-			.setAddress(CONTACTS_ADDRESS + "_changed")
++		Contacts changedContacts = new Contacts.Builder(contacts)
++			.setPhone(contacts.getPhone() + "_changed")
++			.setAddress(contacts.getAddress() + "_changed")
+ 			.build();
+-		when(contactsDAO.findByUserAccount(any(UserAccount.class))).thenReturn(contacts);
++		when(contactsDAO.findByUserAccount(any(UserAccount.class)))
++			.thenReturn(contacts);
+ 
+-		contactsService.updateUserContacts(changedContacts, ACCOUNT_EMAIL);
++		contactsService.updateUserContacts(changedContacts, userAccount.getEmail());
+ 
+ 		verify(contactsDAO).save(contactsCaptor.capture());
+ 		assertThat(contactsCaptor.getValue(), equalTo(changedContacts));
+ 	}
+ }
+diff --git a/src/test/java/market/service/DistilleryServiceTest.java b/src/test/java/market/service/DistilleryServiceTest.java
+index 9b31a85..0558339 100644
+--- a/src/test/java/market/service/DistilleryServiceTest.java
++++ b/src/test/java/market/service/DistilleryServiceTest.java
+@@ -2,10 +2,11 @@ package market.service;
+ 
+ import market.dao.DistilleryDAO;
+ import market.domain.Distillery;
+ import market.domain.Region;
+ import market.service.impl.DistilleryServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -23,15 +24,10 @@ import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class DistilleryServiceTest {
+-	private static final long REGION_ID = 123L;
+-	private static final String REGION_NAME = "region_name";
+-	private static final long DISTILLERY_ID = 234L;
+-	private static final String DISTILLERY_TITLE = "distillery_title";
+-	private static final String DISTILLERY_DESCRIPTION = "distillery_description";
+ 
+ 	@Mock
+ 	private DistilleryDAO distilleryDAO;
+ 	@Mock
+ 	private RegionService regionService;
+@@ -45,89 +41,86 @@ public class DistilleryServiceTest {
+ 	private Distillery distillery;
+ 	private Region region;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		region = new Region.Builder()
+-			.setId(REGION_ID)
+-			.setName(REGION_NAME)
+-			.build();
+-		distillery = new Distillery.Builder()
+-			.setId(DISTILLERY_ID)
+-			.setRegion(region)
+-			.setTitle(DISTILLERY_TITLE)
+-			.setDescription(DISTILLERY_DESCRIPTION)
+-			.build();
++		region = FixturesFactory.region().build();
++		distillery = FixturesFactory.distillery(region).build();
+ 		distilleryService = new DistilleryServiceImpl(regionService, distilleryDAO);
+ 	}
+ 
+ 	@Test
+ 	public void findAll() {
+-		when(distilleryDAO.findAll()).thenReturn(Collections.singletonList(distillery));
++		when(distilleryDAO.findAll())
++			.thenReturn(Collections.singletonList(distillery));
+ 
+ 		List<Distillery> retrieved = distilleryService.findAll();
+ 
+ 		assertThat(retrieved, contains(distillery));
+ 	}
+ 
+ 	@Test
+ 	public void findByRegion() {
+-		when(distilleryDAO.findByRegionOrderByTitleAsc(any(Region.class))).thenReturn(Collections.singletonList(distillery));
++		when(distilleryDAO.findByRegionOrderByTitleAsc(any(Region.class)))
++			.thenReturn(Collections.singletonList(distillery));
+ 
+ 		List<Distillery> retrieved = distilleryService.findByRegion(region);
+ 
+ 		assertThat(retrieved, contains(distillery));
+ 	}
+ 
+ 	@Test
+ 	public void findById() {
+-		when(distilleryDAO.findById(DISTILLERY_ID)).thenReturn(Optional.of(distillery));
++		when(distilleryDAO.findById(distillery.getId()))
++			.thenReturn(Optional.of(distillery));
+ 
+-		Distillery retrieved = distilleryService.findById(DISTILLERY_ID);
++		Distillery retrieved = distilleryService.findById(distillery.getId());
+ 
+ 		assertThat(retrieved, equalTo(distillery));
+ 	}
+ 
+ 	@Test
+ 	public void findByTitle() {
+-		when(distilleryDAO.findByTitle(DISTILLERY_TITLE)).thenReturn(distillery);
++		when(distilleryDAO.findByTitle(distillery.getTitle()))
++			.thenReturn(distillery);
+ 
+-		Distillery retrieved = distilleryService.findByTitle(DISTILLERY_TITLE);
++		Distillery retrieved = distilleryService.findByTitle(distillery.getTitle());
+ 
+ 		assertThat(retrieved, equalTo(distillery));
+ 	}
+ 
+ 	@Test
+ 	public void create() {
+-		when(regionService.findByName(REGION_NAME)).thenReturn(region);
++		when(regionService.findByName(region.getName()))
++			.thenReturn(region);
+ 
+-		distilleryService.create(distillery, REGION_NAME);
++		distilleryService.create(distillery, region.getName());
+ 
+ 		verify(distilleryDAO).save(distilleryCaptor.capture());
+ 		assertThat(distilleryCaptor.getValue(), equalTo(distillery));
+ 	}
+ 
+ 	@Test
+ 	public void update() {
+-		Distillery changedDistillery = new Distillery.Builder()
+-			.setId(distillery.getId())
+-			.setRegion(region)
+-			.setTitle(DISTILLERY_TITLE + "_changed")
+-			.setDescription(DISTILLERY_DESCRIPTION + "_changed")
++		Distillery changedDistillery = new Distillery.Builder(distillery)
++			.setTitle(distillery.getTitle() + "_changed")
++			.setDescription(distillery.getDescription() + "_changed")
+ 			.build();
+-		when(regionService.findByName(region.getName())).thenReturn(region);
+-		when(distilleryDAO.findById(distillery.getId())).thenReturn(Optional.of(distillery));
++		when(regionService.findByName(region.getName()))
++			.thenReturn(region);
++		when(distilleryDAO.findById(distillery.getId()))
++			.thenReturn(Optional.of(distillery));
+ 
+-		distilleryService.update(changedDistillery, REGION_NAME);
++		distilleryService.update(changedDistillery, distillery.getRegion().getName());
+ 
+ 		verify(distilleryDAO).save(distilleryCaptor.capture());
+ 		assertThat(distilleryCaptor.getValue(), equalTo(changedDistillery));
+ 	}
+ 
+ 	@Test
+ 	public void delete() {
+-		distilleryService.delete(DISTILLERY_ID);
++		distilleryService.delete(distillery.getId());
+ 
+ 		verify(distilleryDAO).deleteById(longCaptor.capture());
+-		assertThat(longCaptor.getValue(), equalTo(DISTILLERY_ID));
++		assertThat(longCaptor.getValue(), equalTo(distillery.getId()));
+ 	}
+ }
+diff --git a/src/test/java/market/service/OrderServiceTest.java b/src/test/java/market/service/OrderServiceTest.java
+index 0f73fb0..c4d11d8 100644
+--- a/src/test/java/market/service/OrderServiceTest.java
++++ b/src/test/java/market/service/OrderServiceTest.java
+@@ -1,17 +1,13 @@
+ package market.service;
+ 
+ import market.dao.OrderDAO;
+-import market.domain.Bill;
+-import market.domain.Cart;
+-import market.domain.Order;
+-import market.domain.OrderedProduct;
+-import market.domain.Product;
+-import market.domain.UserAccount;
++import market.domain.*;
+ import market.exception.EmptyCartException;
+ import market.exception.UnknownEntityException;
+ import market.service.impl.OrderServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -20,30 +16,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
+ 
+ import java.time.Instant;
+ import java.time.LocalDate;
+ import java.time.ZoneId;
+ import java.time.ZonedDateTime;
+-import java.util.Collections;
+-import java.util.Date;
+-import java.util.List;
+-import java.util.Optional;
+-import java.util.Set;
++import java.util.*;
+ 
+ import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.hamcrest.Matchers.contains;
+-import static org.hamcrest.Matchers.equalTo;
+-import static org.hamcrest.Matchers.hasSize;
+-import static org.mockito.Mockito.times;
+-import static org.mockito.Mockito.verify;
+-import static org.mockito.Mockito.when;
++import static org.hamcrest.Matchers.*;
++import static org.mockito.Mockito.*;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class OrderServiceTest {
+-	private static final long ACCOUNT_ID = 50L;
+-	private static final String ACCOUNT_EMAIL = "[REDACTED email]";
+-	private static final long ORDER_ID = 123L;
+-	private static final long PRODUCT_ID = 10L;
+ 	private static final String CARD_NUMBER = "1234132412341234";
+ 
+ 	@Mock
+ 	private OrderDAO orderDAO;
+ 	@Mock
+@@ -66,48 +51,40 @@ public class OrderServiceTest {
+ 		return zdt.toLocalDate();
+ 	}
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		userAccount = new UserAccount.Builder()
+-			.setId(ACCOUNT_ID)
+-			.setEmail(ACCOUNT_EMAIL)
+[REDACTED credential-related line]
+-			.setName("Name")
+-			.setActive(true)
+-			.build();
+-		order = new Order.Builder()
+-			.setId(ORDER_ID)
+-			.setUserAccount(userAccount)
+-			.setDateCreated(new Date())
+-			.build();
+-		product = new Product.Builder()
+-			.setId(PRODUCT_ID)
+-			.setPrice(100.0)
+-			.build();
++		userAccount = FixturesFactory.account().build();
++		order = FixturesFactory.order(userAccount).build();
++		Region region = FixturesFactory.region().build();
++		Distillery distillery = FixturesFactory.distillery(region).build();
++		product = FixturesFactory.product(distillery).build();
+ 		cart = new Cart();
+-		cart.setId(ACCOUNT_ID);
++		cart.setId(userAccount.getId());
+ 		cart.setUserAccount(userAccount);
+ 
+ 		orderService = new OrderServiceImpl(orderDAO, userAccountService, cartService);
+ 	}
+ 
+ 	@Test
+ 	public void getUserOrders() {
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
+-		when(orderDAO.findByUserAccountOrderByDateCreatedDesc(userAccount)).thenReturn(Collections.singletonList(order));
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
++		when(orderDAO.findByUserAccountOrderByDateCreatedDesc(userAccount))
++			.thenReturn(Collections.singletonList(order));
+ 
+-		List<Order> retrieved = orderService.getUserOrders(ACCOUNT_EMAIL);
++		List<Order> retrieved = orderService.getUserOrders(userAccount.getEmail());
+ 
+ 		assertThat(retrieved, contains(order));
+ 	}
+ 
+ 	@Test
+ 	public void getUserOrder() throws UnknownEntityException {
+-		when(orderDAO.findById(ORDER_ID)).thenReturn(Optional.of(order));
++		when(orderDAO.findById(order.getId()))
++			.thenReturn(Optional.of(order));
+ 
+-		Order retrieved = orderService.getUserOrder(ACCOUNT_EMAIL, ORDER_ID);
++		Order retrieved = orderService.getUserOrder(userAccount.getEmail(), order.getId());
+ 
+ 		assertThat(retrieved, equalTo(order));
+ 	}
+ 
+ 	@Test
+@@ -115,14 +92,16 @@ public class OrderServiceTest {
+ 		int quantity = 3;
+ 		cart.update(product, quantity);
+ 		int deliveryCost = 300;
+ 		double productsCost = quantity * product.getPrice();
+ 		double totalCost = productsCost + deliveryCost;
+-		when(cartService.getCartOrCreate(ACCOUNT_EMAIL)).thenReturn(cart);
+-		when(userAccountService.findByEmail(ACCOUNT_EMAIL)).thenReturn(userAccount);
++		when(cartService.getCartOrCreate(userAccount.getEmail()))
++			.thenReturn(cart);
++		when(userAccountService.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
+ 
+-		Order createdOrder = orderService.createUserOrder(ACCOUNT_EMAIL, deliveryCost, CARD_NUMBER);
++		Order createdOrder = orderService.createUserOrder(userAccount.getEmail(), deliveryCost, CARD_NUMBER);
+ 
+ 		assertThat(createdOrder.getUserAccount(), equalTo(userAccount));
+ 		assertThat(createdOrder.getProductsCost(), equalTo(productsCost));
+ 		assertThat(createdOrder.isDeliveryIncluded(), equalTo(true));
+ 		assertThat(createdOrder.getDeliveryCost(), equalTo(deliveryCost));
+@@ -144,18 +123,19 @@ public class OrderServiceTest {
+ 		assertThat(orderedProduct.getQuantity(), equalTo(quantity));
+ 	}
+ 
+ 	@Test
+ 	public void updateStatus() {
+-		when(orderDAO.findById(ORDER_ID)).thenReturn(Optional.of(order));
++		when(orderDAO.findById(order.getId()))
++			.thenReturn(Optional.of(order));
+ 
+-		orderService.updateStatus(ORDER_ID, true);
++		orderService.updateStatus(order.getId(), true);
+ 
+ 		verify(orderDAO).save(orderCaptor.capture());
+ 		assertThat(orderCaptor.getValue().isExecuted(), equalTo(true));
+ 
+-		orderService.updateStatus(ORDER_ID, false);
++		orderService.updateStatus(order.getId(), false);
+ 
+ 		verify(orderDAO, times(2)).save(orderCaptor.capture());
+ 		assertThat(orderCaptor.getValue().isExecuted(), equalTo(false));
+ 	}
+ }
+diff --git a/src/test/java/market/service/ProductServiceTest.java b/src/test/java/market/service/ProductServiceTest.java
+index b7d7f99..7a30ee8 100644
+--- a/src/test/java/market/service/ProductServiceTest.java
++++ b/src/test/java/market/service/ProductServiceTest.java
+@@ -4,10 +4,11 @@ import market.dao.ProductDAO;
+ import market.domain.Distillery;
+ import market.domain.Product;
+ import market.domain.Region;
+ import market.exception.UnknownEntityException;
+ import market.service.impl.ProductServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -15,30 +16,20 @@ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.PageImpl;
+ import org.springframework.data.domain.PageRequest;
+ 
+-import java.util.Collections;
+-import java.util.HashMap;
+-import java.util.List;
+-import java.util.Map;
+-import java.util.Optional;
++import java.util.*;
+ 
+ import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.hamcrest.Matchers.contains;
+ import static org.hamcrest.Matchers.equalTo;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class ProductServiceTest {
+-	private static final long PRODUCT_ID = 10L;
+-	private static final double PRODUCT_PRICE = 100.0;
+-	private static final String REGION_NAME = "region_name";
+-	private static final long DISTILLERY_ID = 234L;
+-	private static final String DISTILLERY_TITLE = "distillery_title";
+-	private static final String DISTILLERY_DESCRIPTION = "distillery_description";
+ 
+ 	@Mock
+ 	private ProductDAO productDAO;
+ 	@Mock
+ 	private DistilleryService distilleryService;
+@@ -54,119 +45,116 @@ public class ProductServiceTest {
+ 	private Region region;
+ 	private PageRequest pageRequest;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		product = new Product.Builder()
+-			.setId(PRODUCT_ID)
+-			.setPrice(PRODUCT_PRICE)
+-			.build();
+-		region = new Region.Builder()
+-			.setId(123L)
+-			.setName(REGION_NAME)
+-			.build();
+-		distillery = new Distillery.Builder()
+-			.setId(DISTILLERY_ID)
+-			.setRegion(region)
+-			.setTitle(DISTILLERY_TITLE)
+-			.setDescription(DISTILLERY_DESCRIPTION)
+-			.build();
++		region = FixturesFactory.region().build();
++		distillery = FixturesFactory.distillery(region).build();
++		product = FixturesFactory.product(distillery).build();
+ 		pageRequest = PageRequest.of(1, 1);
+ 
+ 		productService = new ProductServiceImpl(productDAO, distilleryService);
+ 	}
+ 
+ 	@Test
+ 	public void findAll() {
+-		when(productDAO.findAll()).thenReturn(Collections.singletonList(product));
++		when(productDAO.findAll())
++			.thenReturn(Collections.singletonList(product));
+ 
+ 		List<Product> retrieved = productService.findAll();
+ 
+ 		assertThat(retrieved, contains(product));
+ 	}
+ 
+ 	@Test
+ 	public void findAll_Paged() {
+ 		Page<Product> productPage = new PageImpl<>(Collections.singletonList(product));
+-		when(productDAO.findAll(pageRequest)).thenReturn(productPage);
++		when(productDAO.findAll(pageRequest))
++			.thenReturn(productPage);
+ 
+ 		Page<Product> retrieved = productService.findAll(pageRequest);
+ 
+ 		assertThat(retrieved, contains(product));
+ 	}
+ 
+ 	@Test
+ 	public void findByDistillery() {
+ 		Page<Product> productPage = new PageImpl<>(Collections.singletonList(product));
+-		when(productDAO.findByDistilleryOrderByName(distillery, pageRequest)).thenReturn(productPage);
++		when(productDAO.findByDistilleryOrderByName(distillery, pageRequest))
++			.thenReturn(productPage);
+ 
+ 		Page<Product> retrieved = productService.findByDistillery(distillery, pageRequest);
+ 
+ 		assertThat(retrieved, contains(product));
+ 	}
+ 
+ 	@Test
+ 	public void findByRegion() {
+ 		Page<Product> productPage = new PageImpl<>(Collections.singletonList(product));
+-		when(productDAO.findByRegionOrderByName(region, pageRequest)).thenReturn(productPage);
++		when(productDAO.findByRegionOrderByName(region, pageRequest))
++			.thenReturn(productPage);
+ 
+ 		Page<Product> retrieved = productService.findByRegion(region, pageRequest);
+ 
+ 		assertThat(retrieved, contains(product));
+ 	}
+ 
+ 	@Test
+ 	public void findByAvailability() {
+ 		boolean available = true;
+ 		Page<Product> productPage = new PageImpl<>(Collections.singletonList(product));
+-		when(productDAO.findByAvailableOrderByName(available, pageRequest)).thenReturn(productPage);
++		when(productDAO.findByAvailableOrderByName(available, pageRequest))
++			.thenReturn(productPage);
+ 
+ 		Page<Product> retrieved = productService.findByAvailability(Boolean.toString(available), pageRequest);
+ 
+ 		assertThat(retrieved, contains(product));
+ 	}
+ 
+ 	@Test
+ 	public void getProduct() throws UnknownEntityException {
+-		when(productDAO.findById(product.getId())).thenReturn(Optional.of(product));
++		when(productDAO.findById(product.getId()))
++			.thenReturn(Optional.of(product));
+ 
+ 		Product retrieved = productService.getProduct(product.getId());
+ 
+ 		assertThat(retrieved, equalTo(product));
+ 	}
+ 
+ 	@Test
+ 	public void findOne() {
+ 		Optional<Product> productOptional = Optional.of(product);
+-		when(productDAO.findById(product.getId())).thenReturn(productOptional);
++		when(productDAO.findById(product.getId()))
++			.thenReturn(productOptional);
+ 
+ 		Optional<Product> retrieved = productService.findOne(product.getId());
+ 
+ 		assertThat(retrieved, equalTo(productOptional));
+ 	}
+ 
+ 	@Test
+ 	public void create() {
+-		when(distilleryService.findByTitle(DISTILLERY_TITLE)).thenReturn(distillery);
++		when(distilleryService.findByTitle(distillery.getTitle()))
++			.thenReturn(distillery);
+ 
+-		productService.create(product, DISTILLERY_TITLE);
++		productService.create(product, distillery.getTitle());
+ 
+ 		verify(productDAO).save(productCaptor.capture());
+ 		assertThat(productCaptor.getValue(), equalTo(product));
+ 	}
+ 
+ 	@Test
+ 	public void update() throws UnknownEntityException {
+-		Product changedProduct = new Product.Builder()
+-			.setId(product.getId())
+-			.setDistillery(distillery)
+-			.setPrice(PRODUCT_PRICE + 50)
++		Product changedProduct = new Product.Builder(product)
++			.setPrice(product.getPrice() + 50)
+ 			.build();
+-		when(distilleryService.findByTitle(DISTILLERY_TITLE)).thenReturn(distillery);
+-		when(productDAO.findById(product.getId())).thenReturn(Optional.of(product));
++		when(distilleryService.findByTitle(distillery.getTitle()))
++			.thenReturn(distillery);
++		when(productDAO.findById(product.getId()))
++			.thenReturn(Optional.of(product));
+ 
+-		productService.update(changedProduct, DISTILLERY_TITLE);
++		productService.update(changedProduct, distillery.getTitle());
+ 
+ 		verify(productDAO).save(productCaptor.capture());
+ 		assertThat(productCaptor.getValue(), equalTo(changedProduct));
+ 	}
+ 
+@@ -176,11 +164,12 @@ public class ProductServiceTest {
+ 		Product expectedProduct = new Product.Builder(product)
+ 			.setAvailable(updatedAvailability)
+ 			.build();
+ 		Map<Boolean, List<Long>> changes = new HashMap<>();
+ 		changes.put(updatedAvailability, Collections.singletonList(product.getId()));
+-		when(productDAO.findById(product.getId())).thenReturn(Optional.of(product));
++		when(productDAO.findById(product.getId()))
++			.thenReturn(Optional.of(product));
+ 
+ 		productService.updateAvailability(changes);
+ 
+ 		verify(productDAO).save(productCaptor.capture());
+ 		assertThat(productCaptor.getValue(), equalTo(expectedProduct));
+diff --git a/src/test/java/market/service/RegionServiceTest.java b/src/test/java/market/service/RegionServiceTest.java
+index d947e19..4e2447f 100644
+--- a/src/test/java/market/service/RegionServiceTest.java
++++ b/src/test/java/market/service/RegionServiceTest.java
+@@ -1,10 +1,11 @@
+ package market.service;
+ 
+ import market.dao.RegionDAO;
+ import market.domain.Region;
+ import market.service.impl.RegionServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -21,12 +22,10 @@ import static org.hamcrest.Matchers.equalTo;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class RegionServiceTest {
+-	private static final long REGION_ID = 123L;
+-	private static final String REGION_NAME = "region_name";
+ 
+ 	@Mock
+ 	private RegionDAO regionDAO;
+ 
+ 	@Captor
+@@ -37,38 +36,38 @@ public class RegionServiceTest {
+ 	private RegionService regionService;
+ 	private Region region;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		region = new Region.Builder()
+-			.setId(REGION_ID)
+-			.setName(REGION_NAME)
+-			.build();
++		region = FixturesFactory.region().build();
+ 		regionService = new RegionServiceImpl(regionDAO);
+ 	}
+ 
+ 	@Test
+ 	public void findAll() {
+-		when(regionDAO.findAll()).thenReturn(Collections.singletonList(region));
++		when(regionDAO.findAll())
++			.thenReturn(Collections.singletonList(region));
+ 
+ 		List<Region> retrieved = regionService.findAll();
+ 
+ 		assertThat(retrieved, contains(region));
+ 	}
+ 
+ 	@Test
+ 	public void findOne() {
+-		when(regionDAO.findById(region.getId())).thenReturn(Optional.of(region));
++		when(regionDAO.findById(region.getId()))
++			.thenReturn(Optional.of(region));
+ 
+ 		Region retrieved = regionService.findOne(region.getId());
+ 
+ 		assertThat(retrieved, equalTo(region));
+ 	}
+ 
+ 	@Test
+ 	public void findByName() {
+-		when(regionDAO.findByName(region.getName())).thenReturn(Optional.of(region));
++		when(regionDAO.findByName(region.getName()))
++			.thenReturn(Optional.of(region));
+ 
+ 		Region retrieved = regionService.findByName(region.getName());
+ 
+ 		assertThat(retrieved, equalTo(region));
+ 	}
+@@ -81,15 +80,15 @@ public class RegionServiceTest {
+ 		assertThat(regionCaptor.getValue(), equalTo(region));
+ 	}
+ 
+ 	@Test
+ 	public void update() {
+-		Region changedRegion = new Region.Builder()
+-			.setId(region.getId())
+-			.setName(REGION_NAME + "_changed")
++		Region changedRegion = new Region.Builder(region)
++			.setName(region.getName() + "_changed")
+ 			.build();
+-		when(regionDAO.findById(region.getId())).thenReturn(Optional.of(region));
++		when(regionDAO.findById(region.getId()))
++			.thenReturn(Optional.of(region));
+ 
+ 		regionService.update(changedRegion.getId(), changedRegion);
+ 
+ 		verify(regionDAO).save(regionCaptor.capture());
+ 		assertThat(regionCaptor.getValue(), equalTo(changedRegion));
+diff --git a/src/test/java/market/service/UserAccountServiceTest.java b/src/test/java/market/service/UserAccountServiceTest.java
+index 4579d84..2bbff9f 100644
+--- a/src/test/java/market/service/UserAccountServiceTest.java
++++ b/src/test/java/market/service/UserAccountServiceTest.java
+@@ -2,10 +2,11 @@ package market.service;
+ 
+ import market.dao.UserAccountDAO;
+ import market.domain.UserAccount;
+ import market.exception.EmailExistsException;
+ import market.service.impl.UserAccountServiceImpl;
++import market.util.FixturesFactory;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -17,12 +18,10 @@ import static org.hamcrest.Matchers.equalTo;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @ExtendWith(MockitoExtension.class)
+ public class UserAccountServiceTest {
+-	private static final long ACCOUNT_ID = 50L;
+-	private static final String ACCOUNT_EMAIL = "[REDACTED email]";
+ 
+ 	@Mock
+ 	private UserAccountDAO userAccountDAO;
+ 
+ 	@Captor
+@@ -31,32 +30,28 @@ public class UserAccountServiceTest {
+ 	private UserAccountService userAccountService;
+ 	private UserAccount userAccount;
+ 
+ 	@BeforeEach
+ 	public void setUp() {
+-		userAccount = new UserAccount.Builder()
+-			.setId(ACCOUNT_ID)
+-			.setEmail(ACCOUNT_EMAIL)
+[REDACTED credential-related line]
+-			.setName("Name")
+-			.setActive(true)
+-			.build();
++		userAccount = FixturesFactory.account().build();
+ 		userAccountService = new UserAccountServiceImpl(userAccountDAO);
+ 	}
+ 
+ 	@Test
+ 	public void findByEmail() {
+-		when(userAccountDAO.findByEmail(userAccount.getEmail())).thenReturn(userAccount);
++		when(userAccountDAO.findByEmail(userAccount.getEmail()))
++			.thenReturn(userAccount);
+ 
+ 		UserAccount retrieved = userAccountService.findByEmail(userAccount.getEmail());
+ 
+ 		assertThat(retrieved, equalTo(userAccount));
+ 	}
+ 
+ 	@Test
+ 	public void create() throws EmailExistsException {
+-		when(userAccountDAO.findByEmail(userAccount.getEmail())).thenReturn(null);
++		when(userAccountDAO.findByEmail(userAccount.getEmail()))
++			.thenReturn(null);
+ 
+ 		userAccountService.create(userAccount);
+ 
+ 		verify(userAccountDAO).save(userAccountCaptor.capture());
+ 		assertThat(userAccountCaptor.getValue(), equalTo(userAccount));
+diff --git a/src/test/java/market/util/FixturesFactory.java b/src/test/java/market/util/FixturesFactory.java
+new file mode 100644
+index 0000000..c2282de
+--- /dev/null
++++ b/src/test/java/market/util/FixturesFactory.java
+@@ -0,0 +1,94 @@
++package market.util;
++
++import market.domain.*;
++
++import java.util.Date;
++
++public class FixturesFactory {
++	private static final String DISTILLERY_TITLE = "distillery_title";
++	private static final String DISTILLERY_DESCRIPTION = "distillery_description";
++
++	private static final String REGION_NAME = "region_name";
++	private static final String REGION_SUBTITLE = "region_subtitle";
++	private static final String REGION_DESCRIPTION = "region_description";
++	private static final String REGION_COLOR = "region_color";
++
++	private static final double PRODUCT_PRICE = 100.0;
++	private static final String PRODUCT_NAME = "product_name";
++	private static final int PRODUCT_AGE = 10;
++	private static final float PRODUCT_ALCOHOL = 40;
++	private static final int PRODUCT_VOLUME = 700;
++	private static final String PRODUCT_DESCRIPTION = "product_description";
++	private static final boolean PRODUCT_AVAILABLE = true;
++
++	private static final String ACCOUNT_EMAIL = "[REDACTED email]";
+[REDACTED credential-related line]
++	private static final String ACCOUNT_NAME = "Name";
++	private static final boolean ACCOUNT_ACTIVE = true;
++
++	private static final String CONTACTS_PHONE = "some_phone";
++	private static final String CONTACTS_ADDRESS = "some_address";
++
++	private static long regionId = 123L;
++	private static long distilleryId = 234L;
++	private static long productId = 10L;
++	private static long accountId = 50L;
++	private static long orderId = 3000L;
++
++	public static Region.Builder region() {
++		return new Region.Builder()
++			.setId(++regionId)
++			.setName(REGION_NAME + regionId)
++			.setSubtitle(REGION_SUBTITLE)
++			.setDescription(REGION_DESCRIPTION)
++			.setColor(REGION_COLOR);
++	}
++
++	public static Distillery.Builder distillery(Region region) {
++		return new Distillery.Builder()
++			.setId(++distilleryId)
++			.setRegion(region)
++			.setTitle(DISTILLERY_TITLE + distilleryId)
++			.setDescription(DISTILLERY_DESCRIPTION);
++	}
++
++	public static Product.Builder product(Distillery distillery) {
++		return new Product.Builder()
++			.setId(++productId)
++			.setDistillery(distillery)
++			.setName(PRODUCT_NAME + productId)
++			.setAge(PRODUCT_AGE)
++			.setAlcohol(PRODUCT_ALCOHOL)
++			.setPrice(PRODUCT_PRICE)
++			.setVolume(PRODUCT_VOLUME)
++			.setDescription(PRODUCT_DESCRIPTION)
++			.setAvailable(PRODUCT_AVAILABLE);
++	}
++
++	public static UserAccount.Builder account(Cart cart) {
++		return account()
++			.setCart(cart);
++	}
++
++	public static UserAccount.Builder account() {
++		return new UserAccount.Builder()
++			.setId(++accountId)
++			.setEmail(ACCOUNT_EMAIL)
++			.setPassword(ACCOUNT_PASSWORD)
++			.setName(ACCOUNT_NAME)
++			.setActive(ACCOUNT_ACTIVE);
++	}
++
++	public static Contacts.Builder contacts() {
++		return new Contacts.Builder()
++			.setPhone(CONTACTS_PHONE)
++			.setAddress(CONTACTS_ADDRESS);
++	}
++
++	public static Order.Builder order(UserAccount userAccount) {
++		return new Order.Builder()
++			.setId(++orderId)
++			.setUserAccount(userAccount)
++			.setDateCreated(new Date());
++	}
++}

@@ -1,0 +1,34 @@
+diff --git a/docs/architecture-overview.md b/docs/architecture-overview.md
+index 6c1f751..bcdea30 100644
+--- a/docs/architecture-overview.md
++++ b/docs/architecture-overview.md
+@@ -49,11 +49,12 @@ The Verification Server handles pseudonym data this data needs a high level of p
+ |M4|	Persist only hashed values for personal relatable data	|
+ 
+ 
+ ##	Measures to increase data privacy
+ ###	Separate Operation of Verification Server and Corona-Warn-App Server
+-The Verification Server and the Corona-Warn-App Server are operated by different people and run in different cloud subscriptions.
++The Verification Server and the Corona-Warn-App Server are operated by different people and run in different namespaces in one cloud tenant. The namespaces organize access rights of people for resources.
++
+ ###	Logging
+ Primary key or pseudonymous data must not be part of a logging statement, the only exception is detected abuse cases.
+ Logfiles are kept for 30 days.
+ ##	Important Assumptions
+ -	Diagnostic Key upload and TAN verification is executed only a defined number of times per user and test
+diff --git a/src/main/java/app/coronawarn/verification/service/TanService.java b/src/main/java/app/coronawarn/verification/service/TanService.java
+index 1cc337d..9c56cf6 100644
+--- a/src/main/java/app/coronawarn/verification/service/TanService.java
++++ b/src/main/java/app/coronawarn/verification/service/TanService.java
+@@ -58,10 +58,11 @@ public class TanService {
+   private static final Integer TELE_TAN_LENGTH = 7;
+   // Exclude characters which can be confusing in some fonts like 0-O or i-I-l.
+   private static final String TELE_TAN_ALLOWED_CHARS = "23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
+   private static final String TELE_TAN_PATTERN = "^[" + TELE_TAN_ALLOWED_CHARS + "]{" + TELE_TAN_LENGTH + "}$";
+   private static final Pattern PATTERN = Pattern.compile(TELE_TAN_PATTERN);
++
+   /**
+    * The {@link VerificationTanRepository}.
+    */
+   @NonNull
+   private final VerificationTanRepository tanRepository;

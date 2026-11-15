@@ -1,0 +1,132 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/CreateDirectDebitPaymentRequest.java b/src/main/java/uk/gov/pay/api/model/CreateDirectDebitPaymentRequest.java
+index 1623ef2e..0cfba5e6 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreateDirectDebitPaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/CreateDirectDebitPaymentRequest.java
+@@ -15,11 +15,11 @@ import java.util.StringJoiner;
+ @JsonIgnoreProperties(ignoreUnknown = true)
+ public class CreateDirectDebitPaymentRequest {
+ 
+     public static final int REFERENCE_MAX_LENGTH = 255;
+     public static final int AMOUNT_MAX_VALUE = 10000000;
+-    public static final int AMOUNT_MIN_VALUE = 1;
++    public static final int AMOUNT_MIN_VALUE = 100;
+     public static final int DESCRIPTION_MAX_LENGTH = 255;
+     public static final int MANDATE_ID_MAX_LENGTH = 26;
+ 
+     @JsonProperty("amount")
+     @Min(value = AMOUNT_MIN_VALUE, message = "Must be greater than or equal to {value}")
+diff --git a/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
+index 0482a873..58e0903a 100644
+--- a/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
+@@ -79,11 +79,11 @@ public class DirectDebitPaymentsResource {
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 422, message = "Invalid parameters: amount, reference, description, mandate id. See Public API documentation for the correct data formats", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+     public Response createPayment(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+-                                  @Valid CreateDirectDebitPaymentRequest request) {
++                                  @ApiParam(value = "requestPayload", required = true) @Valid CreateDirectDebitPaymentRequest request) {
+         DirectDebitPayment payment = createDirectDebitPaymentsService.create(account, request);
+         return Response.created(publicApiUriGenerator.getDirectDebitPaymentURI(payment.getPaymentId()))
+                 .entity(payment).build();
+     }
+ 
+diff --git a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceCreatePaymentIT.java b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceCreatePaymentIT.java
+index 492479c6..a6860ee9 100644
+--- a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceCreatePaymentIT.java
++++ b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceCreatePaymentIT.java
+@@ -122,16 +122,16 @@ public class DirectDebitPaymentsResourceCreatePaymentIT extends DirectDebitResou
+ 
+     private CreatePaymentRequestValidationParameters[] parametersForValidation() {
+         return new CreatePaymentRequestValidationParameters[]{
+                 someParameters()
+                         .withAmount(null)
+-                        .withErrorMessage("Invalid attribute value: amount. Must be greater than or equal to 1")
++                        .withErrorMessage("Invalid attribute value: amount. Must be greater than or equal to 100")
+                         .withErrorField("amount")
+                         .build(),
+                 someParameters()
+                         .withAmount(0L)
+-                        .withErrorMessage("Invalid attribute value: amount. Must be greater than or equal to 1")
++                        .withErrorMessage("Invalid attribute value: amount. Must be greater than or equal to 100")
+                         .withErrorField("amount")
+                         .build(),
+                 someParameters()
+                         .withAmount(10000001L)
+                         .withErrorMessage("Invalid attribute value: amount. Must be less than or equal to 10000000")
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index bd90e383..7a8d016c 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -305,10 +305,19 @@
+         "summary" : "Create new Direct Debit payment",
+[REDACTED credential-related line]
+         "operationId" : "createDirectDebitPayment",
+         "consumes" : [ "application/json" ],
+         "produces" : [ "application/json" ],
++        "parameters" : [ {
++          "in" : "body",
++          "name" : "body",
++          "description" : "requestPayload",
++          "required" : true,
++          "schema" : {
++            "$ref" : "#/definitions/CreateDirectDebitPaymentRequest"
++          }
++        } ],
+         "responses" : {
+           "201" : {
+             "description" : "Created",
+             "schema" : {
+               "$ref" : "#/definitions/DirectDebitPayment"
+@@ -1135,10 +1144,50 @@
+           "$ref" : "#/definitions/PrefilledCardholderDetails"
+         }
+       },
+       "description" : "The Payment Request Payload"
+     },
++    "CreateDirectDebitPaymentRequest" : {
++      "type" : "object",
++      "required" : [ "amount", "description", "reference" ],
++      "properties" : {
++        "amount" : {
++          "type" : "integer",
++          "format" : "int32",
++          "example" : 12000,
++          "description" : "amount in pence",
++          "readOnly" : true,
++          "minimum" : 100,
++          "maximum" : 10000000
++        },
++        "reference" : {
++          "type" : "string",
++          "example" : "12345",
++          "description" : "payment reference",
++          "readOnly" : true,
++          "minLength" : 0,
++          "maxLength" : 255
++        },
++        "description" : {
++          "type" : "string",
++          "example" : "New passport application",
++          "description" : "payment description",
++          "readOnly" : true,
++          "minLength" : 0,
++          "maxLength" : 255
++        },
++        "mandate_id" : {
++          "type" : "string",
++          "example" : "33890b55-b9ea-4e2f-90fd-77ae0e9009e2",
++          "description" : "ID of the mandates being used to collect the payment",
++          "readOnly" : true,
++          "minLength" : 0,
++          "maxLength" : 26
++        }
++      },
++      "description" : "The Direct Debit Payment Request Payload"
++    },
+     "CreateMandateRequest" : {
+       "type" : "object",
+       "required" : [ "reference", "return_url" ],
+       "properties" : {
+         "return_url" : {

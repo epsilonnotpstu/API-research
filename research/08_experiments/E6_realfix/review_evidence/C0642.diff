@@ -1,0 +1,216 @@
+diff --git a/pom.xml b/pom.xml
+index 99e80e8e..cf05b5eb 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -50,10 +50,22 @@
+ 		<dependency>
+ 			<groupId>org.geotools</groupId>
+ 			<artifactId>gt-epsg-hsql</artifactId>
+ 			<version>17.2</version>
+ 		</dependency>
++		<!-- Springfox implementation of the Swagger specification -->
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-swagger2</artifactId>
++			<version>2.7.0</version>
++		</dependency>
++		<!-- Springfox Swagger UI -->
++		<dependency>
++			<groupId>io.springfox</groupId>
++			<artifactId>springfox-swagger-ui</artifactId>
++			<version>2.7.0</version>
++		</dependency>
+ 	</dependencies>
+ 
+ 	<properties>
+ 		<java.version>1.8</java.version>
+ 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+@@ -67,13 +79,10 @@
+ 			</plugin>
+ 		</plugins>
+ 	</build>
+ 
+ 	<repositories>
+-		<!-- <repository> <snapshots> <enabled>false</enabled> </snapshots> <id>oshdb-releases</id> 
+-			<name>Heigit/GIScience maven repository (releases)</name> <url>http://129.206.7.121:8081/artifactory/libs-release-local</url> 
+-			</repository> -->
+ 		<repository>
+ 			<snapshots>
+ 				<enabled>true</enabled>
+ 			</snapshots>
+ 			<id>oshdb-snapshots</id>
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/SwaggerConfig.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/SwaggerConfig.java
+new file mode 100644
+index 00000000..4bab7769
+--- /dev/null
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/SwaggerConfig.java
+@@ -0,0 +1,24 @@
++package org.heigit.bigspatialdata.ohsome.springBootWebAPI;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++import springfox.documentation.builders.PathSelectors;
++import springfox.documentation.builders.RequestHandlerSelectors;
++import springfox.documentation.spi.DocumentationType;
++import springfox.documentation.spring.web.plugins.Docket;
++import springfox.documentation.swagger2.annotations.EnableSwagger2;
++
++/**
++ * Swagger configuration class
++ *
++ */
++@Configuration
++@EnableSwagger2
++public class SwaggerConfig {
++	@Bean
++	public Docket api() {
++		return new Docket(DocumentationType.SWAGGER_2).select().apis(RequestHandlerSelectors.any())
++				.paths(PathSelectors.any()).build();
++	}
++}
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataAggregationResponse/GroupByResult.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataAggregationResponse/GroupByResult.java
+new file mode 100644
+index 00000000..5e35ca4e
+--- /dev/null
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataAggregationResponse/GroupByResult.java
+@@ -0,0 +1,25 @@
++package org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.dataAggregationResponse;
++
++/**
++ * Contains the result JSON objects + their respective groupeBy parameter. This
++ * class is only used in groupBy requests.
++ *
++ */
++public class GroupByResult {
++
++	private String groupByObj;
++	private Result[] result;
++
++	public GroupByResult(String groupByObj, Result[] result) {
++		this.groupByObj = groupByObj;
++		this.result = result;
++	}
++
++	public String getGroupByObj() {
++		return groupByObj;
++	}
++
++	public Result[] getResult() {
++		return result;
++	}
++}
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/DataExtractionResponseContent.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/DataExtractionResponseContent.java
+index e5b62123..c7f94702 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/DataExtractionResponseContent.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/DataExtractionResponseContent.java
+@@ -6,11 +6,10 @@ import org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.MetaData
+ 
+ /**
+  * First level object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+  * It follows this structure: https://confluence.gistools.geog.uni-heidelberg.de/pages/viewpage.action?pageId=11894804
+[REDACTED personal attribution]
+  *
+  */
+ public class DataExtractionResponseContent {
+ 	
+ 	private final String status;
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Node.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Node.java
+index a2028224..5144433f 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Node.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Node.java
+@@ -1,11 +1,10 @@
+ package org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.dataExtractionResponse;
+ 
+ /**
+  * Content of the node object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+[REDACTED personal attribution]
+  *
+  */
+ public class Node {
+ 
+ 	private long id;
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbObjects.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbObjects.java
+index c409008e..fd715bbc 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbObjects.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbObjects.java
+@@ -4,11 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
+ import com.fasterxml.jackson.annotation.JsonInclude.Include;
+ 
+ /**
+  * Third level object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+[REDACTED personal attribution]
+  *
+  */
+ @JsonInclude(Include.NON_NULL) // needed to exclude NULL objects from the result
+ public class OshdbObjects {
+ 	
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbResult.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbResult.java
+index b33fa5f2..12b5629d 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbResult.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/OshdbResult.java
+@@ -3,11 +3,11 @@ package org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.dataExt
+ import java.util.ArrayList;
+ 
+ /**
+  * Second level object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+[REDACTED personal attribution]
+[REDACTED personal attribution]
+  *
+  */
+ public class OshdbResult {
+ 	
+ 	private final String timestamp; // is the actual timestamp
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Relation.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Relation.java
+index 1c94b304..89c812ea 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Relation.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Relation.java
+@@ -1,11 +1,10 @@
+ package org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.dataExtractionResponse;
+ 
+ /**
+  * Content of the relation object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+[REDACTED personal attribution]
+  *
+  */
+ public class Relation {
+ 
+ 	private long id;
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Way.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Way.java
+index fa4f8f01..ac66d4eb 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Way.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/content/output/dataExtractionResponse/Way.java
+@@ -1,11 +1,10 @@
+ package org.heigit.bigspatialdata.ohsome.springBootWebAPI.content.output.dataExtractionResponse;
+ 
+ /**
+  * Content of the way object in the POST JSON response.
+  * This was implemented before the detailed concept of the REST API was defined in Confluence.
+[REDACTED personal attribution]
+  *
+  */
+ public class Way {
+ 
+ 	private long id;
+diff --git a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/controller/ElementsController.java b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/controller/ElementsController.java
+index 9df33149..504f21bb 100644
+--- a/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/controller/ElementsController.java
++++ b/src/main/java/org/heigit/bigspatialdata/ohsome/springBootWebAPI/controller/ElementsController.java
+@@ -126,11 +126,11 @@ public class ElementsController {
+ 		long duration = System.currentTimeMillis() - startTime;
+ 		// response
+ 		ElementsResponseContent response = new ElementsResponseContent(
+ 				"Lorem ipsum dolor sit amet, consetetur sadipscing elitr,",
+ 				"sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
+-				new MetaData(duration, "amount", "Total number of elements are selected by the parameters."), null,
++				new MetaData(duration, "amount", "Total number of elements, which are selected by the parameters."), null,
+ 				resultSet);
+ 		return response;
+ 	}
+ 
+ 	/**

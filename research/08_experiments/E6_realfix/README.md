@@ -1,0 +1,30 @@
+T42 offline feasibility dataset
+
+This is a mining/review artifact, not a blind benchmark package. There are 1,460 heuristic candidate commits, 105 manually screened commits across 13 repositories, and 13 accepted commit/proposition pairs: SPEC 10, IMPL 3, BOTH 0. One item is retained per fix commit. Two accepted commits overlap T41. See `summary.json` and the Bengali report `09_collab/reports/T42_report.md`.
+
+`candidates.csv` contains the full pool, explicit `not_reviewed` rows, rejection/defer reasons, selection phase and review depth. A bounded diff screen is not an exhaustive audit of every changed line in a large commit. Accepted items additionally received parent/fix source and operation tracing. `accepted.csv` contains full commit IDs, committer dates, neutral parent-state propositions, parent-only `proposition_check`, snapshot locators, diff hunk references and confidence. `source_evidence/R*.txt` contains numbered, sanitized evidence excerpts. `review_evidence/C*.diff` contains sanitized diffs, without author metadata. These files intentionally reveal the fixes and must never be included in a later blind package.
+
+The broad heuristic uses all reachable non-merge history. It requires at least one message cue plus a changed Java/Kotlin file, path matching controller/resource/endpoint/dto/model/exception/handler/response/request/swagger/openapi/api-doc or /api/, or a spec path identified in the initial HEAD scan. Message cues are prefix-matched words: swagger, openapi, api doc, spec, contract, documentation, required, status code, response code, nullable, match, align, fix, correct. The prefix regex can also capture words such as fixtures. Commit titles starting bump/merge/release/chore(deps)/build(deps), or mentioning dependabot/renovate, are filtered. Remaining dependency, formatting, feature and new-endpoint commits are excluded during manual review, with their screening records retained.
+
+Ranking is `10*strong_cue + 4*correction_cue + min(surface_path_count,4)`, where strong cues are swagger/openapi/api doc/contract/status code/response code/nullable/documentation and correction cues are fix/correct/align/match/required. Sort by repo, descending score, then full SHA. The initial sample is the first six per repo, or all when fewer exist (73). The 32 supplemental IDs in `selection.json` were chosen adaptively from own-service contract correction titles and validation/status fixes. This is a purposive precision/yield study, not a probability sample. No rate is an estimate for all upstream defects. The initial HEAD line-oriented spec discovery misses some minified fixture JSON; `surface_audit.py` separately parses JSON root keys for the complete reported HEAD inventory. Candidate selection remains frozen to the initial heuristic.
+
+No window joins are used: each candidate is compared to its single parent. Review must establish an existing implementation operation, a parent contract/behaviour discrepancy, and resolution of that same proposition. Changing both files does not establish BOTH. Programmatic Docket-only corrections are deferred under the requested spec_file/annotations scope. Imported example/schema-validator fixes in Microcks are excluded from own-service REST alignment.
+
+Confidence 3 means explicit parent constraint and direct source evidence. Confidence 2 includes descriptive or semantic model/documentation evidence. Four accepted items are semantic documentation corrections: a permissive old schema may still validate the wire payload. One uses a descriptive SHA-256 constraint. The confidence-3 subset has 8 items (SPEC 6 / IMPL 2). All accepted directions are statically reviewable; no HTTP failure or reproduction has been observed in this task.
+
+Reproduction uses only our scripts and read-only Git. Run from the research directory:
+
+```sh
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/mine.py
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/inspect_candidates.py --select
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/build_tables.py
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/surface_audit.py
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/leakage_audit.py
+/usr/bin/python3 -I -B 08_experiments/E6_realfix/scripts/verify.py
+```
+
+The output of mining is tied to the recorded clone HEADs/all refs. Moving refs can change the pool and candidate IDs; use the frozen `candidate_pool.json` for downstream reproduction. `build_tables.py` materializes the manual data in `scripts/curation.py`; it does not automatically adjudicate the semantic claims. For inspection, `inspect_candidates.py C0010` prints a bounded sanitized diff and `probe_sources.py C0010 'Project.java$' 'getScore'` reads parent text blobs. Neither executes upstream code. The verifier checks commit parents/dates, original blob hashes, locators, contract facts, unchanged target behaviour for SPEC, schema bindings, neutral-template invariants and output privacy patterns. A passed verifier is not independent semantic adjudication.
+
+Only `git --git-dir=... log/show/diff/ls-tree/rev-list` are invoked. No checkout, hook, build, dependency installation, network request or upstream script execution is performed. Diffs use `--no-ext-diff --no-textconv`. Author/committer identities are not requested. Redaction removes attribution/comment/contact identity lines, email addresses, credential-like assignments and token-like URL query values. See `09_collab/logs/T42_scratch/privacy_incident.json` for early display/filter limitations; redaction cannot erase previously displayed tool output.
+
+Stars and quantitative popularity are unavailable offline. `surface_audit.json` records this explicitly for every repo. `leakage_audit.json` checks parent release/readme files for exact future fix SHA/subject strings; it does not guarantee package blindness. Future packages need an independent leakage review, author/secret scrub, parent-only source export without `.git`, and repository/commit-family splits.

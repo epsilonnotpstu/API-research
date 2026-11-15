@@ -1,0 +1,90 @@
+[parent contract] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/controller/VerificationController.java:120
+117:    */
+118:   @Operation(
+119:     summary = "Get registration Token",
+120:     description = "Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN"
+121:   )
+122:   @ApiResponses(value = {
+123:     @ApiResponse(responseCode = "201", description = "registration token generated."),
+124:     @ApiResponse(responseCode = "400", description = "GUID/TeleTAN already exists.")})
+125:   @PostMapping(value = REGISTRATION_TOKEN_ROUTE,
+
+[parent implementation] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/service/HashingService.java:37
+34: @Component
+35: public class HashingService {
+36: 
+37:   private static final String GUID_HASH_PATTERN = "^[0-9A-Fa-f]{64}$";
+38:   private static final Pattern PATTERN = Pattern.compile(GUID_HASH_PATTERN);
+39: 
+40:   /**
+
+[parent implementation] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/service/HashingService.java:70
+67:    */
+68:   public boolean isHashValid(String toValidate) {
+69:     Matcher matcher = PATTERN.matcher(toValidate);
+70:     return matcher.find();
+71:   }
+72: }
+
+[parent route] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:65
+62:     }
+63:     switch (keyType) {
+64:       case GUID:
+65:         return hashingService.isHashValid(key);
+66:       case TELETAN: 
+67:         return tanService.verifyTeleTan(key);
+68:       default: 
+69:         return false;
+70:     }
+
+[parent route] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/controller/VerificationController.java:130
+127:     produces = MediaType.APPLICATION_JSON_VALUE
+128:   )
+129:   public ResponseEntity<RegistrationToken> generateRegistrationToken(
+130:     @RequestBody @Valid RegistrationTokenRequest request) {
+131:     String key = request.getKey();
+132:     RegistrationTokenKeyType keyType = request.getKeyType();
+133:     switch (keyType) {
+134:       case GUID:
+135:         return appSessionService.generateRegistrationTokenByGuid(key);
+
+[parent route] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/controller/VerificationController.java:75
+72:   /**
+73:    * The route to the token registration endpoint.
+74:    */
+75:   public static final String REGISTRATION_TOKEN_ROUTE = "/registrationToken";
+76:   /**
+77:    * The route to the tan generation endpoint.
+78:    */
+79:   public static final String TAN_ROUTE = "/tan";
+80:   /**
+
+[fix contract] 6ade86d3b47f3b0428fda1b475d61a76597aecfd:src/main/java/app/coronawarn/verification/controller/VerificationController.java:120
+117:    */
+118:   @Operation(
+119:     summary = "Get registration Token",
+120:     description = "Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN"
+121:   )
+122:   @ApiResponses(value = {
+123:     @ApiResponse(responseCode = "201", description = "registration token generated."),
+124:     @ApiResponse(responseCode = "400", description = "GUID/TeleTAN already exists.")})
+125:   @PostMapping(value = REGISTRATION_TOKEN_ROUTE,
+
+[fix implementation] 6ade86d3b47f3b0428fda1b475d61a76597aecfd:src/main/java/app/coronawarn/verification/service/HashingService.java:70
+67:    */
+68:   public boolean isHashValid(String toValidate) {
+69:     Matcher matcher = PATTERN.matcher(toValidate);
+70:     return matcher.matches();
+71:   }
+72: }
+
+[parent route] 9ff0794ed647469b865f1736e6bc217c8604a2bf:src/main/java/app/coronawarn/verification/controller/VerificationController.java:68
+65: @Slf4j
+66: @RequiredArgsConstructor
+67: @RestController
+68: @RequestMapping("/version/v1")
+69: @Validated
+70: public class VerificationController {
+71: 
+72:   /**
+73:    * The route to the token registration endpoint.

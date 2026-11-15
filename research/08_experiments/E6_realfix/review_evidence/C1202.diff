@@ -1,0 +1,65 @@
+diff --git a/src/main/resources/openapi.yaml b/src/main/resources/openapi.yaml
+index 1882eca..1aa56f4 100644
+--- a/src/main/resources/openapi.yaml
++++ b/src/main/resources/openapi.yaml
+@@ -126,11 +126,11 @@ paths:
+       operationId: findPetsByStatus
+       parameters:
+         - name: status
+           in: query
+           description: Status values that need to be considered for filter
+-          required: false
++          required: true
+           explode: true
+           schema:
+             type: string
+             default: available
+             enum:
+@@ -168,11 +168,11 @@ paths:
+       operationId: findPetsByTags
+       parameters:
+         - name: tags
+           in: query
+           description: Tags to filter by
+-          required: false
++          required: true
+           explode: true
+           schema:
+             type: array
+             items:
+               type: string
+@@ -265,11 +265,11 @@ paths:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Pet'
+             application/xml:
+               schema:
+-                $ref: '#/components/schemas/Pet'        
++                $ref: '#/components/schemas/Pet'
+         '400':
+           description: Invalid input
+         default:
+           description: Unexpected error
+       security:
+@@ -488,11 +488,11 @@ paths:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/User'
+             application/xml:
+               schema:
+-                $ref: '#/components/schemas/User'        
++                $ref: '#/components/schemas/User'
+         default:
+           description: Unexpected error
+   /user/createWithList:
+     post:
+       tags:
+@@ -834,6 +834,6 @@ components:
+             "write:pets": modify pets in your account
+             "read:pets": read your pets
+     api_key:
+       type: apiKey
+       name: api_key
+-      in: header
+\ No newline at end of file
++      in: header

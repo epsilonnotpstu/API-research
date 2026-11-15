@@ -1,0 +1,351 @@
+diff --git a/pom.xml b/pom.xml
+index caf5a936..3544238f 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -221,11 +221,11 @@
+                         <apiSource>
+                             <springmvc>false</springmvc>
+                             <locations>uk.gov.pay.api.resources</locations>
+                             <schemes>https</schemes>
+                             <host>publicapi-integration-1.pymnt.uk</host>
+-                            <basePath>/</basePath>
++                            <!--<basePath>/</basePath>-->
+                             <info>
+                                 <title>GOV.UK Pay Api</title>
+                                 <version>1.0.0</version>
+                                 <description>GOV.UK Pay Api</description>
+                             </info>
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentRequest.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentRequest.java
+index f7f1c03b..3ed78764 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentRequest.java
+@@ -18,38 +18,38 @@ public class CreatePaymentRequest {
+     @JsonProperty("return_url")
+     private String returnUrl;
+     private String reference;
+     private String description;
+ 
+-    @ApiModelProperty(value = "service return url", required = true)
++    @ApiModelProperty(value = "service return url", required = true, example = "https://service-name.gov.uk/transactions/12345")
+     @JsonProperty
+     @NotBlank
+     public String getReturnUrl() {
+         return returnUrl;
+     }
+ 
+-    @ApiModelProperty(value = "account id", required = false)
++    @ApiModelProperty(value = "account id", required = false, example = "789")
+     @JsonProperty
+     public String getAccountId() {
+         return accountId;
+     }
+ 
+-    @ApiModelProperty(value = "amount in pence", required = true, allowableValues = ">0")
++    @ApiModelProperty(value = "amount in pence", required = true, allowableValues = ">0", example = "12000")
+     @JsonProperty
+     @NotNull
+     public Long getAmount() {
+         return amount;
+     }
+ 
+-    @ApiModelProperty(value = "payment reference", required = true)
++    @ApiModelProperty(value = "payment reference", required = true, example = "12345")
+     @JsonProperty
+     @NotBlank
+     public String getReference() {
+         return reference;
+     }
+ 
+-    @ApiModelProperty(value = "payment description", required = true)
++    @ApiModelProperty(value = "payment description", required = true, example = "New passport application")
+     @JsonProperty
+     @NotBlank
+     public String getDescription() {
+         return description;
+     }
+diff --git a/src/main/java/uk/gov/pay/api/model/LinksResponse.java b/src/main/java/uk/gov/pay/api/model/LinksResponse.java
+index a573854d..6df54867 100644
+--- a/src/main/java/uk/gov/pay/api/model/LinksResponse.java
++++ b/src/main/java/uk/gov/pay/api/model/LinksResponse.java
+@@ -1,9 +1,12 @@
+ package uk.gov.pay.api.model;
+ 
++import com.fasterxml.jackson.annotation.JsonProperty;
+ import com.google.common.base.Joiner;
+ import io.dropwizard.jackson.JsonSnakeCase;
++import io.swagger.annotations.ApiModelProperty;
++import org.hibernate.validator.constraints.NotBlank;
+ 
+ import java.net.URI;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+@@ -41,18 +44,24 @@ public abstract class LinksResponse {
+             this.rel = rel;
+             this.method = method;
+             this.href = href;
+         }
+ 
++        @ApiModelProperty(example = "self")
++        @NotBlank
+         public String getRel() {
+             return rel;
+         }
+ 
++        @ApiModelProperty(example = "GET")
++        @NotBlank
+         public String getMethod() {
+             return method;
+         }
+ 
++        @ApiModelProperty(example = "http://payments.gov.uk/v1/payments/1122335")
++        @NotBlank
+         public String getHref() {
+             return href;
+         }
+ 
+         @Override
+diff --git a/src/main/java/uk/gov/pay/api/model/Payment.java b/src/main/java/uk/gov/pay/api/model/Payment.java
+index ce68b794..64d656d4 100644
+--- a/src/main/java/uk/gov/pay/api/model/Payment.java
++++ b/src/main/java/uk/gov/pay/api/model/Payment.java
+@@ -2,21 +2,21 @@ package uk.gov.pay.api.model;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import com.fasterxml.jackson.databind.JsonNode;
+ import io.dropwizard.jackson.JsonSnakeCase;
+ import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
+ 
+ @ApiModel(value="Payment information", description = "A Payment description")
+ @JsonSnakeCase
+ public class Payment extends LinksResponse {
+     @JsonProperty("payment_id")
+     private final String paymentId;
+     private final long amount;
+     private final String status;
+-    @JsonProperty("return_url")
+-    private final String returnUrl;
+     private final String description;
++    private final String returnUrl;
+     private final String reference;
+ 
+     public static Payment createPaymentResponse(JsonNode payload) {
+         return new Payment(
+                 payload.get("charge_id").asText(),
+@@ -35,30 +35,36 @@ public class Payment extends LinksResponse {
+         this.returnUrl = returnUrl;
+         this.description = description;
+         this.reference = reference;
+     }
+ 
++    @ApiModelProperty(example = "1122335")
+     public String getPaymentId() {
+         return paymentId;
+     }
+ 
++    @ApiModelProperty(example = "1200")
+     public long getAmount() {
+         return amount;
+     }
+ 
++    @ApiModelProperty(example = "CREATED")
+     public String getStatus() {
+         return status;
+     }
+ 
++    @ApiModelProperty(example = "http://government.service.domain/transaction/1")
+     public String getReturnUrl() {
+         return returnUrl;
+     }
+ 
++    @ApiModelProperty(example = "New Passport Application")
+     public String getDescription() {
+         return description;
+     }
+ 
++    @ApiModelProperty(example = "12345")
+     public String getReference() {
+         return reference;
+     }
+ 
+     @Override
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+index a6f2ef0b..57a06dde 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+@@ -72,12 +72,11 @@ public class PaymentsResource {
+     @Path(PAYMENT_BY_ID)
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+             value = "Find a Payment by ID",
+             notes = "Return information about the payment",
+-            code = 200,
+-            response = Payment.class)
++            code = 200)
+ 
+     @ApiResponses(value = { @ApiResponse(code = 200, message = "OK", response = Payment.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 404, message = "Not found") })
+     public Response getPayment(@ApiParam(value = "accountId", hidden = true) @Auth String accountId,
+@@ -99,12 +98,11 @@ public class PaymentsResource {
+     @Path(PAYMENT_EVENTS_BY_ID)
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+             value = "Return a Payment Events by ID",
+             notes = "Return Payment Events information about a certain payment",
+-            code = 200,
+-            response = Payment.class)
++            code = 200)
+ 
+     @ApiResponses(value = { @ApiResponse(code = 200, message = "OK", response = Payment.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 404, message = "Not found") })
+     public Response getPaymentEvents(@ApiParam(value = "accountId", hidden = true) @Auth String accountId,
+@@ -128,12 +126,11 @@ public class PaymentsResource {
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+             value = "Creates a new payment",
+             notes = "Creates a new payment for the account associated to the Authorisation token",
+             code = 201,
+-            nickname = "newPayment",
+-            response = Payment.class)
++            nickname = "newPayment")
+ 
+     @ApiResponses(value = { @ApiResponse(code = 201, message = "Created", response = Payment.class),
+             @ApiResponse(code = 400, message = "Bad request"),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource") })
+     public Response createNewPayment(@ApiParam(value = "accountId", hidden = true) @Auth String accountId,
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index e36879cb..a2809c41 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -4,11 +4,10 @@
+     "description" : "GOV.UK Pay Api",
+     "version" : "1.0.0",
+     "title" : "GOV.UK Pay Api"
+   },
+   "host" : "publicapi-integration-1.pymnt.uk",
+-  "basePath" : "/",
+   "schemes" : [ "https" ],
+   "paths" : {
+     "/v1/payments" : {
+       "post" : {
+         "summary" : "Creates a new payment",
+@@ -24,16 +23,10 @@
+           "schema" : {
+             "$ref" : "#/definitions/CreatePaymentRequest"
+           }
+         } ],
+         "responses" : {
+-          "200" : {
+-            "description" : "successful operation",
+-            "schema" : {
+-              "$ref" : "#/definitions/Payment information"
+-            }
+-          },
+           "201" : {
+             "description" : "Created",
+             "schema" : {
+               "$ref" : "#/definitions/Payment information"
+             }
+@@ -135,47 +128,55 @@
+       "required" : [ "amount", "description", "reference", "return_url" ],
+       "properties" : {
+         "amount" : {
+           "type" : "integer",
+           "format" : "int64",
++          "example" : "12000",
+           "description" : "amount in pence",
+           "readOnly" : true
+         },
+         "reference" : {
+           "type" : "string",
++          "example" : "12345",
+           "description" : "payment reference",
+           "readOnly" : true
+         },
+         "description" : {
+           "type" : "string",
++          "example" : "New passport application",
+           "description" : "payment description",
+           "readOnly" : true
+         },
+         "account_id" : {
+           "type" : "string",
++          "example" : "789",
+           "description" : "account id",
+           "readOnly" : true
+         },
+         "return_url" : {
+           "type" : "string",
++          "example" : "https://service-name.gov.uk/transactions/12345",
+           "description" : "service return url",
+           "readOnly" : true
+         }
+       },
+       "description" : "The Payment Request Payload"
+     },
+     "JsonLink" : {
+       "type" : "object",
+       "properties" : {
+         "rel" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "self"
+         },
+         "method" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "GET"
+         },
+         "href" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "http://payments.gov.uk/v1/payments/1122335"
+         }
+       }
+     },
+     "Payment information" : {
+       "type" : "object",
+@@ -186,27 +187,32 @@
+             "$ref" : "#/definitions/JsonLink"
+           }
+         },
+         "amount" : {
+           "type" : "integer",
+-          "format" : "int64"
++          "format" : "int64",
++          "example" : "1200"
+         },
+         "status" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "CREATED"
+         },
+         "description" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "New Passport Application"
+         },
+-        "reference" : {
+-          "type" : "string"
++        "returnUrl" : {
++          "type" : "string",
++          "example" : "http://government.service.domain/transaction/1"
+         },
+-        "payment_id" : {
++        "reference" : {
+           "type" : "string",
+-          "readOnly" : true
++          "example" : "12345"
+         },
+-        "return_url" : {
++        "payment_id" : {
+           "type" : "string",
++          "example" : "1122335",
+           "readOnly" : true
+         }
+       },
+       "description" : "A Payment description"
+     }

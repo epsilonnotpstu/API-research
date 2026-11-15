@@ -1,0 +1,30 @@
+diff --git a/api/microcks-openapi-v1.10.yaml b/api/microcks-openapi-v1.10.yaml
+index c1bdc6e6..9250a2f0 100644
+--- a/api/microcks-openapi-v1.10.yaml
++++ b/api/microcks-openapi-v1.10.yaml
+@@ -390,14 +390,25 @@ paths:
+         - admin
+       operationId: GetSecret
+       summary: Get Secret
+       description: Retrieve a Secret
+     put:
++      requestBody:
++        description: The Secret to update
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/Secret'
++        required: true
+       tags:
+       - config
+       responses:
+         "200":
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/Secret'
+           description: Updated Secret
+       security:
+       - jwt-bearer:
+         - admin
+       operationId: UpdateSecret

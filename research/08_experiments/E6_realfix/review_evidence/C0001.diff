@@ -1,0 +1,53 @@
+diff --git a/src/main/java/io/papermc/bibliothek/configuration/AppConfiguration.java b/src/main/java/io/papermc/bibliothek/configuration/AppConfiguration.java
+index 1f1f5c1..075442a 100644
+--- a/src/main/java/io/papermc/bibliothek/configuration/AppConfiguration.java
++++ b/src/main/java/io/papermc/bibliothek/configuration/AppConfiguration.java
+@@ -32,10 +32,11 @@ import org.springframework.validation.annotation.Validated;
+ @ConfigurationProperties(prefix = "app")
+ @Validated
+ public class AppConfiguration {
+   private URL apiBaseUrl;
+   private String apiTitle;
++  private String apiVersion;
+   private @NotNull Path storagePath;
+ 
+   @SuppressWarnings("checkstyle:MethodName")
+   public URL getApiBaseUrl() {
+     return this.apiBaseUrl;
+@@ -54,10 +55,20 @@ public class AppConfiguration {
+   @SuppressWarnings("checkstyle:MethodName")
+   public void setApiTitle(final String apiTitle) {
+     this.apiTitle = apiTitle;
+   }
+ 
++  @SuppressWarnings("checkstyle:MethodName")
++  public String getApiVersion() {
++    return this.apiVersion;
++  }
++
++  @SuppressWarnings("checkstyle:MethodName")
++  public void setApiVersion(final String apiVersion) {
++    this.apiVersion = apiVersion;
++  }
++
+   @SuppressWarnings("checkstyle:MethodName")
+   public Path getStoragePath() {
+     return this.storagePath;
+   }
+ 
+diff --git a/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java b/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
+index b36301f..6152861 100644
+--- a/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
++++ b/src/main/java/io/papermc/bibliothek/configuration/OpenAPIConfiguration.java
+@@ -41,10 +41,11 @@ class OpenAPIConfiguration {
+   OpenAPI openAPI(final AppConfiguration configuration) {
+     final OpenAPI api = new OpenAPI();
+     api.info(
+       new Info()
+         .title(configuration.getApiTitle())
++        .version(configuration.getApiVersion())
+     );
+     final URL apiBaseUrl = configuration.getApiBaseUrl();
+     if (apiBaseUrl != null) {
+       api.servers(List.of(new Server().url(apiBaseUrl.toExternalForm())));
+     }

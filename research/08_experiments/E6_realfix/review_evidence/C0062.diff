@@ -1,0 +1,1042 @@
+diff --git a/pom.xml b/pom.xml
+index 67edb18..034926a 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -39,10 +39,18 @@
+     <!-- plugins -->
+     <plugin.checkstyle.version>3.1.1</plugin.checkstyle.version>
+     <plugin.sonar.version>3.6.1.1688</plugin.sonar.version>
+     <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
+     <guava.version>29.0-jre</guava.version>
++    
++    <sonar.coverage.exclusions>
++      **/VerificationApplication.java,
++      **/model/*,
++      **/domain/*,
++      **/config/*,
++      **/exception/*
++    </sonar.coverage.exclusions>    
+   </properties>
+ 
+   <dependencyManagement>
+     <dependencies>
+       <dependency>
+@@ -232,7 +240,6 @@
+           </execution>
+         </executions>
+       </plugin>
+     </plugins>
+   </build>
+-
+ </project>
+diff --git a/src/main/java/app/coronawarn/verification/client/LabServerClient.java b/src/main/java/app/coronawarn/verification/client/LabServerClient.java
+index 9c0ddc6..376205c 100644
+--- a/src/main/java/app/coronawarn/verification/client/LabServerClient.java
++++ b/src/main/java/app/coronawarn/verification/client/LabServerClient.java
+@@ -19,10 +19,12 @@
+  * under the License.
+  */
+ 
+ package app.coronawarn.verification.client;
+ 
++import app.coronawarn.verification.model.HashedGuid;
++import app.coronawarn.verification.model.TestResult;
+ import org.springframework.cloud.openfeign.FeignClient;
+ import org.springframework.http.MediaType;
+ import org.springframework.web.bind.annotation.PostMapping;
+ 
+ /**
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationController.java b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+index 77568ab..8c65dce 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationController.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+@@ -19,24 +19,24 @@
+  * under the License.
+  */
+ 
+ package app.coronawarn.verification.controller;
+ 
+-import app.coronawarn.verification.client.HashedGuid;
+-import app.coronawarn.verification.client.TestResult;
+ import app.coronawarn.verification.config.VerificationApplicationConfig;
+ import app.coronawarn.verification.domain.VerificationAppSession;
+ import app.coronawarn.verification.domain.VerificationTan;
+ import app.coronawarn.verification.exception.VerificationServerException;
+ import app.coronawarn.verification.model.AppSessionSourceOfTrust;
++import app.coronawarn.verification.model.HashedGuid;
+ import app.coronawarn.verification.model.LabTestResult;
+ import app.coronawarn.verification.model.RegistrationToken;
+ import app.coronawarn.verification.model.RegistrationTokenKeyType;
+ import app.coronawarn.verification.model.RegistrationTokenRequest;
+ import app.coronawarn.verification.model.Tan;
+ import app.coronawarn.verification.model.TanSourceOfTrust;
+ import app.coronawarn.verification.model.TeleTan;
++import app.coronawarn.verification.model.TestResult;
+ import app.coronawarn.verification.service.AppSessionService;
+ import app.coronawarn.verification.service.LabServerService;
+ import app.coronawarn.verification.service.TanService;
+ import io.swagger.v3.oas.annotations.Operation;
+ import io.swagger.v3.oas.annotations.responses.ApiResponse;
+@@ -81,11 +81,11 @@ public class VerificationController {
+   /**
+    * The route to the tan verification endpoint.
+    */
+   public static final String TAN_VERIFY_ROUTE = "/tan/verify";
+   /**
+-   * The route to the tele tan generation endpoint.
++   * The route to the teleTAN generation endpoint.
+    */
+   public static final String TELE_TAN_ROUTE = "/tan/teletan";
+ 
+   @NonNull
+   private final AppSessionService appSessionService;
+@@ -98,22 +98,22 @@ public class VerificationController {
+ 
+   @NonNull
+   private VerificationApplicationConfig verificationApplicationConfig;
+ 
+   /**
+-   * This method generates a registrationToken by a hashed guid or a teleTan.
++   * This method generates a registrationToken by a hashed guid or a teleTAN.
+    *
+    * @param request {@link RegistrationTokenRequest}
+    * @return RegistrationToken - the created registration token {@link RegistrationToken}
+    */
+   @Operation(
+       summary = "Get registration Token",
+-      description = "Get a registration token by providing a SHA-256 hasehd GUID or a TeleTAN"
++      description = "Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN"
+   )
+   @ApiResponses(value = {
+     @ApiResponse(responseCode = "201", description = "registration token generated."),
+-    @ApiResponse(responseCode = "400", description = "GUID/TeleTAN already exists."),})
++    @ApiResponse(responseCode = "400", description = "GUID/teleTAN already exists."),})
+   @PostMapping(value = REGISTRATION_TOKEN_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE,
+       produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<RegistrationToken> generateRegistrationToken(
+@@ -123,11 +123,11 @@ public class VerificationController {
+     switch (keyType) {
+       case GUID:
+         if (appSessionService.verifyHashedGuid(key)) {
+           return appSessionService.generateRegistrationToken(key, keyType);
+         } 
+-        throw new VerificationServerException(HttpStatus.BAD_REQUEST, "Hashed guid has no valid pattern");
++        throw new VerificationServerException(HttpStatus.BAD_REQUEST, "The hashed guid has no valid pattern");
+       case TELETAN:
+         if (tanService.verifyTeleTan(key)) {
+           ResponseEntity<RegistrationToken> response = appSessionService.generateRegistrationToken(key, keyType);
+           Optional<VerificationTan> optional = tanService.getEntityByTan(key);
+           if (optional.isPresent()) {
+@@ -135,22 +135,22 @@ public class VerificationController {
+             teleTan.setRedeemed(true);
+             tanService.saveTan(teleTan);
+             return response;
+           }
+         } 
+-        throw new VerificationServerException(HttpStatus.BAD_REQUEST, "TeleTan verification failed");
++        throw new VerificationServerException(HttpStatus.BAD_REQUEST, "The teleTAN verification failed");
+       default:
+         throw new VerificationServerException(HttpStatus.BAD_REQUEST, 
+           "Unknown registration key type for registration token");
+     }
+   }
+ 
+   /**
+    * This method generates a transaction number by a Registration Token, if the state of the COVID-19 lab-test is
+    * positive.
+    *
+-   * @param registrationToken generated by a hashed guid or a teleTan. {@link RegistrationToken}
++   * @param registrationToken generated by a hashed guid or a teleTAN. {@link RegistrationToken}
+    * @return A generated transaction number {@link Tan}.
+    */
+   @Operation(
+       summary = "Generates a Tan",
+       description = "Generates a TAN on input of Registration Token. With the TAN one can submit his Diagnosis keys"
+@@ -194,11 +194,11 @@ public class VerificationController {
+       }
+       throw new VerificationServerException(HttpStatus.BAD_REQUEST,
+         "The maximum of generating tans for this registration token is reached");
+     }
+     throw new VerificationServerException(HttpStatus.BAD_REQUEST, 
+-        "Appsession not found for the registration token");
++        "VerificationAppSession not found for the registration token");
+   }
+ 
+   /**
+    * Returns the test status of the COVID-19 test.
+    *
+@@ -225,11 +225,11 @@ public class VerificationController {
+       if ((appSession.get().getHashedGuid() == null) && (appSession.get().getTeleTanHash() != null)) {
+         return ResponseEntity.ok(new TestResult(LabTestResult.POSITIVE.getTestResult()));
+       }
+       String hash = appSession.get().getHashedGuid() != null
+         ? appSession.get().getHashedGuid() : appSession.get().getTeleTanHash();
+-      log.info("Requested result for registration token with Hashed Guid.");
++      log.info("Requested result for registration token with hashed Guid.");
+       TestResult testResult = labServerService.result(new HashedGuid(hash));
+       return ResponseEntity.ok(testResult);
+     }
+     log.info("The registration token doesn't exists.");
+     throw new VerificationServerException(HttpStatus.BAD_REQUEST, 
+@@ -260,26 +260,28 @@ public class VerificationController {
+           return t;
+         })
+         .map(t -> ResponseEntity.ok().build())
+         .orElseGet(() -> {
+           log.info("The registration token is invalid.");
+-          throw new VerificationServerException(HttpStatus.NOT_FOUND, "Tan not found inside the database");
++          throw new VerificationServerException(HttpStatus.NOT_FOUND, "No Tan found");
+         });
+   }
+ 
+   /**
+-   * This method generates a valid Tele-TAN.
++   * This method generates a valid teleTAN.
+    *
+-   * @return a created teletan
++   * @return a created teleTAN
+    */
+   @Operation(
+-      summary = "Request generation of a TeleTan",
+-      description = "A TeleTan is a human readable TAN with 7 characters which is supposed to be issued via call line"
++      summary = "Request generation of a teleTAN",
++      description = "A teleTAN is a human readable TAN with 7 characters which is supposed to be issued via call line"
+   )
+   @ApiResponses(value = {
+-    @ApiResponse(responseCode = "201", description = "TeleTan created"),})
+-  @PostMapping(TELE_TAN_ROUTE)
++    @ApiResponse(responseCode = "201", description = "teleTAN created"),})
++  @PostMapping(value = TELE_TAN_ROUTE,
++      produces = MediaType.APPLICATION_JSON_VALUE
++  )
+   public ResponseEntity<TeleTan> createTeleTan() {
+     String teleTan = tanService.generateVerificationTeleTan();
+     return ResponseEntity.status(HttpStatus.CREATED).body(new TeleTan(teleTan));
+   }
+ }
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+index 6da714a..edf7f31 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+@@ -61,9 +61,9 @@ public class VerificationExceptionHandler {
+     return ResponseEntity.badRequest().build();
+   }
+ 
+   @ExceptionHandler(VerificationServerException.class)
+   public ResponseEntity<Void> handleVerificationServerExceptions(VerificationServerException exception) {
+-    log.error("Cannot get a valid response from the verification server {}", exception);
++    log.warn("The verification server response preventation due to: {}", exception.getMessage());
+     return ResponseEntity.status(exception.getHttpStatus()).build();
+   }
+ }
+diff --git a/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java b/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
+index 9b43fbb..1ba4114 100644
+--- a/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
++++ b/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
+@@ -21,10 +21,11 @@
+ 
+ package app.coronawarn.verification.model;
+ 
+ /**
+  * This class represents the possible sources of trust for an appsession entity.
++ * @see <a href="https://github.com/corona-warn-app/cwa-verification-server/blob/master/docs/architecture-overview.md#entity-appsession">Entity AppSession - sourceOfTrust</a>
+  */
+ public enum AppSessionSourceOfTrust {
+   HASHED_GUID,
+   TELETAN
+ }
+diff --git a/src/main/java/app/coronawarn/verification/client/HashedGuid.java b/src/main/java/app/coronawarn/verification/model/HashedGuid.java
+similarity index 79%
+rename from src/main/java/app/coronawarn/verification/client/HashedGuid.java
+rename to src/main/java/app/coronawarn/verification/model/HashedGuid.java
+index 3004050..0c4c3ec 100644
+--- a/src/main/java/app/coronawarn/verification/client/HashedGuid.java
++++ b/src/main/java/app/coronawarn/verification/model/HashedGuid.java
+@@ -17,18 +17,19 @@
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+ 
+-package app.coronawarn.verification.client;
++package app.coronawarn.verification.model;
+ 
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
+ /**
+- * This class represents the GUID.
++ * This class represents the hashed Guid.
++ * @see <a href="https://github.com/corona-warn-app/cwa-testresult-server/blob/master/docs/architecture-overview.md#core-entities">Core Entities</a>
+  */
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
+ public class HashedGuid {
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java b/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
+index 7247ac4..8f66047 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
+@@ -20,12 +20,11 @@
+  */
+ 
+ package app.coronawarn.verification.model;
+ 
+ /**
+- * This class represent the different key types, with whom you can generate a
+- * registration token.
++ * This class represent the different key types, with whom you can generate a registration token.
+  */
+ public enum RegistrationTokenKeyType {
+ 
+   /**
+    * The key type GUID(Hash).
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+index e2f6b51..2638272 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+@@ -26,11 +26,11 @@ import javax.validation.constraints.NotNull;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
+ /**
+- * This class represents a registration token request.
++ * This class represents a registration token request parameter with a hashed guid or a teleTAN.
+  */
+ @Schema
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
+diff --git a/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java b/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
+index 6e20733..5d1880b 100644
+--- a/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
++++ b/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
+@@ -21,10 +21,11 @@
+ 
+ package app.coronawarn.verification.model;
+ 
+ /**
+  * This class represents the possible sources of trust for a TAN entity.
++ * @see <a href="https://github.com/corona-warn-app/cwa-verification-server/blob/master/docs/architecture-overview.md#entity-tan">Entity TAN - sourceOfTrust</a>
+  */
+ public enum TanSourceOfTrust {
+   CONNECTED_LAB,
+   TELETAN
+ }
+diff --git a/src/main/java/app/coronawarn/verification/model/TanType.java b/src/main/java/app/coronawarn/verification/model/TanType.java
+index 439cfd4..9ae06cf 100644
+--- a/src/main/java/app/coronawarn/verification/model/TanType.java
++++ b/src/main/java/app/coronawarn/verification/model/TanType.java
+@@ -23,10 +23,11 @@ package app.coronawarn.verification.model;
+ 
+ import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ /**
+  * This class represents the different types of tans.
++ * @see <a href="https://github.com/corona-warn-app/cwa-verification-server/blob/master/docs/architecture-overview.md#entity-tan">Entity TAN - Type</a>
+  */
+ @Schema
+ public enum TanType {
+   /**
+    * The general tan.
+diff --git a/src/main/java/app/coronawarn/verification/model/TeleTan.java b/src/main/java/app/coronawarn/verification/model/TeleTan.java
+index 401aa0f..9cea261 100644
+--- a/src/main/java/app/coronawarn/verification/model/TeleTan.java
++++ b/src/main/java/app/coronawarn/verification/model/TeleTan.java
+@@ -25,11 +25,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
+ /**
+- * This class represents the tele transaction number (Tele TAN).
++ * This class represents the tele transaction number (teleTAN).
+  */
+ @Schema
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
+diff --git a/src/main/java/app/coronawarn/verification/client/TestResult.java b/src/main/java/app/coronawarn/verification/model/TestResult.java
+similarity index 83%
+rename from src/main/java/app/coronawarn/verification/client/TestResult.java
+rename to src/main/java/app/coronawarn/verification/model/TestResult.java
+index dcc25b6..7b56b74 100644
+--- a/src/main/java/app/coronawarn/verification/client/TestResult.java
++++ b/src/main/java/app/coronawarn/verification/model/TestResult.java
+@@ -17,18 +17,19 @@
+  * KIND, either express or implied.  See the License for the
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+ 
+-package app.coronawarn.verification.client;
++package app.coronawarn.verification.model;
+ 
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
+ /**
+  * This class represents the TestResult.
++ * @see <a href="https://github.com/corona-warn-app/cwa-testresult-server/blob/master/docs/architecture-overview.md#core-entities">Core Entities</a>
+  */
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
+ public class TestResult {
+diff --git a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+index 9f721e4..b5c02fa 100644
+--- a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
++++ b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+@@ -40,18 +40,18 @@ public class EntitiesCleanupService {
+   private final VerificationApplicationConfig applicationConfig;
+   private final VerificationAppSessionRepository appSessionRepository;
+   private final VerificationTanRepository tanRepository;
+ 
+   /**
+-   * All entities that are older than configured days should get deleted.
++   * All entities that are older than configured days get deleted.
+    */
+   @Scheduled(
+     fixedDelayString = "${entities.cleanup.rate}"
+   )
+   @Transactional
+   public void cleanup() {
+-    log.info("EntitiesCleanupService cleanup()");
++    log.info("cleanup execution");
+     appSessionRepository.deleteByCreatedAtBefore(LocalDateTime.now()
+       .minus(Period.ofDays(applicationConfig.getEntities().getCleanup().getDays())));
+     tanRepository.deleteByCreatedAtBefore(LocalDateTime.now()
+       .minus(Period.ofDays(applicationConfig.getEntities().getCleanup().getDays())));
+   }
+diff --git a/src/main/java/app/coronawarn/verification/service/LabServerService.java b/src/main/java/app/coronawarn/verification/service/LabServerService.java
+index e08d66e..7558c0a 100644
+--- a/src/main/java/app/coronawarn/verification/service/LabServerService.java
++++ b/src/main/java/app/coronawarn/verification/service/LabServerService.java
+@@ -19,13 +19,13 @@
+  * under the License.
+  */
+ 
+ package app.coronawarn.verification.service;
+ 
+-import app.coronawarn.verification.client.HashedGuid;
+ import app.coronawarn.verification.client.LabServerClient;
+-import app.coronawarn.verification.client.TestResult;
++import app.coronawarn.verification.model.HashedGuid;
++import app.coronawarn.verification.model.TestResult;
+ import lombok.NonNull;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.stereotype.Component;
+ 
+diff --git a/src/main/java/app/coronawarn/verification/service/TanService.java b/src/main/java/app/coronawarn/verification/service/TanService.java
+index bc11284..6f3b440 100644
+--- a/src/main/java/app/coronawarn/verification/service/TanService.java
++++ b/src/main/java/app/coronawarn/verification/service/TanService.java
+@@ -91,37 +91,37 @@ public class TanService {
+   public void deleteTan(VerificationTan tan) {
+     tanRepository.delete(tan);
+   }
+ 
+   /**
+-   * Check Tele-TAN syntax constraints.
++   * Check teleTAN syntax constraints.
+    *
+-   * @param teleTan the Tele TAN
+-   * @return Tele TAN verification flag
++   * @param teleTan the teleTAN
++   * @return teleTAN verification flag
+    */
+   private boolean syntaxTeleTanVerification(String teleTan) {
+     Matcher matcher = PATTERN.matcher(teleTan);
+     return matcher.find();
+   }
+ 
+   /**
+-   * Verifies the tele transaction number (Tele TAN).
++   * Verifies the tele transaction number (teleTAN).
+    *
+-   * @param teleTan the Tele TAN to verify
+-   * @return verified is teletan is verified
++   * @param teleTan the teleTAN to verify
++   * @return is teleTAN verified
+    */
+   public boolean verifyTeleTan(String teleTan) {
+     boolean verified = false;
+     if (syntaxTeleTanVerification(teleTan)) {
+       Optional<VerificationTan> teleTanEntity = getEntityByTan(teleTan);
+       if (teleTanEntity.isPresent() && !teleTanEntity.get().isRedeemed()) {
+         verified = true;
+       } else {
+-        log.warn("The Tele TAN is unknown or already redeemed.");
++        log.warn("The teleTAN is unknown or already redeemed.");
+       }
+     } else {
+-      log.warn("The Tele TAN is not valid to the syntax constraints.");
++      log.warn("The teleTAN is not valid to the syntax constraints.");
+     }
+     return verified;
+   }
+ 
+   /**
+@@ -150,13 +150,13 @@ public class TanService {
+     VerificationTan newTan = generateVerificationTan(tan, tanType, sourceOfTrust);
+     return tanRepository.save(newTan);
+   }
+ 
+   /**
+-   * Returns the a new valid TeleTan String.
++   * Returns the a new valid teleTAN String.
+    *
+-   * @return a new TeleTan
++   * @return a new teleTAN
+    */
+   public String generateTeleTan() {
+     return IntStream.range(0, TELE_TAN_LENGTH)
+         .mapToObj(i -> TELE_TAN_ALLOWED_CHARS.charAt(Holder.NUMBER_GENERATOR.nextInt(TELE_TAN_ALLOWED_CHARS.length())))
+         .collect(Collector.of(
+@@ -165,14 +165,14 @@ public class TanService {
+             StringBuilder::append,
+             StringBuilder::toString));
+   }
+ 
+   /**
+-   * Returns the if a Tele Tan matches the Pattern requirements.
++   * Returns the if a teleTAN matches the Pattern requirements.
+    *
+-   * @param teleTan the Tele TAN to check
+-   * @return The validity of the Tele TAN
++   * @param teleTan the teleTAN to check
++   * @return The validity of the teleTAN
+    */
+   public boolean isTeleTanValid(String teleTan) {
+     return syntaxTeleTanVerification(teleTan);
+   }
+ 
+@@ -191,13 +191,13 @@ public class TanService {
+     String tanHash = hashingService.hash(tan);
+     return !tanRepository.existsByTanHash(tanHash);
+   }
+ 
+   /**
+-   * Returns a generated valid tele TAN and persists it.
++   * Returns a generated valid teleTAN and persists it.
+    *
+-   * @return a valid tele TAN
++   * @return a valid teleTAN
+    */
+   public String generateVerificationTeleTan() {
+     String teleTan = generateTeleTan();
+     persistTan(teleTan, TanType.TELETAN, TanSourceOfTrust.TELETAN);
+     return teleTan;
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java b/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
+index 9d3dcb6..3594cfd 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
+@@ -19,29 +19,20 @@
+  * under the License.
+  */
+ 
+ package app.coronawarn.verification;
+ 
+-import app.coronawarn.verification.client.HashedGuid;
+-import app.coronawarn.verification.client.TestResult;
++import app.coronawarn.verification.model.HashedGuid;
++import app.coronawarn.verification.model.TestResult;
+ import app.coronawarn.verification.domain.VerificationAppSession;
+ import app.coronawarn.verification.domain.VerificationTan;
+-import app.coronawarn.verification.model.AppSessionSourceOfTrust;
+-import app.coronawarn.verification.model.RegistrationToken;
+-import app.coronawarn.verification.model.RegistrationTokenKeyType;
+-import app.coronawarn.verification.model.RegistrationTokenRequest;
+-import app.coronawarn.verification.model.Tan;
+-import app.coronawarn.verification.model.TanSourceOfTrust;
+-import app.coronawarn.verification.model.TanType;
++import app.coronawarn.verification.model.*;
+ import app.coronawarn.verification.repository.VerificationAppSessionRepository;
+ import app.coronawarn.verification.service.LabServerService;
+ import app.coronawarn.verification.service.TanService;
+ import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+-import java.time.LocalDateTime;
+-import java.util.List;
+-import java.util.Optional;
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.Test;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.runner.RunWith;
+ import org.mockito.MockitoAnnotations;
+@@ -52,17 +43,19 @@ import org.springframework.boot.test.mock.mockito.MockBean;
+ import org.springframework.http.MediaType;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ 
+-import static org.junit.Assert.assertEquals;
+-import static org.junit.Assert.assertFalse;
+-import static org.junit.Assert.assertNotNull;
+-import static org.junit.Assert.assertNull;
++import java.time.LocalDateTime;
++import java.util.List;
++import java.util.Optional;
++
++import static org.junit.Assert.*;
+ import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.BDDMockito.given;
+ import static org.mockito.Mockito.doReturn;
++import static org.mockito.Mockito.when;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+ 
+ /**
+@@ -112,12 +105,12 @@ public class VerificationApplicationTest {
+    * Test generateTAN.
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+-  public void callGenerateTAN() throws Exception {
+-    log.info("VerificationAppTests callGenerateTAN()");
++  public void callGenerateTan() throws Exception {
++    log.info("process callGenerateTan()");
+ 
+     prepareAppSessionTestData();
+     doReturn(TEST_LAB_POSITIVE_RESULT).when(labServerService).result(any());
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan")
+@@ -142,11 +135,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanByUnknownToken() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanByUnknownToken()");
++    log.info("process callGenerateTanByUnknownToken()");
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(new RegistrationToken(TEST_REG_TOK))))
+       .andExpect(status().isBadRequest());
+@@ -157,11 +150,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanByInvalidToken() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanByUnknownToken()");
++    log.info("process callGenerateTanByInvalidToken()");
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(new RegistrationToken(TEST_INVALID_REG_TOK))))
+       .andExpect(status().isBadRequest());
+@@ -172,11 +165,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanWithNegativeCovidResult() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanWithNegativeCovidResult()");
++    log.info("process callGenerateTanWithNegativeCovidResult()");
+     prepareAppSessionTestData();
+     doReturn(TEST_LAB_NEGATIVE_RESULT).when(labServerService).result(any());
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan")
+       .contentType(MediaType.APPLICATION_JSON)
+@@ -189,11 +182,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanWithTanCounterMaximum() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanWithTeleTanAppSession()");
++    log.info("process callGenerateTanWithTanCounterMaximum()");
+     appSessionrepository.deleteAll();
+     VerificationAppSession appSessionTestData = getAppSessionTestData();
+     appSessionTestData.setTanCounter(2);
+     appSessionrepository.save(appSessionTestData);
+ 
+@@ -208,11 +201,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanWithTeleTanAppSession() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanWithTeleTanAppSession()");
++    log.info("process callGenerateTanWithTeleTanAppSession()");
+     appSessionrepository.deleteAll();
+     VerificationAppSession appSessionTestData = getAppSessionTestData();
+     appSessionTestData.setSourceOfTrust(AppSessionSourceOfTrust.TELETAN);
+     appSessionrepository.save(appSessionTestData);
+     doReturn(TEST_LAB_NEGATIVE_RESULT).when(labServerService).result(any());
+@@ -228,11 +221,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTanWithUnknownSourceOfTrust() throws Exception {
+-    log.info("VerificationAppTests callGenerateTanWithUnknownSourceOfTrust()");
++    log.info("process callGenerateTanWithUnknownSourceOfTrust()");
+     appSessionrepository.deleteAll();
+     VerificationAppSession appSessionTestData = getAppSessionTestData();
+     appSessionTestData.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
+     appSessionrepository.save(appSessionTestData);
+     doReturn(TEST_LAB_NEGATIVE_RESULT).when(labServerService).result(any());
+@@ -248,11 +241,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGenerateTeleTAN() throws Exception {
+-    log.info("VerificationAppTests callGenerateTeleTAN()");
++    log.info("process callGenerateTeleTAN()");
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan/teletan"))
+       .andExpect(status().isCreated());
+   }
+ 
+@@ -261,11 +254,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByGuid() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByGuid() ");
++    log.info("process callGetRegistrationTokenByGuid() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_GUI_HASH, RegistrationTokenKeyType.GUID);
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(request)))
+@@ -288,11 +281,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenWithNullKeyType() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenWithNullKeyType() ");
++    log.info("process callGetRegistrationTokenWithNullKeyType() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_GUI_HASH, null);
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(request)))
+@@ -304,11 +297,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenWithNullKey() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenWithNullKey() ");
++    log.info("process callGetRegistrationTokenWithNullKey() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(null, RegistrationTokenKeyType.GUID);
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(request)))
+@@ -320,11 +313,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByTeleTan() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByTeleTan() ");
++    log.info("process callGetRegistrationTokenByTeleTan() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_TELE_TAN, RegistrationTokenKeyType.TELETAN);
+     given(this.tanService.verifyTeleTan(TEST_TELE_TAN)).willReturn(true);
+     given(this.tanService.isTeleTanValid(TEST_TELE_TAN)).willReturn(true);
+     given(this.tanService.getEntityByTan(TEST_TELE_TAN)).willReturn(Optional.of(getTeleTanTestData()));
+@@ -351,49 +344,48 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByUnknownTeleTan() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByUnknownTeleTan() ");
++    log.info("process callGetRegistrationTokenByUnknownTeleTan() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_TELE_TAN, RegistrationTokenKeyType.TELETAN);
+-    given(this.tanService.verifyTeleTan(TEST_TELE_TAN)).willReturn(true);
++    when(this.tanService.verifyTeleTan(TEST_TELE_TAN)).thenCallRealMethod();
+     given(this.tanService.getEntityByTan(TEST_TELE_TAN)).willReturn(Optional.empty());
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(request)))
+       .andExpect(status().isBadRequest());
+   }
+ 
+   /**
+-   * Test get registration token by a unknown Tele-Tan.
++   * Test get registration token by invalid Guid.
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByInvalidHashedGUID() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByInvalidHashedGUID() ");
++    log.info("process callGetRegistrationTokenByInvalidHashedGUID() ");
+     appSessionrepository.deleteAll();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_INVALID_GUI_HASH, RegistrationTokenKeyType.GUID);
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(request)))
+       .andExpect(status().isBadRequest());
+-
+   }
+ 
+   /**
+    *
+    * Test get registration token for a guid, but the guid already has a registration token.
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByAlreadyExistForGUID() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByInvalidHashedGUID() ");
++    log.info("process callGetRegistrationTokenByAlreadyExistForGUID() ");
+     prepareAppSessionTestData();
+     RegistrationTokenRequest request = new RegistrationTokenRequest(TEST_GUI_HASH, RegistrationTokenKeyType.GUID);
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/registrationToken")
+       .contentType(MediaType.APPLICATION_JSON)
+@@ -406,11 +398,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetRegistrationTokenByAlreadyExistForTeleTan() throws Exception {
+-    log.info("VerificationAppTests callGetRegistrationTokenByInvalidHashedGUID() ");
++    log.info("process callGetRegistrationTokenByAlreadyExistForTeleTan() ");
+ 
+     appSessionrepository.deleteAll();
+     VerificationAppSession appSessionTestData = getAppSessionTestData();
+     appSessionTestData.setTeleTanHash(TEST_TELE_TAN_HASH);
+     appSessionrepository.save(appSessionTestData);
+@@ -430,11 +422,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetTestState() throws Exception {
+-    log.info("VerificationAppTests callGetTestState()");
++    log.info("process callGetTestState()");
+ 
+     prepareAppSessionTestData();
+ 
+     given(this.labServerService.result(new HashedGuid(TEST_GUI_HASH))).willReturn(TEST_LAB_POSITIVE_RESULT);
+ 
+@@ -449,11 +441,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callGetTestStateByAppSessionIsEmpty() throws Exception {
+-    log.info("VerificationAppTests callGetTestStateByAppSessionIsEmpty()");
++    log.info("process callGetTestStateByAppSessionIsEmpty()");
+ 
+     //clean the repo
+     appSessionrepository.deleteAll();
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/testresult")
+@@ -467,11 +459,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTAN() throws Exception {
+-    log.info("VerificationAppTests callVerifyTAN()");
++    log.info("process callVerifyTAN()");
+ 
+     given(this.tanService.getEntityByTan(TEST_TAN)).willReturn(Optional.of(getVerificationTANTestData()));
+ 
+     assertFalse("Is TAN redeemed?", this.tanService.getEntityByTan(TEST_TAN).get().isRedeemed());
+ 
+@@ -486,11 +478,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTANByVerificationTANIsEmpty() throws Exception {
+-    log.info("VerificationAppTests callVerifyTANByVerificationTANIsEmpty()");
++    log.info("process callVerifyTANByVerificationTANIsEmpty()");
+ 
+     // without mock tanService.getEntityByTan so this method will return empty entity
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan/verify")
+       .contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(new Tan(TEST_TAN))))
+@@ -502,11 +494,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTANByTanWithInvalidSyntax() throws Exception {
+-    log.info("VerificationAppTests callVerifyTANByTanWithInvalidSyntax()");
++    log.info("process callVerifyTANByTanWithInvalidSyntax()");
+ 
+     mockMvc.perform(post(PREFIX_API_VERSION + "/tan/verify").contentType(MediaType.APPLICATION_JSON)
+       .content(getAsJsonFormat(new Tan(TEST_INVALID_TAN))))
+       .andExpect(status().isBadRequest());
+   }
+@@ -516,11 +508,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTANByExpiredTimeFrom() throws Exception {
+-    log.info("VerificationAppTests callVerifyTANByTanSyntaxFailed()");
++    log.info("process callVerifyTANByExpiredTimeFrom()");
+ 
+     VerificationTan cvtan = getVerificationTANTestData();
+     // setValidFrom later 2 days then now
+     cvtan.setValidFrom(LocalDateTime.now().plusDays(2));
+     given(this.tanService.getEntityByTan(TEST_TAN)).willReturn(Optional.of(cvtan));
+@@ -535,11 +527,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTANByExpiredTimeUntil() throws Exception {
+-    log.info("VerificationAppTests callVerifyTANByTanSyntaxFailed()");
++    log.info("process callVerifyTANByExpiredTimeUntil()");
+ 
+     VerificationTan cvtan = getVerificationTANTestData();
+     // setValidUntil earlier 2 days then now
+     cvtan.setValidUntil(LocalDateTime.now().minusDays(2));
+     given(this.tanService.getEntityByTan(TEST_TAN)).willReturn(Optional.of(cvtan));
+@@ -554,11 +546,11 @@ public class VerificationApplicationTest {
+    *
+    * @throws Exception if the test cannot be performed.
+    */
+   @Test
+   public void callVerifyTANByIsRedeemed() throws Exception {
+-    log.info("VerificationAppTests callVerifyTANByIsRedeemed()");
++    log.info("process callVerifyTANByIsRedeemed()");
+ 
+     VerificationTan cvtan = getVerificationTANTestData();
+     // tan is redeemed
+     cvtan.setRedeemed(true);
+     given(this.tanService.getEntityByTan(TEST_TAN)).willReturn(Optional.of(cvtan));
+diff --git a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+index e2d52b0..11d8a71 100644
+--- a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+@@ -40,19 +40,17 @@ public class HashingServiceTest {
+   @Autowired
+   HashingService hashingService;
+ 
+   @Test
+   public void testValidSha256Hash() {
+-
+     assertTrue(hashingService.isHashValid("523463041ef9ffa2950d8450feb34c88bc8692c40c9cf3c99dcdf75e270229e2"));
+     assertTrue(hashingService.isHashValid("0000000000000000000000000000000000000000000000000000000000000000"));
+     assertTrue(hashingService.isHashValid("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+   }
+ 
+   @Test
+   public void testInvalidSha256Hash() {
+-
+     assertFalse(hashingService.isHashValid("x23463041ef9ffa2950d8z50feb34c88bc8692c40c9cf3c99dcdf75e270229e2"));
+     assertFalse(hashingService.isHashValid("523463041ef9ffa2950d8z50feb34c88bc8692c40c9cf3c99dcdf75e270229e2"));
+     assertFalse(hashingService.isHashValid("0"));
+     assertFalse(hashingService.isHashValid("0000000000000000000000000000000000000000000000000000000000000000f"));
+   }
+diff --git a/src/test/java/app/coronawarn/verification/service/LabServerServiceTest.java b/src/test/java/app/coronawarn/verification/service/LabServerServiceTest.java
+index 65f1bfa..34dd947 100644
+--- a/src/test/java/app/coronawarn/verification/service/LabServerServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/LabServerServiceTest.java
+@@ -20,13 +20,13 @@
+  */
+ 
+ package app.coronawarn.verification.service;
+ 
+ import app.coronawarn.verification.VerificationApplication;
+-import app.coronawarn.verification.client.HashedGuid;
++import app.coronawarn.verification.model.HashedGuid;
+ import app.coronawarn.verification.client.LabServerClient;
+-import app.coronawarn.verification.client.TestResult;
++import app.coronawarn.verification.model.TestResult;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.test.context.ContextConfiguration;
+@@ -57,11 +57,10 @@ public class LabServerServiceTest {
+     TestResult testResult = labServerService.result(hashedGuid);
+     assertThat(testResult).isEqualTo(TEST_LAB_POSITIVE_RESULT);
+   }
+ 
+   public static class LabServerClientMock implements LabServerClient {
+-
+     @Override
+     public TestResult result(HashedGuid guid) {
+       return new TestResult(2);
+     }
+   }
+diff --git a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+index ed93fb8..d943242 100644
+--- a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+@@ -24,25 +24,26 @@ package app.coronawarn.verification.service;
+ import app.coronawarn.verification.VerificationApplication;
+ import app.coronawarn.verification.domain.VerificationTan;
+ import app.coronawarn.verification.model.TanSourceOfTrust;
+ import app.coronawarn.verification.model.TanType;
+ import app.coronawarn.verification.repository.VerificationTanRepository;
+-import java.time.LocalDateTime;
+-import java.time.format.DateTimeFormatter;
+-import java.util.Optional;
+-import java.util.regex.Matcher;
+-import java.util.regex.Pattern;
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.Assert;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
++import java.util.Optional;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
+ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.junit.Assert.assertFalse;
+ import static org.junit.Assert.assertTrue;
+ 
+ @Slf4j
+@@ -113,11 +114,10 @@ public class TanServiceTest {
+     tan.setTanHash(TEST_GUI_HASH);
+     tan.setValidFrom(LocalDateTime.now());
+     tan.setValidUntil(TAN_VALID_UNTIL_IN_DAYS);
+     tan.setType(TEST_TAN_TYPE);
+     tan.setSourceOfTrust(TEST_TELE_TAN_SOURCE_OF_TRUST);
+-
+     VerificationTan retunedTan = tanService.saveTan(tan);
+     Assert.assertEquals(retunedTan, tan);
+   }
+ 
+   @Test
+@@ -145,11 +145,10 @@ public class TanServiceTest {
+     LocalDateTime start = LocalDateTime.parse(LocalDateTime.now().format(FORMATTER));
+     tan.setCreatedAt(start);
+     tan.setUpdatedAt(start);
+     tan.setRedeemed(false);
+     tan.setTanHash(TEST_TELE_TAN_HASH);
+-
+     tan.setValidFrom(start);
+     tan.setValidUntil(LocalDateTime.parse((TAN_VALID_UNTIL_IN_DAYS.format(FORMATTER))));
+     tan.setType(TanType.TELETAN.name());
+     tan.setSourceOfTrust(TEST_TELE_TAN_SOURCE_OF_TRUST);
+     tanService.saveTan(tan);

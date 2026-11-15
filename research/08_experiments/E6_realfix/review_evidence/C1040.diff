@@ -1,0 +1,62 @@
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+index 88b762d7..7fae7203 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+@@ -30,10 +30,11 @@ import java.util.stream.Collectors;
+ import static java.lang.String.format;
+ import static javax.ws.rs.client.Entity.json;
+ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+ import static org.apache.commons.lang3.StringEscapeUtils.escapeHtml4;
+ import static org.apache.commons.lang3.StringUtils.isNotBlank;
++import static org.apache.commons.lang3.StringUtils.upperCase;
+ import static org.apache.http.HttpStatus.SC_OK;
+ import static uk.gov.pay.api.model.Payment.createPaymentResponse;
+ import static uk.gov.pay.api.utils.JsonStringBuilder.jsonStringBuilder;
+ import static uk.gov.pay.api.utils.ResponseUtil.*;
+ 
+@@ -163,11 +164,11 @@ public class PaymentsResource {
+         return validationErrors
+                 .map(invalidParams -> unprocessableEntityResponse(logger, errorMessageFrom(invalidParams)))
+                 .orElseGet(() -> {
+                     List<Pair<String, String>> queryParams = Lists.newArrayList(
+                             Pair.of(REFERENCE_KEY, reference),
+-                            Pair.of(STATUS_KEY, status),
++                            Pair.of(STATUS_KEY, upperCase(status)),
+                             Pair.of(FROM_DATE_KEY, fromDate),
+                             Pair.of(TO_DATE_KEY, toDate)
+                     );
+ 
+                     Response connectorResponse = client.target(getConnectorUlr(accountId, queryParams))
+diff --git a/src/test/java/uk/gov/pay/api/it/PaymentSearchITest.java b/src/test/java/uk/gov/pay/api/it/PaymentSearchITest.java
+index c350fd02..e345c0bc 100644
+--- a/src/test/java/uk/gov/pay/api/it/PaymentSearchITest.java
++++ b/src/test/java/uk/gov/pay/api/it/PaymentSearchITest.java
+@@ -64,10 +64,28 @@ public class PaymentSearchITest extends PaymentResourceITestBase {
+ 
+         List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
+         assertThat(results, matchesField("status", TEST_STATUS));
+     }
+ 
++    @Test
++    public void searchPayments_filterByStatusLowercase() throws Exception {
++        publicAuthMock.mapBearerTokenToAccountId(BEARER_TOKEN, GATEWAY_ACCOUNT_ID);
++        connectorMock.respondOk_whenSearchCharges(GATEWAY_ACCOUNT_ID, null, TEST_STATUS, null, null,
++                aSuccessfulSearchResponse()
++                        .withMatchingStatus(TEST_STATUS)
++                        .build()
++        );
++
++        ValidatableResponse response = searchPayments(BEARER_TOKEN, ImmutableMap.of("status", TEST_STATUS.toLowerCase()))
++                .statusCode(200)
++                .contentType(JSON)
++                .body("results.size()", equalTo(3));
++
++        List<Map<String, Object>> results = response.extract().body().jsonPath().getList("results");
++        assertThat(results, matchesField("status", TEST_STATUS));
++    }
++
+     @Test
+     public void searchPayments_filterFromAndToDates() throws Exception {
+         publicAuthMock.mapBearerTokenToAccountId(BEARER_TOKEN, GATEWAY_ACCOUNT_ID);
+         connectorMock.respondOk_whenSearchCharges(GATEWAY_ACCOUNT_ID, null, null, TEST_FROM_DATE, TEST_TO_DATE,
+                 aSuccessfulSearchResponse()

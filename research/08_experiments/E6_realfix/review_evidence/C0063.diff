@@ -1,0 +1,516 @@
+diff --git a/src/main/java/app/coronawarn/verification/VerificationApplication.java b/src/main/java/app/coronawarn/verification/VerificationApplication.java
+index 4510257..5b4d1c8 100644
+--- a/src/main/java/app/coronawarn/verification/VerificationApplication.java
++++ b/src/main/java/app/coronawarn/verification/VerificationApplication.java
+@@ -26,15 +26,22 @@ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.boot.context.properties.EnableConfigurationProperties;
+ import org.springframework.cloud.openfeign.EnableFeignClients;
+ import org.springframework.scheduling.annotation.EnableScheduling;
+ 
++/**
++ * The Application class.
++ */
+ @EnableFeignClients
+ @SpringBootApplication
+ @EnableScheduling
+ @EnableConfigurationProperties({VerificationApplicationConfig.class})
+ public class VerificationApplication {
+ 
++  /**
++   * The main Method.
++   * @param args the args for the main method
++   */
+   public static void main(String[] args) {
+     SpringApplication.run(VerificationApplication.class, args);
+   }
+ }
+diff --git a/src/main/java/app/coronawarn/verification/client/LabServerClient.java b/src/main/java/app/coronawarn/verification/client/LabServerClient.java
+index 376205c..ae5bb9d 100644
+--- a/src/main/java/app/coronawarn/verification/client/LabServerClient.java
++++ b/src/main/java/app/coronawarn/verification/client/LabServerClient.java
+@@ -30,10 +30,15 @@ import org.springframework.web.bind.annotation.PostMapping;
+ /**
+  * This class represents the Labor Server service client.
+  */
+ @FeignClient(name = "labServerService", url = "${uri.endpoint.labserver}")
+ public interface LabServerClient {
++  /**
++   * This method gets a testResult from the LabServer.
++   * @param guid for Testresult
++   * @return Testresult from server
++   */
+   @PostMapping(value = "/api/v1/app/result",
+     consumes = MediaType.APPLICATION_JSON_VALUE,
+     produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   TestResult result(HashedGuid guid);
+diff --git a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+index a23639d..f522823 100644
+--- a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+@@ -36,49 +36,84 @@ public class VerificationApplicationConfig {
+ 
+   private TanCfg tan;
+   private AppSessionCfg appsession;
+   private EntitiesCfg entities;
+ 
++  /**
++   * Configure the TeleValidCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class TeleCfg {
+     @Getter
+     @Setter
+     private TeleValidCfg valid;
+ 
++    /**
++     * Configure the TeleValidCfg with build property values.
++     *
++     * @return the configured paramters
++     */
+     public static class TeleValidCfg {
+       @Getter
+       @Setter
+       private int hours;
+     }
+   }
+ 
++  /**
++   * Configure the ValidCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class ValidCfg {
+     @Getter
+     @Setter
+     int days;
+   }
+ 
++  /**
++   * Configure the TanCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class TanCfg {
+     @Getter
+     @Setter
+     private TeleCfg tele;
+     @Getter
+     @Setter
+     private ValidCfg valid;
+   }
+ 
++  /**
++   * Configure the AppSessionCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class AppSessionCfg {
+     @Getter
+     @Setter
+     int tancountermax;
+   }
+ 
++  /**
++   * Configure the CleanupCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class EntitiesCfg {
+     @Getter
+     @Setter
+     private CleanupCfg cleanup;
+   }
+ 
++  /**
++   * Configure the CleanupCfg with build property values.
++   *
++   * @return the configured paramters
++   */
+   public static class CleanupCfg {
+     @Getter
+     @Setter
+     private Integer days;
+   }
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationController.java b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+index 8c65dce..3906781 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationController.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+@@ -109,11 +109,11 @@ public class VerificationController {
+       summary = "Get registration Token",
+       description = "Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN"
+   )
+   @ApiResponses(value = {
+     @ApiResponse(responseCode = "201", description = "registration token generated."),
+-    @ApiResponse(responseCode = "400", description = "GUID/teleTAN already exists."),})
++    @ApiResponse(responseCode = "400", description = "GUID/TeleTAN already exists.")})
+   @PostMapping(value = REGISTRATION_TOKEN_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE,
+       produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<RegistrationToken> generateRegistrationToken(
+@@ -155,11 +155,11 @@ public class VerificationController {
+       summary = "Generates a Tan",
+       description = "Generates a TAN on input of Registration Token. With the TAN one can submit his Diagnosis keys"
+   )
+   @ApiResponses(value = {
+     @ApiResponse(responseCode = "201", description = "Registration Token is valid"),
+-    @ApiResponse(responseCode = "400", description = "Registration Token does not exist"),})
++    @ApiResponse(responseCode = "400", description = "Registration Token does not exist")})
+   @PostMapping(value = TAN_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE,
+       produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<Tan> generateTan(@Valid @RequestBody RegistrationToken registrationToken) {
+@@ -210,11 +210,11 @@ public class VerificationController {
+     summary = "COVID-19 test result for given RegistrationToken",
+     description = "Gets the result of COVID-19 Test. "
+       + "If the RegistrationToken belongs to a TeleTan the result is always positve"
+   )
+   @ApiResponses(value = {
+-    @ApiResponse(responseCode = "200", description = "Testresult retrieved"),})
++    @ApiResponse(responseCode = "200", description = "Testresult retrieved")})
+   @PostMapping(value = TESTRESULT_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE,
+       produces = MediaType.APPLICATION_JSON_VALUE
+   )
+ 
+@@ -246,11 +246,11 @@ public class VerificationController {
+       summary = "Verify provided Tan",
+       description = "The provided Tan is verified to be formerly issued by the verification server"
+   )
+   @ApiResponses(value = {
+     @ApiResponse(responseCode = "200", description = "Tan is valid an formerly issued by the verification server"),
+-    @ApiResponse(responseCode = "404", description = "Tan could not be verified"),})
++    @ApiResponse(responseCode = "404", description = "Tan could not be verified")})
+   @PostMapping(value = TAN_VERIFY_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<?> verifyTan(@Valid @RequestBody Tan tan) {
+     return tanService.getEntityByTan(tan.getTan())
+@@ -274,11 +274,11 @@ public class VerificationController {
+   @Operation(
+       summary = "Request generation of a teleTAN",
+       description = "A teleTAN is a human readable TAN with 7 characters which is supposed to be issued via call line"
+   )
+   @ApiResponses(value = {
+-    @ApiResponse(responseCode = "201", description = "teleTAN created"),})
++    @ApiResponse(responseCode = "201", description = "TeleTan created")})
+   @PostMapping(value = TELE_TAN_ROUTE,
+       produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<TeleTan> createTeleTan() {
+     String teleTan = tanService.generateVerificationTeleTan();
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+index edf7f31..80ee029 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+@@ -32,37 +32,59 @@ import org.springframework.web.bind.ServletRequestBindingException;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+ import org.springframework.web.bind.annotation.ResponseStatus;
+ import org.springframework.web.bind.annotation.RestControllerAdvice;
+ import org.springframework.web.context.request.WebRequest;
+ 
++/**
++ * This class represents the Exception Handler.
++ */
+ @Slf4j
+ @RestControllerAdvice
+ public class VerificationExceptionHandler {
+ 
++  /**
++   * This method handles unknown Exceptions and Server Errors.
++   * @param ex the thrown exception
++   * @param wr the WebRequest
++   */
+   @ExceptionHandler(Exception.class)
+   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+   public void unknownException(Exception ex, WebRequest wr) {
+     log.error("Unable to handle {}", wr.getDescription(false), ex);
+   }
+ 
++  /**
++   * This method handles Bad Requests.
++   * @param ex the thrown exception
++   * @param wr the WebRequest
++   */
+   @ExceptionHandler({
+     HttpMessageNotReadableException.class,
+     ServletRequestBindingException.class
+   })
+   @ResponseStatus(HttpStatus.BAD_REQUEST)
+   public void bindingExceptions(Exception ex, WebRequest wr) {
+     log.error("Binding failed {}", wr.getDescription(false), ex);
+   }
+ 
++  /**
++   * This method handles Validation Exceptions.
++   * @return ResponseEntity<?> returns Bad Request
++   */
+   @ExceptionHandler({
+     MethodArgumentNotValidException.class,
+     ConstraintViolationException.class
+   })
+   public ResponseEntity<?> handleValidationExceptions() {
+     return ResponseEntity.badRequest().build();
+   }
+ 
++  /**
++   * This method handles Validation Exceptions.
++   * @param exception the thrown exception
++   * @return ResponseEntity<?> returns a HTTP Status
++   */
+   @ExceptionHandler(VerificationServerException.class)
+   public ResponseEntity<Void> handleVerificationServerExceptions(VerificationServerException exception) {
+     log.warn("The verification server response preventation due to: {}", exception.getMessage());
+     return ResponseEntity.status(exception.getHttpStatus()).build();
+   }
+diff --git a/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java b/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
+index db140b9..18fe769 100644
+--- a/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
++++ b/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
+@@ -78,10 +78,13 @@ public class VerificationAppSession implements Serializable {
+ 
+   @Column(name = "sot")
+   @Enumerated(EnumType.STRING)
+   private AppSessionSourceOfTrust sourceOfTrust;
+ 
++  /**
++   * This method increments the tan counter.
++   */
+   public void incrementTanCounter() {
+     this.tanCounter++;
+   }
+ 
+ }
+diff --git a/src/main/java/app/coronawarn/verification/domain/VerificationTan.java b/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
+index cec0d18..8ca0a8b 100644
+--- a/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
++++ b/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
+@@ -45,10 +45,12 @@ import lombok.NoArgsConstructor;
+ @AllArgsConstructor
+ @Entity
+ @Table(name = "tan")
+ public class VerificationTan implements Serializable {
+ 
++  static final long serialVersionUid = 1L;
++
+   @Id
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
+   @Column(name = "id")
+   private Long id;
+ 
+diff --git a/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java b/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
+index d940bc2..1a6f105 100644
+--- a/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
++++ b/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
+@@ -22,15 +22,23 @@
+ package app.coronawarn.verification.exception;
+ 
+ import lombok.Getter;
+ import org.springframework.http.HttpStatus;
+ 
++/**
++ * This class represents an Exception of the VerificationServer.
++ */
+ @Getter
+ public class VerificationServerException extends RuntimeException {
+ 
+   private final HttpStatus httpStatus;
+ 
++  /**
++   * The Constructor for the Exception class.
++   * @param httpStatus the state of the server
++   * @param message the message
++   */
+   public VerificationServerException(HttpStatus httpStatus, String message) {
+     super(message);
+     this.httpStatus = httpStatus;
+   }
+ 
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+index f871798..cc7633e 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+@@ -29,9 +29,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
+ /**
+  * This class represents the AppSession repository.
+  */
+ public interface VerificationAppSessionRepository extends JpaRepository<VerificationAppSession, Long> {
+ 
++  /**
++   * This method looks in the Database for an Appsession with the given registrationTokenHash.
++   * @param registrationTokenHash hash to search for
++   * @return Optional VerificationAppSession the optional Appsession
++   */
+   Optional<VerificationAppSession> findByRegistrationTokenHash(String registrationTokenHash);
+ 
++  /**
++   * This method looks in the Database for Appsessions that are older than the before value and deletes them.
++   * @param before the Date to delete by
++   */
+   void deleteByCreatedAtBefore(LocalDateTime before);
+ }
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+index 1cb236d..9af72b5 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+@@ -29,11 +29,25 @@ import org.springframework.data.jpa.repository.JpaRepository;
+ /**
+  * This class represents the Tan repository.
+  */
+ public interface VerificationTanRepository extends JpaRepository<VerificationTan, Long> {
+ 
++  /**
++   * This method looks in the Database for an if a VerificationTan exists for the tan hash.
++   * @param tanHash hash to search for
++   * @return Boolean if there is an Entity for the tanHash
++   */
+   boolean existsByTanHash(String tanHash);
+ 
++  /**
++   * This method looks in the Database for an if a VerificationTan exists for the tan hash.
++   * @param tanHash hash to search for
++   * @return Optional VerificationTan
++   */
+   Optional<VerificationTan> findByTanHash(String tanHash);
+ 
++  /**
++   * This method purges Entities from the database that are older than before value.
++   * @param before LocalDateTime to delete older entities
++   */
+   void deleteByCreatedAtBefore(LocalDateTime before);
+ }
+diff --git a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+index b5c02fa..08e1cd7 100644
+--- a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
++++ b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+@@ -30,10 +30,13 @@ import javax.transaction.Transactional;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.scheduling.annotation.Scheduled;
+ import org.springframework.stereotype.Component;
+ 
++/**
++ * A Service to delete entities that are older than configured days.
++ */
+ @Slf4j
+ @RequiredArgsConstructor
+ @Component
+ public class EntitiesCleanupService {
+ 
+diff --git a/src/main/java/app/coronawarn/verification/service/LabServerService.java b/src/main/java/app/coronawarn/verification/service/LabServerService.java
+index 7558c0a..dd8ce4f 100644
+--- a/src/main/java/app/coronawarn/verification/service/LabServerService.java
++++ b/src/main/java/app/coronawarn/verification/service/LabServerService.java
+@@ -38,9 +38,14 @@ import org.springframework.stereotype.Component;
+ public class LabServerService {
+ 
+   @NonNull
+   private final LabServerClient labServerClient;
+ 
++  /**
++   * This method gives an TestResult for a guid.
++   * @param guid hashed GUID
++   * @return Testresult for GUID
++   */
+   public TestResult result(HashedGuid guid) {
+     return labServerClient.result(guid);
+   }
+ }
+diff --git a/src/main/resources/application.yml b/src/main/resources/application.yml
+index 9fffd5a..d007c28 100644
+--- a/src/main/resources/application.yml
++++ b/src/main/resources/application.yml
+@@ -1,36 +1,36 @@
+-spring:
+-  application:
+-    name: verification-server
+-  datasource:
+-    driver-class-name: org.h2.Driver
+-    url: jdbc:h2:mem:verification
+-    username: sa
+[REDACTED credential-related line]
+-  jpa:
+-    database-platform: org.hibernate.dialect.H2Dialect
+-    hibernate:
+-      ddl-auto: validate
+-  liquibase:
+-    change-log: classpath:db/changelog.yml
+-feign:
+-  client:
+-    config:
+-      default:
+-        connect-timeout: 5000
+-        read-timeout: 5000
+-        logger-level: basic
+-tan:
+-  tele:
+-    valid:
+-      hours: 1
+-  valid:
+-    days: 14
+-appsession:
+-  tancountermax: 2
+-uri:
+-  endpoint:
+-    labserver: http://localhost:8088
+-entities:
+-  cleanup:
+-    days: 14
+-    rate: 60000
++spring:
++  application:
++    name: verification-server
++  datasource:
++    driver-class-name: org.h2.Driver
++    url: jdbc:h2:mem:verification
++    username: sa
+[REDACTED credential-related line]
++  jpa:
++    database-platform: org.hibernate.dialect.H2Dialect
++    hibernate:
++      ddl-auto: validate
++  liquibase:
++    change-log: classpath:db/changelog.yml
++feign:
++  client:
++    config:
++      default:
++        connect-timeout: 5000
++        read-timeout: 5000
++        logger-level: basic
++tan:
++  tele:
++    valid:
++      hours: 1
++  valid:
++    days: 14
++appsession:
++  tancountermax: 2
++uri:
++  endpoint:
++    labserver: http://localhost:8088
++entities:
++  cleanup:
++    days: 21
++    rate: 3600000
+diff --git a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+index b2fb493..b54bf7f 100644
+--- a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+@@ -68,11 +68,11 @@ public class EntitiesCleanupServiceTest {
+     tanRepository.deleteAll();
+   }
+ 
+   @Test
+   public void cleanupDatabaseTest() {
+-    LocalDateTime testCreationTime = LocalDateTime.now().minus(Period.ofDays(14));
++    LocalDateTime testCreationTime = LocalDateTime.now().minus(Period.ofDays(21));
+     // create repo 1
+     VerificationAppSession session = appSessionRepository.save(getAppSessionTestData(testCreationTime));
+     Assert.assertNotNull(session);
+     Assert.assertEquals(TEST_GUI_HASH, session.getHashedGuid());
+     // create repo 2

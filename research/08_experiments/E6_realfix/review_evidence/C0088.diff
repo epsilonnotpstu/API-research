@@ -1,0 +1,30 @@
+diff --git a/src/main/java/app/coronawarn/verification/service/HashingService.java b/src/main/java/app/coronawarn/verification/service/HashingService.java
+index c2e3247..ca50aae 100644
+--- a/src/main/java/app/coronawarn/verification/service/HashingService.java
++++ b/src/main/java/app/coronawarn/verification/service/HashingService.java
+@@ -65,8 +65,8 @@ public class HashingService {
+    * @param toValidate String that will be checked to match the pattern of a SHA256 Hash
+    * @return Boolean if the String Matches the Pattern
+    */
+   public boolean isHashValid(String toValidate) {
+     Matcher matcher = PATTERN.matcher(toValidate);
+-    return matcher.find();
++    return matcher.matches();
+   }
+ }
+diff --git a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+index 4d96594..80bcb65 100644
+--- a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+@@ -42,10 +42,11 @@ public class HashingServiceTest {
+   public void testInvalidSha256Hash() {
+     assertFalse(hashingService.isHashValid("x23463041ef9ffa2950d8z50feb34c88bc8692c40c9cf3c99dcdf75e270229e2"));
+     assertFalse(hashingService.isHashValid("523463041ef9ffa2950d8z50feb34c88bc8692c40c9cf3c99dcdf75e270229e2"));
+     assertFalse(hashingService.isHashValid("0"));
+     assertFalse(hashingService.isHashValid("0000000000000000000000000000000000000000000000000000000000000000f"));
++    assertFalse(hashingService.isHashValid("0000000000000000000000000000000000000000000000000000000000000000\n"));
+   }
+ 
+   @Test
+   public void testGetCheckDigit() {
+     assertThat(hashingService.getCheckDigit("FE9A5MAK6").equals("C"));

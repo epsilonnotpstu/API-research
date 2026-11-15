@@ -1,0 +1,70 @@
+diff --git a/pom.xml b/pom.xml
+index b71602f5..9e4dc08f 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -59,10 +59,20 @@
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-test</artifactId>
+             <scope>test</scope>
+         </dependency>
++        <dependency>
++            <groupId>io.springfox</groupId>
++            <artifactId>springfox-swagger2</artifactId>
++            <version>2.9.2</version>
++        </dependency>
++        <dependency>
++            <groupId>io.springfox</groupId>
++            <artifactId>springfox-swagger-ui</artifactId>
++            <version>2.9.2</version>
++        </dependency>
+     </dependencies>
+ 
+     <build>
+         <plugins>
+             <plugin>
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java
+new file mode 100644
+index 00000000..bdd4915f
+--- /dev/null
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java
+@@ -0,0 +1,24 @@
++package no.nav.tag.tiltaksgjennomforing;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++import springfox.documentation.builders.PathSelectors;
++import springfox.documentation.builders.RequestHandlerSelectors;
++import springfox.documentation.spi.DocumentationType;
++import springfox.documentation.spring.web.plugins.Docket;
++import springfox.documentation.swagger2.annotations.EnableSwagger2;
++
++@Configuration
++@EnableSwagger2
++public class SwaggerConfig {
++
++    @Bean
++    public Docket api() {
++        return new Docket(DocumentationType.SWAGGER_2)
++          .select()
++          .apis(RequestHandlerSelectors.any())
++          .paths(PathSelectors.any())
++          .build();
++    }
++}
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
+index e03b1ca5..c91f66ed 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
+@@ -1,10 +1,9 @@
+ package no.nav.tag.tiltaksgjennomforing;
+ 
+ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+-import org.springframework.web.bind.annotation.RestController;
+ 
+ @SpringBootApplication
+ public class TiltaksgjennomforingApplication {
+     public static void main(String[] args) {
+         SpringApplication.run(TiltaksgjennomforingApplication.class, args);

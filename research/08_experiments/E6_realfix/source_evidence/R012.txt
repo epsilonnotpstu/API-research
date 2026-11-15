@@ -1,0 +1,54 @@
+[parent contract] 4cff995acb71b65a122b6e1dec3f4aedb440e230:swagger/swagger.json:232
+226:         }, {
+227:           "name" : "state",
+228:           "in" : "query",
+229:           "description" : "State of payments to be searched. Example=success",
+230:           "required" : false,
+231:           "type" : "string",
+232:           "pattern" : "created|pending|success|failed|cancelled|paidout|indemnityclaim|error"
+233:         }, {
+
+[parent implementation] 4cff995acb71b65a122b6e1dec3f4aedb440e230:src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java:28
+25:     @QueryParam("state")
+26:     @ApiParam(value = "State of payments to be searched. Example=success")
+27:     @Pattern(regexp = "created|pending|success|failed|cancelled|paidout|indemnityclaim|error",
+28:             flags = Pattern.Flag.CASE_INSENSITIVE,
+29:             message = "Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+30:     private String state;
+31:     
+
+[parent route] 4cff995acb71b65a122b6e1dec3f4aedb440e230:src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java:111
+103:     @ApiResponses(value = {
+104:             @ApiResponse(code = 200, message = "OK", response = DirectDebitSearchResponse.class),
+105:             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+106:             @ApiResponse(code = 422, message = "Invalid parameter. See Public API documentation for the correct data formats", response = PaymentError.class),
+107:             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+108:             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+109:     public Response searchPayments(@ApiParam(value = "accountId", hidden = true)
+110:                                    @Auth Account account,
+111:                                    @Valid @BeanParam DirectDebitSearchPaymentsParams searchPaymentsParams,
+112:                                    @Context UriInfo uriInfo) {
+113: 
+114:         LOGGER.info("Payments search request - {}", searchPaymentsParams);
+115:         return directDebitPaymentSearchService.doSearch(account, searchPaymentsParams);
+116:     }
+
+[fix contract] 870adce4e8f9040b7c23f91ea05b14bde08db266:swagger/swagger.json:232
+229:           "description" : "State of payments to be searched. Example=success",
+230:           "required" : false,
+231:           "type" : "string",
+232:           "pattern" : "created|pending|success|failed|cancelled|paidout|indemnityclaim|error"
+233:         }, {
+234:           "name" : "mandate_id",
+235:           "in" : "query",
+236:           "description" : "The GOV.UK Pay identifier for the mandate",
+237:           "required" : false,
+
+[fix implementation] 870adce4e8f9040b7c23f91ea05b14bde08db266:src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java:27
+24:     
+25:     @QueryParam("state")
+26:     @ApiParam(value = "State of payments to be searched. Example=success")
+27:     @Pattern(regexp = "created|pending|success|failed|cancelled|paidout|indemnityclaim|error",
+28:             message = "Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+29:     private String state;
+30:     

@@ -1,0 +1,242 @@
+diff --git a/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java b/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
+index 4379a4f1..a8f3c1ce 100644
+--- a/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
+@@ -6,11 +6,10 @@ import io.swagger.annotations.Api;
+ import io.swagger.annotations.ApiOperation;
+ import io.swagger.annotations.ApiParam;
+ import io.swagger.annotations.ApiResponse;
+ import io.swagger.annotations.ApiResponses;
+ import uk.gov.pay.api.auth.Account;
+-import uk.gov.pay.api.exception.ConnectorResponseErrorException;
+ import uk.gov.pay.api.model.links.directdebit.DirectDebitEventsResponse;
+ import uk.gov.pay.api.service.ConnectorUriGenerator;
+ import uk.gov.pay.api.service.DirectDebitEventService;
+ import uk.gov.pay.api.validation.DirectDebitEventSearchValidator;
+ 
+@@ -21,12 +20,14 @@ import javax.ws.rs.Produces;
+ import javax.ws.rs.QueryParam;
+ import javax.ws.rs.client.Client;
+ import javax.ws.rs.core.Response;
+ import java.time.ZonedDateTime;
+ import java.util.List;
++import java.util.Optional;
+ 
+ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
++import static org.eclipse.jetty.util.StringUtil.isBlank;
+ 
+ @Path("/")
+ @Api(value = "/", description = "Public Api Endpoint to get Direct Debit Events")
+ @Produces({"application/json"})
+ public class DirectDebitEventsResource {
+@@ -65,11 +66,17 @@ public class DirectDebitEventsResource {
+             @ApiParam(value = "ID of associated payment", hidden = false)
+             @QueryParam("payment_id") String paymentId
+     ) {
+ 
+         DirectDebitEventSearchValidator.validateSearchParameters(toDate, fromDate);
+-
+-        String uri = connectorUriGenerator.eventsURI(account, ZonedDateTime.parse(toDate), ZonedDateTime.parse(fromDate), page, displaySize, agreementId, paymentId);
++        String uri = connectorUriGenerator.eventsURI(account, parseDate(toDate), parseDate(fromDate), page, displaySize, agreementId, paymentId);
+         DirectDebitEventsResponse response = directDebitEventService.getResponse(uri);
+         return Response.ok(response).build();
+     }
++    
++    private Optional<ZonedDateTime> parseDate(String date) {
++        if (!isBlank(date)) {
++            return Optional.of(ZonedDateTime.parse(date));
++        }
++        return Optional.empty();
++    }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/service/ConnectorUriGenerator.java b/src/main/java/uk/gov/pay/api/service/ConnectorUriGenerator.java
+index d6662bc6..634449a1 100644
+--- a/src/main/java/uk/gov/pay/api/service/ConnectorUriGenerator.java
++++ b/src/main/java/uk/gov/pay/api/service/ConnectorUriGenerator.java
+@@ -6,11 +6,10 @@ import uk.gov.pay.api.auth.Account;
+ import uk.gov.pay.api.utils.DateTimeUtils;
+ 
+ import javax.inject.Inject;
+ import javax.ws.rs.core.UriBuilder;
+ import java.time.ZonedDateTime;
+-import java.time.format.DateTimeFormatter;
+ import java.util.Collections;
+ import java.util.LinkedHashMap;
+ import java.util.Map;
+ import java.util.Optional;
+ 
+@@ -34,30 +33,30 @@ public class ConnectorUriGenerator {
+     }
+ 
+     public String chargesURIWithParams(Account account, Map<String, String> queryParams) {
+         return buildConnectorUri(account, format("/v1/api/accounts/%s/charges", account.getAccountId()), queryParams);
+     }
+-    
++
+     public String chargeURI(Account account, String chargeId) {
+         String path = format("/v1/api/accounts/%s/charges/%s", account.getAccountId(), chargeId);
+         return buildConnectorUri(account, path);
+     }
+ 
+     public String chargeEventsURI(Account account, String paymentId) {
+         String path = format("/v1/api/accounts/%s/charges/%s/events", account.getAccountId(), paymentId);
+         return buildConnectorUri(account, path);
+     }
+-    
++
+     public String directDebitTransactionsURI(Account account, Map<String, String> queryParams) {
+         String path = String.format("/v1/api/accounts/%s/transactions/view", account.getAccountId());
+         return buildConnectorUri(account, path, queryParams);
+     }
+ 
+     private String buildConnectorUri(Account account, String path) {
+         return buildConnectorUri(account, path, Collections.emptyMap());
+     }
+-    
++
+     private String buildConnectorUri(Account account, String path, Map<String, String> params) {
+         UriBuilder builder = UriBuilder.fromPath(connectorBaseUrlForAccount(account)).path(path);
+         params.entrySet().stream()
+                 .filter(k -> k.getValue() != null)
+                 .forEach(k -> builder.queryParam(k.getKey(), k.getValue()));
+@@ -75,27 +74,27 @@ public class ConnectorUriGenerator {
+     public String cancelURI(Account account, String paymentId) {
+         String path = format("/v1/api/accounts/%s/charges/%s/cancel", account.getAccountId(), paymentId);
+         return buildConnectorUri(account, path, Maps.newHashMap());
+     }
+ 
+-    public String eventsURI(Account account, ZonedDateTime toDate, ZonedDateTime fromDate, Integer page, Integer displaySize, String agreementId, String paymentId) {
++    public String eventsURI(Account account, Optional<ZonedDateTime> toDate, Optional<ZonedDateTime> fromDate, Integer page, Integer displaySize, String agreementId, String paymentId) {
+ 
+         Map<String, String> params = new LinkedHashMap<>();
+-        
+-        if (toDate != null)
+-            params.put("to_date", DateTimeUtils.toUTCDateString(toDate));
+ 
+-        if (fromDate != null)
+-            params.put("from_date", DateTimeUtils.toUTCDateString(fromDate));
++        if (toDate.isPresent())
++            params.put("to_date", DateTimeUtils.toUTCDateString(toDate.get()));
++
++        if (fromDate.isPresent())
++            params.put("from_date", DateTimeUtils.toUTCDateString(fromDate.get()));
+ 
+         if (agreementId != null)
+             params.put("mandate_external_id", agreementId);
+ 
+         if (paymentId != null)
+             params.put("transaction_external_id", paymentId);
+ 
+         params.put("page", Optional.ofNullable(page).orElse(1).toString());
+         params.put("display_size", Optional.ofNullable(displaySize).orElse(500).toString());
+-        
++
+         return buildConnectorUri(account, "/v1/events", params);
+     }
+ }
+diff --git a/src/test/java/uk/gov/pay/api/resources/DirectDebitEventsResourceTest.java b/src/test/java/uk/gov/pay/api/resources/DirectDebitEventsResourceTest.java
+new file mode 100644
+index 00000000..1b683025
+--- /dev/null
++++ b/src/test/java/uk/gov/pay/api/resources/DirectDebitEventsResourceTest.java
+@@ -0,0 +1,52 @@
++package uk.gov.pay.api.resources;
++
++import org.junit.Before;
++import org.junit.Test;
++import org.junit.runner.RunWith;
++import org.mockito.Mock;
++import org.mockito.junit.MockitoJUnitRunner;
++import uk.gov.pay.api.service.ConnectorUriGenerator;
++import uk.gov.pay.api.service.DirectDebitEventService;
++
++import javax.ws.rs.client.Client;
++import java.time.ZonedDateTime;
++import java.util.Optional;
++
++import static org.mockito.Mockito.times;
++import static org.mockito.Mockito.verify;
++
++
++@RunWith(MockitoJUnitRunner.class)
++public class DirectDebitEventsResourceTest {
++
++    @Mock
++    private Client client;
++    
++    @Mock
++    private ConnectorUriGenerator connectorUriGenerator;
++    
++    @Mock
++    private DirectDebitEventService directDebitEventService;
++    
++    private DirectDebitEventsResource directDebitEventsResource;
++    
++    
++    @Before
++    public void setUp() {
++        directDebitEventsResource = new DirectDebitEventsResource(client, connectorUriGenerator, directDebitEventService);
++    }
++    
++    @Test
++    public void testAllNullValues() {
++        directDebitEventsResource.getDirectDebitEvents(null, null, null, null, null, null, null);
++        verify(connectorUriGenerator, times(1)).eventsURI(null, Optional.empty(), Optional.empty(), null, null, null, null);
++    }
++
++    @Test
++    public void testWithADate() {
++        ZonedDateTime toDate = ZonedDateTime.now();
++        directDebitEventsResource.getDirectDebitEvents(null, toDate.toString(), null, null, null, null, null);
++        verify(connectorUriGenerator, times(1)).eventsURI(null, Optional.of(toDate), Optional.empty(), null, null, null, null);
++    }
++
++}
+diff --git a/src/test/java/uk/gov/pay/api/service/ConnectorUriGeneratorTest.java b/src/test/java/uk/gov/pay/api/service/ConnectorUriGeneratorTest.java
+index 5ec367bc..12adb0f4 100644
+--- a/src/test/java/uk/gov/pay/api/service/ConnectorUriGeneratorTest.java
++++ b/src/test/java/uk/gov/pay/api/service/ConnectorUriGeneratorTest.java
+@@ -11,10 +11,11 @@ import uk.gov.pay.api.app.config.PublicApiConfig;
+ import uk.gov.pay.api.auth.Account;
+ 
+ import java.io.UnsupportedEncodingException;
+ import java.net.URLDecoder;
+ import java.time.ZonedDateTime;
++import java.util.Optional;
+ 
+ import static org.hamcrest.core.Is.is;
+ import static org.junit.Assert.assertThat;
+ import static org.mockito.Mockito.when;
+ import static uk.gov.pay.api.model.TokenPaymentType.CARD;
+@@ -97,27 +98,27 @@ public class ConnectorUriGeneratorTest {
+         assertThat(uri, is("https://bla.test/v1/api/accounts/accountId/charges/charge_id/events"));
+     }
+ 
+     @Test
+     public void buildEventsURIFromBeforeParameter() throws Exception {
+-        String uri = connectorUriGenerator.eventsURI(cardAccount, ZonedDateTime.parse("2018-03-13T10:00:05Z"), null, null, null, null, null);
++        String uri = connectorUriGenerator.eventsURI(cardAccount, Optional.of(ZonedDateTime.parse("2018-03-13T10:00:05Z")), Optional.empty(), null, null, null, null);
+         assertThat(URLDecoder.decode(uri, "UTF-8"), is("https://bla.test/v1/events?to_date=2018-03-13T10:00:05Z&page=1&display_size=500"));
+     }
+ 
+     @Test
+     public void buildEventsURIFromAfterParameter() throws UnsupportedEncodingException {
+-        String uri = connectorUriGenerator.eventsURI(cardAccount, null, ZonedDateTime.parse("2018-03-13T10:00:05Z"), null, null, null, null);
++        String uri = connectorUriGenerator.eventsURI(cardAccount, Optional.empty(), Optional.of(ZonedDateTime.parse("2018-03-13T10:00:05Z")), null, null, null, null);
+         assertThat(URLDecoder.decode(uri, "UTF-8"), is("https://bla.test/v1/events?from_date=2018-03-13T10:00:05Z&page=1&display_size=500"));
+     }
+ 
+     @Test
+     public void buildEventsURIFromAgreementIdParameter() {
+-        String uri = connectorUriGenerator.eventsURI(cardAccount, null, null, null, null, "1", null);
++        String uri = connectorUriGenerator.eventsURI(cardAccount, Optional.empty(), Optional.empty(), null, null, "1", null);
+         assertThat(uri, is("https://bla.test/v1/events?mandate_external_id=1&page=1&display_size=500"));
+     }
+ 
+     @Test
+     public void buildEventsURIFromAllParameters() throws UnsupportedEncodingException {
+-        String uri = connectorUriGenerator.eventsURI(cardAccount, ZonedDateTime.parse("2018-03-13T10:00:05Z"), ZonedDateTime.parse("2018-03-13T10:00:05Z"), 1, 300, "1", "2");
++        String uri = connectorUriGenerator.eventsURI(cardAccount, Optional.of(ZonedDateTime.parse("2018-03-13T10:00:05Z")), Optional.of(ZonedDateTime.parse("2018-03-13T10:00:05Z")), 1, 300, "1", "2");
+         assertThat(URLDecoder.decode(uri, "UTF-8"), is("https://bla.test/v1/events?to_date=2018-03-13T10:00:05Z&from_date=2018-03-13T10:00:05Z&mandate_external_id=1&transaction_external_id=2&page=1&display_size=300"));
+     }
+ }

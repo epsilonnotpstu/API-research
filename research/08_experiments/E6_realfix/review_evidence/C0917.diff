@@ -1,0 +1,541 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/Address.java b/src/main/java/uk/gov/pay/api/model/Address.java
+index 8d1dce66..b5c4b615 100644
+--- a/src/main/java/uk/gov/pay/api/model/Address.java
++++ b/src/main/java/uk/gov/pay/api/model/Address.java
+@@ -8,11 +8,11 @@ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+ 
+ @JsonIgnoreProperties(ignoreUnknown = true)
+ @JsonInclude(NON_NULL)
+-@ApiModel(value = "Billing Address", description = "A structure representing the billing address of a card")
++@ApiModel(value = "Address", description = "A structure representing the billing address of a card")
+ public class Address {
+ 
+     private String line1;
+     private String line2;
+     private String postcode;
+diff --git a/src/main/java/uk/gov/pay/api/model/CardDetails.java b/src/main/java/uk/gov/pay/api/model/CardDetails.java
+index b1889fe2..b7d6491d 100644
+--- a/src/main/java/uk/gov/pay/api/model/CardDetails.java
++++ b/src/main/java/uk/gov/pay/api/model/CardDetails.java
+@@ -6,11 +6,11 @@ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include.ALWAYS;
+ 
+ @JsonInclude(ALWAYS)
+-@ApiModel(value = "Payment card details", description = "A structure representing the payment card")
++@ApiModel(value = "CardDetails", description = "A structure representing the payment card")
+ public class CardDetails {
+ 
+     @JsonProperty("last_digits_card_number")
+     private final String lastDigitsCardNumber;
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/CardPayment.java b/src/main/java/uk/gov/pay/api/model/CardPayment.java
+index 91cfc662..5f49293d 100644
+--- a/src/main/java/uk/gov/pay/api/model/CardPayment.java
++++ b/src/main/java/uk/gov/pay/api/model/CardPayment.java
+@@ -7,11 +7,11 @@ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static uk.gov.pay.api.model.TokenPaymentType.*;
+ 
+ 
+ @JsonInclude(value = JsonInclude.Include.NON_NULL)
+-@ApiModel(value = "Card Payment")
++@ApiModel(value = "CardPayment")
+ public class CardPayment extends Payment  {
+ 
+     @JsonProperty("refund_summary")
+     private final RefundSummary refundSummary;
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/DirectDebitPayment.java b/src/main/java/uk/gov/pay/api/model/DirectDebitPayment.java
+index a80fb30e..040b528f 100644
+--- a/src/main/java/uk/gov/pay/api/model/DirectDebitPayment.java
++++ b/src/main/java/uk/gov/pay/api/model/DirectDebitPayment.java
+@@ -7,11 +7,11 @@ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static uk.gov.pay.api.model.TokenPaymentType.*;
+ 
+ 
+ @JsonInclude(value = JsonInclude.Include.NON_NULL)
+-@ApiModel(value = "Direct Debit Payment")
++@ApiModel(value = "DirectDebitPayment")
+ public class DirectDebitPayment extends Payment  {
+ 
+     public DirectDebitPayment(String chargeId, long amount, PaymentState state, String returnUrl, String description,
+                               String reference, String email, String paymentProvider, String createdDate) {
+         super(chargeId, amount, state, returnUrl, description, reference, email, paymentProvider, createdDate);
+diff --git a/src/main/java/uk/gov/pay/api/model/PaymentError.java b/src/main/java/uk/gov/pay/api/model/PaymentError.java
+index 02c2dfde..86317054 100644
+--- a/src/main/java/uk/gov/pay/api/model/PaymentError.java
++++ b/src/main/java/uk/gov/pay/api/model/PaymentError.java
+@@ -6,11 +6,11 @@ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+ import static com.google.common.collect.ObjectArrays.concat;
+ import static java.lang.String.format;
+ 
+-@ApiModel(value = "Payment Error", description = "A Payment Error response")
++@ApiModel(value = "PaymentError", description = "A Payment Error response")
+ @JsonInclude(NON_NULL)
+ public class PaymentError {
+ 
+     public enum Code {
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/PaymentEvent.java b/src/main/java/uk/gov/pay/api/model/PaymentEvent.java
+index dd7f4021..bf756d2a 100644
+--- a/src/main/java/uk/gov/pay/api/model/PaymentEvent.java
++++ b/src/main/java/uk/gov/pay/api/model/PaymentEvent.java
+@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
+ import com.fasterxml.jackson.databind.JsonNode;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ import uk.gov.pay.api.model.links.PaymentEventLink;
+ 
+-@ApiModel(value="Payment Event information", description = "A List of Payment Events information")
++@ApiModel(value="PaymentEvent", description = "A List of Payment Events information")
+ public class PaymentEvent {
+     @JsonProperty("payment_id")
+     private final String paymentId;
+ 
+     @JsonProperty("state")
+diff --git a/src/main/java/uk/gov/pay/api/model/PaymentEvents.java b/src/main/java/uk/gov/pay/api/model/PaymentEvents.java
+index d52a63bc..3f3190ac 100644
+--- a/src/main/java/uk/gov/pay/api/model/PaymentEvents.java
++++ b/src/main/java/uk/gov/pay/api/model/PaymentEvents.java
+@@ -9,11 +9,11 @@ import uk.gov.pay.api.model.links.PaymentLinksForEvents;
+ import java.util.List;
+ 
+ import static com.google.common.collect.Lists.newArrayList;
+ import static uk.gov.pay.api.model.PaymentEvent.createPaymentEvent;
+ 
+-@ApiModel(value="PaymentEventsInformation", description = "A List of Payment Events information")
++@ApiModel(value="PaymentEvents", description = "A List of Payment Events information")
+ public class PaymentEvents {
+     public static final String EVENTS = "events";
+     @JsonProperty("payment_id")
+     private final String paymentId;
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/PaymentState.java b/src/main/java/uk/gov/pay/api/model/PaymentState.java
+index d21ba2ef..6b0a591c 100644
+--- a/src/main/java/uk/gov/pay/api/model/PaymentState.java
++++ b/src/main/java/uk/gov/pay/api/model/PaymentState.java
+@@ -7,11 +7,11 @@ import com.fasterxml.jackson.databind.JsonNode;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ @JsonInclude(JsonInclude.Include.NON_NULL)
+ @JsonIgnoreProperties(ignoreUnknown = true)
+-@ApiModel(value="Payment state", description = "A structure representing the current state of the payment in its lifecycle.")
++@ApiModel(value="PaymentState", description = "A structure representing the current state of the payment in its lifecycle.")
+ public class PaymentState {
+     @JsonProperty("status")
+     private String status;
+ 
+     @JsonProperty("finished")
+diff --git a/src/main/java/uk/gov/pay/api/model/RefundSummary.java b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+index 72d8613f..daea6604 100644
+--- a/src/main/java/uk/gov/pay/api/model/RefundSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+@@ -2,11 +2,11 @@ package uk.gov.pay.api.model;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+-@ApiModel(value="Refund Summary", description = "A structure representing the refunds availability")
++@ApiModel(value="RefundSummary", description = "A structure representing the refunds availability")
+ public class RefundSummary {
+ 
+     private String status;
+ 
+     @JsonProperty("amount_available")
+diff --git a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+index 76394db0..49e1246e 100644
+--- a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+@@ -6,11 +6,11 @@ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import java.time.ZonedDateTime;
+ 
+ @JsonInclude(value = JsonInclude.Include.NON_NULL)
+-@ApiModel(value="Settlement Summary", description = "A structure representing information about a settlement")
++@ApiModel(value="SettlementSummary", description = "A structure representing information about a settlement")
+ public class SettlementSummary {
+ 
+     @JsonProperty("capture_submit_time")
+     private String captureSubmitTime;
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/links/Link.java b/src/main/java/uk/gov/pay/api/model/links/Link.java
+index ee8613bd..c37b3f03 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/Link.java
++++ b/src/main/java/uk/gov/pay/api/model/links/Link.java
+@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
+ 
+-@ApiModel(value = "paymentLink", description = "A link related to a payment")
++@ApiModel(value = "Link", description = "A link related to a payment")
+ @JsonInclude(Include.NON_NULL)
+ public class Link {
+ 
+     @JsonProperty(value = "href")
+     private String href;
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentEventLink.java b/src/main/java/uk/gov/pay/api/model/links/PaymentEventLink.java
+index e2988d29..1de1a72c 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentEventLink.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentEventLink.java
+@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ 
+-@ApiModel(value = "payment-event-link", description = "Resource link for a payment of a payment event")
++@ApiModel(value = "PaymentEventLink", description = "Resource link for a payment of a payment event")
+ public class PaymentEventLink {
+ 
+     public static final String PAYMENT_LINK = "payment_url";
+ 
+     @JsonProperty(value = PAYMENT_LINK)
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java b/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
+index a6932b09..443d2474 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
+@@ -8,11 +8,11 @@ import uk.gov.pay.api.model.PaymentConnectorResponseLink;
+ import java.util.List;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ import static javax.ws.rs.HttpMethod.POST;
+ 
+-@ApiModel(value = "allLinksForAPayment", description = "self,events and next links of a Payment")
++@ApiModel(value = "PaymentLinks", description = "self,events and next links of a Payment")
+ public class PaymentLinks {
+ 
+     private static final String SELF = "self";
+     private static final String NEXT_URL = "next_url";
+     private static final String NEXT_URL_POST = "next_url_post";
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForEvents.java b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForEvents.java
+index 0b88a584..16bcc237 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForEvents.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForEvents.java
+@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ 
+-@ApiModel(value = "linksForEvents", description = "links for events resource")
++@ApiModel(value = "PaymentLinks", description = "links for events resource")
+ public class PaymentLinksForEvents {
+ 
+     public static final String SELF = "self";
+ 
+     @JsonProperty(value = SELF)
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
+index ebd3a001..ba0782d2 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
+@@ -5,11 +5,11 @@ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ import static javax.ws.rs.HttpMethod.POST;
+ 
+-@ApiModel(value = "linksForSearchResults", description = "links for search payment resource")
++@ApiModel(value = "PaymentLinksForSearch", description = "links for search payment resource")
+ public class PaymentLinksForSearch {
+ 
+     private static final String SELF = "self";
+     private static final String EVENTS = "events";
+     private static final String CANCEL = "cancel";
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentSearchNavigationLinks.java b/src/main/java/uk/gov/pay/api/model/links/PaymentSearchNavigationLinks.java
+index a560c3ad..291f226e 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentSearchNavigationLinks.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentSearchNavigationLinks.java
+@@ -1,11 +1,11 @@
+ package uk.gov.pay.api.model.links;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ 
+-@ApiModel(value = "pageNavigationLinks", description = "Links to navigate through pages")
++@ApiModel(value = "PaymentSearchNavigationLinks", description = "Links to navigate through pages")
+ public class PaymentSearchNavigationLinks {
+ 
+     @JsonProperty(value = "self")
+     private Link self;
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PostLink.java b/src/main/java/uk/gov/pay/api/model/links/PostLink.java
+index 5d350a4e..ec3df50a 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PostLink.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PostLink.java
+@@ -6,11 +6,11 @@ import io.swagger.annotations.ApiModelProperty;
+ 
+ import java.util.Map;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
+ 
+-@ApiModel(value = "paymentPOSTLink", description = "A POST link related to a payment")
++@ApiModel(value = "PostLink", description = "A POST link related to a payment")
+ @JsonInclude(Include.NON_NULL)
+ public class PostLink extends Link {
+ 
+     private String type;
+     private Map<String, Object> params;
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index 86b51feb..8fc27aaa 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -79,17 +79,17 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "422" : {
+             "description" : "Invalid parameters: from_date, to_date, status, display_size. See Public API documentation for the correct data formats",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       },
+       "post" : {
+@@ -115,26 +115,26 @@
+             }
+           },
+           "400" : {
+             "description" : "Bad request",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+           "422" : {
+             "description" : "Invalid attribute value: description. Must be less than or equal to 255 characters length",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     },
+@@ -161,17 +161,17 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     },
+@@ -192,32 +192,32 @@
+             "description" : "No Content"
+           },
+           "400" : {
+             "description" : "Cancellation of payment failed",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "409" : {
+             "description" : "Conflict",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     },
+@@ -244,17 +244,17 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     },
+@@ -279,17 +279,17 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       },
+       "post" : {
+@@ -322,20 +322,20 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "412" : {
+             "description" : "Refund amount available mismatch"
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     },
+@@ -365,17 +365,17 @@
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+             "description" : "Not found",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           },
+           "500" : {
+             "description" : "Downstream system error",
+             "schema" : {
+-              "$ref" : "#/definitions/Payment Error"
++              "$ref" : "#/definitions/PaymentError"
+             }
+           }
+         }
+       }
+     }
+@@ -545,28 +545,10 @@
+           "example" : "2016-01-21T17:15:00Z",
+           "readOnly" : true
+         }
+       }
+     },
+-    "Payment Error" : {
+-      "type" : "object",
+-      "properties" : {
+-        "field" : {
+-          "type" : "string",
+-          "example" : "amount"
+-        },
+-        "code" : {
+-          "type" : "string",
+-          "example" : "P0102"
+-        },
+-        "description" : {
+-          "type" : "string",
+-          "example" : "Invalid attribute value: amount. Must be less than or equal to 10000000"
+-        }
+-      },
+-      "description" : "A Payment Error response"
+-    },
+     "Payment Event information" : {
+       "type" : "object",
+       "properties" : {
+         "payment_id" : {
+           "type" : "string",
+@@ -650,10 +632,28 @@
+           "readOnly" : true
+         }
+       },
+       "description" : "A structure representing the current state of the payment in its lifecycle."
+     },
++    "PaymentError" : {
++      "type" : "object",
++      "properties" : {
++        "field" : {
++          "type" : "string",
++          "example" : "amount"
++        },
++        "code" : {
++          "type" : "string",
++          "example" : "P0102"
++        },
++        "description" : {
++          "type" : "string",
++          "example" : "Invalid attribute value: amount. Must be less than or equal to 10000000"
++        }
++      },
++      "description" : "A Payment Error response"
++    },
+     "PaymentEventsInformation" : {
+       "type" : "object",
+       "properties" : {
+         "events" : {
+           "type" : "array",

@@ -1,0 +1,379 @@
+diff --git a/src/main/java/io/swagger/petstore/model/Category.java b/src/main/java/io/swagger/petstore/model/Category.java
+index e4c837d..bd099f2 100644
+--- a/src/main/java/io/swagger/petstore/model/Category.java
++++ b/src/main/java/io/swagger/petstore/model/Category.java
+@@ -5,11 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
+ import javax.xml.bind.annotation.XmlElement;
+ import javax.xml.bind.annotation.XmlRootElement;
+ 
+ @Schema(
+         description = "Category",
+-        $id = "/components/schemas/category"
++        $id = "/api/v31/components/schemas/category"
+ )
+ @XmlRootElement(name = "Category")
+ public class Category {
+   private long id;
+   private String name;
+diff --git a/src/main/java/io/swagger/petstore/model/Pet.java b/src/main/java/io/swagger/petstore/model/Pet.java
+index 58065b8..22b7164 100644
+--- a/src/main/java/io/swagger/petstore/model/Pet.java
++++ b/src/main/java/io/swagger/petstore/model/Pet.java
+@@ -89,11 +89,11 @@ public class Pet {
+ 
+     public void setStatus(final String status) {
+         this.status = status;
+     }
+ 
+-    @Schema(name = "petDetails", ref = "/components/schemas/petdetails")
++    @Schema(name = "petDetails", ref = "/api/v31/components/schemas/petdetails")
+     public PetDetails getPetDetails() {
+         return petDetails;
+     }
+ 
+     public void setPetDetails(final PetDetails petDetails) {
+@@ -124,11 +124,11 @@ public class Pet {
+     public void setAvailableInstances(final int availableInstances) {
+         this.availableInstances = availableInstances;
+     }
+ 
+     @XmlElement(name = "petDetailsId")
+-    @Schema(name = "petDetailsId", ref = "/components/schemas/petdetails#pet_details_id")
++    @Schema(name = "petDetailsId", ref = "/api/v31/components/schemas/petdetails#pet_details_id")
+     public long getPetDetailsId() {
+         return petDetailsId;
+     }
+ 
+     public void setPetDetailsId(final long petDetailsId) {
+diff --git a/src/main/java/io/swagger/petstore/model/PetDetails.java b/src/main/java/io/swagger/petstore/model/PetDetails.java
+index 089db3c..afc847b 100644
+--- a/src/main/java/io/swagger/petstore/model/PetDetails.java
++++ b/src/main/java/io/swagger/petstore/model/PetDetails.java
+@@ -9,11 +9,11 @@ import java.util.List;
+ 
+ @XmlRootElement(name = "PetDetails")
+ @Schema(
+         $schema = "https://json-schema.org/draft/2020-12/schema",
+         $vocabulary = "https://spec.openapis.org/oas/3.1/schema-base",
+-        $id = "/components/schemas/petdetails",
++        $id = "/api/v31/components/schemas/petdetails",
+         type = "object"
+ )
+ public class PetDetails {
+     private Long id;
+     private Category category;
+@@ -30,20 +30,20 @@ public class PetDetails {
+ 
+     public void setId(final Long id) {
+         this.id = id;
+     }
+ 
+-    @Schema(description = "PetDetails Category", ref = "/components/schemas/category")
++    @Schema(description = "PetDetails Category", ref = "/api/v31/components/schemas/category")
+     public Category getCategory() {
+         return category;
+     }
+ 
+     public void setCategory(final Category category) {
+         this.category = category;
+     }
+ 
+-    @Schema(ref = "/components/schemas/tag")
++    @Schema(ref = "/api/v31/components/schemas/tag")
+     public Tag getTag() {
+         return tag;
+     }
+ 
+     public void setTag(final Tag tag) {
+diff --git a/src/main/java/io/swagger/petstore/model/Tag.java b/src/main/java/io/swagger/petstore/model/Tag.java
+index e6d84ca..e037332 100644
+--- a/src/main/java/io/swagger/petstore/model/Tag.java
++++ b/src/main/java/io/swagger/petstore/model/Tag.java
+@@ -4,11 +4,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ import javax.xml.bind.annotation.XmlElement;
+ import javax.xml.bind.annotation.XmlRootElement;
+ 
+ @Schema(
+-        $id = "/components/schemas/tag"
++        $id = "/api/v31/components/schemas/tag"
+ )
+ @XmlRootElement(name = "Tag")
+ public class Tag {
+   private long id;
+   private String name;
+diff --git a/src/main/java/io/swagger/petstore/resource/CategoryResource.java b/src/main/java/io/swagger/petstore/resource/CategoryResource.java
+new file mode 100644
+index 0000000..28555dc
+--- /dev/null
++++ b/src/main/java/io/swagger/petstore/resource/CategoryResource.java
+@@ -0,0 +1,42 @@
++package io.swagger.petstore.resource;
++
++import io.swagger.petstore.data.PetData;
++import io.swagger.v3.oas.annotations.Hidden;
++import javax.ws.rs.GET;
++import javax.ws.rs.Path;
++import javax.ws.rs.Produces;
++import javax.ws.rs.core.MediaType;
++import javax.ws.rs.core.Response;
++
++@Path("/components/schemas/category")
++@Produces({"application/json"})
++public class CategoryResource {
++    static PetData petData = new PetData();
++
++    @GET
++    @Hidden
++    public Response category() {
++        String json = "{\n" +
++                "  \"Category\" : {\n" +
++                "    \"$id\" : \"/api/v31/components/schemas/category\",\n" +
++                "    \"description\" : \"Category\",\n" +
++                "    \"properties\" : {\n" +
++                "      \"id\" : {\n" +
++                "        \"type\" : \"integer\",\n" +
++                "        \"format\" : \"int64\",\n" +
++                "        \"example\" : 1\n" +
++                "      },\n" +
++                "      \"name\" : {\n" +
++                "        \"type\" : \"string\",\n" +
++                "        \"example\" : \"Dogs\"\n" +
++                "      }\n" +
++                "    },\n" +
++                "    \"xml\" : {\n" +
++                "      \"name\" : \"Category\"\n" +
++                "    }\n" +
++                "  }\n" +
++                "}";
++
++        return Response.ok(json, MediaType.APPLICATION_JSON).build();
++    }
++}
+diff --git a/src/main/java/io/swagger/petstore/resource/PetDetailsResource.java b/src/main/java/io/swagger/petstore/resource/PetDetailsResource.java
+new file mode 100644
+index 0000000..98e79d9
+--- /dev/null
++++ b/src/main/java/io/swagger/petstore/resource/PetDetailsResource.java
+@@ -0,0 +1,46 @@
++package io.swagger.petstore.resource;
++
++import io.swagger.petstore.data.PetData;
++import io.swagger.v3.oas.annotations.Hidden;
++
++import javax.ws.rs.GET;
++import javax.ws.rs.Path;
++import javax.ws.rs.Produces;
++import javax.ws.rs.core.MediaType;
++import javax.ws.rs.core.Response;
++
++@Path("/components/schemas/petdetails")
++@Produces({"application/json"})
++public class PetDetailsResource {
++    static PetData petData = new PetData();
++
++    @GET
++    @Hidden
++    public Response petDetails() {
++        String json = "{\n" +
++                "  \"$id\": \"/api/v31/components/schemas/petdetails\",\n" +
++                "  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n" +
++                "  \"$vocabulary\": \"https://spec.openapis.org/oas/3.1/schema-base\",\n" +
++                "  \"properties\": {\n" +
++                "    \"id\": {\n" +
++                "      \"type\": \"integer\",\n" +
++                "      \"format\": \"int64\",\n" +
++                "      \"$anchor\": \"pet_details_id\",\n" +
++                "      \"example\": 10\n" +
++                "    },\n" +
++                "    \"category\": {\n" +
++                "      \"$ref\": \"/api/v31/components/schemas/category\",\n" +
++                "      \"description\": \"PetDetails Category\"\n" +
++                "    },\n" +
++                "    \"tag\": {\n" +
++                "      \"$ref\": \"/api/v31/components/schemas/tag\"\n" +
++                "    }\n" +
++                "  },\n" +
++                "  \"xml\": {\n" +
++                "    \"name\": \"PetDetails\"\n" +
++                "  }\n" +
++                "}";
++
++        return Response.ok(json, MediaType.APPLICATION_JSON).build();
++    }
++}
+diff --git a/src/main/java/io/swagger/petstore/resource/TagResource.java b/src/main/java/io/swagger/petstore/resource/TagResource.java
+new file mode 100644
+index 0000000..c3807dd
+--- /dev/null
++++ b/src/main/java/io/swagger/petstore/resource/TagResource.java
+@@ -0,0 +1,38 @@
++package io.swagger.petstore.resource;
++
++import io.swagger.petstore.data.PetData;
++import io.swagger.v3.oas.annotations.Hidden;
++
++import javax.ws.rs.GET;
++import javax.ws.rs.Path;
++import javax.ws.rs.Produces;
++import javax.ws.rs.core.MediaType;
++import javax.ws.rs.core.Response;
++
++@Path("/components/schemas/tag")
++@Produces({"application/json"})
++public class TagResource {
++    static PetData petData = new PetData();
++
++    @GET
++    @Hidden
++    public Response tag() {
++        String json = "{\n" +
++                "  \"$id\": \"/api/v3/components/schemas/tag\",\n" +
++                "  \"properties\": {\n" +
++                "    \"id\": {\n" +
++                "      \"type\": \"integer\",\n" +
++                "      \"format\": \"int64\"\n" +
++                "    },\n" +
++                "    \"name\": {\n" +
++                "      \"type\": \"string\"\n" +
++                "    }\n" +
++                "  },\n" +
++                "  \"xml\": {\n" +
++                "    \"name\": \"Tag\"\n" +
++                "  }\n" +
++                "}";
++
++        return Response.ok(json, MediaType.APPLICATION_JSON).build();
++    }
++}
+diff --git a/src/main/webapp/code-first/openapi.json b/src/main/webapp/code-first/openapi.json
+index f1ce028..ed1d067 100644
+--- a/src/main/webapp/code-first/openapi.json
++++ b/src/main/webapp/code-first/openapi.json
+@@ -212,11 +212,11 @@
+     }
+   },
+   "components" : {
+     "schemas" : {
+       "Category" : {
+-        "$id" : "/components/schemas/category",
++        "$id" : "/api/v31/components/schemas/category",
+         "description" : "Category",
+         "properties" : {
+           "id" : {
+             "type" : "integer",
+             "format" : "int64",
+@@ -283,46 +283,46 @@
+             "swagger-extension" : true
+           },
+           "petDetailsId" : {
+             "type" : "integer",
+             "format" : "int64",
+-            "$ref" : "/components/schemas/petdetails#pet_details_id"
++            "$ref" : "/api/v31/components/schemas/petdetails#pet_details_id"
+           },
+           "petDetails" : {
+-            "$ref" : "/components/schemas/petdetails"
++            "$ref" : "/api/v31/components/schemas/petdetails"
+           }
+         },
+         "required" : [ "name", "photoUrls" ],
+         "xml" : {
+           "name" : "Pet"
+         }
+       },
+       "PetDetails" : {
+-        "$id" : "/components/schemas/petdetails",
++        "$id" : "/api/v31/components/schemas/petdetails",
+         "$schema" : "https://json-schema.org/draft/2020-12/schema",
+         "$vocabulary" : "https://spec.openapis.org/oas/3.1/schema-base",
+         "properties" : {
+           "id" : {
+             "type" : "integer",
+             "format" : "int64",
+             "$anchor" : "pet_details_id",
+             "example" : 10
+           },
+           "category" : {
+-            "$ref" : "/components/schemas/category",
++            "$ref" : "/api/v31/components/schemas/category",
+             "description" : "PetDetails Category"
+           },
+           "tag" : {
+-            "$ref" : "/components/schemas/tag"
++            "$ref" : "/api/v31/components/schemas/tag"
+           }
+         },
+         "xml" : {
+           "name" : "PetDetails"
+         }
+       },
+       "Tag" : {
+-        "$id" : "/components/schemas/tag",
++        "$id" : "/api/v31/components/schemas/tag",
+         "properties" : {
+           "id" : {
+             "type" : "integer",
+             "format" : "int64"
+           },
+diff --git a/src/main/webapp/code-first/openapi.yaml b/src/main/webapp/code-first/openapi.yaml
+index c985d44..2665e80 100644
+--- a/src/main/webapp/code-first/openapi.yaml
++++ b/src/main/webapp/code-first/openapi.yaml
+@@ -167,11 +167,11 @@ paths:
+         - read:pets
+       - api_key: []
+ components:
+   schemas:
+     Category:
+-      $id: /components/schemas/category
++      $id: /api/v31/components/schemas/category
+       description: Category
+       properties:
+         id:
+           type: integer
+           format: int64
+@@ -224,37 +224,37 @@ components:
+           exclusiveMinimum: 1
+           swagger-extension: true
+         petDetailsId:
+           type: integer
+           format: int64
+-          $ref: /components/schemas/petdetails#pet_details_id
++          $ref: /api/v31/components/schemas/petdetails#pet_details_id
+         petDetails:
+-          $ref: /components/schemas/petdetails
++          $ref: /api/v31/components/schemas/petdetails
+       required:
+       - name
+       - photoUrls
+       xml:
+         name: Pet
+     PetDetails:
+-      $id: /components/schemas/petdetails
++      $id: /api/v31/components/schemas/petdetails
+       $schema: https://json-schema.org/draft/2020-12/schema
+       $vocabulary: https://spec.openapis.org/oas/3.1/schema-base
+       properties:
+         id:
+           type: integer
+           format: int64
+           $anchor: pet_details_id
+           example: 10
+         category:
+-          $ref: /components/schemas/category
++          $ref: /api/v31/components/schemas/category
+           description: PetDetails Category
+         tag:
+-          $ref: /components/schemas/tag
++          $ref: /api/v31/components/schemas/tag
+       xml:
+         name: PetDetails
+     Tag:
+-      $id: /components/schemas/tag
++      $id: /api/v31/components/schemas/tag
+       properties:
+         id:
+           type: integer
+           format: int64
+         name:

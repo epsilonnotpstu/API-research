@@ -1,0 +1,57 @@
+diff --git a/src/main/java/io/papermc/bibliothek/controller/v2/DownloadController.java b/src/main/java/io/papermc/bibliothek/controller/v2/DownloadController.java
+index cfc6630..2ac19fe 100644
+--- a/src/main/java/io/papermc/bibliothek/controller/v2/DownloadController.java
++++ b/src/main/java/io/papermc/bibliothek/controller/v2/DownloadController.java
+@@ -101,11 +101,11 @@ public class DownloadController {
+         schema = @Schema(type = "string")
+       )
+     }
+   )
+   @GetMapping(
+-    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:[a-z0-9._-]+}",
++    value = "/v2/projects/{project:[a-z]+}/versions/{version:" + Version.PATTERN + "}/builds/{build:\\d+}/downloads/{download:" + Build.Download.PATTERN + "}",
+     produces = {
+       MediaType.APPLICATION_JSON_VALUE,
+       HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
+     }
+   )
+@@ -123,11 +123,11 @@ public class DownloadController {
+     @PathVariable("build")
+     @Pattern(regexp = "\\d+") //
+     final int buildNumber,
+     @Parameter(description = "A download of the build.")
+     @PathVariable("download")
+-    @Pattern(regexp = "[a-z0-9._-]+") //
++    @Pattern(regexp = Build.Download.PATTERN) //
+     final String downloadName
+   ) {
+     final Project project = this.projects.findByName(projectName).orElseThrow(ProjectNotFound::new);
+     final Version version = this.versions.findByProjectAndName(project._id(), versionName).orElseThrow(VersionNotFound::new);
+     final Build build = this.builds.findByProjectAndVersionAndNumber(project._id(), version._id(), buildNumber).orElseThrow(BuildNotFound::new);
+diff --git a/src/main/java/io/papermc/bibliothek/database/model/Build.java b/src/main/java/io/papermc/bibliothek/database/model/Build.java
+index cc08061..f05878b 100644
+--- a/src/main/java/io/papermc/bibliothek/database/model/Build.java
++++ b/src/main/java/io/papermc/bibliothek/database/model/Build.java
+@@ -28,10 +28,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ import java.time.Instant;
+ import java.util.List;
+ import java.util.Map;
+ import org.bson.types.ObjectId;
++import org.intellij.lang.annotations.Language;
+ import org.jetbrains.annotations.Nullable;
+ import org.springframework.data.annotation.Id;
+ import org.springframework.data.mongodb.core.index.CompoundIndex;
+ import org.springframework.data.mongodb.core.mapping.Document;
+ 
+@@ -74,7 +75,10 @@ public record Build(
+     @Schema(name = "name", pattern = "[a-z0-9._-]+", example = "paper-1.18-10.jar")
+     String name,
+     @Schema(name = "sha256", pattern = "[a-f0-9]{64}", example = "f065e2d345d9d772d5cf2a1ce5c495c4cc56eb2fcd6820e82856485fa19414c8")
+     String sha256
+   ) {
++    // NOTE: this pattern cannot contain any capturing groups
++    @Language("RegExp")
++    public static final String PATTERN = "[a-zA-Z0-9._-]+";
+   }
+ }

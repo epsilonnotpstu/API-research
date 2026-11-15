@@ -1,0 +1,129 @@
+diff --git a/docs/api_specification.md b/docs/api_specification.md
+index d28a5d0f..07c942b2 100644
+--- a/docs/api_specification.md
++++ b/docs/api_specification.md
+@@ -1487,7 +1487,7 @@ Content-Length: 44
+ 
+ | Code               | Description                                      |
+ | ------------------ | -------------------------------------------------|
+ | `P1101`            | Request parameters have Validation errors        |
+ | `P1100`            | Requested page not found                         |
+-| `P1102`            | Refunds not supported for direct debit accounts  |
++| `P1102`            | Refunds not supported for Direct Debit accounts  |
+ | `P1898`            | Connector response was unrecognised to PublicAPI |
+\ No newline at end of file
+diff --git a/src/main/java/uk/gov/pay/api/model/RefundError.java b/src/main/java/uk/gov/pay/api/model/RefundError.java
+index 467fc6c2..615c047f 100644
+--- a/src/main/java/uk/gov/pay/api/model/RefundError.java
++++ b/src/main/java/uk/gov/pay/api/model/RefundError.java
+@@ -13,11 +13,11 @@ import static java.lang.String.format;
+ public class RefundError {
+ 
+     public enum Code {
+ 
+         SEARCH_REFUNDS_VALIDATION_ERROR("P1101", "Invalid parameters: %s. See Public API documentation for the correct data formats"),
+-        SEARCH_REFUNDS_DIRECT_DEBIT_ERROR("P1102","Searching all refunds are not currently supported for direct debit accounts."),
++        SEARCH_REFUNDS_DIRECT_DEBIT_ERROR("P1102","Searching all refunds are not currently supported for Direct Debit accounts."),
+         SEARCH_REFUNDS_NOT_FOUND("P1100", "Page not found"),
+         SEARCH_REFUNDS_CONNECTOR_ERROR("P1898", "Downstream system error");
+ 
+         private String value;
+         private String format;
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+index 7cca60f5..ac3e2491 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+@@ -32,16 +32,16 @@ public class DirectDebitSearchPaymentsParams {
+     @ApiParam(value = "The GOV.UK Pay identifier for the mandate")
+     @Size(min = 1, max = MANDATE_ID_MAX_LENGTH, message = "Must be less than or equal to {max} characters length")
+     private String mandateId;
+     
+     @QueryParam("from_date")
+-    @ApiParam(value = "From date of direct debit payments to be searched (this date is inclusive). Example=2015-08-13T12:35:00Z")
++    @ApiParam(value = "From date of Direct Debit payments to be searched (this date is inclusive). Example=2015-08-13T12:35:00Z")
+     @ValidDate
+     private String fromDate;
+     
+     @QueryParam("to_date")
+-    @ApiParam(value = "To date of direct debit payments to be searched (this date is exclusive). Example=2015-08-13T12:35:00Z")
++    @ApiParam(value = "To date of Direct Debit payments to be searched (this date is exclusive). Example=2015-08-13T12:35:00Z")
+     @ValidDate
+     private String toDate;
+     
+     @QueryParam("page")
+     @ApiParam(value = "Page number requested for the search, should be a positive integer (optional, defaults to 1)")
+diff --git a/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java b/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
+index 061f8af0..ac522878 100644
+--- a/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java
+@@ -44,11 +44,11 @@ public class DirectDebitEventsResource {
+     @GET
+     @Timed
+     @Path("/v1/events")
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+-            value = "Get direct debit events",
++            value = "Get Direct Debit events",
+             notes = "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+     @ApiResponses(value = {
+             @ApiResponse(code = 200, message = "OK", response = List.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+diff --git a/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
+index cad5cbd7..d3405647 100644
+--- a/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResource.java
+@@ -120,12 +120,12 @@ public class DirectDebitPaymentsResource {
+     @Timed
+     @Path("{paymentId}")
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+             nickname = "Get a Direct Debit payment",
+-            value = "Find direct debit payment by ID",
+-            notes = "Return information about the direct debit payment. " +
++            value = "Find Direct Debit payment by ID",
++            notes = "Return information about the Direct Debit payment. " +
+                     "The Authorisation token needs to be specified in the 'Authorization' header " +
+[REDACTED credential-related line]
+             code = 200,
+             authorizations = {@Authorization("Authorization")})
+     @ApiResponses(value = {
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index 042de864..74f30d19 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -247,17 +247,17 @@
+           "maxLength" : 26,
+           "minLength" : 1
+         }, {
+           "name" : "from_date",
+           "in" : "query",
+-          "description" : "From date of direct debit payments to be searched (this date is inclusive). Example=2015-08-13T12:35:00Z",
++          "description" : "From date of Direct Debit payments to be searched (this date is inclusive). Example=2015-08-13T12:35:00Z",
+           "required" : false,
+           "type" : "string"
+         }, {
+           "name" : "to_date",
+           "in" : "query",
+-          "description" : "To date of direct debit payments to be searched (this date is exclusive). Example=2015-08-13T12:35:00Z",
++          "description" : "To date of Direct Debit payments to be searched (this date is exclusive). Example=2015-08-13T12:35:00Z",
+           "required" : false,
+           "type" : "string"
+         }, {
+           "name" : "page",
+           "in" : "query",
+@@ -366,12 +366,12 @@
+       }
+     },
+     "/v1/directdebit/payments/{paymentId}" : {
+       "get" : {
+         "tags" : [ "Direct Debit" ],
+-        "summary" : "Find direct debit payment by ID",
+[REDACTED credential-related line]
++        "summary" : "Find Direct Debit payment by ID",
+[REDACTED credential-related line]
+         "operationId" : "Get a Direct Debit payment",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+           "in" : "path",

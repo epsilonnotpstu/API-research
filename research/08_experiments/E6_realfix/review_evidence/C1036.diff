@@ -1,0 +1,52 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchMandatesParams.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchMandatesParams.java
+index 1afea3a1..42ccdca7 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchMandatesParams.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchMandatesParams.java
+@@ -17,11 +17,12 @@ public class DirectDebitSearchMandatesParams {
+ 
+     @QueryParam("reference")
+     private String reference;
+ 
+     @QueryParam("state")
+-    @Pattern(regexp = "created|started|pending|submitted|active|inactive|cancelled", message = "state is not a valid mandate external state")
++    @Pattern(regexp = "created|started|pending|active|inactive|cancelled|failed|abandoned|error",
++            message = "Must be one of created, started, pending, active, inactive, cancelled, failed, abandoned or error")
+     private String state;
+ 
+     @QueryParam("bank_statement_reference")
+     private String bankStatementReference;
+ 
+diff --git a/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java b/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java
+index 916fcdb6..6b82cb7f 100644
+--- a/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java
++++ b/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java
+@@ -135,11 +135,11 @@ public class MandateResourceSearchMandateIT extends PaymentResourceITestBase {
+                 .get("/v1/directdebit/mandates/")
+                 .then()
+                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                 .body("field", is("state"))
+                 .body("code", is("P0102"))
+-                .body("description", is("Invalid attribute value: state. state is not a valid mandate external state"));
++                .body("description", is("Invalid attribute value: state. Must be one of created, started, pending, active, inactive, cancelled, failed, abandoned or error"));
+     }
+ 
+     @Test
+     public void shouldSuccessfullySearchMandate() throws JsonProcessingException {
+         var searchNavigationLinksFromConnector = new SearchNavigationLinks()
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index c7d7b7c6..cc6ee6eb 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -25,11 +25,11 @@
+         }, {
+           "name" : "state",
+           "in" : "query",
+           "required" : false,
+           "type" : "string",
+-          "pattern" : "created|started|pending|submitted|active|inactive|cancelled"
++          "pattern" : "created|started|pending|active|inactive|cancelled|failed|abandoned|error"
+         }, {
+           "name" : "bank_statement_reference",
+           "in" : "query",
+           "required" : false,
+           "type" : "string"

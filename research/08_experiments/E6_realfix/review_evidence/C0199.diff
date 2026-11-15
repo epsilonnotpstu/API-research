@@ -1,0 +1,116 @@
+diff --git a/commons/model/src/main/java/io/github/microcks/domain/Operation.java b/commons/model/src/main/java/io/github/microcks/domain/Operation.java
+index 27a8056c..052aad31 100644
+--- a/commons/model/src/main/java/io/github/microcks/domain/Operation.java
++++ b/commons/model/src/main/java/io/github/microcks/domain/Operation.java
+@@ -142,11 +142,13 @@ public class Operation {
+ 
+    public void addResourcePath(String resourcePath) {
+       if (this.resourcePaths == null) {
+          this.resourcePaths = new ArrayList<>();
+       }
+-      resourcePaths.add(resourcePath);
++      if (!this.resourcePaths.contains(resourcePath)) {
++         this.resourcePaths.add(resourcePath);
++      }
+    }
+ 
+    public List<ParameterConstraint> getParameterConstraints() {
+       return parameterConstraints;
+    }
+diff --git a/webapp/src/main/java/io/github/microcks/util/postman/PostmanCollectionImporter.java b/webapp/src/main/java/io/github/microcks/util/postman/PostmanCollectionImporter.java
+index 29221b1e..4e491539 100644
+--- a/webapp/src/main/java/io/github/microcks/util/postman/PostmanCollectionImporter.java
++++ b/webapp/src/main/java/io/github/microcks/util/postman/PostmanCollectionImporter.java
+@@ -201,10 +201,12 @@ public class PostmanCollectionImporter implements MockRepositoryImporter {
+                String dispatchCriteria = null;
+                String requestUrl = requestNode.path("url").path("raw").asText();
+ 
+                if (DispatchStyles.URI_PARAMS.equals(operation.getDispatcher())) {
+                   dispatchCriteria = DispatchCriteriaHelper.extractFromURIParams(operation.getDispatcherRules(), requestUrl);
++                  // We only need the pattern here.
++                  operation.addResourcePath(extractResourcePath(requestUrl, null));
+                } else if (DispatchStyles.URI_PARTS.equals(operation.getDispatcher())) {
+                   Map<String, String> parts = buildRequestParts(requestNode);
+                   dispatchCriteria = DispatchCriteriaHelper.buildFromPartsMap(parts);
+                   // We should complete resourcePath here.
+                   String resourcePath = extractResourcePath(requestUrl, null);
+@@ -234,13 +236,22 @@ public class PostmanCollectionImporter implements MockRepositoryImporter {
+       }
+       return result;
+    }
+ 
+    private boolean areOperationsEquivalent(String operationNameRef, String operationNameCandidate) {
+-      if (operationNameRef.equals(operationNameCandidate)) {
++      // First check equals ignoring case.
++      if (operationNameRef.equalsIgnoreCase(operationNameCandidate)) {
+          return true;
+       }
++      // Then we may have an OpenAPI template we should convert to Postman and check again.
++      if (operationNameRef.contains("/{")) {
++         String transformedName = operationNameRef.replaceAll("/\\{", "/:").replaceAll("}", "");
++         if (transformedName.equalsIgnoreCase(operationNameCandidate)) {
++            return true;
++         }
++      }
++
+       try {
+          return operationNameCandidate.matches(OPERATION_NAME_EXPRESSION_PREFIX + operationNameRef);
+       } catch (PatternSyntaxException pse) {
+          log.warn(OPERATION_NAME_EXPRESSION_PREFIX + operationNameRef + " throws a PatternSyntaxException");
+       }
+diff --git a/webapp/src/test/java/io/github/microcks/web/RestControllerIT.java b/webapp/src/test/java/io/github/microcks/web/RestControllerIT.java
+index 28ba2198..07c37544 100644
+--- a/webapp/src/test/java/io/github/microcks/web/RestControllerIT.java
++++ b/webapp/src/test/java/io/github/microcks/web/RestControllerIT.java
+@@ -55,6 +55,37 @@ public class RestControllerIT extends AbstractBaseIT {
+                response.getBody(), JSONCompareMode.LENIENT);
+       } catch (Exception e) {
+          fail("No Exception should be thrown here");
+       }
+    }
++
++   @Test
++   public void testSwaggerMocking() {
++      // Upload Beer Catalog API swagger and then Postman collection artifacts.
++      uploadArtifactFile("target/test-classes/io/github/microcks/util/openapi/beer-catalog-api-swagger.json", true);
++      uploadArtifactFile("target/test-classes/io/github/microcks/util/openapi/beer-catalog-api-collection.json", false);
++
++      // Check its different mocked operations.
++      ResponseEntity<String> response = restTemplate.getForEntity("/rest/Beer+Catalog+API/0.9/beer?page=0", String.class);
++      assertEquals(200, response.getStatusCode().value());
++      try {
++         JSONAssert.assertEquals("[3]", response.getBody(), new ArraySizeComparator(JSONCompareMode.LENIENT));
++      } catch (Exception e) {
++         fail("No Exception should be thrown here");
++      }
++
++      response = restTemplate.getForEntity("/rest/Beer+Catalog+API/0.9/beer/Weissbier", String.class);
++      assertEquals(200, response.getStatusCode().value());
++      try {
++         JSONAssert.assertEquals("{\n" +
++                     "    \"name\": \"Weissbier\",\n" +
++                     "    \"country\": \"Germany\",\n" +
++                     "    \"type\": \"Wheat\",\n" +
++                     "    \"rating\": 4.1,\n" +
++                     "    \"status\": \"out_of_stock\"\n" +
++                     "}",
++               response.getBody(), JSONCompareMode.LENIENT);
++      } catch (Exception e) {
++         fail("No Exception should be thrown here");
++      }
++   }
+ }
+diff --git a/webapp/src/test/resources/logback-test.xml b/webapp/src/test/resources/logback-test.xml
+index 10576fb9..28af8e4d 100644
+--- a/webapp/src/test/resources/logback-test.xml
++++ b/webapp/src/test/resources/logback-test.xml
+@@ -8,7 +8,8 @@
+   <root level="ERROR">
+     <appender-ref ref="STDOUT"/>
+   </root>
+ 
+   <logger name="org.springframework.test" level="ERROR"/>
++  <logger name="io.github.microcks" level="INFO"/>
+   <logger name="io.github.microcks.web.AbstractBaseIT" level="INFO"/>
+ </configuration>
+\ No newline at end of file

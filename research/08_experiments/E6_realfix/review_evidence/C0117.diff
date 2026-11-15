@@ -1,0 +1,102 @@
+diff --git a/README.md b/README.md
+index 43fc6a0..cf95610 100644
+--- a/README.md
++++ b/README.md
+@@ -21,10 +21,43 @@ Three goals:
+ 2. Integration of heterogeneous information into a harmonized structure and
+ programmatic interface
+ 3. Dissemination of the diverse information in a hierarchical digestible way
+ for interpreting variants and patients.
+ 
++## Pre-requisites
++
++#### Mongo DB
++
++##### Alternative 1 - install mongoDB
++Install mongoDB manually.
++
++##### Alternative 2 - start mongoDB in a docker container (assuming genome-nexus is running locally, development mode)
++Start with docker:
++```
++docker network create gn-net
++docker run --name=gn-mongo --restart=always --net=gn-net -p 27017:27017 -d mongo
++```
++Enable the following line in `application.properties`:
++```
++spring.data.mongodb.import.command.prefix=docker run --rm --net=gn-net -v ${user.dir}:${user.dir} -v /tmp:/tmp mongo mongoimport --uri mongodb://gn-mongo:27017/annotator
++```
++##### Alternative 3 - start genome-nexus and mongoDB in docker containers (production mode)
++Create common docker network:
++```
++docker network create gn-net
++```
++Run your genome-nexus container using the network above (`--net` parameter in docker).
++
++Run the mongoDB container:
++```
++docker run --name=gn-mongo --restart=always --net=gn-net -d mongo
++```
++**Only** change the following in `application.properties` (so do **not** enable the property used in Alternative 2 above):
++```
++spring.data.mongodb.uri=mongodb://gn-mongo:27017/annotator
++```
++
+ ## Run
+ ```
+ mvn clean install
+ java -jar web/target/web-*.war
+ ```
+diff --git a/web/src/main/java/org/cbioportal/genome_nexus/GenomeNexusImporter.java b/web/src/main/java/org/cbioportal/genome_nexus/GenomeNexusImporter.java
+index 615518f..2331b5f 100644
+--- a/web/src/main/java/org/cbioportal/genome_nexus/GenomeNexusImporter.java
++++ b/web/src/main/java/org/cbioportal/genome_nexus/GenomeNexusImporter.java
+@@ -14,10 +14,13 @@ import org.cbioportal.genome_nexus.persistence.internal.EnsemblRepositoryImpl;
+ @Component
+ public class GenomeNexusImporter implements CommandLineRunner {
+     private String mongoDBURI;
+     @Value("${spring.data.mongodb.uri:}")
+     public void setMongoDBURI(String mongoDBURI) { this.mongoDBURI =  mongoDBURI; }
++    private String mongoDBImportCommandPrefix;
++    @Value("${spring.data.mongodb.import.command.prefix:}")
++    public void setMongoDBImportCommandPrefix(String mongoDBImportCommandPrefix) { this.mongoDBImportCommandPrefix =  mongoDBImportCommandPrefix; }
+ 
+     protected final Log logger = LogFactory.getLog(getClass());
+     final static String[][] IMPORT_RESOURCE_FILES = new String[][]{
+         new String[]{"/ensembl_biomart_transcripts.json", EnsemblRepositoryImpl.TRANSCRIPTS_COLLECTION, "--type json"},
+         new String[]{"/ensembl_biomart_canonical_transcripts_per_hgnc.txt", EnsemblRepositoryImpl.CANONICAL_TRANSCRIPTS_COLLECTION, "--type tsv --headerline"},
+@@ -69,11 +72,17 @@ public class GenomeNexusImporter implements CommandLineRunner {
+ 
+             try {
+                 File file = new File(GenomeNexusImporter.exportResource(fileName));
+                 logger.info("Importing " + fileName + " to mongodb collection " + collection + "...");
+ 
+-                String command = "mongoimport --uri " + mongoDBURI + " --drop --collection " + collection + " " + extraOptions + " --file " + file.getAbsolutePath();
++                String command;
++                if (mongoDBImportCommandPrefix.length() > 0) {
++                    command = mongoDBImportCommandPrefix;
++                } else {
++                    command = "mongoimport --uri " + mongoDBURI;
++                }
++                command += " --drop --collection " + collection + " " + extraOptions + " --file " + file.getAbsolutePath();
+                 logger.info("Command: " + command);
+                 p = r.exec(command);
+                 p.waitFor();
+                 BufferedReader stdInput = new BufferedReader(new
+                     InputStreamReader(p.getInputStream()));
+diff --git a/web/src/main/resources/application.properties.EXAMPLE b/web/src/main/resources/application.properties.EXAMPLE
+index 3bf9dee..893d0a6 100644
+--- a/web/src/main/resources/application.properties.EXAMPLE
++++ b/web/src/main/resources/application.properties.EXAMPLE
+@@ -18,9 +18,11 @@ vep.isoform.overrides=uniprot:isoform_overrides_uniprot.txt,mskcc:isoform_overri
+ # PDB header web service URL
+ pdb.header_service_url=http://files.rcsb.org/header/PDB_ID.pdb
+ 
+[REDACTED credential-related line]
+ spring.data.mongodb.uri=mongodb://127.0.0.1:27017/annotator
++# Use this if MongoDB is running on docker for example:
++#spring.data.mongodb.import.command.prefix=docker run --rm --net=gn-net -v ${user.dir}:${user.dir} -v /tmp:/tmp mongo mongoimport --uri mongodb://gn-mongo:27017/annotator
+ 
+ # Server port number for the embedded tomcat. This property is required only when building
+ # a jar file, and ignored when building a war file.
+ server.port=38080
+\ No newline at end of file

@@ -1,0 +1,429 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java b/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java
+index c3f86072..2538cb57 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java
++++ b/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java
+@@ -1,18 +1,19 @@
+ package uk.gov.pay.api.model.search.card;
+ 
+ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+ import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ import uk.gov.pay.api.model.links.RefundLinksForSearch;
+ 
+ import java.net.URI;
+ 
+ @JsonIgnoreProperties(ignoreUnknown = true)
++@ApiModel
+ public class RefundForSearchRefundsResult {
+ 
+-
+     @JsonProperty("refund_id")
+     private String refundId;
+ 
+     @JsonProperty("created_date")
+     private String createdDate;
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchResult.java b/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchResult.java
+new file mode 100644
+index 00000000..229f75ca
+--- /dev/null
++++ b/src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchResult.java
+@@ -0,0 +1,39 @@
++package uk.gov.pay.api.model.search.card;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
++import uk.gov.pay.api.model.links.RefundLinksForSearch;
++
++import java.util.List;
++
++@ApiModel
++public class RefundForSearchResult {
++
++    @ApiModelProperty(name = "payment_id")
++    private String paymentId;
++    @ApiModelProperty(name = "_links")
++    private RefundLinksForSearch links;
++    @JsonProperty(value = "_embedded")
++    private Embedded embedded;
++
++    public class Embedded {
++        private List<RefundResult> refunds;
++
++        public List<RefundResult> getRefunds() {
++            return refunds;
++        }
++    }
++
++    public String getPaymentId() {
++        return paymentId;
++    }
++
++    public RefundLinksForSearch getLinks() {
++        return links;
++    }
++
++    public Embedded getEmbedded() {
++        return embedded;
++    }
++}
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/RefundResult.java b/src/main/java/uk/gov/pay/api/model/search/card/RefundResult.java
+new file mode 100644
+index 00000000..1c0bd218
+--- /dev/null
++++ b/src/main/java/uk/gov/pay/api/model/search/card/RefundResult.java
+@@ -0,0 +1,24 @@
++package uk.gov.pay.api.model.search.card;
++
++import com.fasterxml.jackson.annotation.JsonUnwrapped;
++import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
++import uk.gov.pay.api.model.links.RefundLinksForSearch;
++
++@ApiModel(value = "Refund")
++public class RefundResult {
++
++    @ApiModelProperty
++    @JsonUnwrapped
++    private RefundForSearchRefundsResult refunds;
++    @ApiModelProperty(name = "_links")
++    private RefundLinksForSearch links;
++
++    public RefundForSearchRefundsResult getRefunds() {
++        return refunds;
++    }
++
++    public RefundLinksForSearch getLinks() {
++        return links;
++    }
++}
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java b/src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java
+index f2e0851e..c0cbe171 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java
++++ b/src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java
+@@ -1,22 +1,45 @@
+ package uk.gov.pay.api.model.search.card;
+ 
+-import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.annotations.ApiModelProperty;
++import uk.gov.pay.api.model.links.SearchNavigationLinks;
++import uk.gov.pay.api.model.search.SearchPagination;
+ 
+ import java.util.List;
+ 
+-public class SearchRefundsResults {
++public class SearchRefundsResults implements SearchPagination {
+ 
+-    @JsonProperty("results")
+-    private List<RefundForSearchRefundsResult> refunds;
++    @ApiModelProperty(name = "total", example = "100")
++    private int total;
++    @ApiModelProperty(name = "count", example = "20")
++    private int count;
++    @ApiModelProperty(name = "page", example = "1")
++    private int page;
++    @ApiModelProperty(name = "results")
++    private List<RefundForSearchRefundsResult> results;
++    @ApiModelProperty(name = "_links")
++    private SearchNavigationLinks links;
+ 
+-    public SearchRefundsResults(List<RefundForSearchRefundsResult> refunds) {
+-        this.refunds = refunds;
++    @Override
++    public int getTotal() {
++        return total;
+     }
+ 
+-    public List<RefundForSearchRefundsResult> getRefunds() {
+-        return refunds;
++    @Override
++    public int getCount() {
++        return count;
+     }
+-    
+-    
+ 
++    @Override
++    public int getPage() {
++        return page;
++    }
++
++    public List<RefundForSearchRefundsResult> getResults() {
++        return results;
++    }
++
++    @Override
++    public SearchNavigationLinks getLinks() {
++        return links;
++    }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
+index d6e1dfb8..ff6f4b0c 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
+@@ -22,10 +22,12 @@ import uk.gov.pay.api.model.CreatePaymentRefundRequest;
+ import uk.gov.pay.api.model.PaymentError;
+ import uk.gov.pay.api.model.RefundFromConnector;
+ import uk.gov.pay.api.model.RefundResponse;
+ import uk.gov.pay.api.model.RefundsFromConnector;
+ import uk.gov.pay.api.model.RefundsResponse;
++import uk.gov.pay.api.model.search.card.RefundResult;
++import uk.gov.pay.api.model.search.card.RefundForSearchResult;
+ import uk.gov.pay.api.resources.error.ApiErrorResponse;
+ 
+ import javax.inject.Inject;
+ import javax.ws.rs.Consumes;
+ import javax.ws.rs.GET;
+@@ -82,11 +84,12 @@ public class PaymentRefundsResource {
+ 
+     @GET
+     @Timed
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
+-            value = "Get all refunds for a payment.",
++            response = RefundForSearchResult.class,
++            value = "Get all refunds for a payment",
+             notes = "Return refunds for a payment. " +
+[REDACTED credential-related line]
+             code = 200)
+     @ApiResponses(value = {
+             @ApiResponse(code = 200, message = "OK"),
+@@ -117,10 +120,11 @@ public class PaymentRefundsResource {
+     @GET
+     @Timed
+     @Path("/{refundId}")
+     @Produces(APPLICATION_JSON)
+     @ApiOperation(
++            response = RefundResult.class,
+             value = "Find payment refund by ID",
+             notes = "Return payment refund information by Refund ID " +
+                     "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+             code = 200)
+@@ -153,10 +157,11 @@ public class PaymentRefundsResource {
+     @POST
+     @Timed
+     @Produces(APPLICATION_JSON)
+     @Consumes(APPLICATION_JSON)
+     @ApiOperation(
++            response = RefundResult.class,
+             value = "Submit a refund for a payment",
+             notes = "Return issued refund information. " +
+[REDACTED credential-related line]
+             code = 202)
+     @ApiResponses(value = {
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+index 305b78db..26b2235f 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+@@ -192,17 +192,17 @@ public class PaymentsResource {
+                                    @ApiParam(value = "Number of results to be shown per page, should be a positive integer (optional, defaults to 500, max 500)", hidden = false)
+                                    @QueryParam("display_size") String displaySize,
+                                    @ApiParam(value = "Direct Debit Agreement Id", hidden = true)
+                                    @QueryParam("agreement_id") String agreementId,
+                                    @ApiParam(value = "Name on card used to make payment", hidden = false)
+-                                       @QueryParam("cardholder_name") String cardHolderName,
++                                   @QueryParam("cardholder_name") String cardHolderName,
+                                    @ApiParam(value = "First six digits of the card used to make payment", hidden = false)
+ 
+-                                       @QueryParam("first_digits_card_number") String firstDigitsCardNumber,
++                                   @QueryParam("first_digits_card_number") String firstDigitsCardNumber,
+                                    @ApiParam(value = "Last four digits of the card used to make payment", hidden = false)
+ 
+-                                       @QueryParam("last_digits_card_number") String lastDigitsCardNumber,
++                                   @QueryParam("last_digits_card_number") String lastDigitsCardNumber,
+                                    @Context UriInfo uriInfo) {
+ 
+         logger.info("Payments search request - [ {} ]",
+                 format("reference:%s, email: %s, status: %s, card_brand %s, fromDate: %s, toDate: %s, page: %s, display_size: %s, agreement_id: %s, cardholder_name: %s, first_digits_card_number: %s, last_digits_card_number: %s",
+                         reference, email, state, cardBrand, fromDate, toDate, pageNumber, displaySize, agreementId, cardHolderName, firstDigitsCardNumber, lastDigitsCardNumber));
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index dacec344..59d1f703 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -359,11 +359,11 @@
+       }
+     },
+     "/v1/payments/{paymentId}/refunds" : {
+       "get" : {
+         "tags" : [ "refunds" ],
+-        "summary" : "Get all refunds for a payment.",
++        "summary" : "Get all refunds for a payment",
+[REDACTED credential-related line]
+         "operationId" : "getRefunds",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+@@ -371,11 +371,14 @@
+           "required" : true,
+           "type" : "string"
+         } ],
+         "responses" : {
+           "200" : {
+-            "description" : "OK"
++            "description" : "OK",
++            "schema" : {
++              "$ref" : "#/definitions/RefundForSearchResult"
++            }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+@@ -419,10 +422,16 @@
+           "schema" : {
+             "$ref" : "#/definitions/CreatePaymentRefundRequest"
+           }
+         } ],
+         "responses" : {
++          "200" : {
++            "description" : "successful operation",
++            "schema" : {
++              "$ref" : "#/definitions/Refund"
++            }
++          },
+           "202" : {
+             "description" : "ACCEPTED"
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+@@ -469,11 +478,14 @@
+           "required" : true,
+           "type" : "string"
+         } ],
+         "responses" : {
+           "200" : {
+-            "description" : "OK"
++            "description" : "OK",
++            "schema" : {
++              "$ref" : "#/definitions/Refund"
++            }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+           "404" : {
+@@ -700,10 +712,21 @@
+         "$ref" : "#/definitions/Payment"
+       }, {
+         "type" : "object"
+       } ]
+     },
++    "Embedded" : {
++      "type" : "object",
++      "properties" : {
++        "refunds" : {
++          "type" : "array",
++          "items" : {
++            "$ref" : "#/definitions/Refund"
++          }
++        }
++      }
++    },
+     "ErrorResponse" : {
+       "type" : "object",
+       "properties" : {
+         "code" : {
+           "type" : "string",
+@@ -1147,10 +1170,39 @@
+           "readOnly" : true
+         }
+       },
+       "description" : "A POST link related to a payment"
+     },
++    "Refund" : {
++      "type" : "object",
++      "properties" : {
++        "refund_id" : {
++          "type" : "string",
++          "readOnly" : true
++        },
++        "created_date" : {
++          "type" : "string",
++          "readOnly" : true
++        },
++        "payment_id" : {
++          "type" : "string",
++          "readOnly" : true
++        },
++        "amount" : {
++          "type" : "integer",
++          "format" : "int64",
++          "readOnly" : true
++        },
++        "_links" : {
++          "$ref" : "#/definitions/RefundLinksForSearch"
++        },
++        "status" : {
++          "type" : "string",
++          "readOnly" : true
++        }
++      }
++    },
+     "RefundError" : {
+       "type" : "object",
+       "properties" : {
+         "field" : {
+           "type" : "string",
+@@ -1195,10 +1247,25 @@
+           "type" : "string",
+           "readOnly" : true
+         }
+       }
+     },
++    "RefundForSearchResult" : {
++      "type" : "object",
++      "properties" : {
++        "payment_id" : {
++          "type" : "string"
++        },
++        "_links" : {
++          "$ref" : "#/definitions/RefundLinksForSearch"
++        },
++        "_embedded" : {
++          "readOnly" : true,
++          "$ref" : "#/definitions/Embedded"
++        }
++      }
++    },
+     "RefundLinksForSearch" : {
+       "type" : "object",
+       "properties" : {
+         "self" : {
+           "description" : "self",
+@@ -1263,16 +1330,33 @@
+       "description" : "Links to navigate through pages"
+     },
+     "SearchRefundsResults" : {
+       "type" : "object",
+       "properties" : {
++        "total" : {
++          "type" : "integer",
++          "format" : "int32",
++          "example" : 100
++        },
++        "count" : {
++          "type" : "integer",
++          "format" : "int32",
++          "example" : 20
++        },
++        "page" : {
++          "type" : "integer",
++          "format" : "int32",
++          "example" : 1
++        },
+         "results" : {
+           "type" : "array",
+-          "readOnly" : true,
+           "items" : {
+             "$ref" : "#/definitions/RefundForSearchRefundsResult"
+           }
++        },
++        "_links" : {
++          "$ref" : "#/definitions/SearchNavigationLinks"
+         }
+       }
+     },
+     "SettlementSummary" : {
+       "type" : "object",

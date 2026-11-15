@@ -1,0 +1,319 @@
+diff --git a/README.md b/README.md
+index 63006af..aee4abf 100644
+--- a/README.md
++++ b/README.md
+@@ -61,11 +61,11 @@ There are two ways to build:
+ Whether you cloned or downloaded the 'zipped' sources you will either find the sources in the chosen checkout-directory or get a zip file with the source code, which you can expand to a folder of your choice.
+ 
+ In either case open a terminal pointing to the directory you put the sources in. The local build process is described afterwards depending on the way you choose.
+ 
+ #### Maven based build
+-This is the recommmended way for taking part in the development.  
++This is the recommended way for taking part in the development.  
+ Please check, whether following prerequisites are installed on your machine:
+ - [Open JDK 11](https://openjdk.java.net) or a similar JDK 11 compatible VM  
+ - [Maven](https://maven.apache.org)
+ 
+ You can then open a terminal pointing to the root directory of the verification server and do the following:
+diff --git a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+index f522823..daf4370 100644
+--- a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+@@ -24,12 +24,12 @@ package app.coronawarn.verification.config;
+ import lombok.Getter;
+ import lombok.Setter;
+ import org.springframework.boot.context.properties.ConfigurationProperties;
+ 
+ /**
+- * This class is used to read in values from configuration file application.yml.
+- * It is loaded via the @EnableConfigurationProperties annotation from SpringBootApplication main class.
++ * This class is used to read in values from configuration file application.yml, which is loaded via the
++ * '@EnableConfigurationProperties' annotation from SpringBootApplication main class.
+  */
+ @Getter
+ @Setter
+ @ConfigurationProperties
+ public class VerificationApplicationConfig {
+@@ -37,46 +37,38 @@ public class VerificationApplicationConfig {
+   private TanCfg tan;
+   private AppSessionCfg appsession;
+   private EntitiesCfg entities;
+ 
+   /**
+-   * Configure the TeleValidCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the TeleCfg with build property values and return the configured parameters.
+    */
+   public static class TeleCfg {
+     @Getter
+     @Setter
+     private TeleValidCfg valid;
+ 
+     /**
+-     * Configure the TeleValidCfg with build property values.
+-     *
+-     * @return the configured paramters
++     * Configure the TeleValidCfg with build property values and return the configured parameters.
+      */
+     public static class TeleValidCfg {
+       @Getter
+       @Setter
+       private int hours;
+     }
+   }
+ 
+   /**
+-   * Configure the ValidCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the ValidCfg with build property values and return the configured parameters.
+    */
+   public static class ValidCfg {
+     @Getter
+     @Setter
+     int days;
+   }
+ 
+   /**
+-   * Configure the TanCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the TanCfg with build property values and return the configured parameters.
+    */
+   public static class TanCfg {
+     @Getter
+     @Setter
+     private TeleCfg tele;
+@@ -84,35 +76,29 @@ public class VerificationApplicationConfig {
+     @Setter
+     private ValidCfg valid;
+   }
+ 
+   /**
+-   * Configure the AppSessionCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the AppSessionCfg with build property values and return the configured parameters.
+    */
+   public static class AppSessionCfg {
+     @Getter
+     @Setter
+     int tancountermax;
+   }
+ 
+   /**
+-   * Configure the CleanupCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the EntitiesCfg with build property values and return the configured parameters.
+    */
+   public static class EntitiesCfg {
+     @Getter
+     @Setter
+     private CleanupCfg cleanup;
+   }
+ 
+   /**
+-   * Configure the CleanupCfg with build property values.
+-   *
+-   * @return the configured paramters
++   * Configure the CleanupCfg with build property values and return the configured parameters.
+    */
+   public static class CleanupCfg {
+     @Getter
+     @Setter
+     private Integer days;
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationController.java b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+index a9336de..210bd95 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationController.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+@@ -207,11 +207,11 @@ public class VerificationController {
+    *         and will always be POSITIVE for a TeleTan
+    */
+   @Operation(
+     summary = "COVID-19 test result for given RegistrationToken",
+     description = "Gets the result of COVID-19 Test. "
+-      + "If the RegistrationToken belongs to a TeleTan the result is always positve"
++      + "If the RegistrationToken belongs to a TeleTan the result is always positive"
+   )
+   @ApiResponses(value = {
+     @ApiResponse(responseCode = "200", description = "Testresult retrieved")})
+   @PostMapping(value = TESTRESULT_ROUTE,
+       consumes = MediaType.APPLICATION_JSON_VALUE,
+diff --git a/src/main/java/app/coronawarn/verification/service/TanService.java b/src/main/java/app/coronawarn/verification/service/TanService.java
+index 8208edd..24e05fc 100644
+--- a/src/main/java/app/coronawarn/verification/service/TanService.java
++++ b/src/main/java/app/coronawarn/verification/service/TanService.java
+@@ -127,15 +127,15 @@ public class TanService {
+   /**
+    * Returns the a Valid TAN String.
+    *
+    * @return a Valid TAN String
+    */
+-  public String generateValidTan() {
++  private String generateValidTan() {
+     boolean validTan = false;
+     String newTan = "";
+     while (!validTan) {
+-      newTan = generateTanFromUuid();
++      newTan = UUID.randomUUID().toString();
+       validTan = checkTanNotExist(newTan);
+     }
+     return newTan;
+   }
+ 
+@@ -174,15 +174,10 @@ public class TanService {
+    */
+   public boolean isTeleTanValid(String teleTan) {
+     return syntaxTeleTanVerification(teleTan);
+   }
+ 
+-  private String generateTanFromUuid() {
+-    // A UUID is a 128 bit value
+-    return UUID.randomUUID().toString();
+-  }
+-
+   /**
+    * Check for existing TAN in the {@link VerificationTanRepository}.
+    *
+    * @param tan the TAN
+    * @return flag for existing TAN
+diff --git a/src/main/resources/application-cloud.yml b/src/main/resources/application-cloud.yml
+index bf7ad53..6adacee 100644
+--- a/src/main/resources/application-cloud.yml
++++ b/src/main/resources/application-cloud.yml
+@@ -4,18 +4,5 @@ spring:
+     url: jdbc:postgresql://${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DATABASE}
+     username: ${POSTGRESQL_USERNAME}
+[REDACTED credential-related line]
+   jpa:
+     database-platform: org.hibernate.dialect.PostgreSQLDialect
+-server:
+-  port: 8080
+-management:
+-  server:
+-    port: 8090
+-  endpoints:
+-    web:
+-      exposure:
+-        include: health
+-  endpoint:
+-    health:
+-      show-details: ALWAYS
+-      show-components: ALWAYS
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java b/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
+index 3594cfd..90aaaca 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationTest.java
+@@ -118,17 +118,17 @@ public class VerificationApplicationTest {
+       .content(getAsJsonFormat(new RegistrationToken(TEST_REG_TOK))))
+       .andExpect(status().isCreated());
+ 
+     long count = appSessionrepository.count();
+     log.info("Got {} verification entries from db repository.", count);
+-    assertEquals("Verification Failed: Amount of verfication entries is not 1 (Result=" + count + "). ", 1, count);
++    assertEquals("Verification Failed: Amount of verification entries is not 1 (Result=" + count + "). ", 1, count);
+ 
+-    List<VerificationAppSession> verficationList = appSessionrepository.findAll();
+-    assertNotNull(verficationList);
+-    assertEquals(TEST_GUI_HASH, verficationList.get(0).getHashedGuid());
+-    assertEquals(AppSessionSourceOfTrust.HASHED_GUID, verficationList.get(0).getSourceOfTrust());
+-    assertEquals(TEST_REG_TOK_HASH, verficationList.get(0).getRegistrationTokenHash());
++    List<VerificationAppSession> verificationList = appSessionrepository.findAll();
++    assertNotNull(verificationList);
++    assertEquals(TEST_GUI_HASH, verificationList.get(0).getHashedGuid());
++    assertEquals(AppSessionSourceOfTrust.HASHED_GUID, verificationList.get(0).getSourceOfTrust());
++    assertEquals(TEST_REG_TOK_HASH, verificationList.get(0).getRegistrationTokenHash());
+ 
+   }
+ 
+   /**
+    * Test generateTAN with an unknown registration token.
+@@ -265,11 +265,11 @@ public class VerificationApplicationTest {
+       .andExpect(status().isCreated())
+       .andExpect(jsonPath("$.registrationToken").exists());
+ 
+     long count = appSessionrepository.count();
+     log.info("Got {} verification entries from db repository.", count);
+-    assertEquals("Verification Failed: Amount of verfication entries is not 1 (Result=" + count + "). ", 1, count);
++    assertEquals("Verification Failed: Amount of verification entries is not 1 (Result=" + count + "). ", 1, count);
+ 
+     List<VerificationAppSession> verificationList = appSessionrepository.findAll();
+     assertNotNull(verificationList);
+     assertEquals(TEST_GUI_HASH, verificationList.get(0).getHashedGuid());
+     assertEquals(AppSessionSourceOfTrust.HASHED_GUID, verificationList.get(0).getSourceOfTrust());
+@@ -328,11 +328,11 @@ public class VerificationApplicationTest {
+       .andExpect(status().isCreated())
+       .andExpect(jsonPath("$.registrationToken").exists());
+ 
+     long count = appSessionrepository.count();
+     log.info("Got {} verification entries from db repository.", count);
+-    assertEquals("Verification Failed: Amount of verfication entries is not 1 (Result=" + count + "). ", 1, count);
++    assertEquals("Verification Failed: Amount of verification entries is not 1 (Result=" + count + "). ", 1, count);
+ 
+     List<VerificationAppSession> verificationList = appSessionrepository.findAll();
+     assertNotNull(verificationList);
+     assertNull(verificationList.get(0).getHashedGuid());
+     assertEquals(AppSessionSourceOfTrust.TELETAN, verificationList.get(0).getSourceOfTrust());
+diff --git a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+index 50b9153..a2609f2 100644
+--- a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+@@ -24,26 +24,25 @@ package app.coronawarn.verification.service;
+ import app.coronawarn.verification.VerificationApplication;
+ import app.coronawarn.verification.domain.VerificationTan;
+ import app.coronawarn.verification.model.TanSourceOfTrust;
+ import app.coronawarn.verification.model.TanType;
+ import app.coronawarn.verification.repository.VerificationTanRepository;
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
++import java.util.Optional;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.Assert;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
+-import java.time.LocalDateTime;
+-import java.time.format.DateTimeFormatter;
+-import java.util.Optional;
+-import java.util.regex.Matcher;
+-import java.util.regex.Pattern;
+-
+ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.junit.Assert.assertFalse;
+ import static org.junit.Assert.assertTrue;
+ 
+ @Slf4j
+@@ -59,10 +58,11 @@ public class TanServiceTest {
+   public static final String TEST_TELE_TAN = "R3ZNUEV";
+   public static final String TEST_TELE_TAN_HASH = "a865dd70e90e02286ea06a25f0babe88020d27d2923241ad792fac81f1254c75";
+   private static final String TELE_TAN_REGEX = "^[2-9A-HJ-KMNP-Z]{7}$";
+   private static final String TAN_REGEX = "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$";
+   private static final TanSourceOfTrust TEST_TELE_TAN_SOURCE_OF_TRUST = TanSourceOfTrust.TELETAN;
++  private static final TanSourceOfTrust TEST_TAN_SOURCE_OF_TRUST = TanSourceOfTrust.CONNECTED_LAB;
+   private static final Pattern TELE_TAN_PATTERN = Pattern.compile(TELE_TAN_REGEX);
+   private static final Pattern TAN_PATTERN = Pattern.compile(TAN_REGEX);
+   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSSSS");
+   private static final LocalDateTime TAN_VALID_UNTIL_IN_DAYS = LocalDateTime.now().plusDays(14);
+   private static final LocalDateTime TELE_TAN_VALID_UNTIL_IN_HOURS = LocalDateTime.now().plusHours(1);
+@@ -163,11 +163,11 @@ public class TanServiceTest {
+     assertFalse(tan.isEmpty());
+   }
+ 
+   @Test
+   public void generateValidTan() {
+-    String tan = tanService.generateValidTan();
++    String tan = tanService.generateVerificationTan(TEST_TAN_SOURCE_OF_TRUST);
+     assertTrue(syntaxTanVerification(tan));
+     assertFalse(tan.isEmpty());
+   }
+ 
+   @Test

@@ -1,0 +1,33 @@
+diff --git a/src/test/java/org/cbioportal/session_service/SessionServiceTest.java b/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
+index 2f3e349..c3bad95 100644
+--- a/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
++++ b/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
+@@ -38,11 +38,10 @@ import java.util.List;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ import static org.hamcrest.Matchers.*;
+ import org.junit.*;
+ import static org.junit.Assert.assertThat;
+-import static org.junit.Assert.assertTrue;
+ 
+ import org.junit.runner.RunWith;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.web.client.TestRestTemplate;
+ import org.springframework.boot.test.web.server.LocalServerPort;
+@@ -155,14 +154,14 @@ public class SessionServiceTest {
+ 
+         // test that the status was 200
+         assertThat(createNewSessionResponse.getStatusCode(), equalTo(HttpStatus.OK));
+ 
+         String data2 = "\"portal-session\":\"altered session information\"";
+-        ResponseEntity<String> createDuplicateByIdResonse = createNewSession("msk_portal", "main_session", customVsId, data2);
++        ResponseEntity<String> createDuplicateByIdResponse = createNewSession("msk_portal", "main_session", customVsId, data2);
+ 
+         // test that the status was 409
+-        assertThat(createDuplicateByIdResonse.getStatusCode(), equalTo(HttpStatus.CONFLICT));
++        assertThat(createDuplicateByIdResponse.getStatusCode(), equalTo(HttpStatus.CONFLICT));
+ 
+         // the content should not change during the conflict
+         ResponseEntity<String> fetchNewSessionResponse = template.getForEntity(base.toString() + "msk_portal/main_session/" + customVsId, String.class);
+         assertThat(expectedResponse(fetchNewSessionResponse.getBody(), "msk_portal", "main_session", data1), equalTo(true));
+     }

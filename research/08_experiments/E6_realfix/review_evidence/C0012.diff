@@ -1,0 +1,55 @@
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/util/ContributorStats.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/util/ContributorStats.java
+index 6aefde5..b136fc3 100644
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/util/ContributorStats.java
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/util/ContributorStats.java
+@@ -7,10 +7,15 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+ import java.util.*;
+ 
+ /**
+  * Class to collect the statistics of the contributors
+  *
++ * This class collect the statistics from a List of Contributor objects and
++ * put them in a more compact way.
++ * Specifically, the fields which have always the same value are storaged for
++ * only once. The counts and dates are put into an array of their own.
++ *
+[REDACTED personal attribution]
+  */
+ public class ContributorStats {
+     private String name;
+     private String organizationName;
+@@ -74,19 +79,34 @@ public class ContributorStats {
+ 
+     @JsonProperty(value="snapshot_dates")
+     @JsonSerialize(using = JsonDateListSerializer.class)
+     public List<Date> getSnapshotDates() { return snapshotDates; }
+ 
++    /**
++     * Take a list of contributors and return a list their statistics that are seperated
++     * by different contributors.
++     *
++     * @param contributors  a list consisting of contributors.
++     * @return a list, each entry of which consists of statistics of the same contributors
++     * at different date.
++     */
+     public static List<ContributorStats> buildStats(List<Contributor> contributors) {
+         Map<String, List<Contributor>> contributorByID = getDistinctContributors(contributors);
+         List<ContributorStats> result = new LinkedList<>();
+         for (List<Contributor> contributions : contributorByID.values()) {
+             result.add(new ContributorStats(contributions));
+         }
+         return result;
+     }
+ 
++    /**
++     * Take a list of contributors and return a map of lists where contributors have been partitioned
++     * by id.
++     *
++     * @param contributors a list consisting of potentially different contributors.
++     * @return a map which contains the list separated by contributors, using the id as index.
++     */
+     public static Map<String, List<Contributor>> getDistinctContributors(List<Contributor> contributors) {
+         Map<String, List<Contributor>> result = new HashMap<>();
+         for (Contributor contributor : contributors) {
+             String id = String.valueOf(contributor.getId());
+             List<Contributor> list = result.get(id);

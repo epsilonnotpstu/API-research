@@ -1,0 +1,34 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java b/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
+index bcf6b44b..85c5ccef 100644
+--- a/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
+@@ -23,11 +23,11 @@ public class ValidCreatePaymentRequest {
+     private String returnUrl;
+     @ApiModelProperty(value = "payment description", required = true, example = "New passport application")
+     private final String description;
+     @ApiModelProperty(name = "agreement_id", value = "ID of the agreement being used to collect the payment", required = false, example = "33890b55-b9ea-4e2f-90fd-77ae0e9009e2")
+     private String agreementId;
+-    @ApiModelProperty(name = "language", value = "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages", required = false, example = "en", allowableValues = "en,wy")
++    @ApiModelProperty(name = "language", value = "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages", required = false, example = "en", allowableValues = "en,cy")
+     private SupportedLanguage language;
+     @ApiModelProperty(name = "delayed_capture", value = "delayed capture flag", required = false, example = "false" )
+     @JsonProperty("delayed_capture")
+     private Boolean delayedCapture;
+ 
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index ce4cb6c1..dacec344 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -1321,11 +1321,11 @@
+         },
+         "language" : {
+           "type" : "string",
+           "example" : "en",
+           "description" : "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages",
+-          "enum" : [ "en", "wy" ]
++          "enum" : [ "en", "cy" ]
+         },
+         "delayed_capture" : {
+           "type" : "boolean",
+           "example" : false,
+           "description" : "delayed capture flag",

@@ -1,0 +1,104 @@
+diff --git a/pom.xml b/pom.xml
+index e141b6bc..7da7304b 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -422,10 +422,11 @@
+                                 <location>uk.gov.pay.api.resources.PaymentsResource</location>
+                             </locations>
+                             <apiModelPropertyAccessExclusions>
+                                 <apiModelPropertyAccessExclusion>agreementId</apiModelPropertyAccessExclusion>
+                                 <apiModelPropertyAccessExclusion>language</apiModelPropertyAccessExclusion>
++                                <apiModelPropertyAccessExclusion>delayedCapture</apiModelPropertyAccessExclusion>
+                             </apiModelPropertyAccessExclusions>
+                             <schemes>
+                                 <scheme>https</scheme>
+                             </schemes>
+                             <host>publicapi.payments.service.gov.uk</host>
+diff --git a/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java b/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
+index fbe5875f..f6d1d679 100644
+--- a/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/ValidCreatePaymentRequest.java
+@@ -1,7 +1,8 @@
+ package uk.gov.pay.api.model;
+ 
++import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModelProperty;
+ import uk.gov.pay.commons.model.SupportedLanguage;
+ 
+ import java.util.Objects;
+ import java.util.Optional;
+@@ -12,16 +13,24 @@ import java.util.StringJoiner;
+  * Note that this class does not actually do any validation itself:
+  * do that yourself before constructing an instance of this object
+  **/
+ public class ValidCreatePaymentRequest {
+ 
++    @ApiModelProperty(value = "amount in pence", required = true, allowableValues = "range[1, 10000000]", example = "12000")
+     private final int amount;
++    @ApiModelProperty(value = "payment reference", required = true, example = "12345")
+     private final String reference;
+-    private final String description;
++    @ApiModelProperty(name = "return_url", value = "service return url", required = true, example = "https://service-name.gov.uk/transactions/12345")
+     private String returnUrl;
++    @ApiModelProperty(value = "payment description", required = true, example = "New passport application")
++    private final String description;
++    @ApiModelProperty(name = "agreement_id", value = "ID of the agreement being used to collect the payment", required = false, example = "33890b55-b9ea-4e2f-90fd-77ae0e9009e2")
+     private String agreementId;
++    @ApiModelProperty(value = "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages", required = false, example = "en")
+     private SupportedLanguage language;
++    @ApiModelProperty(value = "delayed capture flag", required = false, example = "false" )
++    @JsonProperty("delayed_capture")
+     private Boolean delayedCapture;
+ 
+     public ValidCreatePaymentRequest(CreatePaymentRequest createPaymentRequest) {
+         amount = Objects.requireNonNull(createPaymentRequest.getAmount());
+         reference = Objects.requireNonNull(createPaymentRequest.getReference());
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index 99151b63..d1208752 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -888,26 +888,34 @@
+       },
+       "description" : "A structure representing information about a settlement"
+     },
+     "ValidCreatePaymentRequest" : {
+       "type" : "object",
++      "required" : [ "amount", "description", "reference", "return_url" ],
+       "properties" : {
+         "amount" : {
+           "type" : "integer",
+-          "format" : "int32"
++          "format" : "int32",
++          "example" : 12000,
++          "description" : "amount in pence",
++          "minimum" : 1,
++          "maximum" : 10000000
+         },
+         "reference" : {
+-          "type" : "string"
+-        },
+-        "description" : {
+-          "type" : "string"
++          "type" : "string",
++          "example" : "12345",
++          "description" : "payment reference"
+         },
+-        "returnUrl" : {
+-          "type" : "string"
++        "return_url" : {
++          "type" : "string",
++          "example" : "https://service-name.gov.uk/transactions/12345",
++          "description" : "service return url"
+         },
+-        "delayedCapture" : {
+-          "type" : "boolean"
++        "description" : {
++          "type" : "string",
++          "example" : "New passport application",
++          "description" : "payment description"
+         }
+       }
+     }
+   }
+ }
+\ No newline at end of file

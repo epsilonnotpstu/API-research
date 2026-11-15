@@ -1,0 +1,783 @@
+diff --git a/webapp/src/main/java/io/github/microcks/web/DocumentationController.java b/webapp/src/main/java/io/github/microcks/web/DocumentationController.java
+index 351588d5..27457f2e 100644
+--- a/webapp/src/main/java/io/github/microcks/web/DocumentationController.java
++++ b/webapp/src/main/java/io/github/microcks/web/DocumentationController.java
+@@ -26,16 +26,18 @@ import org.springframework.http.HttpStatus;
+ import org.springframework.http.MediaType;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PathVariable;
+ import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.util.UriUtils;
+ 
+ import java.io.BufferedReader;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.io.InputStreamReader;
+ import java.io.StringWriter;
++import java.nio.charset.StandardCharsets;
+ import java.util.List;
+ import java.util.Optional;
+ import java.util.stream.Stream;
+ 
+ /**
+@@ -79,11 +81,12 @@ public class DocumentationController {
+          } else {
+             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+          }
+       }
+ 
+-      return responseWithResource("/api/resources/" + name, resourceType, resource);
++      return responseWithResource("/api/resources/" + UriUtils.encodePathSegment(name, StandardCharsets.UTF_8),
++            resourceType, resource);
+    }
+ 
+    @GetMapping(value = "/documentation/id/{id}/{resourceType}")
+    public ResponseEntity<byte[]> getDocumentationByResourceId(@PathVariable("id") String id,
+          @PathVariable("resourceType") String resourceType) {
+@@ -97,11 +100,12 @@ public class DocumentationController {
+          } else {
+             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+          }
+       }
+ 
+-      return responseWithResource("/api/resources/id/" + id, resourceType, resource);
++      return responseWithResource("/api/resources/id/" + UriUtils.encodePathSegment(id, StandardCharsets.UTF_8),
++            resourceType, resource);
+    }
+ 
+    private ResponseEntity<byte[]> responseWithResource(String resourceUrl, String resourceType, Resource resource) {
+       // Prepare HttpHeaders.
+       InputStream stream = null;
+diff --git a/webapp/src/main/resources/templates/redoc.html b/webapp/src/main/resources/templates/redoc.html
+index fa466ece..21173844 100644
+--- a/webapp/src/main/resources/templates/redoc.html
++++ b/webapp/src/main/resources/templates/redoc.html
+@@ -3,19 +3,24 @@
+   <head>
+     <title>Microcks-UI - API Documentation</title>
+     <meta charset="utf-8"/>
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+ 
+     <style>
+       body {
+         margin: 0;
+         padding: 0;
+       }
+     </style>
+   </head>
+   <body>
+-    <redoc spec-url="{RESOURCE_URL}"></redoc>
+-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
++    <div id="redoc-container">Loading API documentation…</div>
++    <script type="module">
++      import { init } from "/assets/redoc/redoc.standalone.js";
++
++      const specUrl = "{RESOURCE_URL}";
++      init(specUrl, { disableTelemetry: true, downloadUrls: [{ url: specUrl, title: "Download API description" }] },
++        document.getElementById("redoc-container"));
++    </script>
+   </body>
+ </html>
+diff --git a/webapp/src/main/webapp/angular.json b/webapp/src/main/webapp/angular.json
+index 9d4336da..8909eb9d 100644
+--- a/webapp/src/main/webapp/angular.json
++++ b/webapp/src/main/webapp/angular.json
+@@ -24,11 +24,16 @@
+               {
+                 "glob": "**/*",
+                 "input": "public"
+               },
+               "src/favicon.ico",
+-              "src/assets"
++              "src/assets",
++              {
++                "glob": "redoc.standalone.js",
++                "input": "node_modules/redoc/bundles",
++                "output": "assets/redoc"
++              }
+             ],
+             "styles": [
+               "@angular/material/prebuilt-themes/azure-blue.css",
+               "./node_modules/patternfly/dist/css/patternfly.min.css",
+               "./node_modules/patternfly/dist/css/patternfly-additions.min.css",
+diff --git a/webapp/src/main/webapp/package-lock.json b/webapp/src/main/webapp/package-lock.json
+index 29d4b03c..8f12db12 100644
+--- a/webapp/src/main/webapp/package-lock.json
++++ b/webapp/src/main/webapp/package-lock.json
+@@ -31,10 +31,11 @@
+         "ng2-file-upload": "10.0.0",
+         "ngx-bootstrap": "21.2.0",
+         "ngx-highlightjs": "14.0.1",
+         "ngx-vflow": "1.16.4",
+         "patternfly": "3.59.5",
++        "redoc": "3.0.1",
+         "rxjs": "7.8.2",
+         "sanitize-html": "2.18.0",
+         "tslib": "2.8.1",
+         "zone.js": "0.15.1"
+       },
+@@ -2752,10 +2753,27 @@
+       "peer": true,
+       "dependencies": {
+         "tslib": "^2.4.0"
+       }
+     },
++    "node_modules/@emotion/is-prop-valid": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/@emotion/is-prop-valid/-/is-prop-valid-1.4.0.tgz",
++      "integrity": "sha512-QgD4fyscGcbbKwJmqNvUMSE02OsHUa+lAWKdEUIJKgqe5IwRSKd7+KhibEWdaKwgjLj0DRSHA9biAIqGBk05lw==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "@emotion/memoize": "^0.9.0"
++      }
++    },
++    "node_modules/@emotion/memoize": {
++      "version": "0.9.0",
++      "resolved": "https://registry.npmjs.org/@emotion/memoize/-/memoize-0.9.0.tgz",
++      "integrity": "sha512-30FAj7/EoJ5mwVPOWhAyCX+FPfMDrVecJAM+Iw9NRoSl4BBAQeqj4cApHHUXOVvIPgLVDsCFoz/hGD+5QQD1GQ==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/@esbuild/aix-ppc64": {
+       "version": "0.28.1",
+       "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.28.1.tgz",
+       "integrity": "sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==",
+       "cpu": [
+@@ -5003,10 +5021,22 @@
+       "license": "Apache-2.0",
+       "engines": {
+         "node": ">=8.0.0"
+       }
+     },
++    "node_modules/@opentelemetry/api-logs": {
++      "version": "0.219.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/api-logs/-/api-logs-0.219.0.tgz",
++      "integrity": "sha512-FFx7YnaYJlIjqWW/AG/yAZ0L/NEY724PipXXXQLdtZPbLwBGbUMTGL1i/esI56TWfTUXxhLfpgrnWJCG8aUJyg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/api": "^1.3.0"
++      },
++      "engines": {
++        "node": ">=8.0.0"
++      }
++    },
+     "node_modules/@opentelemetry/core": {
+       "version": "2.8.0",
+       "resolved": "https://registry.npmjs.org/@opentelemetry/core/-/core-2.8.0.tgz",
+       "integrity": "sha512-hd1Lfh8p545nNz+jq1Ejfz+Mn1hyLuxYn1YzTfFNrxr8urEWMNQLPf1Th8kjOH+HxwawCrtgBp8JpBUR4ZSgww==",
+       "license": "Apache-2.0",
+@@ -5018,10 +5048,65 @@
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": ">=1.0.0 <1.10.0"
+       }
+     },
++    "node_modules/@opentelemetry/exporter-trace-otlp-http": {
++      "version": "0.219.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/exporter-trace-otlp-http/-/exporter-trace-otlp-http-0.219.0.tgz",
++      "integrity": "sha512-9t6SvBXXBEjOBcIzgozvBbd3jWrv3Gt3ngGhl1fhdZ/zRc7oZDVOFEqbi2zlBpW9BXhgDMKv422J0DL/3iQWfw==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/otlp-exporter-base": "0.219.0",
++        "@opentelemetry/otlp-transformer": "0.219.0",
++        "@opentelemetry/resources": "2.8.0",
++        "@opentelemetry/sdk-trace-base": "2.8.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": "^1.3.0"
++      }
++    },
++    "node_modules/@opentelemetry/otlp-exporter-base": {
++      "version": "0.219.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/otlp-exporter-base/-/otlp-exporter-base-0.219.0.tgz",
++      "integrity": "sha512-zvIxQX/AZUVKDU+hCuYx+7UkiP7GRdnk1ZbFQRYzHvYp47cAWR4j3IhoPhV9KaeXEv2xdGq3IA6PnpzDmLcmSA==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/otlp-transformer": "0.219.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": "^1.3.0"
++      }
++    },
++    "node_modules/@opentelemetry/otlp-transformer": {
++      "version": "0.219.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/otlp-transformer/-/otlp-transformer-0.219.0.tgz",
++      "integrity": "sha512-aaYKAyXhw9VchKZVGOopD3Gw/kPsyrX2c6IQ0AW32mTjqmZOh5Y6Gf5OYqTNqVktAeBjmFinhyFaCwW6GYK9YQ==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/api-logs": "0.219.0",
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/resources": "2.8.0",
++        "@opentelemetry/sdk-logs": "0.219.0",
++        "@opentelemetry/sdk-metrics": "2.8.0",
++        "@opentelemetry/sdk-trace-base": "2.8.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": "^1.3.0"
++      }
++    },
+     "node_modules/@opentelemetry/resources": {
+       "version": "2.8.0",
+       "resolved": "https://registry.npmjs.org/@opentelemetry/resources/-/resources-2.8.0.tgz",
+       "integrity": "sha512-qmXQ27ilDbUK/vGMqwL8D4/rhn76C+sherM4wTbjlfknR8Nvfc/hCxjRJPhkzZzUsPiNg16SA31NxMabwttRjg==",
+       "license": "Apache-2.0",
+@@ -5034,10 +5119,44 @@
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": ">=1.3.0 <1.10.0"
+       }
+     },
++    "node_modules/@opentelemetry/sdk-logs": {
++      "version": "0.219.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/sdk-logs/-/sdk-logs-0.219.0.tgz",
++      "integrity": "sha512-s6lTKRakaPClvKoWHRChxnXjDMkM/TQ30ff78jN6EBGf7MI7VzANE5PU3f4z9qDUudWjvZjOLHG0rBnBKYvoXA==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/api-logs": "0.219.0",
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/resources": "2.8.0",
++        "@opentelemetry/semantic-conventions": "^1.29.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": ">=1.4.0 <1.10.0"
++      }
++    },
++    "node_modules/@opentelemetry/sdk-metrics": {
++      "version": "2.8.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/sdk-metrics/-/sdk-metrics-2.8.0.tgz",
++      "integrity": "sha512-UDBGaj6W0Rgy5rTTaoxs8gVGF/aGkAKyjurJv7se6wjRxJu7FoquTLT/vt54DZfo4crbprYfhX/SOK9+BPw1qg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/resources": "2.8.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": ">=1.9.0 <1.10.0"
++      }
++    },
+     "node_modules/@opentelemetry/sdk-trace-base": {
+       "version": "2.8.0",
+       "resolved": "https://registry.npmjs.org/@opentelemetry/sdk-trace-base/-/sdk-trace-base-2.8.0.tgz",
+       "integrity": "sha512-mhU4jp+vW0mGbFRd+GeXHvmfA4aDqWjBjLC3pE5XMpLs0IE2ryYb019Ts2AQrOq67gaTF25D91+fgvEHDZEnuQ==",
+       "license": "Apache-2.0",
+@@ -5051,10 +5170,26 @@
+       },
+       "peerDependencies": {
+         "@opentelemetry/api": ">=1.3.0 <1.10.0"
+       }
+     },
++    "node_modules/@opentelemetry/sdk-trace-web": {
++      "version": "2.8.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/sdk-trace-web/-/sdk-trace-web-2.8.0.tgz",
++      "integrity": "sha512-P3ZM8BGJ5mwjtyfAxRyxsCyWHvaj+xahdhLoS3YiPsEyTHcWTVzx2691C8SrGkpvro3tNFCsWuNNrvM+spKODg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@opentelemetry/core": "2.8.0",
++        "@opentelemetry/sdk-trace-base": "2.8.0"
++      },
++      "engines": {
++        "node": "^18.19.0 || >=20.6.0"
++      },
++      "peerDependencies": {
++        "@opentelemetry/api": ">=1.0.0 <1.10.0"
++      }
++    },
+     "node_modules/@opentelemetry/semantic-conventions": {
+       "version": "1.43.0",
+       "resolved": "https://registry.npmjs.org/@opentelemetry/semantic-conventions/-/semantic-conventions-1.43.0.tgz",
+       "integrity": "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==",
+       "license": "Apache-2.0",
+@@ -5568,10 +5703,56 @@
+       "funding": {
+         "type": "opencollective",
+         "url": "https://opencollective.com/popperjs"
+       }
+     },
++    "node_modules/@redocly/config": {
++      "version": "0.67.0",
++      "resolved": "https://registry.npmjs.org/@redocly/config/-/config-0.67.0.tgz",
++      "integrity": "sha512-3PSnuzaFHnBsFKwrSouBTfLua2tw1dC0G6TTrqt9XTsehp4OHHt9cYCOxkOIhBou5+TFnACZU1xl4xb/a4rcJA==",
++      "license": "MIT",
++      "peer": true
++    },
++    "node_modules/@redocly/redoc-opentelemetry": {
++      "version": "0.5.1",
++      "resolved": "https://registry.npmjs.org/@redocly/redoc-opentelemetry/-/redoc-opentelemetry-0.5.1.tgz",
++      "integrity": "sha512-mZkFsR/51RYi5YTAZCogyg3S3Z/7AwfXFpOON3+mt/1sadc0+r0FcPWVTrgSZmXFpYl4gaaqQ0JtHbjwORX+8g==",
++      "license": "MIT",
++      "dependencies": {
++        "@opentelemetry/api": "1.9.1",
++        "@opentelemetry/exporter-trace-otlp-http": "0.219.0",
++        "@opentelemetry/resources": "2.8.0",
++        "@opentelemetry/sdk-trace-web": "2.8.0",
++        "@opentelemetry/semantic-conventions": "1.40.0",
++        "ulid": "^3.0.2"
++      }
++    },
++    "node_modules/@redocly/redoc-opentelemetry/node_modules/@opentelemetry/api": {
++      "version": "1.9.1",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/api/-/api-1.9.1.tgz",
++      "integrity": "sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==",
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=8.0.0"
++      }
++    },
++    "node_modules/@redocly/redoc-opentelemetry/node_modules/@opentelemetry/semantic-conventions": {
++      "version": "1.40.0",
++      "resolved": "https://registry.npmjs.org/@opentelemetry/semantic-conventions/-/semantic-conventions-1.40.0.tgz",
++      "integrity": "sha512-cifvXDhcqMwwTlTK04GBNeIe7yyo28Mfby85QXFe1Yk8nmi36Ab/5UQwptOx84SsoGNRg+EVSjwzfSZMy6pmlw==",
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=14"
++      }
++    },
++    "node_modules/@remix-run/route-pattern": {
++      "version": "0.22.1",
++      "resolved": "https://registry.npmjs.org/@remix-run/route-pattern/-/route-pattern-0.22.1.tgz",
++      "integrity": "sha512-czdGJWh09Lapvcqt7Vb09KlrU2PhRJ8xQaI+AItTuD9aDJ5MAgxnS38lnys6Ll+6RJEqPiaUqTwIQhVLwFvv+w==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/@rolldown/binding-android-arm64": {
+       "version": "1.0.0-rc.4",
+       "resolved": "https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.0.0-rc.4.tgz",
+       "integrity": "sha512-vRq9f4NzvbdZavhQbjkJBx7rRebDKYR9zHfO/Wg486+I7bSecdUapzCm5cyXoK+LHokTxgSq7A5baAXUZkIz0w==",
+       "cpu": [
+@@ -7211,10 +7392,17 @@
+       "license": "MIT",
+       "dependencies": {
+         "@types/node": "*"
+       }
+     },
++    "node_modules/@types/stylis": {
++      "version": "4.2.7",
++      "resolved": "https://registry.npmjs.org/@types/stylis/-/stylis-4.2.7.tgz",
++      "integrity": "sha512-VgDNokpBoKF+wrdvhAAfS55OMQpL6QRglwTwNC3kIgBrzZxA4WsFj+2eLfEA/uMUDzBcEhYmjSbwQakn/i3ajA==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/@types/ws": {
+       "version": "8.18.2",
+       "resolved": "https://registry.npmjs.org/@types/ws/-/ws-8.18.2.tgz",
+       "integrity": "sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==",
+       "dev": true,
+@@ -8642,10 +8830,20 @@
+       "license": "MIT",
+       "engines": {
+         "node": ">=6"
+       }
+     },
++    "node_modules/camelize": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/camelize/-/camelize-1.0.1.tgz",
++      "integrity": "sha512-dU+Tx2fsypxTgtLoE36npi3UqcjSSMNYfkqgmoEhtZrraP5VWq0K7FkWVTYa8eMPtnU/G2txVsfdCJTn9uzpuQ==",
++      "license": "MIT",
++      "peer": true,
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
+     "node_modules/caniuse-lite": {
+       "version": "1.0.30001816",
+       "resolved": "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001816.tgz",
+       "integrity": "sha512-+8Yx7BXCoqk6IF8yTicjfUR6D/ldJzdlsodlEOiOSPmhK844WIgk67/zIQaGAOxNkZyyvBlrRFnLvqKIoqbAFw==",
+       "dev": true,
+@@ -9097,10 +9295,17 @@
+       "license": "MIT",
+       "engines": {
+         "node": ">= 0.6"
+       }
+     },
++    "node_modules/cookie-es": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/cookie-es/-/cookie-es-3.1.1.tgz",
++      "integrity": "sha512-UaXxwISYJPTr9hwQxMFYZ7kNhSXboMXP+Z3TRX6f1/NyaGPfuNUZOWP1pUEb75B2HjfklIYLVRfWiFZJyC6Npg==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/cookie-signature": {
+       "version": "1.2.2",
+       "resolved": "https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.2.2.tgz",
+       "integrity": "sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==",
+       "dev": true,
+@@ -9228,10 +9433,20 @@
+       },
+       "engines": {
+         "node": ">= 8"
+       }
+     },
++    "node_modules/css-color-keywords": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/css-color-keywords/-/css-color-keywords-1.0.0.tgz",
++      "integrity": "sha512-FyyrDHZKEjXDpNJYvVsV960FiqQyXc/LlYmsxl2BcdMb2WPx0OGRVgTg55rPSyLSNMqP52R9r8geSp7apN3Ofg==",
++      "license": "ISC",
++      "peer": true,
++      "engines": {
++        "node": ">=4"
++      }
++    },
+     "node_modules/css-loader": {
+       "version": "7.1.3",
+       "resolved": "https://registry.npmjs.org/css-loader/-/css-loader-7.1.3.tgz",
+       "integrity": "sha512-frbERmjT0UC5lMheWpJmMilnt9GEhbZJN/heUb7/zaJYeIzj5St9HvDcfshzzOqbsS+rYpMk++2SD3vGETDSyA==",
+       "dev": true,
+@@ -9353,10 +9568,22 @@
+       },
+       "funding": {
+         "url": "https://github.com/fb55/entities?sponsor=1"
+       }
+     },
++    "node_modules/css-to-react-native": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/css-to-react-native/-/css-to-react-native-3.2.0.tgz",
++      "integrity": "sha512-e8RKaLXMOFii+02mOlqwjbD00KSEKqblnpO9e++1aXS1fPQOpS1YoqdVHBqPjHNoxeF2mimzVqawm2KCbEdtHQ==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "camelize": "^1.0.0",
++        "css-color-keywords": "^1.0.0",
++        "postcss-value-parser": "^4.0.2"
++      }
++    },
+     "node_modules/css-what": {
+       "version": "7.0.0",
+       "resolved": "https://registry.npmjs.org/css-what/-/css-what-7.0.0.tgz",
+       "integrity": "sha512-wD5oz5xibMOPHzy13CyGmogB3phdvcDaB5t0W/Nr5Z2O/agcB8YwOz6e2Lsp10pNDzBoDO9nVa3RGs/2BttpHQ==",
+       "dev": true,
+@@ -9379,10 +9606,17 @@
+       },
+       "engines": {
+         "node": ">=4"
+       }
+     },
++    "node_modules/csstype": {
++      "version": "3.2.3",
++      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
++      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/custom-event": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/custom-event/-/custom-event-1.0.1.tgz",
+       "integrity": "sha512-GAj5FOq0Hd+RsCGVJxZuKaIDXDf3h6GQoNEjFgbLLI/trgtavwUbSnZ5pVfg27DVCaWjIohryS0JFwIJyT2cMg==",
+       "dev": true,
+@@ -14703,11 +14937,10 @@
+     },
+     "node_modules/postcss-value-parser": {
+       "version": "4.2.0",
+       "resolved": "https://registry.npmjs.org/postcss-value-parser/-/postcss-value-parser-4.2.0.tgz",
+       "integrity": "sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==",
+-      "dev": true,
+       "license": "MIT"
+     },
+     "node_modules/powershell-utils": {
+       "version": "0.1.0",
+       "resolved": "https://registry.npmjs.org/powershell-utils/-/powershell-utils-0.1.0.tgz",
+@@ -14855,10 +15088,64 @@
+       },
+       "engines": {
+         "node": ">= 0.10"
+       }
+     },
++    "node_modules/react": {
++      "version": "19.3.1",
++      "resolved": "https://registry.npmjs.org/react/-/react-19.3.1.tgz",
++      "integrity": "sha512-QNhWdt7nrgVWWQG58QuGsAR3jv3Hbe4mb4vz7w2csnHavciZJgda1CPNaldF6eVxv90ud3jUXpKlHL69gO38yw==",
++      "license": "MIT",
++      "peer": true,
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/react-dom": {
++      "version": "19.3.1",
++      "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.1.tgz",
++      "integrity": "sha512-Y0bARz53lhEC1NMCASs0/j+faB/zqt3R8hpvg1e8+61ZVJ4UL0UdC4cBbXfZMcIuhrfgeILTLe+ZeBCavQPtKQ==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "scheduler": "^0.28.0"
++      },
++      "peerDependencies": {
++        "react": "^19.3.1"
++      }
++    },
++    "node_modules/react-router": {
++      "version": "8.5.0",
++      "resolved": "https://registry.npmjs.org/react-router/-/react-router-8.5.0.tgz",
++      "integrity": "sha512-9nEd/deifcTJIIcUaNIyQGkyXD0D6QVB9XD2O5GgHpP3xu3U5RXm87YQ8++Wn8JQWgMBM/5+PjWPM/7n7O7WHA==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "@remix-run/route-pattern": "^0.22.1",
++        "cookie-es": "^3.1.1"
++      },
++      "engines": {
++        "node": ">=22.22.0"
++      },
++      "peerDependencies": {
++        "@types/react": ">=19.2.0",
++        "@types/react-dom": ">=19.2.0",
++        "react": ">=19.2.7",
++        "react-dom": ">=19.2.7"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        },
++        "react-dom": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/readable-stream": {
+       "version": "3.6.2",
+       "resolved": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
+       "integrity": "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==",
+       "dev": true,
+@@ -14884,10 +15171,33 @@
+       "funding": {
+         "type": "individual",
+         "url": "https://paulmillr.com/funding/"
+       }
+     },
++    "node_modules/redoc": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/redoc/-/redoc-3.0.1.tgz",
++      "integrity": "sha512-KDfoKaYW19LCl4YStgBnwlaNjYEFfs5zCNt1s1WZ2YM5u8d26Yuzd2l43fZO851ZsgIMe/D640fDJkD8eaRQKQ==",
++      "license": "MIT",
++      "workspaces": [
++        "."
++      ],
++      "dependencies": {
++        "@redocly/redoc-opentelemetry": "^0.5.1"
++      },
++      "engines": {
++        "node": ">=22",
++        "npm": ">=10.0.0"
++      },
++      "peerDependencies": {
++        "@redocly/config": ">=0.65.0",
++        "react": "^18.3.0 || ^19.0.0",
++        "react-dom": "^18.3.0 || ^19.0.0",
++        "react-router": "^7.0.0 || ^8.0.0",
++        "styled-components": "^6.0.0"
++      }
++    },
+     "node_modules/reflect-metadata": {
+       "version": "0.2.2",
+       "resolved": "https://registry.npmjs.org/reflect-metadata/-/reflect-metadata-0.2.2.tgz",
+       "integrity": "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==",
+       "dev": true,
+@@ -15431,10 +15741,17 @@
+       "optional": true,
+       "engines": {
+         "node": ">=11.0.0"
+       }
+     },
++    "node_modules/scheduler": {
++      "version": "0.28.0",
++      "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.28.0.tgz",
++      "integrity": "sha512-juorfCmIkIw8tT+p5BXSm6PJjQF/ycEYmKyzURCIt/RaZIhL+PulbQ9Yu2z1HdOJDdqDTlxA1+xKBmHXJsczAw==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/schema-utils": {
+       "version": "4.5.0",
+       "resolved": "https://registry.npmjs.org/schema-utils/-/schema-utils-4.5.0.tgz",
+       "integrity": "sha512-zJlMCZ0cAR5p/Y4oVpRoqioDMJcGxaXRrQ/4rP4WyR84vc5z/DolXdbvXeDpTwbtocDFr2rhPqHPErDCUtz2kA==",
+       "dev": true,
+@@ -16231,10 +16548,55 @@
+       },
+       "funding": {
+         "url": "https://github.com/chalk/strip-ansi?sponsor=1"
+       }
+     },
++    "node_modules/styled-components": {
++      "version": "6.6.0",
++      "resolved": "https://registry.npmjs.org/styled-components/-/styled-components-6.6.0.tgz",
++      "integrity": "sha512-drKKsqvDBxVRn4ySU67iQ5nQBuo/1xyYeBfdhDde112PkqrS3+95KPnpDs5hFRcmrW+q6+gbyywYYYR14oWFtw==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "@emotion/is-prop-valid": "1.4.0",
++        "@types/stylis": "4.2.7",
++        "css-to-react-native": "3.2.0",
++        "csstype": "3.2.3",
++        "stylis": "4.3.6"
++      },
++      "engines": {
++        "node": ">= 16"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/styled-components"
++      },
++      "peerDependencies": {
++        "css-to-react-native": ">= 3.2.0",
++        "react": ">= 16.8.0",
++        "react-dom": ">= 16.8.0",
++        "react-native": ">= 0.68.0"
++      },
++      "peerDependenciesMeta": {
++        "css-to-react-native": {
++          "optional": true
++        },
++        "react-dom": {
++          "optional": true
++        },
++        "react-native": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/stylis": {
++      "version": "4.3.6",
++      "resolved": "https://registry.npmjs.org/stylis/-/stylis-4.3.6.tgz",
++      "integrity": "sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==",
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/supports-color": {
+       "version": "7.2.0",
+       "resolved": "https://registry.npmjs.org/supports-color/-/supports-color-7.2.0.tgz",
+       "integrity": "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==",
+       "dev": true,
+@@ -16614,10 +16976,19 @@
+       "version": "2.1.0",
+       "resolved": "https://registry.npmjs.org/uc.micro/-/uc.micro-2.1.0.tgz",
+       "integrity": "sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==",
+       "license": "MIT"
+     },
++    "node_modules/ulid": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/ulid/-/ulid-3.0.2.tgz",
++      "integrity": "sha512-yu26mwteFYzBAot7KVMqFGCVpsF6g8wXfJzQUHvu1no3+rRRSFcSV2nKeYvNPLD2J4b08jYBDhHUjeH0ygIl9w==",
++      "license": "MIT",
++      "bin": {
++        "ulid": "dist/cli.js"
++      }
++    },
+     "node_modules/undici": {
+       "version": "6.29.1",
+       "resolved": "https://registry.npmjs.org/undici/-/undici-6.29.1.tgz",
+       "integrity": "sha512-EvRlUt/QqAEvXdQeRMYUfwOQsfzpDztykrG2owGEE/rBOBoYv9uF39ZzsNDh4lTFHhTr2XOZjKkYgueD12ZmGA==",
+       "dev": true,
+diff --git a/webapp/src/main/webapp/package.json b/webapp/src/main/webapp/package.json
+index bbff69ad..52899fa5 100644
+--- a/webapp/src/main/webapp/package.json
++++ b/webapp/src/main/webapp/package.json
+@@ -33,10 +33,11 @@
+     "ng2-file-upload": "10.0.0",
+     "ngx-bootstrap": "21.2.0",
+     "ngx-highlightjs": "14.0.1",
+     "ngx-vflow": "1.16.4",
+     "patternfly": "3.59.5",
++    "redoc": "3.0.1",
+     "rxjs": "7.8.2",
+     "sanitize-html": "2.18.0",
+     "tslib": "2.8.1",
+     "zone.js": "0.15.1"
+   },
+diff --git a/webapp/src/test/java/io/github/microcks/web/DocumentationControllerTest.java b/webapp/src/test/java/io/github/microcks/web/DocumentationControllerTest.java
+new file mode 100644
+index 00000000..390ed6b1
+--- /dev/null
++++ b/webapp/src/test/java/io/github/microcks/web/DocumentationControllerTest.java
+@@ -0,0 +1,70 @@
++/*
++ * Copyright The Microcks Authors.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *  http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package io.github.microcks.web;
++
++import io.github.microcks.domain.ResourceType;
++import io.github.microcks.repository.ResourceRepository;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.InjectMocks;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++
++import java.nio.charset.StandardCharsets;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++@ExtendWith(MockitoExtension.class)
++class DocumentationControllerTest {
++
++   private static final String OPEN_API = ResourceType.OPEN_API_SPEC.toString();
++
++   @Mock
++   private ResourceRepository resourceRepository;
++
++   @InjectMocks
++   private DocumentationController sut;
++
++   @Test
++   void shouldEncodeResourceNameInSpecUrl() {
++      ResponseEntity<byte[]> response = sut.getDocumentationByResourceName("API Pastry - 2.0-2.0.0.yaml", OPEN_API);
++
++      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
++      assertThat(body(response)).contains("\"/api/resources/API%20Pastry%20-%202.0-2.0.0.yaml\"")
++            .doesNotContain("API Pastry - 2.0-2.0.0.yaml\"");
++   }
++
++   @Test
++   void shouldEncodeQuotesInResourceName() {
++      ResponseEntity<byte[]> response = sut.getDocumentationByResourceName("a\"b.yaml", OPEN_API);
++
++      assertThat(body(response)).contains("\"/api/resources/a%22b.yaml\"").doesNotContain("a\"b.yaml");
++   }
++
++   @Test
++   void shouldEncodeQuotesInResourceId() {
++      ResponseEntity<byte[]> response = sut.getDocumentationByResourceId("x\"y", OPEN_API);
++
++      assertThat(body(response)).contains("\"/api/resources/id/x%22y\"").doesNotContain("x\"y");
++   }
++
++   private static String body(ResponseEntity<byte[]> response) {
++      return new String(response.getBody(), StandardCharsets.UTF_8);
++   }
++}

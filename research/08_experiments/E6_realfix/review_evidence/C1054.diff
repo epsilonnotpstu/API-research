@@ -1,0 +1,76 @@
+diff --git a/src/main/java/uk/gov/pay/api/resources/MandatesResource.java b/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
+index f9f2b7f2..0a1ab63a 100644
+--- a/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
+@@ -85,11 +85,11 @@ public class MandatesResource {
+             value = "Search mandates",
+             notes = "Searches for mandates with the parameters provided. " +
+                     "The Authorisation token needs to be specified in the 'Authorization' header " +
+[REDACTED credential-related line]
+     @ApiResponses(value = {
+-            @ApiResponse(code = 200, message = "OK", response = MandateResponse.class),
++            @ApiResponse(code = 200, message = "OK", response = SearchMandateResponse.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 404, message = "Not found", response = MandateError.class),
+             @ApiResponse(code = 422, message = "Invalid parameters: from_date, to_date, state, page, display_size. See Public API documentation for the correct data formats", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = MandateError.class)})
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index 5b950f59..c4dfa7d2 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -75,11 +75,11 @@
+         } ],
+         "responses" : {
+           "200" : {
+             "description" : "OK",
+             "schema" : {
+-              "$ref" : "#/definitions/MandateResponse"
++              "$ref" : "#/definitions/SearchMandateResponse"
+             }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+@@ -1900,10 +1900,41 @@
+           "readOnly" : true
+         }
+       },
+       "description" : "A structure representing the refunds availability"
+     },
++    "SearchMandateResponse" : {
++      "type" : "object",
++      "properties" : {
++        "total" : {
++          "type" : "integer",
++          "format" : "int32",
++          "readOnly" : true
++        },
++        "count" : {
++          "type" : "integer",
++          "format" : "int32",
++          "readOnly" : true
++        },
++        "page" : {
++          "type" : "integer",
++          "format" : "int32",
++          "readOnly" : true
++        },
++        "results" : {
++          "type" : "array",
++          "readOnly" : true,
++          "items" : {
++            "$ref" : "#/definitions/MandateResponse"
++          }
++        },
++        "_links" : {
++          "readOnly" : true,
++          "$ref" : "#/definitions/SearchNavigationLinks"
++        }
++      }
++    },
+     "SearchNavigationLinks" : {
+       "type" : "object",
+       "properties" : {
+         "self" : {
+           "readOnly" : true,

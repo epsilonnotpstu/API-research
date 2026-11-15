@@ -1,0 +1,157 @@
+diff --git a/src/main/java/org/cbioportal/session_service/domain/Session.java b/src/main/java/org/cbioportal/session_service/domain/Session.java
+index 463442c..1be2141 100644
+--- a/src/main/java/org/cbioportal/session_service/domain/Session.java
++++ b/src/main/java/org/cbioportal/session_service/domain/Session.java
+@@ -62,10 +62,13 @@ public class Session {
+ 
+     @JsonView(Session.Views.IdOnly.class)
+     public String getId() {
+         return id;
+     }
++    public void setId(String id) {
++        this.id = id;
++    }
+ 
+     public String getChecksum() {
+         return checksum;
+     }
+ 
+diff --git a/src/main/java/org/cbioportal/session_service/service/SessionService.java b/src/main/java/org/cbioportal/session_service/service/SessionService.java
+index c747d4b..3c68d32 100644
+--- a/src/main/java/org/cbioportal/session_service/service/SessionService.java
++++ b/src/main/java/org/cbioportal/session_service/service/SessionService.java
+@@ -40,10 +40,11 @@ import java.util.List;
+ 
+ /**
+[REDACTED personal attribution]
+  */
+ public interface SessionService {
++    Session addSession(String id, String source, SessionType type, String data) throws SessionInvalidException;
+     Session addSession(String source, SessionType type, String data) throws SessionInvalidException;
+     List<Session> getSessions(String source, SessionType type);
+     List<Session> getSessionsByQuery(String source, SessionType type, String query);
+     Session getSession(String source, SessionType type, String id) throws SessionNotFoundException;
+     void updateSession(String source, SessionType type, String id, String data) throws SessionInvalidException, 
+diff --git a/src/main/java/org/cbioportal/session_service/service/internal/SessionServiceImpl.java b/src/main/java/org/cbioportal/session_service/service/internal/SessionServiceImpl.java
+index c4ba8a5..7f01c86 100644
+--- a/src/main/java/org/cbioportal/session_service/service/internal/SessionServiceImpl.java
++++ b/src/main/java/org/cbioportal/session_service/service/internal/SessionServiceImpl.java
+@@ -55,15 +55,22 @@ import org.springframework.stereotype.Service;
+ public class SessionServiceImpl implements SessionService {
+ 
+     @Autowired
+     private SessionRepository sessionRepository;
+ 
++    /**
++     * Adds a session to the repository.
++     * @param id the unique identifier for the session, can be null (automatically generated)
++     */
+     @Override
+-    public Session addSession(String source, SessionType type, String data) throws SessionInvalidException {
++    public Session addSession(String id, String source, SessionType type, String data) throws SessionInvalidException {
+         Session session = null;
+         try {
+             session = new Session();
++            if (id != null) {
++                session.setId(id);
++            }
+             session.setSource(source);
+             session.setType(type);
+             session.setData(data);
+ 
+             sessionRepository.saveSession(session);
+@@ -79,10 +86,15 @@ public class SessionServiceImpl implements SessionService {
+             throw new SessionInvalidException(e.getMessage());
+         }
+         return session;
+     }
+ 
++    @Override
++    public Session addSession(String source, SessionType type, String data) throws SessionInvalidException {
++        return addSession(null, source, type, data);
++    }
++
+     @Override
+     public List<Session> getSessions(String source, SessionType type) {
+         return sessionRepository.findBySourceAndType(source, type);
+     }
+ 
+diff --git a/src/main/java/org/cbioportal/session_service/web/SessionServiceController.java b/src/main/java/org/cbioportal/session_service/web/SessionServiceController.java
+index 7171faf..dc5ce1a 100644
+--- a/src/main/java/org/cbioportal/session_service/web/SessionServiceController.java
++++ b/src/main/java/org/cbioportal/session_service/web/SessionServiceController.java
+@@ -77,10 +77,19 @@ public class SessionServiceController {
+         @PathVariable SessionType type, 
+         @RequestBody String data) { 
+         return sessionService.addSession(source, type, data);
+     }
+ 
++    @RequestMapping(method = RequestMethod.POST, value="/{source}/{type}/{id}")
++    @JsonView(Session.Views.IdOnly.class)
++    public Session addSession(@PathVariable String source,
++                              @PathVariable SessionType type,
++                              @PathVariable String id,
++                              @RequestBody String data) {
++        return sessionService.addSession(id, source, type, data);
++    }
++
+     @RequestMapping(method = RequestMethod.GET, value="/{source}/{type}")
+     @JsonView(Session.Views.Full.class)
+     public Iterable<Session> getSessions(@PathVariable String source, 
+         @PathVariable SessionType type) {
+         return sessionService.getSessions(source, type);
+diff --git a/src/test/java/org/cbioportal/session_service/SessionServiceTest.java b/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
+index 58e35e9..e5a6c22 100644
+--- a/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
++++ b/src/test/java/org/cbioportal/session_service/SessionServiceTest.java
+@@ -122,10 +122,30 @@ public class SessionServiceTest {
+         // get record
+         response = template.getForEntity(base.toString() + "msk_portal/main_session/" + id, String.class);
+         assertThat(expectedResponse(response.getBody(), "msk_portal", "main_session", data), equalTo(true)); 
+     }
+ 
++    @Test
++    public void addSessionWithCustomId() throws Exception {
++        // add data
++        String data = "\"portal-session\":\"my session information\"";
++        ResponseEntity<String> response = addData("msk_portal", "main_session", "custom_vs_id", data);
++
++        // test that the status was 200
++        assertThat(response.getStatusCode(), equalTo(HttpStatus.OK));
++
++        // get id
++        List<String> ids = parseIds(response.getBody());
++        assertThat(ids.size(), equalTo(1));
++        String id = ids.get(0);
++        assertThat(id, equalTo("custom_vs_id"));
++
++        // get record
++        response = template.getForEntity(base.toString() + "msk_portal/main_session/" + id, String.class);
++        assertThat(expectedResponse(response.getBody(), "msk_portal", "main_session", data), equalTo(true));
++    }
++
+     @Test
+     public void addSessionNoData() throws Exception {
+         // add {} actually works TODO decide if it should
+         String data = "";
+         ResponseEntity<String> response = addData("msk_portal", "main_session", data);
+@@ -444,13 +464,17 @@ public class SessionServiceTest {
+             data = "{" + data + "}";
+         }
+         return new HttpEntity<String>(data, headers);
+     }
+ 
+-    private ResponseEntity<String> addData(String source, String type, String data) throws Exception {
++    private ResponseEntity<String> addData(String source, String type, String id, String data) throws Exception {
+         HttpEntity<String> entity = prepareData(data);
+-        return template.exchange(base.toString() + source + "/" + type, HttpMethod.POST, entity, String.class);
++        return template.exchange(base.toString() + source + "/" + type + (id == null ? "" : "/" + id), HttpMethod.POST, entity, String.class);
++    }
++
++    private ResponseEntity<String> addData(String source, String type, String data) throws Exception {
++        return addData(source, type, null, data);
+     }
+ 
+     /*
+      * plural is false.
+      */

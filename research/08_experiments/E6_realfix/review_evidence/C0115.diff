@@ -1,0 +1,928 @@
+diff --git a/model/pom.xml b/model/pom.xml
+index 16b3604..3b3d587 100644
+--- a/model/pom.xml
++++ b/model/pom.xml
+@@ -28,10 +28,9 @@
+         </dependency>
+         <dependency>
+             <groupId>com.fasterxml.jackson.core</groupId>
+             <artifactId>jackson-annotations</artifactId>
+             <version>2.9.5</version>
+-            <type>jar</type>
+         </dependency>
+     </dependencies>
+ 
+ </project>
+diff --git a/model/src/main/java/org/cbioportal/genome_nexus/model/AnnotationField.java b/model/src/main/java/org/cbioportal/genome_nexus/model/AnnotationField.java
+new file mode 100644
+index 0000000..814f009
+--- /dev/null
++++ b/model/src/main/java/org/cbioportal/genome_nexus/model/AnnotationField.java
+@@ -0,0 +1,37 @@
++package org.cbioportal.genome_nexus.model;
++
++import com.fasterxml.jackson.annotation.JsonValue;
++
++
++public enum AnnotationField {
++    ANNOTATION_SUMMARY("annotation_summary"),
++    CLINVAR("clinvar"),
++    HOTSPOTS("hotspots"),
++    MUTATION_ASSESSOR("mutation_assessor"),
++    MY_VARIANT_INFO("my_variant_info"),
++    NUCLEOTIDE_CONTEXT("nucleotide_context"),
++    ONCOKB("oncokb"),
++    PTMS("ptms"),
++    SIGNAL("signal");
++
++    private final String value;
++
++    AnnotationField(String value) {
++        this.value = value;
++    }
++
++
++    public static AnnotationField fromString(String value) {
++        for (AnnotationField field : AnnotationField.values()) {
++            if (field.value.equalsIgnoreCase(value)) {
++                return field;
++            }
++        }
++        throw new IllegalArgumentException("Invalid value for AnnotationType: " + value);
++    }
++
++    @JsonValue
++    public String getValue() {
++        return value;
++    }
++}
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/GenomicLocationAnnotationService.java b/service/src/main/java/org/cbioportal/genome_nexus/service/GenomicLocationAnnotationService.java
+index 372e1e8..4c33349 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/GenomicLocationAnnotationService.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/GenomicLocationAnnotationService.java
+@@ -30,10 +30,11 @@
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+ package org.cbioportal.genome_nexus.service;
+ 
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.GenomicLocation;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+ 
+@@ -45,11 +46,11 @@ public interface GenomicLocationAnnotationService
+     VariantAnnotation getAnnotation(GenomicLocation genomicLocation)
+         throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException;
+     VariantAnnotation getAnnotation(String genomicLocation)
+         throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException;
+     List<VariantAnnotation> getAnnotations(List<GenomicLocation> genomicLocations);
+-    VariantAnnotation getAnnotation(String genomicLocation, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    VariantAnnotation getAnnotation(String genomicLocation, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+         throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException;
+-    List<VariantAnnotation> getAnnotations(List<GenomicLocation> genomicLocations, String isoformOverrideSource, Map<String, String> token, List<String> fields);
++    List<VariantAnnotation> getAnnotations(List<GenomicLocation> genomicLocations, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields);
+ 
+     String getVariantFormat(GenomicLocation genomicLocation);
+ }
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/SelectedAnnotationService.java b/service/src/main/java/org/cbioportal/genome_nexus/service/SelectedAnnotationService.java
+index 9a67b98..fdfbe55 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/SelectedAnnotationService.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/SelectedAnnotationService.java
+@@ -30,27 +30,28 @@
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+ package org.cbioportal.genome_nexus.service;
+ 
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationQueryMixedFormatException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+ 
+ import java.util.*;
+ 
+ public interface SelectedAnnotationService {
+ 
+     public VariantAnnotation getAnnotation(
+-            String variant,
+-            String isoformOverrideSource,
+-            Map<String, String> token,
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException;
++        String variant,
++        String isoformOverrideSource,
++        Map<String, String> token,
++        List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException;
+ 
+     public List<VariantAnnotation> getAnnotations(
+-            List<String> variants,
+-            String isoformOverrideSource,
+-            Map<String, String> token,
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException;
++        List<String> variants,
++        String isoformOverrideSource,
++        Map<String, String> token,
++        List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException;
+ 
+ }
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/VariantAnnotationService.java b/service/src/main/java/org/cbioportal/genome_nexus/service/VariantAnnotationService.java
+index 23d63f6..05f57ff 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/VariantAnnotationService.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/VariantAnnotationService.java
+@@ -30,13 +30,13 @@
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+ package org.cbioportal.genome_nexus.service;
+ 
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+-import org.cbioportal.genome_nexus.service.exception.VariantAnnotationQueryMixedFormatException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+ 
+ import java.util.*;
+ 
+ /**
+@@ -45,9 +45,9 @@ import java.util.*;
+ public interface VariantAnnotationService
+ {
+     VariantAnnotation getAnnotation(String variant)
+         throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException;
+     List<VariantAnnotation> getAnnotations(List<String> variants);
+-    VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+         throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException;
+-    List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<String> fields);
++    List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields);
+ }
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/BaseVariantAnnotationServiceImpl.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/BaseVariantAnnotationServiceImpl.java
+index bd712aa..0e3a6d3 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/BaseVariantAnnotationServiceImpl.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/BaseVariantAnnotationServiceImpl.java
+@@ -49,11 +49,10 @@ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundEx
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+ import org.springframework.web.client.HttpClientErrorException;
+ import org.springframework.web.client.ResourceAccessException;
+ 
+ import java.util.*;
+-import java.util.stream.Collectors;
+ 
+ import com.google.gson.Gson;
+ import com.mongodb.BasicDBObject;
+ import com.mongodb.DBObject;
+ 
+@@ -134,20 +133,20 @@ public abstract class BaseVariantAnnotationServiceImpl implements VariantAnnotat
+             null
+         );
+     }
+ 
+     @Override
+-    public VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    public VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+         throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException
+     {
+         EnrichmentService postEnrichmentService = this.initPostEnrichmentService(isoformOverrideSource, fields, token);
+ 
+         return this.getVariantAnnotation(variant, postEnrichmentService);
+     }
+ 
+     @Override
+-    public List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    public List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+     {
+         EnrichmentService postEnrichmentService = this.initPostEnrichmentService(isoformOverrideSource, fields, token);
+ 
+         return this.getVariantAnnotations(
+             variants,
+@@ -163,16 +162,16 @@ public abstract class BaseVariantAnnotationServiceImpl implements VariantAnnotat
+         String normalizedVariant = normalizeVariant(variant);
+ 
+         try {
+             // get the annotation from the web service and save it to the DB
+             variantAnnotation = Optional.ofNullable(this.resourceFetcher.fetchAndCache(normalizedVariant));
+-            
++
+             // add new annotation to index db
+             variantAnnotation.ifPresent(annotation -> {
+                 this.saveToIndexDb(normalizedVariant, annotation);
+             });
+-    
++
+             // include original variant value too
+             variantAnnotation.ifPresent(x -> x.setVariant(normalizedVariant));
+         }
+         catch (HttpClientErrorException e) {
+             // in case of web service error, throw an exception to indicate that there is a problem with the service.
+@@ -275,11 +274,11 @@ public abstract class BaseVariantAnnotationServiceImpl implements VariantAnnotat
+         DBObject dbObject = BasicDBObject.parse(gson.toJson(this.buildIndex(annotation)));
+         this.indexRepository.saveDBObject("index", normalizedVariant, dbObject);
+     }
+ 
+ 
+-    private EnrichmentService initPostEnrichmentService(String isoformOverrideSource, List<String> fields, Map<String, String> token)
++    private EnrichmentService initPostEnrichmentService(String isoformOverrideSource, List<AnnotationField> fields, Map<String, String> token)
+     {
+         // The post enrichment service enriches the annotation after saving
+         // the original annotation data to the repository. Any enrichment
+         // performed by the post enrichment service is not saved
+         // to the annotation repository.
+@@ -289,53 +288,57 @@ public abstract class BaseVariantAnnotationServiceImpl implements VariantAnnotat
+         // if the source is invalid we will use the default override source
+         postEnrichmentService.registerEnricher(
+             new IsoformAnnotationEnricher(isoformOverrideSource, isoformOverrideSource, ensemblService)
+         );
+ 
+-        if (fields != null && fields.contains("hotspots"))
++        if (fields == null || fields.isEmpty()) {
++            return postEnrichmentService;
++        }
++
++        if (fields.contains(AnnotationField.HOTSPOTS))
+         {
+             postEnrichmentService.registerEnricher(
+                 new HotspotAnnotationEnricher("cancerHotspots", hotspotService, true)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("mutation_assessor"))
++        if (fields.contains(AnnotationField.MUTATION_ASSESSOR))
+         {
+             postEnrichmentService.registerEnricher(
+                 new MutationAssessorAnnotationEnricher("mutation_assessor", mutationAssessorService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("nucleotide_context"))
++        if (fields.contains(AnnotationField.NUCLEOTIDE_CONTEXT))
+         {
+             postEnrichmentService.registerEnricher(
+                 new NucleotideContextAnnotationEnricher("nucleotide_context", nucleotideContextService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("my_variant_info"))
++        if (fields.contains(AnnotationField.MY_VARIANT_INFO))
+         {
+             postEnrichmentService.registerEnricher(
+                 new MyVariantInfoAnnotationEnricher("my_variant_info", myVariantInfoService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("ptms"))
++        if (fields.contains(AnnotationField.PTMS))
+         {
+             postEnrichmentService.registerEnricher(
+                 new PostTranslationalModificationEnricher("ptm", postTranslationalModificationService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("signal"))
++        if (fields.contains(AnnotationField.SIGNAL))
+         {
+             postEnrichmentService.registerEnricher(
+                 new SignalAnnotationEnricher("signal", signalMutationService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("oncokb"))
++        if (fields.contains(AnnotationField.ONCOKB))
+         {
+             String oncokbToken = null;
+             if (token != null && token.containsKey("oncokb")) {
+                 oncokbToken = token.get("oncokb");
+             }
+@@ -348,18 +351,18 @@ public abstract class BaseVariantAnnotationServiceImpl implements VariantAnnotat
+                     oncokbToken
+                 )
+             );
+         }
+ 
+-        if (fields != null && fields.contains("clinvar"))
++        if (fields.contains(AnnotationField.CLINVAR))
+         {
+             postEnrichmentService.registerEnricher(
+                 new ClinvarVariantAnnotationEnricher("clinvar", clinvarVariantAnnotationService)
+             );
+         }
+ 
+-        if (fields != null && fields.contains("annotation_summary"))
++        if (fields.contains(AnnotationField.ANNOTATION_SUMMARY))
+         {
+             postEnrichmentService.registerEnricher(
+                 new CanonicalTranscriptAnnotationEnricher(
+                     "annotation_summary",
+                     variantAnnotationSummaryService
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/CuriousCasesServiceImpl.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/CuriousCasesServiceImpl.java
+index f076c93..e85ace0 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/CuriousCasesServiceImpl.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/CuriousCasesServiceImpl.java
+@@ -1,7 +1,8 @@
+ package org.cbioportal.genome_nexus.service.internal;
+ 
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.CuriousCases;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.CuriousCasesService;
+ import org.cbioportal.genome_nexus.service.GenomicLocationAnnotationService;
+ import org.cbioportal.genome_nexus.service.exception.CuriousCasesNotFoundException;
+@@ -33,11 +34,11 @@ public class CuriousCasesServiceImpl implements CuriousCasesService {
+     public CuriousCases getCuriousCases(String genomicLocation)
+             throws CuriousCasesNotFoundException, CuriousCasesWebServiceException {
+         CuriousCases CuriousCases = null;
+ 
+         try {
+-            VariantAnnotation annotation = genomicLocationAnnotationService.getAnnotation(genomicLocation, null, null, Arrays.asList("annotation_summary"));
++            VariantAnnotation annotation = genomicLocationAnnotationService.getAnnotation(genomicLocation, null, null, Arrays.asList(AnnotationField.ANNOTATION_SUMMARY));
+             CuriousCases = generateCuriousCases(annotation, genomicLocation);
+             if (CuriousCases != null) {
+                 CuriousCases.setGenomicLocation(genomicLocation);
+                 return CuriousCases;
+             } else {
+@@ -77,11 +78,11 @@ public class CuriousCasesServiceImpl implements CuriousCasesService {
+             // Potential KIT Exon 11 inframe deletion
+             else if (chr.equals("4") && start == 55593580 && end == 55593580 && variantType.equals(MutationType.SNP) && ref.equals("A") && var.equals("T")) {
+                 comment = "Potential in-frame deletion event at intron10-exon 11 boundary, commmon in Gastrointestinal Stromal Tumors";
+                 pubmedIds = new ArrayList<>(Arrays.asList(15507676, 27600498, 32697050));
+             }
+-            // Potential APC Exon 9 intro of cryptic splice acceptor site 
++            // Potential APC Exon 9 intro of cryptic splice acceptor site
+             else if (chr.equals("5") && start == 112151184 && end == 112151184 && variantType.equals(MutationType.SNP) && ref.equals("A") && var.equals("G")) {
+                 comment = "Potential introduction of donor splice site, common in colorectal cancers";
+                 pubmedIds = new ArrayList<>(Arrays.asList(29316426));
+             }
+             // Potential CTNNB1 Exon 3 inframe deletion
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/GenomicLocationAnnotationServiceImpl.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/GenomicLocationAnnotationServiceImpl.java
+index cce8684..79e5772 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/GenomicLocationAnnotationServiceImpl.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/GenomicLocationAnnotationServiceImpl.java
+@@ -135,11 +135,11 @@ public class GenomicLocationAnnotationServiceImpl implements GenomicLocationAnno
+ 
+     @Override
+     public VariantAnnotation getAnnotation(String genomicLocation,
+                                            String isoformOverrideSource,
+                                            Map<String, String> token,
+-                                           List<String> fields)
++                                           List<AnnotationField> fields)
+         throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException
+     {
+         VariantAnnotation variantAnnotation = this.variantAnnotationService.getAnnotation(
+                 this.genomicLocationStringToVariantFormat.convert(genomicLocation),
+                 isoformOverrideSource,
+@@ -149,13 +149,13 @@ public class GenomicLocationAnnotationServiceImpl implements GenomicLocationAnno
+         return variantAnnotation;
+     }
+ 
+     @Override
+     public List<VariantAnnotation> getAnnotations(List<GenomicLocation> genomicLocations,
+-                                                                    String isoformOverrideSource,
+-                                                                    Map<String, String> token,
+-                                                                    List<String> fields)
++                                                  String isoformOverrideSource,
++                                                  Map<String, String> token,
++                                                  List<AnnotationField> fields)
+     {
+         Map<String, Set<String>> convertedVarsToOrigVarQueryMap = mapConvertedVarsToOrigVarQuery(genomicLocations);
+         List<VariantAnnotation> variantAnnotations = new ArrayList<>();
+         this.variantAnnotationService.getAnnotations(
+                 this.genomicLocationsToVariantFormats.convert(genomicLocations),
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/SelectedAnnotationServiceImpl.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/SelectedAnnotationServiceImpl.java
+index 77c95e4..c8e1de6 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/SelectedAnnotationServiceImpl.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/SelectedAnnotationServiceImpl.java
+@@ -31,19 +31,19 @@
+ */
+ 
+ package org.cbioportal.genome_nexus.service.internal;
+ 
+ import org.cbioportal.genome_nexus.component.annotation.NotationConverter;
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.GenomicLocation;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.GenomicLocationAnnotationService;
+ import org.cbioportal.genome_nexus.service.SelectedAnnotationService;
+ import org.cbioportal.genome_nexus.service.VariantAnnotationService;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationQueryMixedFormatException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+-import org.cbioportal.genome_nexus.service.internal.HgvsVariantAnnotationService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.stereotype.Service;
+ 
+ import java.util.*;
+@@ -73,14 +73,14 @@ public class SelectedAnnotationServiceImpl implements SelectedAnnotationService
+         this.isRegionAnnotationEnabled = vepRegionUrl != null && vepRegionUrl.length() > 0;
+     }
+ 
+     @Override
+     public VariantAnnotation getAnnotation(
+-            String variant,
+-            String isoformOverrideSource,
+-            Map<String, String> token,
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException {
++        String variant,
++        String isoformOverrideSource,
++        Map<String, String> token,
++        List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException {
+         if (needToConvertHgvsToRegionForAnnotation(variant)) {
+             GenomicLocation variantAsGenomicLocation = notationConverter.hgvsgToGenomicLocation(variant);
+             // TODO: we should provide a getAnnotation() call to genomicLocationAnnotationService which accepts GenomicLocation
+             return genomicLocationAnnotationService.getAnnotation(variantAsGenomicLocation.toString(), isoformOverrideSource, token, fields);
+         } else {
+@@ -89,14 +89,14 @@ public class SelectedAnnotationServiceImpl implements SelectedAnnotationService
+         }
+     }
+ 
+     @Override
+     public List<VariantAnnotation> getAnnotations(
+-            List<String> variants,
+-            String isoformOverrideSource,
+-            Map<String, String> token,
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException {
++        List<String> variants,
++        String isoformOverrideSource,
++        Map<String, String> token,
++        List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException {
+         if (needToConvertHgvsToRegionForAnnotation(variants)) {
+             List<GenomicLocation> variantsAsGenomicLocations = notationConverter.hgvsgToGenomicLocations(variants);
+             return genomicLocationAnnotationService.getAnnotations(variantsAsGenomicLocations, isoformOverrideSource, token, fields);
+         } else {
+             // all variants will be sent to the hgvsAnnotationService, so non-hgvs formatted variants will fail annotation and hgvs formatted variants may succeed
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceImpl.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceImpl.java
+index 520f438..8f4ed0f 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceImpl.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceImpl.java
+@@ -94,23 +94,23 @@ public class VerifiedGenomicLocationAnnotationServiceImpl implements GenomicLoca
+ 
+     @Override
+     public VariantAnnotation getAnnotation(String genomicLocation,
+                                            String isoformOverrideSource,
+                                            Map<String, String> token,
+-                                           List<String> fields)
++                                           List<AnnotationField> fields)
+         throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException
+     {
+         VariantAnnotation annotation = genomicLocationAnnotationService.getAnnotation(genomicLocation, isoformOverrideSource, token, fields);
+         VariantAnnotation verifiedAnnotation = verifyOrFailAnnotation(annotation);
+         return verifiedAnnotation;
+     }
+ 
+     @Override
+     public List<VariantAnnotation> getAnnotations(List<GenomicLocation> genomicLocations,
+-                                                                    String isoformOverrideSource,
+-                                                                    Map<String, String> token,
+-                                                                    List<String> fields)
++                                                  String isoformOverrideSource,
++                                                  Map<String, String> token,
++                                                  List<AnnotationField> fields)
+     {
+         List<VariantAnnotation> annotations = genomicLocationAnnotationService.getAnnotations(genomicLocations, isoformOverrideSource, token, fields);
+         for (int index = 0; index < annotations.size(); index = index + 1) {
+             VariantAnnotation annotation = annotations.get(index);
+             VariantAnnotation verifiedAnnotation = verifyOrFailAnnotation(annotation);
+diff --git a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationService.java b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationService.java
+index ac09710..89083ae 100644
+--- a/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationService.java
++++ b/service/src/main/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationService.java
+@@ -33,19 +33,17 @@
+ package org.cbioportal.genome_nexus.service.internal;
+ 
+ import java.util.*;
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.*;
+-import org.cbioportal.genome_nexus.service.cached.CachedVariantAnnotationFetcher;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+-import org.cbioportal.genome_nexus.service.internal.HgvsVariantAnnotationService;
+ import org.cbioportal.genome_nexus.util.GenomicVariantUtil;
+ import org.springframework.beans.factory.annotation.*;
+-import org.springframework.context.annotation.Lazy;
+ import org.springframework.stereotype.Service;
+ 
+ @Service
+ public class VerifiedHgvsVariantAnnotationService implements VariantAnnotationService
+ {
+@@ -79,20 +77,20 @@ public class VerifiedHgvsVariantAnnotationService implements VariantAnnotationSe
+         }
+         return annotations;
+     }
+ 
+     @Override
+-    public VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    public VariantAnnotation getAnnotation(String variant, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+             throws VariantAnnotationWebServiceException, VariantAnnotationNotFoundException
+     {
+         VariantAnnotation annotation = hgvsVariantAnnotationService.getAnnotation(variant, isoformOverrideSource, token, fields);
+         VariantAnnotation verifiedAnnotation = verifyOrFailAnnotation(annotation);
+         return verifiedAnnotation;
+     }
+ 
+     @Override
+-    public List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<String> fields)
++    public List<VariantAnnotation> getAnnotations(List<String> variants, String isoformOverrideSource, Map<String, String> token, List<AnnotationField> fields)
+     {
+         List<VariantAnnotation> annotations = hgvsVariantAnnotationService.getAnnotations(variants, isoformOverrideSource, token, fields);
+         for (int index = 0; index < annotations.size(); index = index + 1) {
+             VariantAnnotation annotation = annotations.get(index);
+             VariantAnnotation verifiedAnnotation = verifyOrFailAnnotation(annotation);
+diff --git a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VariantAnnotationServiceTest.java b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VariantAnnotationServiceTest.java
+index e6d04f7..c9b43ac 100644
+--- a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VariantAnnotationServiceTest.java
++++ b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VariantAnnotationServiceTest.java
+@@ -1,10 +1,9 @@
+ package org.cbioportal.genome_nexus.service.internal;
+ 
+ import static org.junit.Assert.assertEquals;
+ import static org.mockito.ArgumentMatchers.any;
+-import static org.mockito.ArgumentMatchers.anyString;
+ import static org.mockito.Mockito.spy;
+ 
+ import java.io.IOException;
+ import java.util.ArrayList;
+ import java.util.HashSet;
+@@ -157,12 +156,12 @@ public class VariantAnnotationServiceTest
+ 
+         this.mockVariantFetcherMethods(variantMockData);
+         this.mockMutationAssessorServiceMethods(variantMockData, maMockData);
+         this.mockEnsemblServiceMethods();
+ 
+-        List<String> fields = new ArrayList<>(1);
+-        fields.add("mutation_assessor");
++        List<AnnotationField> fields = new ArrayList<>(1);
++        fields.add(AnnotationField.MUTATION_ASSESSOR);
+ 
+         VariantAnnotation annotation1 = variantAnnotationService.getAnnotation(
+             "7:g.140453136A>T", null, null, fields);
+ 
+         assertEquals(maMockData.get("7,140453136,A,T"),
+@@ -185,12 +184,12 @@ public class VariantAnnotationServiceTest
+ 
+         this.mockVariantFetcherMethods(variantMockData);
+         this.mockMyVariantInfoServiceMethods(variantMockData, mviMockData);
+         this.mockEnsemblServiceMethods();
+ 
+-        List<String> fields = new ArrayList<>(1);
+-        fields.add("my_variant_info");
++        List<AnnotationField> fields = new ArrayList<>(1);
++        fields.add(AnnotationField.MY_VARIANT_INFO);
+ 
+         VariantAnnotation annotation1 = variantAnnotationService.getAnnotation(
+             "7:g.140453136A>T", null, null, fields);
+ 
+         assertEquals(mviMockData.get("7:g.140453136A>T"),
+@@ -212,12 +211,12 @@ public class VariantAnnotationServiceTest
+ 
+         this.mockVariantFetcherMethods(variantMockData);
+         this.mockPtmServiceMethods(ptmMockData);
+         this.mockEnsemblServiceMethods();
+ 
+-        List<String> fields = new ArrayList<>(1);
+-        fields.add("ptms");
++        List<AnnotationField> fields = new ArrayList<>(1);
++        fields.add(AnnotationField.PTMS);
+ 
+         VariantAnnotation annotation1 = variantAnnotationService.getAnnotation(
+             "7:g.140453136A>T", null, null, fields);
+ 
+         assertEquals(ptmMockData.get("ENST00000288602"),
+@@ -240,12 +239,12 @@ public class VariantAnnotationServiceTest
+ 
+         this.mockVariantFetcherMethods(variantMockData);
+         this.mockHotspotServiceMethods(hotspotMockData);
+         this.mockEnsemblServiceMethods();
+ 
+-        List<String> fields = new ArrayList<>(1);
+-        fields.add("hotspots");
++        List<AnnotationField> fields = new ArrayList<>(1);
++        fields.add(AnnotationField.HOTSPOTS);
+ 
+         VariantAnnotation annotation1 = variantAnnotationService.getAnnotation(
+             "7:g.140453136A>T", null, null, fields);
+ 
+         assertEquals(hotspotMockData.get("ENST00000288602"),
+diff --git a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceTest.java b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceTest.java
+index 2772404..30f0510 100644
+--- a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceTest.java
++++ b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedGenomicLocationAnnotationServiceTest.java
+@@ -33,10 +33,11 @@
+ package org.cbioportal.genome_nexus.service.internal;
+ 
+ import java.util.*;
+ import java.util.stream.Collectors;
+ import org.cbioportal.genome_nexus.component.annotation.NotationConverter;
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.GenomicLocation;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.GenomicLocationAnnotationService;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+@@ -69,11 +70,11 @@ public class VerifiedGenomicLocationAnnotationServiceTest
+     public Map<String, Boolean> variantToVepSuccessfullyAnnotated = new HashMap<String, Boolean>();
+     public Map<String, String> variantToVepAlleleString = new HashMap<String, String>();
+     // argument list stubs
+     public String mockIsoformOverrideSource = "mockIsoformOverrideSource";
+     public Map<String, String> mockTokenMap = new HashMap<String, String>();
+-    public List<String> mockFields = new ArrayList<String>();
++    public List<AnnotationField> mockFields = new ArrayList<>();
+ 
+     class VariantTestCase
+     {
+         public String originalVariantQuery;
+         public boolean expectedGnSuccessfullyAnnotated;
+@@ -121,11 +122,11 @@ public class VerifiedGenomicLocationAnnotationServiceTest
+             glDeletions.add(new VariantTestCase("5,138163255,138163256,CCCC,-", false, null, "2nt deletion with invalid RefAllele"));
+             glInsertions = new ArrayList<VariantTestCase>();
+             glInsertions.add(new VariantTestCase("5,138163255,138163256,-,T", true, "-/T", "1nt insertion"));
+             glInsertions.add(new VariantTestCase("5,138163255,138163256,-,TT", true, "-/TT", "2nt insertion"));
+             glInsertions.add(new VariantTestCase("5,138163255,138163256,-,-", true, "-/-", "insertion missing TumorSeqAllele")); // note : different result than ensembl
+-            glInsertions.add(new VariantTestCase("5,138163256,138163256,C,CA", true, "-/A", "1nt deletion with RefAllele, 2nt insertion, partial change")); 
++            glInsertions.add(new VariantTestCase("5,138163256,138163256,C,CA", true, "-/A", "1nt deletion with RefAllele, 2nt insertion, partial change"));
+             glInsertions.add(new VariantTestCase("5,138163255,138163256,TC,TCA", true, "-/A", "2nt deletion with RefAllele, 3nt insertion, partial change"));
+             glInsertionDeletions = new ArrayList<VariantTestCase>();
+             glInsertionDeletions.add(new VariantTestCase("5,138163256,138163256,C,T", true, "C/T", "1nt deletion with RefAllele, 1nt insertion"));
+             glInsertionDeletions.add(new VariantTestCase("5,138163256,138163256,A,T", false, null, "1nt deletion with discrepant RefAllele, 1nt insertion"));
+             glInsertionDeletions.add(new VariantTestCase("5,138163256,138163256,C,TT", true, "C/TT", "1nt deletion with RefAllele, 2nt insertion"));
+diff --git a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationServiceTest.java b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationServiceTest.java
+index 006bed9..103558d 100644
+--- a/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationServiceTest.java
++++ b/service/src/test/java/org/cbioportal/genome_nexus/service/internal/VerifiedHgvsVariantAnnotationServiceTest.java
+@@ -32,10 +32,12 @@
+ 
+ package org.cbioportal.genome_nexus.service.internal;
+ 
+ import java.util.*;
+ import java.util.stream.Collectors;
++
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+ import org.junit.Assert;
+ import org.junit.Before;
+@@ -65,11 +67,11 @@ public class VerifiedHgvsVariantAnnotationServiceTest
+     public Map<String, Boolean> variantToVepSuccessfullyAnnotated = new HashMap<String, Boolean>();
+     public Map<String, String> variantToVepAlleleString = new HashMap<String, String>();
+     // argument list stubs
+     public String mockIsoformOverrideSource = "mockIsoformOverrideSource";
+     public Map<String, String> mockTokenMap = new HashMap<String, String>();
+-    public List<String> mockFields = new ArrayList<String>();
++    public List<AnnotationField> mockFields = new ArrayList<>();
+ 
+     class VariantTestCase {
+         public String originalVariantQuery;
+         public boolean expectedGnSuccessfullyAnnotated;
+         public String expectedGnAlleleString;
+diff --git a/web/pom.xml b/web/pom.xml
+index 273d916..afe9e08 100644
+--- a/web/pom.xml
++++ b/web/pom.xml
+@@ -12,11 +12,11 @@
+     <artifactId>genome-nexus</artifactId>
+     <!-- project version is generated through git or can be passed as
+          PROJECT_VERSION env variable (see version.sh) -->
+     <version>0-unknown-version-SNAPSHOT</version>
+   </parent>
+-  
++
+   <profiles>
+     <profile>
+       <id>war</id>
+       <activation>
+         <activeByDefault>true</activeByDefault>
+@@ -140,11 +140,11 @@
+         <artifactId>maven-surefire-plugin</artifactId>
+         <version>3.0.0-M3</version>
+         <configuration>
+           <forkCount>3</forkCount>
+           <reuseForks>true</reuseForks>
+-          <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
++          <argLine>-Xmx1024m</argLine>
+           <systemPropertyVariables>
+             <projectVersion>1.0</projectVersion>
+           </systemPropertyVariables>
+         </configuration>
+       </plugin>
+diff --git a/web/src/main/java/org/cbioportal/genome_nexus/web/AnnotationController.java b/web/src/main/java/org/cbioportal/genome_nexus/web/AnnotationController.java
+index dbf9928..bd299b9 100644
+--- a/web/src/main/java/org/cbioportal/genome_nexus/web/AnnotationController.java
++++ b/web/src/main/java/org/cbioportal/genome_nexus/web/AnnotationController.java
+@@ -32,19 +32,20 @@
+ 
+ package org.cbioportal.genome_nexus.web;
+ 
+ import io.swagger.annotations.*;
+ import java.util.*;
++
++import org.cbioportal.genome_nexus.model.AnnotationField;
+ import org.cbioportal.genome_nexus.model.GenomicLocation;
+ import org.cbioportal.genome_nexus.model.VariantAnnotation;
+ import org.cbioportal.genome_nexus.service.GenomicLocationAnnotationService;
+ import org.cbioportal.genome_nexus.service.SelectedAnnotationService;
+ import org.cbioportal.genome_nexus.service.VariantAnnotationService;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationNotFoundException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationQueryMixedFormatException;
+ import org.cbioportal.genome_nexus.service.exception.VariantAnnotationWebServiceException;
+-import org.cbioportal.genome_nexus.service.internal.VerifiedGenomicLocationAnnotationServiceImpl;
+ import org.cbioportal.genome_nexus.util.TokenMapConverter;
+ import org.cbioportal.genome_nexus.web.config.PublicApi;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.validation.annotation.Validated;
+ import org.springframework.web.bind.annotation.*;
+@@ -90,14 +91,15 @@ public class AnnotationController
+             String isoformOverrideSource,
+             @RequestParam(required = false)
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}",
+                     required = false)
+             String token,
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). " +
+-                    "For example: hotspots", required = false, defaultValue = "hotspots")
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
+     {
+         return this.fetchVariantAnnotationPOST(variants, isoformOverrideSource, token, fields);
+     }
+ 
+     // TODO remove this endpoint after all internal dependencies are resolved
+@@ -111,16 +113,18 @@ public class AnnotationController
+                     required = true, allowMultiple = true)
+             List<String> variants,
+             @RequestParam(required = false)
+             @ApiParam(value="Isoform override source. For example uniprot", required = false)
+             String isoformOverrideSource,
+-            @RequestParam(required = false) 
++            @RequestParam(required = false)
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             String token,
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: hotspots", required = false, defaultValue = "hotspots")
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
+     {
+         return this.fetchVariantAnnotationPOST(variants, isoformOverrideSource, token, fields);
+     }
+ 
+     @ApiOperation(value = "Retrieves VEP annotation for the provided list of variants", nickname = "fetchVariantAnnotationPOST")
+@@ -135,13 +139,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: hotspots", required = false, defaultValue = "hotspots")
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationQueryMixedFormatException, VariantAnnotationWebServiceException
+     {
+         return this.selectedAnnotationService.getAnnotations(variants, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+     @ApiOperation(value = "Retrieves VEP annotation for the provided variant", nickname = "fetchVariantAnnotationGET")
+@@ -154,12 +160,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: hotspots", required = false, defaultValue = "hotspots")
+-            @RequestParam(required = false) List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
++            @RequestParam(required = false)
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
+     {
+         return this.selectedAnnotationService.getAnnotation(variant, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+     @ApiOperation(value = "Retrieves VEP annotation for the provided list of genomic locations", nickname = "fetchVariantAnnotationByGenomicLocationPOST")
+@@ -172,13 +181,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: hotspots", required = false, defaultValue = "hotspots")
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            List<String> fields)
++            List<AnnotationField> fields)
+     {
+         return this.verifiedGenomicLocationAnnotationService.getAnnotations(
+             genomicLocations, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+@@ -192,13 +203,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: hotspots", required = false, defaultValue = "hotspots")
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
+     {
+         return this.verifiedGenomicLocationAnnotationService.getAnnotation(genomicLocation, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+     @ApiOperation(value = "Retrieves VEP annotation for the provided list of dbSNP ids", nickname = "fetchVariantAnnotationByIdPOST")
+@@ -211,13 +224,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). For example: annotation_summary", required = false, defaultValue = "annotation_summary")
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            List<String> fields)
++            List<AnnotationField> fields)
+     {
+         return this.dbsnpAnnotationService.getAnnotations(variantIds, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+     @ApiOperation(value = "Retrieves VEP annotation for the give dbSNP id", nickname = "fetchVariantAnnotationByIdGET")
+@@ -230,13 +245,15 @@ public class AnnotationController
+             @RequestParam(required = false)
+             String isoformOverrideSource,
+             @ApiParam(value="Map of tokens. For example {\"source1\":\"put-your-token1-here\",\"source2\":\"put-your-token2-here\"}", required = false)
+             @RequestParam(required = false)
+             String token,
+-            @ApiParam(value="Comma separated list of fields to include (case-sensitive!). " + "For example: annotation_summary", required = false, defaultValue = "annotation_summary")
++            @ApiParam(value="Comma separated list of fields to include in the annotation (case-sensitive!). Defaults to \"annotation_summary\" if no value passed. " +
++                "Valid values: {annotation_summary, clinvar, hotspots, mutation_assessor, my_variant_info, nucleotide_context, oncokb, ptms, signal}",
++                required = false, defaultValue = "annotation_summary")
+             @RequestParam(required = false)
+-            List<String> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
++            List<AnnotationField> fields) throws VariantAnnotationNotFoundException, VariantAnnotationWebServiceException
+     {
+         return this.dbsnpAnnotationService.getAnnotation(variantId, isoformOverrideSource, tokenMapConverter.convertToMap(token), fields);
+     }
+ 
+ }
+diff --git a/web/src/main/java/org/cbioportal/genome_nexus/web/config/AppWebMvcConfigurer.java b/web/src/main/java/org/cbioportal/genome_nexus/web/config/AppWebMvcConfigurer.java
+new file mode 100644
+index 0000000..3e87e84
+--- /dev/null
++++ b/web/src/main/java/org/cbioportal/genome_nexus/web/config/AppWebMvcConfigurer.java
+@@ -0,0 +1,19 @@
++package org.cbioportal.genome_nexus.web.config;
++import org.cbioportal.genome_nexus.web.converters.AnnotationFieldEnumConverter;
++import org.springframework.boot.autoconfigure.web.format.WebConversionService;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.format.FormatterRegistry;
++import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
++
++
++@Configuration
++public class AppWebMvcConfigurer implements WebMvcConfigurer {
++    /**
++     * Add custom converters to the default WebConversionService.
++     */
++    @Override
++    public void addFormatters(FormatterRegistry registry) {
++        registry.addConverter(new AnnotationFieldEnumConverter());
++        WebConversionService.addDefaultFormatters(registry);
++    }
++}
+diff --git a/web/src/main/java/org/cbioportal/genome_nexus/web/converters/AnnotationFieldEnumConverter.java b/web/src/main/java/org/cbioportal/genome_nexus/web/converters/AnnotationFieldEnumConverter.java
+new file mode 100644
+index 0000000..7c925fc
+--- /dev/null
++++ b/web/src/main/java/org/cbioportal/genome_nexus/web/converters/AnnotationFieldEnumConverter.java
+@@ -0,0 +1,12 @@
++package org.cbioportal.genome_nexus.web.converters;
++
++import org.cbioportal.genome_nexus.model.AnnotationField;
++import org.springframework.core.convert.converter.Converter;
++
++public class AnnotationFieldEnumConverter implements Converter<String, AnnotationField> {
++    @Override
++    public AnnotationField convert(String s) {
++        return AnnotationField.fromString(s);
++    }
++}
++

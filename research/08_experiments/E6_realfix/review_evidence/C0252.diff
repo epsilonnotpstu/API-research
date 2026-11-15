@@ -1,0 +1,40 @@
+diff --git a/api/microcks-openapi-v1.10.yaml b/api/microcks-openapi-v1.10.yaml
+index 288d2eaa..c1bdc6e6 100644
+--- a/api/microcks-openapi-v1.10.yaml
++++ b/api/microcks-openapi-v1.10.yaml
+@@ -1102,10 +1102,35 @@ paths:
+       - jwt-bearer:
+         - manager
+       operationId: downloadArtifact
+       summary: Download an artifact
+       description: Ask Microcks to download an artifact and import it
++  /secrets/search:
++    get:
++      tags:
++      - config
++      parameters:
++      - name: name
++        description: Search using this name-like criterion
++        schema:
++          type: string
++        in: query
++        required: true
++      responses:
++        "200":
++          content:
++            application/json:
++              schema:
++                type: array
++                items:
++                  $ref: '#/components/schemas/Secret'
++          description: List of found Secrets (filtered according search criteria)
++      security:
++      - jwt-bearer:
++        - admin
++      operationId: SearchSecrets
++      summary: Search for Secrets
+ components:
+   schemas:
+     TestCaseResult:
+       description: Companion objects for TestResult. Each TestCaseResult correspond
+         to a particuliar service operation / action reference by the operationName

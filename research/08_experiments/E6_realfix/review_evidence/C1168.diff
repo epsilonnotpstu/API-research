@@ -1,0 +1,117 @@
+diff --git a/README.md b/README.md
+index ed293e9..c56f5c6 100644
+--- a/README.md
++++ b/README.md
+@@ -82,10 +82,12 @@ session-service$ export set SERVER_PORT=8090; mvn package -Dpackaging.type=jar &
+ ```
+ 
+ 
+ ## API
+ 
++Swagger documentation will be found here: http://[url]:[port]/swagger-ui.html e.g. http://localhost:8090/swagger-ui.html
++
+ ### Create
+ 
+ #### POST http://localhost:8080/api/sessions/{source}/{type}/
+ Creates a session.  Returns status 200 and the session id in response body
+ on success.  The session is saved in a collection named {type}. Both
+diff --git a/pom.xml b/pom.xml
+index 230bf54..0a3360a 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -63,10 +63,20 @@
+         <dependency>
+             <groupId>com.fasterxml.jackson.core</groupId>
+             <artifactId>jackson-annotations</artifactId>
+             <version>2.7.0</version>
+         </dependency>
++        <dependency>
++            <groupId>io.springfox</groupId>
++            <artifactId>springfox-swagger2</artifactId>
++            <version>2.4.0</version>
++        </dependency>
++        <dependency>
++            <groupId>io.springfox</groupId>
++            <artifactId>springfox-swagger-ui</artifactId>
++            <version>2.4.0</version>
++        </dependency>
+     </dependencies>
+ 
+     <properties>
+         <java.version>1.7</java.version>
+     </properties>
+diff --git a/src/main/java/org/cbioportal/session_service/swagger/SwaggerConfig.java b/src/main/java/org/cbioportal/session_service/swagger/SwaggerConfig.java
+new file mode 100644
+index 0000000..ddbdf24
+--- /dev/null
++++ b/src/main/java/org/cbioportal/session_service/swagger/SwaggerConfig.java
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (c) 2016 Memorial Sloan-Kettering Cancer Center.
++ *
++ * This library is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY, WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS
++ * FOR A PARTICULAR PURPOSE. The software and documentation provided hereunder
++ * is on an "as is" basis, and Memorial Sloan-Kettering Cancer Center has no
++ * obligations to provide maintenance, support, updates, enhancements or
++ * modifications. In no event shall Memorial Sloan-Kettering Cancer Center be
++ * liable to any party for direct, indirect, special, incidental or
++ * consequential damages, including lost profits, arising out of the use of this
++ * software and its documentation, even if Memorial Sloan-Kettering Cancer
++ * Center has been advised of the possibility of such damage.
++ */
++
++/*
++ * This file is part of cBioPortal Session Service.
++ *
++ * cBioPortal is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU Affero General Public License as
++ * published by the Free Software Foundation, either version 3 of the
++ * License.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Affero General Public License for more details.
++ *
++ * You should have received a copy of the GNU Affero General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++*/
++
++package org.cbioportal.session_service.swagger;
++
++import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Bean;
++
++import springfox.documentation.swagger2.annotations.EnableSwagger2;
++import springfox.documentation.spring.web.plugins.Docket;
++import springfox.documentation.spi.DocumentationType;
++import springfox.documentation.builders.RequestHandlerSelectors;
++import springfox.documentation.builders.PathSelectors;
++import springfox.documentation.service.ApiInfo;
++
++@Configuration
++@EnableSwagger2
++public class SwaggerConfig {
++    @Bean
++    public Docket api() { 
++        return new Docket(DocumentationType.SWAGGER_2) 
++            .select()
++            .apis(RequestHandlerSelectors.basePackage("org.cbioportal.session_service.web"))
++            .build()
++            .pathMapping("/api")
++            .apiInfo(apiInfo()); 
++    }
++
++    private ApiInfo apiInfo() {
++        ApiInfo apiInfo = new ApiInfo(
++            "cBioPortal session-service API", 
++            "RESTful API to access cBioPortal/cbioportal sessions in MongoDB.", 
++            "1.0 (beta)",
++            "www.cbioportal.org",
++            "[REDACTED email]", 
++            "License", 
++            "https://github.com/cBioPortal/cbioportal/blob/master/LICENSE");
++        return apiInfo;
++    }
++}

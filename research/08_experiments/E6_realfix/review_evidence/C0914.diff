@@ -1,0 +1,170 @@
+diff --git a/openapi/publicapi_spec.json b/openapi/publicapi_spec.json
+index 95e1241f..ea97f05c 100644
+--- a/openapi/publicapi_spec.json
++++ b/openapi/publicapi_spec.json
+@@ -1209,11 +1209,11 @@
+             "$ref" : "#/components/schemas/CardDetails"
+           },
+           "created_date" : {
+             "type" : "string",
+             "description" : "The date you created the payment.",
+-            "example" : "2016-01-21T17:15:00Z"
++            "example" : "2016-01-21T17:15:00.000Z"
+           },
+           "delayed_capture" : {
+             "type" : "boolean",
+             "description" : "Whether to [delay capturing](https://docs.payments.service.gov.uk/optional_features/delayed_capture/) this payment.",
+             "example" : false,
+@@ -1293,11 +1293,11 @@
+             "readOnly" : true
+           },
+           "created_date" : {
+             "type" : "string",
+             "description" : "The date and time the user's bank told GOV.UK Pay about this dispute.",
+-            "example" : "2022-07-28T16:43:000Z",
++            "example" : "2022-07-28T16:43:00.000Z",
+             "readOnly" : true
+           },
+           "dispute_id" : {
+             "type" : "string",
+             "description" : "The unique ID GOV.UK Pay automatically associated with this dispute when the paying user disputed the payment.",
+@@ -1305,11 +1305,11 @@
+             "readOnly" : true
+           },
+           "evidence_due_date" : {
+             "type" : "string",
+             "description" : "The deadline for submitting your supporting evidence. This value uses Coordinated Universal Time (UTC) and ISO 8601 format",
+-            "example" : "2022-07-28T16:43:000Z",
++            "example" : "2022-07-28T16:43:00.000Z",
+             "readOnly" : true
+           },
+           "fee" : {
+             "type" : "integer",
+             "format" : "int64",
+@@ -1461,11 +1461,11 @@
+             "example" : 250,
+             "readOnly" : true
+           },
+           "created_date" : {
+             "type" : "string",
+-            "example" : "2016-01-21T17:15:000Z",
++            "example" : "2016-01-21T17:15:00.000Z",
+             "readOnly" : true
+           },
+           "delayed_capture" : {
+             "type" : "boolean",
+             "description" : "delayed capture flag",
+@@ -1599,11 +1599,11 @@
+             "example" : 250,
+             "readOnly" : true
+           },
+           "created_date" : {
+             "type" : "string",
+-            "example" : "2016-01-21T17:15:000Z",
++            "example" : "2016-01-21T17:15:00.000Z",
+             "readOnly" : true
+           },
+           "delayed_capture" : {
+             "type" : "boolean",
+             "description" : "delayed capture flag",
+@@ -1855,11 +1855,11 @@
+         "description" : "A structure representing information about a settlement",
+         "properties" : {
+           "capture_submit_time" : {
+             "type" : "string",
+             "description" : "Date and time capture request has been submitted. May be null if capture request was not immediately acknowledged by payment gateway.",
+-            "example" : "2016-01-21T17:15:000Z",
++            "example" : "2016-01-21T17:15:00.000Z",
+             "readOnly" : true
+           },
+           "captured_date" : {
+             "type" : "string",
+             "description" : "Date of the capture event.",
+@@ -2190,6 +2190,6 @@
+         "scheme" : "bearer",
+         "type" : "http"
+       }
+     }
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+index 19c3253a..ddcafef4 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+@@ -44,11 +44,11 @@ public class CreatePaymentResult {
+     @JsonProperty
+     @Schema(name = "return_url", description = "An HTTPS URL on your site that your user will be sent back to once they have completed their payment attempt on GOV.UK Pay.", example = "https://service-name.gov.uk/transactions/12345")
+     private String returnUrl;
+ 
+     @JsonProperty
+-    @Schema(name = "created_date", description = "The date you created the payment.", example = "2016-01-21T17:15:00Z")
++    @Schema(name = "created_date", description = "The date you created the payment.", example = "2016-01-21T17:15:00.000Z")
+     private String createdDate;
+ 
+     @JsonProperty
+     @Schema(name = "delayed_capture", description = "Whether to [delay capturing](https://docs.payments.service.gov.uk/optional_features/delayed_capture/) this payment.", example = "false", accessMode = READ_ONLY)
+     private boolean delayedCapture;
+diff --git a/src/main/java/uk/gov/pay/api/model/Payment.java b/src/main/java/uk/gov/pay/api/model/Payment.java
+index 0777344f..ec922d1e 100644
+--- a/src/main/java/uk/gov/pay/api/model/Payment.java
++++ b/src/main/java/uk/gov/pay/api/model/Payment.java
+@@ -41,11 +41,11 @@ public abstract class Payment {
+         this.reference = reference;
+         this.paymentProvider = paymentProvider;
+         this.createdDate = createdDate;
+     }
+ 
+-    @Schema(example = "2016-01-21T17:15:000Z", accessMode = READ_ONLY)
++    @Schema(example = "2016-01-21T17:15:00.000Z", accessMode = READ_ONLY)
+     public String getCreatedDate() {
+         return createdDate;
+     }
+ 
+     @Schema(example = "hu20sqlact5260q2nanm0q8u93", accessMode = READ_ONLY)
+diff --git a/src/main/java/uk/gov/pay/api/model/PaymentSettlementSummary.java b/src/main/java/uk/gov/pay/api/model/PaymentSettlementSummary.java
+index e5157ce1..f9c2f431 100644
+--- a/src/main/java/uk/gov/pay/api/model/PaymentSettlementSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/PaymentSettlementSummary.java
+@@ -28,11 +28,11 @@ public class PaymentSettlementSummary {
+         this.capturedDate = capturedDate;
+         this.settledDate = settledDate;
+     }
+ 
+     @Schema(description = "Date and time capture request has been submitted. May be null if capture request was not immediately acknowledged by payment gateway.",
+-            example = "2016-01-21T17:15:000Z", accessMode = READ_ONLY)
++            example = "2016-01-21T17:15:00.000Z", accessMode = READ_ONLY)
+     public String getCaptureSubmitTime() {
+         return captureSubmitTime;
+     }
+ 
+     @Schema(description = "Date of the capture event.", example = "2016-01-21", accessMode = READ_ONLY)
+diff --git a/src/main/java/uk/gov/pay/api/model/search/dispute/DisputeForSearchResult.java b/src/main/java/uk/gov/pay/api/model/search/dispute/DisputeForSearchResult.java
+index b9cdc8a7..1841759e 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/dispute/DisputeForSearchResult.java
++++ b/src/main/java/uk/gov/pay/api/model/search/dispute/DisputeForSearchResult.java
+@@ -58,21 +58,21 @@ public class DisputeForSearchResult {
+     @Schema(example = "1200", description = "The disputed amount in pence.", accessMode = READ_ONLY)
+     public Long getAmount() {
+         return amount;
+     }
+ 
+-    @Schema(example = "2022-07-28T16:43:000Z", description = "The date and time the user's bank told GOV.UK Pay about this dispute.", accessMode = READ_ONLY)
++    @Schema(example = "2022-07-28T16:43:00.000Z", description = "The date and time the user's bank told GOV.UK Pay about this dispute.", accessMode = READ_ONLY)
+     public String getCreatedDate() {
+         return createdDate;
+     }
+ 
+     @Schema(example = "hu20sqlact5260q2nanm0q8u93", description = "The unique ID GOV.UK Pay automatically associated with this dispute when the paying user disputed the payment.", accessMode = READ_ONLY)
+     public String getDisputeId() {
+         return disputeId;
+     }
+ 
+-    @Schema(example = "2022-07-28T16:43:000Z", description = "The deadline for submitting your supporting evidence. This value uses Coordinated Universal Time (UTC) and ISO 8601 format", accessMode = READ_ONLY)
++    @Schema(example = "2022-07-28T16:43:00.000Z", description = "The deadline for submitting your supporting evidence. This value uses Coordinated Universal Time (UTC) and ISO 8601 format", accessMode = READ_ONLY)
+     public String getEvidenceDueDate() {
+         return evidenceDueDate;
+     }
+ 
+     @Schema(example = "1200", description = "The payment service provider’s dispute fee, in pence.", accessMode = READ_ONLY)
