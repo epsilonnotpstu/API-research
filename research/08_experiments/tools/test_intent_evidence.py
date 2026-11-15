@@ -1,4 +1,4 @@
-"""Synthetic search regressions; only own Python and read-only local git run.
+"""Synthetic search regressions; only own Python and local git fixtures run.
 
 Run this file with /usr/bin/python3 -I -B; imports the adjacent staged module.
 """
@@ -248,7 +248,7 @@ paths:
         commands = []
         def git(cmd, **kwargs):
             commands.append(cmd)
-            output = 'true\n' if 'rev-parse' in cmd else 'abc123 update response\n'
+            output = str(self.root) + '\n' if 'rev-parse' in cmd else 'abc123 update response\n'
             return subprocess.CompletedProcess(cmd, 0, output, '')
         with patch.object(ie.subprocess, 'run', side_effect=git):
             result = self.search(status=418)
@@ -259,6 +259,94 @@ paths:
         self.assertIn('-S418', log)
         self.assertEqual(log[-2:], ['--', 'src/main/C.java'])
         self.assertFalse(any('fetch' in c for c in commands))
+
+    def init_history_repo(self, toplevel):
+        """Commit synthetic fixtures only, without templates or hooks."""
+        for args in (['-c', 'init.templateDir=', 'init', '-q', str(toplevel)],
+                     ['-C', str(toplevel), 'add', '.'],
+                     ['-C', str(toplevel), '-c', 'core.hooksPath=/dev/null',
+                      '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                      '-c', 'commit.gpgSign=false', 'commit', '-qm', 'synthetic response 418']):
+            subprocess.run(['git', *args], check=True, capture_output=True)
+
+    def nested_source_repo(self):
+        enclosing = self.root
+        self.root = enclosing / 'package' / 'source'
+        self.root.mkdir(parents=True)
+        self.handler()
+        self.init_history_repo(enclosing)
+        return enclosing
+
+    def test_enclosing_repo_unavailable_without_git_log(self):
+        self.nested_source_repo()
+        with patch.object(ie.subprocess, 'run', wraps=subprocess.run) as run:
+            result = self.search(status=418)
+        self.assertEqual(result['history'], {
+            'availability': 'unavailable', 'scope': 'unavailable',
+            'toplevel_inside_source': False,
+            'reason': 'enclosing repository outside source_dir'})
+        self.assertFalse(any('log' in call.args[0] for call in run.call_args_list))
+        for call in run.call_args_list:
+            self.assertEqual(call.kwargs['env']['GIT_CEILING_DIRECTORIES'], str(self.root.parent))
+
+    def test_own_repo_history_available(self):
+        self.handler()
+        self.init_history_repo(self.root)
+        result = self.search(status=418)
+        self.assertEqual(result['history']['availability'], 'available')
+        self.assertEqual(result['history']['scope'], 'own_repo')
+        self.assertTrue(result['history']['toplevel_inside_source'])
+        self.assertTrue(self.hits(result, 'E-HISTORY'))
+
+    def test_explicit_ancestor_cli_history_available(self):
+        enclosing = self.nested_source_repo()
+        args = [str(self.root), str(self.spec), '--method', 'GET', '--path', '/api/products',
+                '--status', '418', '--history-root', str(enclosing), '--json']
+        with patch.object(ie.subprocess, 'run', wraps=subprocess.run) as run:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(ie.main(args), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result['history']['availability'], 'available')
+        self.assertEqual(result['history']['scope'], 'explicit_root')
+        self.assertFalse(result['history']['toplevel_inside_source'])
+        self.assertTrue(self.hits(result, 'E-HISTORY'))
+        log = next(call for call in run.call_args_list if 'log' in call.args[0])
+        self.assertEqual(log.args[0][-1], 'package/source/src/main/C.java')
+        self.assertEqual(log.kwargs['env']['GIT_CEILING_DIRECTORIES'], str(self.root.parent))
+
+    def test_history_root_nonancestor_cli_exit_2(self):
+        other = self.root / 'other'
+        other.mkdir()
+        args = [str(self.root), str(self.spec), '--method', 'GET', '--path', '/api/products',
+                '--history-root', str(other)]
+        with patch.object(ie.subprocess, 'run') as run:
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as exc:
+                ie.main(args)
+        self.assertEqual(exc.exception.code, 2)
+        run.assert_not_called()
+
+    def test_explicit_root_must_match_toplevel_exactly(self):
+        enclosing = self.nested_source_repo()
+        with patch.object(ie.subprocess, 'run', wraps=subprocess.run) as run:
+            result = self.search(history_root=enclosing / 'package')
+        self.assertEqual(result['history']['scope'], 'unavailable')
+        self.assertFalse(any('log' in call.args[0] for call in run.call_args_list))
+
+    def test_git_executable_missing(self):
+        with patch.object(ie.subprocess, 'run', side_effect=FileNotFoundError('git absent')):
+            history = self.search()['history']
+        self.assertEqual(history['availability'], 'unavailable')
+        self.assertEqual(history['scope'], 'unavailable')
+        self.assertFalse(history['toplevel_inside_source'])
+
+    def test_outside_toplevel_probe_cannot_authorize_log(self):
+        self.handler()
+        with patch.object(ie.subprocess, 'run', return_value=subprocess.CompletedProcess(
+                [], 0, str(self.root.parent) + '\n', '')) as run:
+            result = self.search(status=418)
+        self.assertEqual(result['history']['scope'], 'unavailable')
+        self.assertEqual(result['history']['reason'], 'enclosing repository outside source_dir')
+        self.assertFalse(any('log' in call.args[0] for call in run.call_args_list))
 
     def test_deadline_marks_partial(self):
         self.handler()

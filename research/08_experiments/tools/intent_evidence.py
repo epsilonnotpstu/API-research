@@ -3,6 +3,11 @@
 
 Usage: intent_evidence.py SOURCE_DIR SPEC --method GET --path /products
                          [--status 418] [--field name] [--json]
+                         [--history-root DIR]
+
+History defaults to SOURCE_DIR's own repository. To search a containing
+repository (e.g. EMB), explicitly name its exact toplevel with --history-root;
+DIR must be an ancestor of or equal to SOURCE_DIR.
 
 This is a lexical search, not a Java compiler or an attribution oracle. All
 relationships are reviewable candidates; handler code never counts as independent
@@ -532,12 +537,17 @@ def spec_context(spec, method, path, field, observed):
             'locator': '#/paths/' + op_path.replace('~', '~0').replace('/', '~1') + '/' + method.lower()}
 
 
-def search(source, spec_path, method, path, status=None, field=None, budget=25.0):
+def search(source, spec_path, method, path, status=None, field=None, budget=25.0,
+           history_root=None):
     start_time = time.monotonic()
     deadline = start_time + budget
     root = Path(source).resolve()
     if not root.is_dir():
         raise ValueError('SOURCE_DIR must be a directory')
+    history_root = Path(history_root).resolve() if history_root is not None else None
+    if history_root is not None and (not history_root.is_dir() or
+                                    not root.is_relative_to(history_root)):
+        raise ValueError('--history-root must be a directory ancestor of or equal to SOURCE_DIR')
     document = load_spec(spec_path)
     spec = spec_context(document, method.upper(), path, field, status)
     files, warnings = [], []
@@ -807,18 +817,29 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
                 **comparison(values, behavior))
 
     # 5. Git is read-only, local, timeout bounded, with external diff disabled.
-    history = {'availability': 'unavailable', 'reason': 'not inside a git work tree'}
+    history = {'availability': 'unavailable', 'reason': 'not inside a git work tree',
+               'scope': 'unavailable', 'toplevel_inside_source': False}
+    git_root = history_root if history_root is not None else root
     env = dict(os.environ, GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0',
-               GIT_PAGER='cat', GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull)
+               GIT_PAGER='cat', GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
+               GIT_CEILING_DIRECTORIES=str(root.parent))
+    # Repository selectors inherited from a caller must not bypass the boundary.
+    for key in ('GIT_DIR', 'GIT_WORK_TREE', 'GIT_COMMON_DIR', 'GIT_INDEX_FILE'):
+        env.pop(key, None)
     def git(args):
         remaining()
-        return subprocess.run(['git', '--no-pager', '-C', str(root), *args],
+        return subprocess.run(['git', '--no-pager', '-C', str(git_root), *args],
                               capture_output=True, text=True, encoding='utf-8', errors='replace',
                               timeout=max(0.01, min(3, remaining())), env=env, check=False)
     try:
-        probe = git(['rev-parse', '--is-inside-work-tree'])
-        if probe.returncode == 0 and probe.stdout.strip() == 'true':
-            history = {'availability': 'available', 'reason': 'local git history searched', 'queries': []}
+        probe = git(['rev-parse', '--show-toplevel'])
+        toplevel = Path(probe.stdout.strip()).resolve() if probe.returncode == 0 and probe.stdout.strip() else None
+        inside = toplevel is not None and toplevel.is_relative_to(root)
+        history['toplevel_inside_source'] = inside
+        allowed = inside or (history_root is not None and toplevel == history_root)
+        if allowed:
+            history.update(availability='available', reason='local git history searched',
+                           scope='own_repo' if inside else 'explicit_root', queries=[])
             literals = [str(status)] if status is not None else []
             if field:
                 literals.append(field)
@@ -829,11 +850,13 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
                 r = next(r for mf, r in matched if mf is f)
                 for literal in literals:
                     log = git(['--literal-pathspecs', 'log', '--no-ext-diff', '--no-textconv',
-                               '--format=%h %s', '-S' + literal, '--oneline', '--', filename])
+                               '--format=%h %s', '-S' + literal, '--oneline', '--',
+                               (root / filename).relative_to(git_root).as_posix()])
                     history['queries'].append({'file': filename, 'literal': literal,
                                                'returncode': log.returncode})
                     if log.returncode:
                         history['availability'] = 'unavailable'
+                        history['scope'] = 'unavailable'
                         history['reason'] = 'git log failed'
                     for commit in log.stdout.splitlines():
                         add('E-HISTORY', f, lineno(f, r['body']),
@@ -841,10 +864,17 @@ def search(source, spec_path, method, path, status=None, field=None, budget=25.0
                             independent=True, commit=commit[:160], literal=literal, support=[])
             if not matched:
                 history['reason'] = 'git available; no matched handler file to search'
+        elif toplevel is not None:
+            history['reason'] = ('enclosing repository outside source_dir' if not inside
+                                 else 'git toplevel does not match --history-root')
+        elif history_root is None and any((parent / '.git').exists() for parent in root.parents):
+            # The ceiling blocks discovery. Inspect only metadata existence to
+            # distinguish an enclosing repository; never query its history.
+            history['reason'] = 'enclosing repository outside source_dir'
         elif probe.returncode and 'not a git repository' not in probe.stderr:
             history['reason'] = probe.stderr.strip()[:200] or 'git probe failed'
     except (OSError, subprocess.TimeoutExpired, TimeoutError) as exc:
-        history = {'availability': 'unavailable', 'reason': str(exc)[:200]}
+        history.update(availability='unavailable', scope='unavailable', reason=str(exc)[:200])
     hits.sort(key=lambda h: (CATEGORIES.index(h['category']), h['file'], h['line'],
                              json.dumps(h, sort_keys=True)))
     support = {s for h in hits if h.get('independent') for s in h.get('support', [])}
@@ -871,6 +901,8 @@ def main(argv=None):
     parser.add_argument('--path', required=True)
     parser.add_argument('--status', type=int, choices=range(100, 600), metavar='100..599')
     parser.add_argument('--field')
+    parser.add_argument('--history-root', metavar='DIR',
+                        help='opt into this exact git toplevel (ancestor of SOURCE_DIR)')
     parser.add_argument('--json', action='store_true')
     args = parser.parse_args(argv)
     # The CLI has a hard wall-clock ceiling as well as cooperative scan/git
@@ -883,7 +915,8 @@ def main(argv=None):
         if hasattr(signal, 'setitimer'):
             signal.signal(signal.SIGALRM, timeout)
             old_timer = signal.setitimer(signal.ITIMER_REAL, 27)
-        result = search(args.source_dir, args.spec, args.method, args.path, args.status, args.field)
+        result = search(args.source_dir, args.spec, args.method, args.path, args.status, args.field,
+                        history_root=args.history_root)
     except (OSError, ValueError, TypeError, RecursionError, SearchDeadline) as exc:
         parser.exit(2, f'intent_evidence: {exc}\n')
     finally:
