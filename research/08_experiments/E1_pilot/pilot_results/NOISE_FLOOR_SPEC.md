@@ -55,7 +55,8 @@
 - Replicate-গুলো আলাদা সময়ের batch থেকে। SUT-এর ভেতরের state প্রতিবার নতুন container-এ শুরু হয়, তবে ⚠️ host-এর load আলাদা হতে পারে।
 - NEW-এর হিসাব fingerprint স্তরে। একই op-এ ভিন্ন kind আলাদা গোনা হয়।
 
-## সংযোজন (2026-11-15): প্রত্যাশিত-kind সংকেত (collateral exposure বাদ দিয়ে)
+## সংযোজন (2026-11-15): প্রত্যাশিত-kind (canonical, mechanism-compatible) সংকেত
+⚠️ T39 F2/F3: এটা causal adjudication নয়। Filter-এর বাইরের NEW মানেই trace-confirmed collateral নয়। METHOD_SEM-এর set একটা canonical subset। 34/61 ঘোষিত filter অনুযায়ী observed count।
 **কেন:** STRICT ablation (`STRICT_ABLATION.md`) দেখিয়েছে, mutated spec generator-কে SUT-এর **আগে থেকে থাকা** defect-এর পথে ঠেলে দিতে পারে। তখন mutated op-এ NEW আসে, কিন্তু kind spec mutation-এর প্রত্যাশিত kind নয়।
 
 **নিয়ম:** fault-এর mechanism থেকে প্রত্যাশিত kind আগে থেকে ঠিক করা (`fuzzer_compare.EXPECTED_KINDS`; per-kind ফল দেখার আগে):
@@ -90,4 +91,4 @@
 - **সংশোধিত উপসংহার:**
   - Fresh mode-এ STRICT, ORACLE আর METHOD_SEM-এর প্রত্যাশিত সংকেত বেশিরভাগ ক্ষেত্রে noise ছাড়ায়।
   - **REQUEST_LOOSE-এর ক্ষেত্রে ছাড়ায় না:** 6/25, মাত্র দুটো SUT-এ।
-  - আগের "51/61" উপসংহার kind-নিরপেক্ষ ছিল। তাতে collateral exposure-ও গোনা হয়েছিল।
+  - আগের "51/61" উপসংহার kind-নিরপেক্ষ ছিল। তাতে প্রত্যাশিত kind-এর বাইরের NEW-ও গোনা হয়েছিল। এগুলোর অন্তত কিছু collateral (STRICT ablation-এ trace দিয়ে নিশ্চিত)।

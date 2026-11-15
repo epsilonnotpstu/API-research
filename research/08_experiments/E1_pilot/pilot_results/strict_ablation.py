@@ -71,6 +71,8 @@ def main():
         if base is None:
             continue
         variant = '+'.join(meta['strict_keywords']) if meta.get('strict_keywords') else 'full'
+        if fz == 'schemathesis' and meta.get('schema_checks') != 'response_headers_conformance':
+            variant += f"[checks={meta.get('schema_checks')}]"  # T39 F1: runtime checks change generation
         manifest = json.load(open(run / 'manifest.json'))
         base_spec, mut_spec = next(base.glob('spec.original.*')), next(run.glob('spec.test.*'))
         bv, _ = violations(base, base_spec, SUT)
@@ -85,7 +87,9 @@ def main():
                                           'fresh'))['mut_NEW_checkable'] for p in sorted(peers)]
         st, links, links500 = traffic(run, manifest)
         edits = Counter(e['pointer'].rsplit('/', 1)[-1] for mu in manifest['mutations'] for e in mu.get('edits', []))
-        row = {'fuzzer': fz, 'variant': variant, 'seed': meta['seed'], 'run': run.name, 'baseline_run': base.name,
+        row = {'fuzzer': fz, 'variant': variant, 'schema_checks': meta.get('schema_checks'),
+               'fuzzer_exit': meta.get('schemathesis_exit') if fz == 'schemathesis' else meta.get('evomaster_exit'),
+               'harness_exit': meta.get('harness_exit'), 'seed': meta['seed'], 'run': run.name, 'baseline_run': base.name,
                'mutated_ops': len(manifest['mutations']), 'selected_no_edit': len(manifest.get('selected_no_edit', [])),
                'edit_keys': ';'.join(f'{k}:{v}' for k, v in sorted(edits.items())),
                'manifest_sig': manifest_signature(manifest), 'mutated_exchanges': mn,

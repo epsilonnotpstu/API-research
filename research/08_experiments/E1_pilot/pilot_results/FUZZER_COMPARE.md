@@ -50,7 +50,7 @@
 
 | SUT | Fault | EvoMaster | Schemathesis |
 |---|---|---|---|
-| petstore | METHOD_SEM | 3/3 | **0/3** (raw NEW সবই `REQUEST_UNCHECKABLE`) |
+| petstore | METHOD_SEM | 3/3 | **0/3** checkable threshold-এ। raw NEW-এ বেশিরভাগ `REQUEST_UNCHECKABLE`, আর s1-এ VALID_REJECTED 1, s3-এ SERVER_ERROR 1। Expected-kind threshold-এ 1/3 (ফল ৩)। |
 | petstore | REQUEST_STRICT | 3/3 | 3/3 |
 | petstore | RESPONSE_ORACLE | 1/1 | 1/1 |
 | market | METHOD_SEM | 3/3 | 3/3 |
@@ -84,7 +84,8 @@
   - Controlled ঘরে কোনো duplicate নেই (26 = 26)।
 - cwa REQUEST_LOOSE-এর তুলনা হয়নি: Schemathesis শুধু p100-এ আছে (সেখানে 3/3), আর EvoMaster p30-এ (2/3)।
 
-## ফল ৩: প্রত্যাশিত-kind সংকেত (2026-11-15; collateral exposure বাদ)
+## ফল ৩: প্রত্যাশিত-kind (canonical, mechanism-compatible) সংকেত (2026-11-15; T39-এ সংশোধিত)
+- ⚠️ এটা causal adjudication নয় (T39 F3)। Filter-এর বাইরের NEW মানেই "collateral" নয়। Trace দিয়ে নিশ্চিত collateral আছে কেবল market STRICT required-only-এ (T35 HAL path)। METHOD_SEM-এর set একটা canonical subset (T39 F2)। `34/61` বা ঘরের সংখ্যাগুলো ঘোষিত filter অনুযায়ী observed count, detection rate নয়।
 - **নিয়ম:** `fuzzer_compare.EXPECTED_KINDS`। এটা mechanism থেকে আগে ঠিক করা, per-kind ফল দেখার আগে।
 
   | Fault | প্রত্যাশিত kind |
@@ -100,12 +101,14 @@
   - বাকি সব ঘর অপরিবর্তিত।
 - **Manifest আলাদা (primary): EvoMaster 10/19, Schemathesis 8/19।** Checkable নিয়মে ছিল 13/19 বনাম 11/19।
   - **REQUEST_LOOSE-এর সব ঘর 0।** petstore, market আর scout, দুই fuzzer-এই।
-  - আগের LOOSE "সংকেত" ছিল collateral: RESPONSE_SCHEMA (petstore), INVALID_ACCEPTED (scout Schemathesis), UNDOCUMENTED_STATUS আর SERVER_ERROR (market/scout EvoMaster)।
+  - আগের LOOSE "সংকেত" filter-এর বাইরের kind ছিল: RESPONSE_SCHEMA (petstore), INVALID_ACCEPTED (scout Schemathesis), UNDOCUMENTED_STATUS আর SERVER_ERROR (market/scout EvoMaster)।
+    - T39 আসল data স্বাধীনভাবে যাচাই করেছে: scout/petstore-এর 13টি NEW-এর একটিরও VANISHED partner নেই। এগুলো বদলানো negative traffic-এ টিকে থাকা constraint-এর (type/required/enum) লঙ্ঘনের সঙ্গে সঙ্গত, pointer-shift artifact নয়।
+    - ⚠️ Cause (spec নাকি impl) চূড়ান্ত নয়।
   - প্রত্যাশিত VALID_REJECTED এসেছে শুধু cwa LOOSE-এ: Schemathesis p100 3/3, EvoMaster p30 2/3। cwa এই তুলনার বাইরে, কারণ severity আলাদা।
   - ORACLE অপরিবর্তিত।
 - **উপসংহার:**
   - দুই fuzzer-এর তুলনা (controlled) kind filter-এ প্রায় অপরিবর্তিত।
-  - কিন্তু REQUEST_LOOSE-এর fresh সংকেত প্রায় পুরোটাই collateral ছিল।
+  - কিন্তু REQUEST_LOOSE-এর fresh সংকেত প্রায় পুরোটাই প্রত্যাশিত kind-এর বাইরে ছিল।
   - Kind-নিরপেক্ষ mapped-fingerprint মাপ fault class-এর detection বাড়িয়ে দেখায়, বিশেষত যখন mutation generator-এর trajectory বদলায়।
 - Per-run kind-বণ্টন: `fuzzer_compare.csv` (`fresh_mut_kinds`)। Run log: `09_collab/logs/kindfilter/`।
 
@@ -198,10 +201,10 @@
        - Schemathesis-এর 2xx violation অন্য operation-এ, তাই "একই breach, ভিন্ন status" এমন সরাসরি জোড়া এই corpus-এ নেই।
        - Claude-এর spot-check: s1-এ 392, s3-এ 361টি array-`_links` PUT, সব 500 + HAL message।
        - **Keyword ablation (`STRICT_ABLATION.md`):** required edit সরালে EvoMaster-এর INVALID_ACCEPTED সংকেত 0/3 থেকে 2/3-এ ফেরে; শুধু required রাখলে 0/3।
-       - Schemathesis-এর required-only run-এ 3/3 NEW এসেছে, কিন্তু সব **collateral** 500 (আগে থেকে থাকা HAL defect)। তাই fresh সংকেত kind-নিরপেক্ষভাবে গোনা যায় না।
+       - Schemathesis-এ required edit নিরপেক্ষ: মিলানো settings-এ required-only 0/3, no-required 3/3। আগের `[checks=all]` run-এ required-only-তে 3/3 **collateral** 500 এসেছিল, কারণ baseline ছোট ছিল (T39 F1)। তাই collateral exposure নির্ভর করে baseline coverage-এর ওপর, আর fresh সংকেত kind-নিরপেক্ষভাবে গোনা যায় না।
        - ⚠️ T32-এর আরেকটা পর্যবেক্ষণ: কিছু STRICT edit original pattern-এর সঙ্গে মিলিয়ে অসম্ভব (যেমন phone regex ≥12 char কিন্তু `maxLength=1`)। এর প্রভাব generator-ভেদে আলাদা হতে পারে; causal কারণ যাচাই হয়নি।
      - R1-এর জন্য তাৎপর্য: fresh-only মূল্যায়ন generator-এর পথ এবং SUT-এর আচরণের ওপর নির্ভর করে। Replay mode একই baseline traffic-এ oracle বদলায়, তাই এই নির্ভরতা থেকে মুক্ত।
-   - **petstore METHOD_SEM:** EvoMaster 3/3; Schemathesis-এর সংকেত শুধু `REQUEST_UNCHECKABLE`, তাই checkable 0/3।
+   - **petstore METHOD_SEM:** EvoMaster 3/3; Schemathesis checkable threshold-এ 0/3, কারণ raw NEW-এ বেশিরভাগ `REQUEST_UNCHECKABLE`, আর বাকিগুলো reference ছাড়ায় না। Expected-kind threshold-এ 1/3।
      - ⚠️ এটা দেখায় raw NEW গুনলে ফল কতটা বিভ্রান্তিকর হয়।
    - **cwa REQUEST_STRICT:** EvoMaster 1/3 (s2: fresh 2, replay 0), Schemathesis 0/3।
      - ⚠️ Baseline replay-তে ওই violation দেখা যায়নি। এর মানে input অনুপস্থিত ছিল কিনা, তা fingerprint দিয়ে বলা যায় না (T29 F6)।
