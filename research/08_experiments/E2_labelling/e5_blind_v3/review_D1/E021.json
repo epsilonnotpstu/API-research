@@ -1,0 +1,666 @@
+{
+  "item_id": "E021",
+  "target_proposition": {
+    "side": "request and response",
+    "method": "POST",
+    "path_template": "/version/v1/registrationToken",
+    "scenario": "Empty JSON creation request omits key/keyType, reaches null switch, returns 500; determine required fields and rejection obligation.",
+    "observed_status": 500,
+    "field": "keyType",
+    "direction": "Request key/keyType requiredness and safe 4xx rejection versus current optional fields and crash."
+  },
+  "search_mandatory": true,
+  "search_mandatory_reason": "Assess missing resource key/keyType spec defect under §10.6; both_candidate requires §11.4.1(b) search, although primary non-gateway crash attribution is deterministic.",
+  "review_start_time": "2026-11-15T02:34:19.840548+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:81",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 71,
+        "end_line": 91
+      }
+    },
+    {
+      "index": 1,
+      "category": "HANDLER",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:120",
+      "disposition": "context",
+      "reason": "This explicit status expression is a different error branch from the target success response; handler code is context only in any case.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 110,
+        "end_line": 127
+      }
+    },
+    {
+      "index": 2,
+      "category": "HANDLER",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:123",
+      "disposition": "context",
+      "reason": "This explicit status expression is a different error branch from the target success response; handler code is context only in any case.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 113,
+        "end_line": 127
+      }
+    },
+    {
+      "index": 3,
+      "category": "E-DOC",
+      "location": "K11/source/docs/architecture-overview.md:187",
+      "disposition": "reject",
+      "reason": "The creation guide shows keyType and discusses invalid teleTAN verification, but does not specify the empty-object/null-keyType branch. Status-only or example proximity cannot decide requiredness.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/docs/architecture-overview.md",
+        "start_line": 177,
+        "end_line": 197
+      }
+    },
+    {
+      "index": 4,
+      "category": "E-DOC",
+      "location": "K11/source/docs/architecture-overview.md:194",
+      "disposition": "reject",
+      "reason": "The creation guide shows keyType and discusses invalid teleTAN verification, but does not specify the empty-object/null-keyType branch. Status-only or example proximity cannot decide requiredness.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/docs/architecture-overview.md",
+        "start_line": 184,
+        "end_line": 204
+      }
+    },
+    {
+      "index": 5,
+      "category": "E-DOC",
+      "location": "K11/source/docs/architecture-overview.md:269",
+      "disposition": "reject",
+      "reason": "The cited architecture paragraph concerns POST /tan/another TAN use case rather than empty POST /registrationToken. Nearby 400/201 values do not establish this branch.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/docs/architecture-overview.md",
+        "start_line": 259,
+        "end_line": 279
+      }
+    },
+    {
+      "index": 6,
+      "category": "E-DOC",
+      "location": "K11/source/docs/architecture-overview.md:274",
+      "disposition": "reject",
+      "reason": "The cited architecture paragraph concerns POST /tan/another TAN use case rather than empty POST /registrationToken. Nearby 400/201 values do not establish this branch.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/docs/architecture-overview.md",
+        "start_line": 264,
+        "end_line": 284
+      }
+    },
+    {
+      "index": 7,
+      "category": "E-DOC",
+      "location": "K11/source/docs/architecture-overview.md:277",
+      "disposition": "reject",
+      "reason": "The cited architecture paragraph concerns POST /tan/another TAN use case rather than empty POST /registrationToken. Nearby 400/201 values do not establish this branch.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/docs/architecture-overview.md",
+        "start_line": 267,
+        "end_line": 287
+      }
+    },
+    {
+      "index": 8,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:63",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 53,
+        "end_line": 73
+      }
+    },
+    {
+      "index": 9,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:64",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 54,
+        "end_line": 74
+      }
+    },
+    {
+      "index": 10,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:65",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 55,
+        "end_line": 75
+      }
+    },
+    {
+      "index": 11,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:66",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 56,
+        "end_line": 76
+      }
+    },
+    {
+      "index": 12,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:67",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 57,
+        "end_line": 77
+      }
+    },
+    {
+      "index": 13,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:68",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 58,
+        "end_line": 78
+      }
+    },
+    {
+      "index": 14,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:69",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 59,
+        "end_line": 79
+      }
+    },
+    {
+      "index": 15,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:70",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 60,
+        "end_line": 80
+      }
+    },
+    {
+      "index": 16,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:71",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 61,
+        "end_line": 81
+      }
+    },
+    {
+      "index": 17,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:72",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 62,
+        "end_line": 82
+      }
+    },
+    {
+      "index": 18,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:73",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 63,
+        "end_line": 83
+      }
+    },
+    {
+      "index": 19,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:74",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 64,
+        "end_line": 84
+      }
+    },
+    {
+      "index": 20,
+      "category": "E-DOC",
+      "location": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:75",
+      "disposition": "reject",
+      "reason": "Handler Javadoc or OpenAPI annotation repeats the questioned implementation/contract. There is no separately linked normative source, so the tool's independent flag is rejected.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java",
+        "start_line": 65,
+        "end_line": 85
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:80",
+        "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91",
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K11/r1/exchanges.jsonl:132"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:51",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:52"
+      ],
+      "disposition": "accept",
+      "reason": "The test constructs a request with null keyType and asserts 400. Constants resolve POST /version/v1/registrationToken; cwa-fake=0 reaches real validation. This manual hit was missed by lexical route matching.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": "supports_spec_behavior"
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:51",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:52"
+      ],
+      "disposition": "accept",
+      "reason": "The test constructs a request with null key and asserts 400. Constants resolve POST /version/v1/registrationToken; cwa-fake=0 reaches real validation. This manual hit was missed by lexical route matching.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": "supports_spec_behavior"
+    },
+    {
+      "category": "E-CODE-INTENT",
+      "locators": [
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59",
+        "K11/source/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:60"
+      ],
+      "disposition": "accept",
+      "reason": "Independent model NotNull constraints and the null-key/keyType validator agree with the tests. The creation schema has no required list; under §10.6 its missing resource keys are a secondary spec defect.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": "supports_required_creation_keys"
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": true,
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Null key/keyType tests require 400; model constraints require both fields. Missing binding validation permits a null switch and 500. The creation schema omits required keys, so §10.6 also warrants both_candidate.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": null,
+    "evidence_types": "E-TEST;E-CODE-INTENT;E-CONV"
+  },
+  "review_end_time": "2026-11-15T02:49:23.919415+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-cwa-verification:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "SERVER_ERROR",
+        "method": "POST",
+        "template": "/version/v1/registrationToken",
+        "status": 500,
+        "pointer": "",
+        "message": ""
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K11/r1/exchanges.jsonl",
+    "exchange_index_0_based": 131,
+    "line_1_based": 132,
+    "method": "POST",
+    "path": "/version/v1/registrationToken",
+    "observed_status": 500
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "complete",
+  "intent_search_verdict": "supports_spec",
+  "intent_review_verdict": "supports_spec_behavior",
+  "search_execution": {
+    "stdout": "search_D1/E021.json",
+    "stderr": "search_D1/E021.stderr",
+    "exit_code_file": "search_D1/E021.exitcode",
+    "exit_code": 0,
+    "scan_complete": true,
+    "warnings": [],
+    "command_argv": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K11/source",
+      "K11/spec.json",
+      "--method",
+      "POST",
+      "--path",
+      "/version/v1/registrationToken",
+      "--status",
+      "500",
+      "--field",
+      "keyType",
+      "--json"
+    ]
+  },
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "available"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K11/source",
+    "procedure": "Read selected handler and linked DTO/superclass/configuration; inspect authored tests/docs with explicit package paths; resolve test method, helper and route constants; reject vendor assets and annotation/spec repetition. No external lookup or package execution.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "both_candidate_evidence": {
+    "implementation": [
+      "K11/r1/exchanges.jsonl:132",
+      "K11/r1/compose.log:10355",
+      "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:80",
+      "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91"
+    ],
+    "specification": [
+      "K11/spec.json#/components/schemas/RegistrationTokenRequest",
+      "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+      "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59"
+    ],
+    "secondary_L2": "S-REQ-LOOSE",
+    "rule": "§10.6 required resource keys in a creation request; primary IMPL/I-CRASH."
+  },
+  "evidence_locators": [
+    "K11/r1/exchanges.jsonl:132",
+    "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:80",
+    "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91",
+    "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+    "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+    "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558",
+    "K11/r1/compose.log:10353",
+    "K11/r1/compose.log:10355",
+    "K11/r1/compose.log:10356",
+    "K11/spec.json#/paths/~1version~1v1~1registrationToken/post",
+    "K11/spec.json#/components/schemas/RegistrationTokenRequest"
+  ],
+  "intent_review_verdict_interpretation": "supports_spec_behavior applies to documented 400 response versus observed 500; request requiredness is independently stricter than the schema and is recorded as the secondary S-REQ-LOOSE candidate. There is no contradictory intent between the tests and model."
+}

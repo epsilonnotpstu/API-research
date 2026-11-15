@@ -1,0 +1,151 @@
+{
+  "item_id": "E036",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/pet/{petId}",
+    "scenario": "SERVER_ERROR: ",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL."
+  },
+  "search_mandatory": false,
+  "search_mandatory_reason": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL.",
+  "review_start_time": "2026-11-15T02:34:19.841234+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K03/source/src/main/java/io/swagger/petstore/controller/PetController.java:72"
+      ],
+      "disposition": "context",
+      "reason": "Followed the listed binding, linked model, superclass or DAO to explain observed behavior; implementation structure alone is not independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K03/r1/exchanges.jsonl:409"
+      ],
+      "disposition": "context",
+      "reason": "Representative traffic confirms the target scenario; observation is not independent normative intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K03/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3"
+      ],
+      "disposition": "context",
+      "reason": "This package test class has no assertions; absence of tests does not support either side.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K03/source/README.md:3",
+        "K03/source/README.md:39"
+      ],
+      "disposition": "reject",
+      "reason": "Read the setup/UI README paragraphs. They contain no target response-type requirement.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "A positive numeric pet ID triggers an explicit exception guard and traffic returns 500. Regardless of the guard's intended rejection policy, the non-gateway server error is IMPL under R1.",
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "unit": "Only the listed violation fingerprint, not unrelated messages on the same representative exchange.",
+    "deterministic_rule": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL."
+  },
+  "review_end_time": "2026-11-15T02:49:23.927633+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-swagger-petstore:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "SERVER_ERROR",
+        "method": "GET",
+        "template": "/pet/{petId}",
+        "status": 500,
+        "pointer": "",
+        "message": ""
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K03/r1/exchanges.jsonl",
+    "exchange_index_0_based": 408,
+    "line_1_based": 409,
+    "method": "GET",
+    "path": "/api/v3/pet/13",
+    "observed_status": 500
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "not_run",
+  "intent_search_verdict": "NA",
+  "intent_review_verdict": "not_applicable",
+  "search_execution": null,
+  "history_review": {
+    "decision": "No package history is supplied. No E-HISTORY hit exists or is used; enclosing-worktree metadata is excluded.",
+    "raw_tool_availability": "not_run"
+  },
+  "evidence_locators": [
+    "K03/r1/exchanges.jsonl:409",
+    "K03/source/src/main/java/io/swagger/petstore/controller/PetController.java:72",
+    "K03/spec.json#/paths/~1pet~1{petId}/get"
+  ],
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K03/source",
+    "procedure": "Check deterministic rule against local schema, source and captured exchange.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/pet/findByStatus"
+  },
+  "observed_status": 200,
+  "field": "tags",
+  "spec": {
+    "file": "./K03/spec.json",
+    "path": "/pet/findByStatus",
+    "statuses": [
+      "200",
+      "400",
+      "default"
+    ],
+    "field_policy": [
+      "optional"
+    ],
+    "field": "tags",
+    "locator": "#/paths/~1pet~1findByStatus/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:50",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 50,
+      "snippet": "public ResponseContext findPetsByStatus(final RequestContext request, final String status) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/pet/findByStatus",
+      "methods": [
+        "GET"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "./K03/spec.json",
+      "operation_id": "findPetsByStatus",
+      "controller": "io.swagger.petstore.controller.PetController",
+      "inflector_config": "inflector.yaml"
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:54",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 54,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:62",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 62,
+      "snippet": "return new ResponseContext().status(Response.Status.NOT_FOUND).entity(\"Pets not found\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        404
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/model/Pet.java:74",
+      "file": "src/main/java/io/swagger/petstore/model/Pet.java",
+      "line": 74,
+      "snippet": "@XmlElement(name = \"tag\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; response DTO link and serialization are lexical inferences; XML annotation does not establish JSON presence",
+      "field": "tags",
+      "field_behavior": null,
+      "independent": false
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+        "literal": "200",
+        "returncode": 0
+      },
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+        "literal": "tags",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 29,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

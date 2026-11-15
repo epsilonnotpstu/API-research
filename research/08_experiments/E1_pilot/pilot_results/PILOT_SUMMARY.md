@@ -130,7 +130,13 @@
      - IMPL* 7/6। বাকিগুলো UNDECIDABLE+both।
      - WRONG_STATUS-এ labeller-রা test আর documentation-এ intent-প্রমাণ খুঁজে পেয়ে IMPL দিয়েছে।
      - খরচ: annotation fault-এ বিরত থাকা।
-   - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md` (v1 + v2)।
+   - **v3, codebook v0.6 §11.4 (2026-11-15):** intent-evidence search procedure-এর held-out মূল্যায়ন, pre-registered।
+     - নতুন labeller D1/D2, primary n=11। Misattribution 0/0 (S1 পূরণ)।
+     - Wrong-status item-এ স্বাধীন E-DOC/E-TEST প্রমাণ মিলে 4/4 IMPL।
+     - WRITE_ONLY আর guard-only item-এ স্বাধীন প্রমাণ নেই, তাই UNDECIDABLE + both।
+     - Intent-looking subset-এ v2 C1 2, C2 1 → v3 2, 2 (S2 পূরণ, সামান্য)।
+     - **উপসংহার:** procedure নিরাপদ, আর তার লাভ নির্ভর করে source-এ স্বাধীন intent-প্রমাণ আছে কিনা তার ওপর।
+   - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md` (v1 + v2 + v3)।
 
 9. **[H9] দ্বিতীয় fuzzer (EvoMaster v6.2.0 black-box) — fault class-স্তরের প্যাটার্ন একই রকম, ঘর-স্তরে generator-নির্ভরতা আছে।** উৎস: `FUZZER_COMPARE.md`।
    - **Controlled ঘর** (একই mutation set, p30): EvoMaster **20/26**, Schemathesis **19/26**।

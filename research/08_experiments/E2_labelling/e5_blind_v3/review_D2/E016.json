@@ -1,0 +1,270 @@
+{
+  "item_id": "E016",
+  "review_started_at": "2026-11-15T02:33:34.658782+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/user/login",
+    "scenario": "Absent optional login username is rejected with 400.",
+    "field": "username",
+    "observed_status": 400,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": true,
+  "search_requirement_reason": "§11.4.1(a–c): intent-dependent attribution; independent tests/docs may change the decision.",
+  "history_scope": "unavailable",
+  "tool_hits_review": [
+    {
+      "hit_index": 0,
+      "category": "HANDLER",
+      "source_locator": "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:103",
+      "disposition": "context",
+      "reason": "Handler/model return, guard, or annotation establishes mechanics only; it is not independent intent evidence.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded",
+        "initial"
+      ]
+    },
+    {
+      "hit_index": 1,
+      "category": "HANDLER",
+      "source_locator": "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:106",
+      "disposition": "context",
+      "reason": "Handler/model return, guard, or annotation establishes mechanics only; it is not independent intent evidence.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded",
+        "initial"
+      ]
+    }
+  ],
+  "manual_additions": [
+    {
+      "locators": [
+        "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:104",
+        "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:125"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K04/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3",
+        "K04/source/README.md:4"
+      ],
+      "disposition": "reject",
+      "reason": "Complete local test class is empty; complete README contains setup/UI guidance only. Absence of tests does not establish implementation intent.",
+      "evidence_type": "E-TEST",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:104",
+        "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:125"
+      ],
+      "disposition": "unresolved",
+      "reason": "Login and delete-user username guards share UserController; the latter has a path-bound username. Their independence/applicability to login optionality is insufficient; flag same-class policy.",
+      "evidence_type": "E-CONSIST",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "same_class_policy",
+    "history_scope": "unavailable",
+    "rationale": "The login username guard conflicts with optionality. Other username guards share UserController and different routes; they do not independently resolve login policy.",
+    "evidence_types": [
+      "E-CODE-INTENT"
+    ],
+    "evidence_locators": [
+      "K04/r1/exchanges.jsonl:1279",
+      "K04/spec.json#/paths/~1user~1login/get",
+      "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:104",
+      "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:125",
+      "K04/spec.json#/paths/~1user~1login/get/parameters/0"
+    ],
+    "components": [
+      {
+        "item_kind": "VALID_REJECTED",
+        "L1": "UNDECIDABLE",
+        "L2": "NA"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §11.4.1(a–c): intent-dependent attribution; independent tests/docs may change the decision."
+  },
+  "review_ended_at": "2026-11-15T02:43:14.088004+00:00",
+  "search_execution": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "./K04/source",
+      "./K04/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/user/login",
+      "--status",
+      "400",
+      "--field",
+      "username",
+      "--json"
+    ],
+    "environment_override": {
+      "GIT_CEILING_DIRECTORIES": "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e5_blind_v3"
+    },
+    "initial_attempt_preserved": "search_D2/E016.initial.json",
+    "incident": "Initial tool discovered ancestor git, despite package history being unavailable. No E-HISTORY hits were returned. Rerun bounds git discovery to this task directory."
+  },
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "none_found",
+  "search_status": "complete",
+  "scan_review": {
+    "tool_scan": {
+      "text_files": 29,
+      "skipped_binary_or_encoding": 0,
+      "skipped_large": 0,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "resolution": "All target routes and relevant source/test/doc files were readable; binary/vendor/large UI assets are irrelevant to these obligations. Manual fallback resolves lexical misses. No package history is available."
+  },
+  "initial_attempt_review": {
+    "raw_output": "search_D2/E016.initial.json",
+    "raw_verdict": "none_found",
+    "hit_review": "Initial and bounded-run hit arrays are identical; each indexed review applies to both attempts. Ancestor-history metadata is excluded.",
+    "history_hits": 0
+  },
+  "representative_exchange": {
+    "file": "K04/r1/exchanges.jsonl",
+    "zero_based_index": 1278,
+    "physical_line_one_based": 1279
+  },
+  "manual_fallback_complete": true
+}

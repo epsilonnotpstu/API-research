@@ -1,0 +1,128 @@
+{
+  "item_id": "E006",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/products/{productId}",
+    "scenario": "UNDOCUMENTED_STATUS: ",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL."
+  },
+  "search_mandatory": false,
+  "search_mandatory_reason": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL.",
+  "review_start_time": "2026-11-15T02:34:19.839874+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K07/source/market-rest/src/main/java/market/rest/ProductsRestController.java:60"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K07/r1/exchanges.jsonl:1003"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Missing product reaches Optional.get and returns 500. R1 applies even though this item is the undocumented-status fingerprint; nonexistent resources do not establish a second spec defect.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": "Non-gateway 500: codebook §9.3 R1; deterministic IMPL.",
+    "evidence_types": "E-CODE-INTENT;E-CONV"
+  },
+  "review_end_time": "2026-11-15T02:49:23.907003+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-market:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "SERVER_ERROR",
+        "method": "GET",
+        "template": "/products/{productId}",
+        "status": 500,
+        "pointer": "",
+        "message": ""
+      },
+      {
+        "kind": "UNDOCUMENTED_STATUS",
+        "method": "GET",
+        "template": "/products/{productId}",
+        "status": 500,
+        "pointer": "",
+        "message": ""
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K07/r1/exchanges.jsonl",
+    "exchange_index_0_based": 1002,
+    "line_1_based": 1003,
+    "method": "GET",
+    "path": "/products/0",
+    "observed_status": 500
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "not_run",
+  "intent_search_verdict": "NA",
+  "intent_review_verdict": "not_applicable",
+  "search_execution": null,
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "not_run"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "procedure": "Deterministic rule checked against representative exchange, local schema and deployed code; intent search not needed.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "evidence_locators": [
+    "K07/r1/exchanges.jsonl:1003",
+    "K07/source/market-rest/src/main/java/market/rest/ProductsRestController.java:60",
+    "K07/r1/compose.log:24830",
+    "K07/r1/compose.log:24831",
+    "K07/r1/compose.log:24833",
+    "K07/spec.json#/paths/~1products~1{productId}/get"
+  ]
+}

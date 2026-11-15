@@ -1,0 +1,130 @@
+{
+  "item_id": "E023",
+  "review_started_at": "2026-11-15T02:33:34.659135+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/store/order/{orderId}",
+    "scenario": "Integer beyond int64 range is rejected during Java Long conversion.",
+    "field": "orderId",
+    "observed_status": 400,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": false,
+  "search_requirement_reason": "§10.5 int64 oracle format limitation",
+  "history_scope": "unavailable",
+  "tool_hits_review": [],
+  "manual_additions": [
+    {
+      "locators": [
+        "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:40"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K03/r1/exchanges.jsonl:962"
+      ],
+      "disposition": "context",
+      "reason": "Deterministic transport/capture/numeric-format evidence in representative exchange; no API-intent claim is needed.",
+      "evidence_type": "E-CONV",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "TEST",
+    "L2": "NA",
+    "proposed_L2": "T-ORACLE-FORMAT",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The representative order ID exceeds signed int64. Its Java Long conversion failure is legitimate; the checker validity premise misses numeric-format limits.",
+    "evidence_types": [
+      "E-CONV"
+    ],
+    "evidence_locators": [
+      "K03/r1/exchanges.jsonl:962",
+      "K03/spec.json#/paths/~1store~1order~1{orderId}/get",
+      "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:40",
+      "K03/spec.json#/paths/~1store~1order~1{orderId}/get/parameters/0",
+      "../../tools/conformance.py:40"
+    ],
+    "components": [
+      {
+        "item_kind": "VALID_REJECTED",
+        "L1": "TEST",
+        "L2": "NA"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §10.5 int64 oracle format limitation"
+  },
+  "review_ended_at": "2026-11-15T02:43:14.094044+00:00",
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "scan_review": {
+    "resolution": "Intent-free deterministic rule; see search_requirement_reason and decision."
+  },
+  "representative_exchange": {
+    "file": "K03/r1/exchanges.jsonl",
+    "zero_based_index": 961,
+    "physical_line_one_based": 962
+  },
+  "manual_fallback_complete": true
+}

@@ -1,0 +1,105 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/pet/findByTags"
+  },
+  "observed_status": 400,
+  "field": "tags",
+  "spec": {
+    "file": "./K10/spec.json",
+    "path": "/pet/findByTags",
+    "statuses": [
+      "200",
+      "400",
+      "default"
+    ],
+    "field_policy": [],
+    "field": "tags",
+    "locator": "#/paths/~1pet~1findByTags/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:233",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 233,
+      "snippet": "public ResponseContext findPetsByTags(final RequestContext request, final List<String> tags) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/pet/findByTags",
+      "methods": [
+        "GET"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "./K10/spec.json",
+      "operation_id": "findPetsByTags",
+      "controller": "io.swagger.petstore.controller.PetController",
+      "inflector_config": "inflector.yaml"
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:237",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 237,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/model/Pet.java:75",
+      "file": "src/main/java/io/swagger/petstore/model/Pet.java",
+      "line": 75,
+      "snippet": "@XmlElement(name = \"tag\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; response DTO link and serialization are lexical inferences; XML annotation does not establish JSON presence",
+      "field": "tags",
+      "field_behavior": null,
+      "independent": false
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+        "literal": "400",
+        "returncode": 0
+      },
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+        "literal": "tags",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 29,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

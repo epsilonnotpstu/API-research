@@ -1,0 +1,187 @@
+{
+  "item_id": "E023",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/store/order/{orderId}",
+    "scenario": "VALID_REJECTED: ",
+    "observed_status": 400,
+    "field": null,
+    "direction": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT."
+  },
+  "search_mandatory": false,
+  "search_mandatory_reason": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT.",
+  "review_start_time": "2026-11-15T02:34:19.840635+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:40"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K03/r1/exchanges.jsonl:962"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K03/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3"
+      ],
+      "disposition": "context",
+      "reason": "The only package test class has no methods or assertions. Absence of a test is not positive evidence for implementation intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K03/source/README.md:3",
+        "K03/source/README.md:39"
+      ],
+      "disposition": "reject",
+      "reason": "Full setup/overview/UI paragraphs do not state the target obligation; the separately bundled OpenAPI is contract context, not independent prose.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CODE-INTENT",
+      "locators": [
+        "../../tools/conformance.py:25",
+        "../../tools/conformance.py:39",
+        "K03/r1/exchanges.jsonl:962"
+      ],
+      "disposition": "context",
+      "reason": "The recorded integer is greater than 2**63-1. Current format-aware checker emits no VALID_REJECTED; INT_FORMATS=False reproduces the listed fingerprint. This is an oracle-format false positive.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CODE-INTENT",
+      "locators": [
+        "../../tools/conformance.py:25",
+        "../../tools/conformance.py:39",
+        "K03/r1/exchanges.jsonl:962"
+      ],
+      "disposition": "context",
+      "reason": "Recorded path integer exceeds 2**63-1. Current checker suppresses VALID_REJECTED while INT_FORMATS=False reproduces it.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "TEST",
+    "L2": "NA",
+    "proposed_L2": "T-ORACLE-FORMAT",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The path value exceeds signed int64. Java Long conversion correctly rejects it; the historical checker classified it as valid because integer-format limits were disabled.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT.",
+    "evidence_types": "E-CODE-INTENT"
+  },
+  "review_end_time": "2026-11-15T02:49:23.920696+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-swagger-petstore:8080",
+    "int_formats": true,
+    "representative_matches_item": false,
+    "violations": [],
+    "legacy_int_formats_false_violations": [
+      {
+        "kind": "VALID_REJECTED",
+        "method": "GET",
+        "template": "/store/order/{orderId}",
+        "status": 400,
+        "pointer": "",
+        "message": ""
+      }
+    ]
+  },
+  "traffic_evidence": {
+    "file": "K03/r1/exchanges.jsonl",
+    "exchange_index_0_based": 961,
+    "line_1_based": 962,
+    "method": "GET",
+    "path": "/api/v3/store/order/150297332117151923664279083626680624782",
+    "observed_status": 400
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "not_run",
+  "intent_search_verdict": "NA",
+  "intent_review_verdict": "not_applicable",
+  "search_execution": null,
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "not_run"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "procedure": "Deterministic rule checked against representative exchange, local schema and deployed code; intent search not needed.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "evidence_locators": [
+    "K03/r1/exchanges.jsonl:962",
+    "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:40",
+    "K03/spec.json#/paths/~1store~1order~1{orderId}/get",
+    "K03/spec.json#/paths/~1store~1order~1{orderId}/get/parameters/0/schema/format"
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "item_id": "E031",
+  "review_started_at": "2026-11-15T02:33:34.659550+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "POST",
+    "path_template": "/v1/favourites",
+    "scenario": "Spec requires a path id on template /v1/favourites that has no id placeholder; request has body id.",
+    "field": "id",
+    "observed_status": 204,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": false,
+  "search_requirement_reason": "§4 S-STRUCT: path parameter absent from path template",
+  "history_scope": "unavailable",
+  "tool_hits_review": [],
+  "manual_additions": [
+    {
+      "locators": [
+        "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:30",
+        "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:55"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K01/spec.json#/paths/~1v1~1favourites/post/parameters/0"
+      ],
+      "disposition": "accept",
+      "reason": "A required path parameter named id cannot be supplied on a path template without {id}; structural witness is the template and its own parameter declaration.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-STRUCT",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The spec requires a path id on a template containing no id placeholder. This structural contradiction is independent of implementation intent.",
+    "evidence_types": [
+      "E-CODE-INTENT"
+    ],
+    "evidence_locators": [
+      "K01/r1/exchanges.jsonl:4662",
+      "K01/spec.json#/paths/~1v1~1favourites/post",
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:30",
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:55",
+      "K01/spec.json#/paths/~1v1~1favourites/post/parameters/0",
+      "K01/spec.json#/paths/~1v1~1favourites/post/parameters/0"
+    ],
+    "components": [
+      {
+        "item_kind": "INVALID_ACCEPTED",
+        "L1": "SPEC",
+        "L2": "S-STRUCT"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §4 S-STRUCT: path parameter absent from path template"
+  },
+  "review_ended_at": "2026-11-15T02:43:14.103688+00:00",
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "scan_review": {
+    "resolution": "Intent-free deterministic rule; see search_requirement_reason and decision."
+  },
+  "representative_exchange": {
+    "file": "K01/r1/exchanges.jsonl",
+    "zero_based_index": 4661,
+    "physical_line_one_based": 4662
+  },
+  "manual_fallback_complete": true
+}

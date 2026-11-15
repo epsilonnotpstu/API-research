@@ -1,0 +1,129 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/store/order"
+  },
+  "observed_status": 200,
+  "field": "status",
+  "spec": {
+    "file": "K10/spec.json",
+    "path": "/store/order",
+    "statuses": [
+      "200",
+      "400",
+      "422",
+      "default"
+    ],
+    "field_policy": [
+      "optional"
+    ],
+    "field": "status",
+    "locator": "#/paths/~1store~1order/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/OrderController.java:58",
+      "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+      "line": 58,
+      "snippet": "public ResponseContext placeOrder(final RequestContext request, final Order order) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/store/order",
+      "methods": [
+        "POST"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "x-swagger-router-controller",
+      "routing_source": "src/main/webapp/openapi.yaml",
+      "operation_id": "placeOrder",
+      "controller": "io.swagger.petstore.controller.OrderController",
+      "inflector_config": null
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/OrderController.java:61",
+      "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+      "line": 61,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/OrderController.java:72",
+      "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+      "line": 72,
+      "snippet": "final String status, final Boolean complete) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/store/order",
+      "methods": [
+        "POST"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "x-swagger-router-controller",
+      "routing_source": "src/main/webapp/openapi.yaml",
+      "operation_id": "placeOrder",
+      "controller": "io.swagger.petstore.controller.OrderController",
+      "inflector_config": null
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/model/Order.java:70",
+      "file": "src/main/java/io/swagger/petstore/model/Order.java",
+      "line": 70,
+      "snippet": "@XmlElement(name = \"status\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; response DTO link and serialization are lexical inferences; XML annotation does not establish JSON presence",
+      "field": "status",
+      "field_behavior": null,
+      "independent": false
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+        "literal": "200",
+        "returncode": 0
+      },
+      {
+        "file": "src/main/java/io/swagger/petstore/controller/OrderController.java",
+        "literal": "status",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 29,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}
