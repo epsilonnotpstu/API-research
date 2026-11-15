@@ -1,0 +1,126 @@
+{
+  "item_id": "I010",
+  "start_time": "2026-11-15T05:42:29.946597+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/v1/media_files/{id}",
+    "scenario": "GET media file exists in implementation but method is absent from specification",
+    "observed_status": 404,
+    "field": null,
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "UNDOCUMENTED_OPERATION",
+    "violation_pointer": "",
+    "spec_obligation": "method not in spec",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+      "disposition": "context",
+      "proposition": "createRequest helpers at 44–63 add /api/ and default v1, resolving the test route precisely.",
+      "support": null,
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "createRequest helpers at 44–63 add /api/ and default v1, resolving the test route precisely."
+      }
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:165",
+      "disposition": "accept",
+      "proposition": "GET media_files/id asserts HTTP_OK at 167, called by CRUD test at 89–99. This independently establishes route existence, not overflow-id response intent.",
+      "support": "supports_impl_behavior",
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "GET media_files/id asserts HTTP_OK at 167, called by CRUD test at 89–99. This independently establishes route existence, not overflow-id response intent."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-METHOD",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "Independent media CRUD tests exercise GET by id using the resolved API prefix. Its omission from the contract is established even though this representative oversized id returns 404.",
+    "evidence_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:233",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:165",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:167",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+      "K01/spec.json#/paths/~1v1~1media_files~1{id}/get",
+      "K01/r1/exchanges.jsonl:928",
+      "search_F2/I010.json",
+      "review_F2/I010.json"
+    ],
+    "secondary_defect": null,
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "No additional both-side candidate established",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.922709+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/media_files/{id}",
+      "--status",
+      "404",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:42:29.946736+00:00",
+    "end_time": "2026-11-15T05:42:30.012868+00:00",
+    "exit_code": 2
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "NA",
+  "tool_coverage": {
+    "exit_code": 2,
+    "scan": null,
+    "warnings": [],
+    "stderr_file": "search_F2/I010.stderr",
+    "raw_stdout_file": "search_F2/I010.json",
+    "manual_gap_resolution": "Missing-operation tool precondition failed. Manually inspected handler routes, tests and documentation; annotated paths/constants or explicitly resolved helpers close the retrieval gap. No outside routing/history source was opened."
+  },
+  "manual_coverage": {
+    "handler_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:233"
+    ],
+    "test_scope": "K01/source/api/src/test/java/se/devscout/scoutapi; IntegrationTest helper",
+    "doc_scope": "K01/source/api/src/main/resources/assets/docs/README.md (generic bundled UI documentation)",
+    "status": "manually completed; no claim that failed tool returned none_found"
+  }
+}

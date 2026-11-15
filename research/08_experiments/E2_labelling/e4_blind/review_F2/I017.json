@@ -1,0 +1,126 @@
+{
+  "item_id": "I017",
+  "start_time": "2026-11-15T05:43:00.850559+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/v1/system/ping",
+    "scenario": "GET ping returns 204 but operation is absent from specification",
+    "observed_status": 204,
+    "field": null,
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "UNDOCUMENTED_OPERATION",
+    "violation_pointer": "",
+    "spec_obligation": "method not in spec",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+      "disposition": "context",
+      "proposition": "createRequest helpers at 44–63 add /api/ and default v1, resolving the test route precisely.",
+      "support": null,
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "createRequest helpers at 44–63 add /api/ and default v1, resolving the test route precisely."
+      }
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:34",
+      "disposition": "accept",
+      "proposition": "GET system/ping explicitly asserts HTTP_NO_CONTENT at 36, with helper prefix resolved.",
+      "support": "supports_impl_behavior",
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "GET system/ping explicitly asserts HTTP_NO_CONTENT at 36, with helper prefix resolved."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-METHOD",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "The resolved GET ping test explicitly expects 204, matching the handler and exchange. The contract omits this independently tested operation.",
+    "evidence_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:25",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:34",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:36",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+      "K01/spec.json#/paths/~1v1~1system~1ping/get",
+      "K01/r1/exchanges.jsonl:2003",
+      "search_F2/I017.json",
+      "review_F2/I017.json"
+    ],
+    "secondary_defect": null,
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "No additional both-side candidate established",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.926540+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/system/ping",
+      "--status",
+      "204",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:43:00.850679+00:00",
+    "end_time": "2026-11-15T05:43:00.918864+00:00",
+    "exit_code": 2
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "NA",
+  "tool_coverage": {
+    "exit_code": 2,
+    "scan": null,
+    "warnings": [],
+    "stderr_file": "search_F2/I017.stderr",
+    "raw_stdout_file": "search_F2/I017.json",
+    "manual_gap_resolution": "Missing-operation tool precondition failed. Manually inspected handler routes, tests and documentation; annotated paths/constants or explicitly resolved helpers close the retrieval gap. No outside routing/history source was opened."
+  },
+  "manual_coverage": {
+    "handler_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:25"
+    ],
+    "test_scope": "K01/source/api/src/test/java/se/devscout/scoutapi; IntegrationTest helper",
+    "doc_scope": "K01/source/api/src/main/resources/assets/docs/README.md (generic bundled UI documentation)",
+    "status": "manually completed; no claim that failed tool returned none_found"
+  }
+}

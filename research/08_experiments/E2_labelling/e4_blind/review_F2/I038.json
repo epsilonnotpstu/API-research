@@ -1,0 +1,129 @@
+{
+  "item_id": "I038",
+  "start_time": "2026-11-15T05:43:08.038582+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/categories",
+    "scenario": "missing required min_activities_count query parameter accepted",
+    "observed_status": 200,
+    "field": "min_activities_count",
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "INVALID_ACCEPTED",
+    "violation_pointer": "/parameters/query/min_activities_count/required",
+    "spec_obligation": "missing required query parameter min_activities_count",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "locator": "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:42",
+      "disposition": "context",
+      "reason": "Matched implementation behavior/routing only; no independent intent. Any other-module handler match is not treated as target evidence.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": ""
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+      "disposition": "accept",
+      "proposition": "Tags-list test sends GET v2/tags without min_activities_count and asserts 200 at 56. CategoryResource:43 directly delegates to that TagResource implementation and TagDao:44 explicitly handles null as no threshold. Cross-version linkage is explicit.",
+      "support": "supports_impl_behavior",
+      "inference": true,
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "Tags-list test sends GET v2/tags without min_activities_count and asserts 200 at 56. CategoryResource:43 directly delegates to that TagResource implementation and TagDao:44 explicitly handles null as no threshold. Cross-version linkage is explicit."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-REQ-STRICT",
+    "proposed_L2": "",
+    "confidence": 2,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "⚠️ The independent tags-list test omits the count filter and succeeds. Category delegates to that same listing implementation, whose null filter means no threshold; the required query constraint is excessive.",
+    "evidence_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:44",
+      "K01/source/data-access/src/main/java/se/devscout/scoutapi/dao/TagDao.java:44",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+      "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+      "K01/spec.json#/paths/~1v1~1categories/get/parameters/2/required",
+      "K01/r1/exchanges.jsonl:4304",
+      "search_F2/I038.json",
+      "review_F2/I038.json"
+    ],
+    "secondary_defect": null,
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "No additional both-side candidate established",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.944225+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/categories",
+      "--status",
+      "200",
+      "--field",
+      "min_activities_count",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:43:08.038690+00:00",
+    "end_time": "2026-11-15T05:43:08.836991+00:00",
+    "exit_code": 0
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "none_found",
+  "tool_coverage": {
+    "exit_code": 0,
+    "scan": {
+      "text_files": 130,
+      "skipped_binary_or_encoding": 12,
+      "skipped_large": 1,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "stderr_file": "search_F2/I038.stderr",
+    "raw_stdout_file": "search_F2/I038.json",
+    "manual_gap_resolution": "Raw scan completed. Directed manual fallback reviewed linked helpers/fixtures, full relevant prose, and independent class policy; no relevant unreadable file remained."
+  }
+}

@@ -1,0 +1,468 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/version/v1/tan/verify"
+  },
+  "observed_status": 404,
+  "field": null,
+  "spec": {
+    "file": "K03/spec.json",
+    "path": "/version/v1/tan/verify",
+    "statuses": [
+      "200",
+      "400",
+      "404",
+      "500"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1version~1v1~1tan~1verify/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "conflicting",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:103",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 103,
+      "snippet": "public ResponseEntity<?> verifyTan(@Valid @RequestBody Tan tan) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/version/v1/tan/verify",
+      "methods": [
+        "POST"
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:112",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 112,
+      "snippet": "ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok();",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        200
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:122",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 122,
+      "snippet": "throw new VerificationServerException(HttpStatus.NOT_FOUND, \"No Tan found or Tan is invalid\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        404
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:82",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 82,
+      "snippet": "/**",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:83",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 83,
+      "snippet": "* This provided REST method verifies the transaction number (TAN).",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:84",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 84,
+      "snippet": "*",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:85",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 85,
+      "snippet": "* @param tan - the transaction number, which needs to be verified {@link Tan}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:86",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 86,
+      "snippet": "* @return HTTP 200, if the verification was successful. Otherwise HTTP 404.",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200,
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code",
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:87",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 87,
+      "snippet": "*/",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:88",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 88,
+      "snippet": "@Operation(",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:89",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 89,
+      "snippet": "summary = \"Verify provided Tan\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:90",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 90,
+      "snippet": "description = \"The provided Tan is verified to be formerly issued by the verification server\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:91",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 91,
+      "snippet": ")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:92",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 92,
+      "snippet": "@ApiResponses(value = {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:93",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 93,
+      "snippet": "@ApiResponse(",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:94",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 94,
+      "snippet": "responseCode = \"200\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:95",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 95,
+      "snippet": "description = \"Tan is valid an formerly issued by the verification server\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:96",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 96,
+      "snippet": "headers = {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:97",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 97,
+      "snippet": "@Header(name = TELE_TAN_TYPE_HEADER, description = \"Type of the TeleTan (TEST or EVENT)\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:98",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 98,
+      "snippet": "}),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:99",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 99,
+      "snippet": "@ApiResponse(responseCode = \"404\", description = \"Tan could not be verified\")})",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 67,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

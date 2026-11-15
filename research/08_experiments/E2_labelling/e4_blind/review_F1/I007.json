@@ -1,0 +1,193 @@
+{
+  "item_id": "I007",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.759044+00:00",
+  "end_time": "2026-11-15T05:58:35.254032+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/categories",
+    "scenario": "GET categories with group length >1 returns 200; is maxLength=1 intended?",
+    "observed_status": 200,
+    "field": "group",
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [
+    {
+      "raw_result": "search_F1/I007.json",
+      "hit_index": 0,
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:42",
+      "disposition": "context",
+      "review_verdict": "none_found",
+      "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    },
+    {
+      "raw_result": "search_F1/I007.json",
+      "hit_index": 1,
+      "category": "E-DOC",
+      "location": "api/src/main/resources/assets/docs/lib/underscore-min.map:1",
+      "disposition": "reject",
+      "review_verdict": "none_found",
+      "reason": "Full paragraph or operation context is another route/branch, an incidental field/number, UI content, or status-only text. It does not independently state this target obligation.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": false,
+          "reason": "Full paragraph or operation context is another route/branch, an incidental field/number, UI content, or status-only text. It does not independently state this target obligation."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": false,
+          "reason": "Full paragraph or operation context is another route/branch, an incidental field/number, UI content, or status-only text. It does not independently state this target obligation."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": false,
+          "reason": "Full paragraph or operation context is another route/branch, an incidental field/number, UI content, or status-only text. It does not independently state this target obligation."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K01/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:90",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "The independent DAO test passes group=location and asserts that groups match at line 94. CategoryResource.all delegates unchanged through TagResource.all to this exact DAO method. Only multi-character filter length is attributed.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "The independent DAO test passes group=location and asserts that groups match at line 94. CategoryResource.all delegates unchanged through TagResource.all to this exact DAO method. Only multi-character filter length is attributed."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "The independent DAO test passes group=location and asserts that groups match at line 94. CategoryResource.all delegates unchanged through TagResource.all to this exact DAO method. Only multi-character filter length is attributed."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "The independent DAO test passes group=location and asserts that groups match at line 94. CategoryResource.all delegates unchanged through TagResource.all to this exact DAO method. Only multi-character filter length is attributed."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-REQ-STRICT",
+    "proposed_L2": "",
+    "confidence": 2,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "⚠️ The category alias delegates to TagDao.find. Its independent group-filter test uses location and checks matching groups, supporting multi-character filters rather than maxLength=1.",
+    "inference_marked": true,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K01/source",
+    "K01/spec.json",
+    "--method",
+    "GET",
+    "--path",
+    "/v1/categories",
+    "--status",
+    "200",
+    "--json",
+    "--field",
+    "group"
+  ],
+  "search_finished_time": "2026-11-15T05:42:24.909408+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "none_found",
+  "raw_result": "search_F1/I007.json",
+  "tool_exitcode": 0,
+  "coverage_resolution": "Manual handler and field review supplements the lexical scan.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+    "K01/source/data-access/src/main/java/se/devscout/scoutapi/dao/TagDao.java:40",
+    "K01/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:90",
+    "K01/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:94",
+    "K01/spec.json:#/paths/~1v1~1categories/get/parameters/0/maxLength",
+    "K01/r1/exchanges.jsonl:4329"
+  ]
+}

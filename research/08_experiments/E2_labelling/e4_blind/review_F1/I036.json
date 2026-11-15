@@ -1,0 +1,83 @@
+{
+  "item_id": "I036",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.760882+00:00",
+  "end_time": "2026-11-15T05:58:35.284181+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "POST",
+    "path_template": "/store/order",
+    "scenario": "POST order XML omits shipDate in 200 response; must shipDate always be present?",
+    "observed_status": 200,
+    "field": "shipDate",
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [],
+  "manual_additions": [],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "S-RESP-MISSING",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "rationale": "The XML-created order’s JSON response omits shipDate. Manual inspection locates placeOrder missed by the tool, but returning nullable data does not independently establish whether that response field must always exist.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K04/source",
+    "K04/spec.json",
+    "--method",
+    "POST",
+    "--path",
+    "/store/order",
+    "--status",
+    "200",
+    "--json",
+    "--field",
+    "shipDate"
+  ],
+  "search_finished_time": "2026-11-15T05:42:27.274787+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K04/source",
+      "spec": "K04/spec.json",
+      "exchanges": "K04/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "The lexical tool misses the store handler (zero hits). Manual operationId placeOrder uniquely matches OrderController.placeOrder:58 and its nullable Order.shipDate:30; this closes handler context. No field-presence assertion appears in the supplied empty test class or README.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "none_found",
+  "raw_result": "search_F1/I036.json",
+  "tool_exitcode": 0,
+  "coverage_resolution": "Manual handler and field review supplements the lexical scan.",
+  "evidence_locators": [
+    "K04/source/src/main/java/io/swagger/petstore/controller/OrderController.java:58",
+    "K04/source/src/main/java/io/swagger/petstore/model/Order.java:30",
+    "K04/spec.json:#/paths/~1store~1order/post/responses/200/content/application~1json/schema/required",
+    "K04/r1/exchanges.jsonl:647"
+  ]
+}

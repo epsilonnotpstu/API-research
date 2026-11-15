@@ -1,0 +1,129 @@
+{
+  "item_id": "I016",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.759678+00:00",
+  "end_time": "2026-11-15T05:58:35.262724+00:00",
+  "target_proposition": {
+    "side": "operation_presence",
+    "method": "GET",
+    "path_template": "/v1/media_files/{id}/file",
+    "scenario": "GET media file download route is absent from spec and missing ID causes 500; public route presence versus controlled missing-resource error.",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(b): independent operation omission and crash components require search; §9.3 R1 determines primary IMPL."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:133",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "A media file is created locally at 131; GET media_files/{createdId}/file is asserted 200 at 134 with content equality at 137. Helper resolves /api/v1. Independent evidence establishes the omitted download operation, not a 500 requirement.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "A media file is created locally at 131; GET media_files/{createdId}/file is asserted 200 at 134 with content equality at 137. Helper resolves /api/v1. Independent evidence establishes the omitted download operation, not a 500 requirement."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "A media file is created locally at 131; GET media_files/{createdId}/file is asserted 200 at 134 with content equality at 137. Helper resolves /api/v1. Independent evidence establishes the omitted download operation, not a 500 requirement."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "A media file is created locally at 131; GET media_files/{createdId}/file is asserted 200 at 134 with content equality at 137. Helper resolves /api/v1. Independent evidence establishes the omitted download operation, not a 500 requirement."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": true,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "A missing media entity is dereferenced during download, causing 500. An independent download test establishes the public route omitted from the contract; retain primary IMPL and a specification-side candidate.",
+    "inference_marked": false,
+    "history_scope": "unavailable",
+    "both_components": {
+      "implementation": "Observed non-gateway 500; deterministic §9.3 R1.",
+      "specification": "Missing public operation; proven for I016 by the download test, candidate only for I011."
+    }
+  },
+  "history_scope": "unavailable",
+  "additional_searches": [
+    {
+      "result": "search_F1/I016.json",
+      "command": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "../../tools/intent_evidence.py",
+        "K01/source",
+        "K01/spec.json",
+        "--method",
+        "GET",
+        "--path",
+        "/v1/media_files/{id}/file",
+        "--status",
+        "500",
+        "--json"
+      ],
+      "start_time": "2026-11-15T05:49:51.302972+00:00",
+      "end_time": "2026-11-15T05:49:51.385357+00:00",
+      "exitcode": 2
+    }
+  ],
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "NA",
+  "raw_result": "search_F1/I016.json",
+  "tool_exitcode": 2,
+  "coverage_resolution": "Manual fallback resolves Java mapping and relevant test/doc coverage after the tool rejects the absent spec operation.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:260",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:133",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:134",
+    "K01/r1/compose.log:84371",
+    "K01/spec.json:#/paths/~1v1~1media_files~1{id}~1file/get",
+    "K01/r1/exchanges.jsonl:1402"
+  ]
+}

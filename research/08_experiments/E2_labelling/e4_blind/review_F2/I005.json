@@ -1,0 +1,127 @@
+{
+  "item_id": "I005",
+  "start_time": "2026-11-15T05:42:26.286952+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "POST",
+    "path_template": "/v1/categories",
+    "scenario": "empty category JSON crashes; assess missing persistent key as well",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "UNDOCUMENTED_STATUS",
+    "violation_pointer": "",
+    "spec_obligation": "document observed status",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "Deterministic non-gateway 500 or checker-coverage rule; search performed voluntarily to check additional spec component."
+  },
+  "history_scope": "unavailable",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "locator": "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:59",
+      "disposition": "context",
+      "reason": "Matched implementation behavior/routing only; no independent intent. Any other-module handler match is not treated as target evidence.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": ""
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K01/source/data-access/src/main/java/se/devscout/scoutapi/model/Tag.java:37",
+      "disposition": "context",
+      "proposition": "Group and name have persistent @Basic(optional=false), lines 37–42. Together with the captured NOT NULL failure this invokes deterministic §10.6, not an inference from an absent test.",
+      "support": null,
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "Group and name have persistent @Basic(optional=false), lines 37–42. Together with the captured NOT NULL failure this invokes deterministic §10.6, not an inference from an absent test."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": true,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "rationale": "Empty category creation violates persistent NOT NULL group/name requirements and escapes as 500. The request schema omits those required fields; §10.6 supports the additional spec-defect flag.",
+    "evidence_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:60",
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:61",
+      "K01/source/data-access/src/main/java/se/devscout/scoutapi/model/Tag.java:37",
+      "K01/source/data-access/src/main/java/se/devscout/scoutapi/model/Tag.java:41",
+      "K01/spec.json#/paths/~1v1~1categories/post/parameters/0/schema",
+      "K01/spec.json#/definitions/Tag/required",
+      "K01/r1/exchanges.jsonl:4404",
+      "K01/r1/compose.log:230674",
+      "search_F2/I005.json",
+      "review_F2/I005.json"
+    ],
+    "secondary_defect": "S-REQ-LOOSE: missing persistent required fields",
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "Independently evidenced second defect",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.919447+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/spec.json",
+      "--method",
+      "POST",
+      "--path",
+      "/v1/categories",
+      "--status",
+      "500",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:42:26.287138+00:00",
+    "end_time": "2026-11-15T05:42:27.466672+00:00",
+    "exit_code": 0
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "none_found",
+  "tool_coverage": {
+    "exit_code": 0,
+    "scan": {
+      "text_files": 130,
+      "skipped_binary_or_encoding": 12,
+      "skipped_large": 1,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "stderr_file": "search_F2/I005.stderr",
+    "raw_stdout_file": "search_F2/I005.json",
+    "manual_gap_resolution": "Raw scan completed. Directed manual fallback reviewed linked helpers/fixtures, full relevant prose, and independent class policy; no relevant unreadable file remained."
+  }
+}

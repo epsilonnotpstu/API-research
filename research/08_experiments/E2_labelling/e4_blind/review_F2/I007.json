@@ -1,0 +1,123 @@
+{
+  "item_id": "I007",
+  "start_time": "2026-11-15T05:42:27.835548+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/categories",
+    "scenario": "group exceeds maxLength=1 and is accepted",
+    "observed_status": 200,
+    "field": "group",
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "INVALID_ACCEPTED",
+    "violation_pointer": "/parameters/query/group/maxLength",
+    "spec_obligation": "'\\x9bª\\U0010c709I\\x8aÈ\\U00085700' is too long",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "locator": "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:42",
+      "disposition": "context",
+      "reason": "Matched implementation behavior/routing only; no independent intent. Any other-module handler match is not treated as target evidence.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": ""
+      }
+    },
+    {
+      "index": 1,
+      "category": "E-DOC",
+      "locator": "K01/source/api/src/main/resources/assets/docs/lib/underscore-min.map:1",
+      "disposition": "reject",
+      "reason": "Bundled third-party source map containing incidental names, not API normative documentation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": ""
+      }
+    }
+  ],
+  "manual_additions": [],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "S-REQ-STRICT",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "rationale": "The group filter accepts the longer string, but neither the shared implementation nor unrelated group fixtures independently establishes the intended query-length policy.",
+    "evidence_locators": [
+      "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:33",
+      "K01/source/data-access/src/main/java/se/devscout/scoutapi/dao/TagDao.java:40",
+      "K01/spec.json#/paths/~1v1~1categories/get/parameters/0/maxLength",
+      "K01/r1/exchanges.jsonl:4329",
+      "search_F2/I007.json",
+      "review_F2/I007.json"
+    ],
+    "secondary_defect": null,
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "Unresolved attribution under §11; not proof that both sides are defective",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.920963+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K01/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/categories",
+      "--status",
+      "200",
+      "--field",
+      "group",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:42:27.835709+00:00",
+    "end_time": "2026-11-15T05:42:28.826276+00:00",
+    "exit_code": 0
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "none_found",
+  "tool_coverage": {
+    "exit_code": 0,
+    "scan": {
+      "text_files": 130,
+      "skipped_binary_or_encoding": 12,
+      "skipped_large": 1,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "stderr_file": "search_F2/I007.stderr",
+    "raw_stdout_file": "search_F2/I007.json",
+    "manual_gap_resolution": "Raw scan completed. Directed manual fallback reviewed linked helpers/fixtures, full relevant prose, and independent class policy; no relevant unreadable file remained."
+  }
+}

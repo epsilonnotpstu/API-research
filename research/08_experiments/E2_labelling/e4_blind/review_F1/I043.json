@@ -1,0 +1,116 @@
+{
+  "item_id": "I043",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.761208+00:00",
+  "end_time": "2026-11-15T05:58:35.288568+00:00",
+  "target_proposition": {
+    "side": "operation_presence",
+    "method": "PUT",
+    "path_template": "/customer/cart/delivery",
+    "scenario": "PUT cart delivery included=false returns 200; should operation be documented?",
+    "observed_status": 200,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-DOC",
+      "location": "K02/source/market-web/src/main/resources/templates/rest.html:138",
+      "disposition": "reject",
+      "review_verdict": "none_found",
+      "reason": "The guide describes /cart/delivery?included while current REST mapping is /customer/cart/delivery. README_RU additionally uses a path segment. The independent service test proves setDelivery semantics, not the current public HTTP route or applicable interface revision.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": false,
+          "reason": "The guide describes /cart/delivery?included while current REST mapping is /customer/cart/delivery. README_RU additionally uses a path segment. The independent service test proves setDelivery semantics, not the current public HTTP route or applicable interface revision."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": false,
+          "reason": "The guide describes /cart/delivery?included while current REST mapping is /customer/cart/delivery. README_RU additionally uses a path segment. The independent service test proves setDelivery semantics, not the current public HTTP route or applicable interface revision."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": false,
+          "reason": "The guide describes /cart/delivery?included while current REST mapping is /customer/cart/delivery. README_RU additionally uses a path segment. The independent service test proves setDelivery semantics, not the current public HTTP route or applicable interface revision."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "S-METHOD",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "rationale": "⚠️ The delivery route is explicitly mapped, but documentation uses an older cart prefix and tests cover a different interface or service layer. Public-route intent lacks independent revision-matched support.",
+    "inference_marked": true,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K02/source",
+    "K02/spec.json",
+    "--method",
+    "PUT",
+    "--path",
+    "/customer/cart/delivery",
+    "--status",
+    "200",
+    "--json"
+  ],
+  "search_finished_time": "2026-11-15T05:42:27.368042+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K02/source",
+      "spec": "K02/spec.json",
+      "exchanges": "K02/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "NA",
+  "raw_result": "search_F1/I043.json",
+  "tool_exitcode": 2,
+  "coverage_resolution": "Manual fallback resolves Java mapping and relevant test/doc coverage after the tool rejects the absent spec operation.",
+  "evidence_locators": [
+    "K02/source/market-rest/src/main/java/market/rest/CartRestController.java:98",
+    "K02/source/market-web/src/main/resources/templates/rest.html:138",
+    "K02/spec.json:#/paths/~1customer~1cart~1delivery/put",
+    "K02/r1/exchanges.jsonl:402"
+  ]
+}

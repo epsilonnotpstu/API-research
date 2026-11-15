@@ -1,0 +1,2972 @@
+{
+  "operation": {
+    "method": "DELETE",
+    "path": "/customer/cart"
+  },
+  "observed_status": 200,
+  "field": "name",
+  "spec": {
+    "file": "K02/spec.json",
+    "path": "/customer/cart",
+    "statuses": [
+      "200",
+      "204",
+      "401",
+      "403"
+    ],
+    "field_policy": [],
+    "field": "name",
+    "locator": "#/paths/~1customer~1cart/delete"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "conflicting",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:87",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 87,
+      "snippet": "public CartDTO clearCart(Principal principal) {",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/customer/cart",
+      "methods": [
+        "DELETE"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java:112",
+      "file": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java",
+      "line": 112,
+      "snippet": ".andExpect(status().isOk())",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ other_module context only; no handler-class or REST-base-path reference; candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": false,
+      "counts_toward_verdict": false,
+      "module_scope": "other_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java:113",
+      "file": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java",
+      "line": 113,
+      "snippet": ".andExpect(view().name(\"customer/new\"))",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ other_module context only; no handler-class or REST-base-path reference; candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "name",
+      "field_behavior": null,
+      "independent": false,
+      "counts_toward_verdict": false,
+      "module_scope": "other_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java:134",
+      "file": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java",
+      "line": 134,
+      "snippet": ".param(\"name\", account.getName())",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ other_module context only; no handler-class or REST-base-path reference; candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "name",
+      "field_behavior": null,
+      "independent": false,
+      "counts_toward_verdict": false,
+      "module_scope": "other_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.adoc:102",
+      "file": "README.adoc",
+      "line": 102,
+      "snippet": "** storing in the database a shopping cart of a registered customer",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:158",
+      "file": "README_RU.md",
+      "line": 158,
+      "snippet": "<p>Так обращение к ресурсу <code>http://46.101.111.55:8080/rest/products</code>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:160",
+      "file": "README_RU.md",
+      "line": 160,
+      "snippet": "<pre style=\"width: 95%;\">[<br/>    {<br/>        \"productId\": 1,<br/>        \"distillery\": \"Ardbeg\",<br/>        \"name\": \"Ten\",<br/>        \"price\": 4030,<br/> ",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111
+      ],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:163",
+      "file": "README_RU.md",
+      "line": 163,
+      "snippet": "<pre style=\"width: 85%;\">{<br/>    \"id\": 2,<br/>    \"distillery\": \"Balvenie\",<br/>    \"name\": \"12 y.o. Doublewood\",<br/>    \"price\": 4100,<br/>    \"age\": 12,<br",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:169",
+      "file": "README_RU.md",
+      "line": 169,
+      "snippet": "<pre style=\"width: 75%;\">заголовок:   Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                 \"email\": \"ivan.petrov@yandex.ru\",<br> ",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        123,
+        456
+      ],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:170",
+      "file": "README_RU.md",
+      "line": 170,
+      "snippet": "<p>Ответ приложения при успешном создании аккаунта: <code>200 Ok</code>.</p>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:173",
+      "file": "README_RU.md",
+      "line": 173,
+      "snippet": "HTTP-состояние <code>406 Not Acceptable</code> с соответствующими пояснениями.</p>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:174",
+      "file": "README_RU.md",
+      "line": 174,
+      "snippet": "<p>Например, об ошибке в имени <code>\"name\": \"name@#$%^\"</code>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:176",
+      "file": "README_RU.md",
+      "line": 176,
+      "snippet": "<pre style=\"width: 95%;\">{<br>    \"fieldErrors\":<br>    [{<br>        \"field\": \"name\",<br>        \"message\": \"В имени допустимы только буквы, пробел, дефис и ап",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:186",
+      "file": "README_RU.md",
+      "line": 186,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"us",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:193",
+      "file": "README_RU.md",
+      "line": 193,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 201 Created<br>             Location: http://46.101.111.55:8080/rest/customer/orders/13<br>             Conte",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:81",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 81,
+      "snippet": "/**",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:82",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 82,
+      "snippet": "* Clearing the cart.",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:83",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 83,
+      "snippet": "*",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:84",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 84,
+      "snippet": "* @return cleared cart",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:85",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 85,
+      "snippet": "*/",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html:17",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html",
+      "line": 17,
+      "snippet": "<select class=\"form-control\" id=\"region\" name=\"region\" th:field=\"*{region}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html:18",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html",
+      "line": 18,
+      "snippet": "<option th:each=\"region : ${regions}\" th:text=\"${region.name}\" th:value=\"${region.name}\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html:31",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html",
+      "line": 31,
+      "snippet": "id=\"title\" maxlength=\"20\" name=\"title\" size=\"19\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html:44",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/distillery-form.html",
+      "line": 44,
+      "snippet": "<textarea class=\"form-control\" id=\"description\" maxlength=\"1000\" name=\"description\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:19",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 19,
+      "snippet": "<select class=\"form-control\" id=\"distillery\" name=\"distillery\" th:field=\"*{distillery}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:27",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 27,
+      "snippet": "<label class=\"col-sm-3 control-label\" for=\"name\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:31",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 31,
+      "snippet": "<input th:value=\"*{name}\" value=\"${product.name}\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:32",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 32,
+      "snippet": "class=\"form-control\" data-describedby=\"name-desc\" data-description=\"name\" data-validate=\"name\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:33",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 33,
+      "snippet": "id=\"name\" maxlength=\"20\" name=\"name\" size=\"19\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:34",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 34,
+      "snippet": "<span class=\"glyphicon form-control-feedback\" id=\"name\"></span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:36",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 36,
+      "snippet": "<div id=\"name-desc\"></div>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:37",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 37,
+      "snippet": "<errors cssClass=\"alert alert-danger\" element=\"div\" path=\"name\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:46",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 46,
+      "snippet": "id=\"age\" maxlength=\"10\" name=\"age\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:63",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 63,
+      "snippet": "id=\"alcohol\" maxlength=\"10\" name=\"alcohol\" placeholder=\"40.0\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:77",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 77,
+      "snippet": "id=\"volume\" maxlength=\"10\" name=\"volume\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:92",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 92,
+      "snippet": "class=\"form-control\" id=\"description\" maxlength=\"500\" name=\"description\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        500
+      ],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:104",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 104,
+      "snippet": "id=\"price\" maxlength=\"10\" name=\"price\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:133",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 133,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/product-form.html:151",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/product-form.html",
+      "line": 151,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:12",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 12,
+      "snippet": "<label class=\"col-sm-3 control-label\" for=\"name\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:17",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 17,
+      "snippet": "class=\"form-control\" data-describedby=\"name-desc\" data-description=\"name\" data-validate=\"name\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:18",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 18,
+      "snippet": "id=\"name\" maxlength=\"20\" name=\"name\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:19",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 19,
+      "snippet": "size=\"19\" th:value=\"*{name}\" value=\"${region.name}\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:20",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 20,
+      "snippet": "<span class=\"glyphicon form-control-feedback\" id=\"name\"></span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:22",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 22,
+      "snippet": "<div id=\"name-desc\"></div>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:23",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 23,
+      "snippet": "<errors cssClass=\"alert alert-danger\" element=\"div\" path=\"name\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:35",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 35,
+      "snippet": "id=\"subtitle\" maxlength=\"25\" name=\"subtitle\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:49",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 49,
+      "snippet": "class=\"form-control\" id=\"description\" maxlength=\"1000\" name=\"description\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:61",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 61,
+      "snippet": "id=\"color\" maxlength=\"10\" name=\"color\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:89",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 89,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/backend/region-form.html:101",
+      "file": "market-web/src/main/resources/templates/_layouts/backend/region-form.html",
+      "line": 101,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/frontend/menu.html:15",
+      "file": "market-web/src/main/resources/templates/_layouts/frontend/menu.html",
+      "line": 15,
+      "snippet": "<span class=\"regionText\" th:text=\"${region.name}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/frontend/menu.html:16",
+      "file": "market-web/src/main/resources/templates/_layouts/frontend/menu.html",
+      "line": 16,
+      "snippet": "region.name",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/frontend/menu.html:22",
+      "file": "market-web/src/main/resources/templates/_layouts/frontend/menu.html",
+      "line": 22,
+      "snippet": "<a class=\"regionText\" th:href=\"@{'/regions/' + ${region.id}}\" th:text=\"${region.name}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/frontend/menu.html:23",
+      "file": "market-web/src/main/resources/templates/_layouts/frontend/menu.html",
+      "line": 23,
+      "snippet": "region.name",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/distilleries/edit.html:19",
+      "file": "market-web/src/main/resources/templates/admin/distilleries/edit.html",
+      "line": 19,
+      "snippet": "<input name=\"id\" th:value=\"*{id}\" type=\"hidden\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/orders.html:44",
+      "file": "market-web/src/main/resources/templates/admin/orders.html",
+      "line": 44,
+      "snippet": "<input name=\"executed\" type=\"hidden\" value=\"true\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/orders.html:113",
+      "file": "market-web/src/main/resources/templates/admin/orders.html",
+      "line": 113,
+      "snippet": "<td th:text=\"${product.distillery + ' ' + product.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/orders.html:160",
+      "file": "market-web/src/main/resources/templates/admin/orders.html",
+      "line": 160,
+      "snippet": "<td><span id=\"user-name\"></span></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/products.html:36",
+      "file": "market-web/src/main/resources/templates/admin/products.html",
+      "line": 36,
+      "snippet": "th:with=\"desc=${product.description},shortDesc=${desc.length() > 100 ? #strings.substring(desc, 0, 60) : desc}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/products.html:40",
+      "file": "market-web/src/main/resources/templates/admin/products.html",
+      "line": 40,
+      "snippet": "<td th:text=\"${product.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/products/edit.html:19",
+      "file": "market-web/src/main/resources/templates/admin/products/edit.html",
+      "line": 19,
+      "snippet": "<input name=\"productId\" th:value=\"*{productId}\" type=\"hidden\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/regions.html:29",
+      "file": "market-web/src/main/resources/templates/admin/regions.html",
+      "line": 29,
+      "snippet": "th:with=\"desc=${region.description},shortDesc=${desc.length() > 120 ? #strings.substring(desc, 0, 60) : desc}\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        120
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/regions.html:32",
+      "file": "market-web/src/main/resources/templates/admin/regions.html",
+      "line": 32,
+      "snippet": "<td th:text=\"${region.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/regions.html:36",
+      "file": "market-web/src/main/resources/templates/admin/regions.html",
+      "line": 36,
+      "snippet": "<span th:if=\"${desc.length() >= 120}\">...</span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        120
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/regions/edit.html:19",
+      "file": "market-web/src/main/resources/templates/admin/regions/edit.html",
+      "line": 19,
+      "snippet": "<input name=\"id\" th:value=\"*{id}\" type=\"hidden\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/storage.html:33",
+      "file": "market-web/src/main/resources/templates/admin/storage.html",
+      "line": 33,
+      "snippet": "<td th:text=\"${product.distillery + ' ' + product.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/storage.html:38",
+      "file": "market-web/src/main/resources/templates/admin/storage.html",
+      "line": 38,
+      "snippet": "<input id=\"productsIds\" name=\"productsIds\" th:value=\"${product.productId}\" type=\"hidden\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/admin/storage.html:39",
+      "file": "market-web/src/main/resources/templates/admin/storage.html",
+      "line": 39,
+      "snippet": "<input name=\"availableProductsIds\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:84",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 84,
+      "snippet": "<img th:alt=\"${product.distillery} + ' ' + ${product.name}\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:85",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 85,
+      "snippet": "th:src=\"@{'img/' + ${product.distillery} + '/' + ${product.name} + '.jpg'}\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:86",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 86,
+      "snippet": "width=\"100\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:88",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 88,
+      "snippet": "<td th:text=\"${product.distillery} + ' ' + ${product.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:92",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 92,
+      "snippet": "<input name=\"productId\" th:value=\"${product.productId}\" type=\"hidden\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:94",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 94,
+      "snippet": "<input class=\"form-control\" maxlength=\"2\" name=\"quantity\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:138",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 138,
+      "snippet": "<input name=\"included\" th:checked=\"${session.cart.deliveryIncluded}\" th:value=\"true\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:143",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 143,
+      "snippet": "<input name=\"included\" th:checked=\"${!session.cart.deliveryIncluded}\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/cart.html:213",
+      "file": "market-web/src/main/resources/templates/cart.html",
+      "line": 213,
+      "snippet": "$('body').delegate('input[name=included]:checked', 'change', function () {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/confirmation.html:34",
+      "file": "market-web/src/main/resources/templates/checkout/confirmation.html",
+      "line": 34,
+      "snippet": "<span th:text=\"${userAccount.name}\"></span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:30",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 30,
+      "snippet": "<input checked=\"checked\" id=\"useExisting\" name=\"changeContacts\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:37",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 37,
+      "snippet": "<input id=\"changeRequested\" name=\"changeContacts\" type=\"radio\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:52",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 52,
+      "snippet": "maxlength=\"18\" name=\"phone\" size=\"15\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:67",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 67,
+      "snippet": "maxlength=\"100\" name=\"address\" size=\"15\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:89",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 89,
+      "snippet": "$('#detailsForm').delegate('input[name=changeContacts]:checked', 'change', function () {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/details.html:90",
+      "file": "market-web/src/main/resources/templates/checkout/details.html",
+      "line": 90,
+      "snippet": "var value = $('input[name=changeContacts]:checked', '#detailsForm').val();",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/payment.html:41",
+      "file": "market-web/src/main/resources/templates/checkout/payment.html",
+      "line": 41,
+      "snippet": "<td th:text=\"${product.distillery + ' ' + product.name}\"></td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/payment.html:93",
+      "file": "market-web/src/main/resources/templates/checkout/payment.html",
+      "line": 93,
+      "snippet": "name=\"ccNumber\" placeholder=\"0000 0000 0000 0000\" size=\"19\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:24",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 24,
+      "snippet": "<label class=\"col-sm-4 control-label\" for=\"name\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:28",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 28,
+      "snippet": "<input class=\"form-control\" data-describedby=\"name-desc\" data-description=\"name\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:29",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 29,
+      "snippet": "data-validate=\"name\" id=\"name\" maxlength=\"50\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:30",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 30,
+      "snippet": "name=\"name\" placeholder=\"Иван Петров\" size=\"19\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:31",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 31,
+      "snippet": "th:value=\"*{name}\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:32",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 32,
+      "snippet": "<span class=\"glyphicon form-control-feedback\" id=\"name\"></span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:34",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 34,
+      "snippet": "<div id=\"name-desc\"></div>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:35",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 35,
+      "snippet": "<errors cssClass=\"alert alert-danger\" element=\"div\" path=\"name\"></errors>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:50",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 50,
+      "snippet": "name=\"email\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:73",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 73,
+      "snippet": "name=\"password\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:96",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 96,
+      "snippet": "name=\"confirm\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:117",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 117,
+      "snippet": "name=\"phone\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:118",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 118,
+      "snippet": "placeholder=\"+7 (123) 456 78 90\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        123,
+        456
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:138",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 138,
+      "snippet": "maxlength=\"100\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:139",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 139,
+      "snippet": "name=\"address\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:184",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 184,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/new.html:208",
+      "file": "market-web/src/main/resources/templates/customer/new.html",
+      "line": 208,
+      "snippet": "name: {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/customer/orders.html:47",
+      "file": "market-web/src/main/resources/templates/customer/orders.html",
+      "line": 47,
+      "snippet": "<td th:text=\"${product.distillery + ' ' + product.name}\">1</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/index.html:51",
+      "file": "market-web/src/main/resources/templates/index.html",
+      "line": 51,
+      "snippet": "<span class=\"regionTitle\" th:text=\"${region.name}\">region.name</span>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/index.html:54",
+      "file": "market-web/src/main/resources/templates/index.html",
+      "line": 54,
+      "snippet": "<img class=\"regionImage img-responsive\" th:src=\"@{'img/regions/' + ${region.name} + '-preview.jpg'}\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:36",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 36,
+      "snippet": "<a name=\"tech\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:52",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 52,
+      "snippet": "<a name=\"func\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:83",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 83,
+      "snippet": "<a name=\"ckeckout\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:97",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 97,
+      "snippet": "<a name=\"rest\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:105",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 105,
+      "snippet": "<a name=\"web\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:122",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 122,
+      "snippet": "<a name=\"forms\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:141",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 141,
+      "snippet": "<a name=\"exceptions\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:153",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 153,
+      "snippet": "<code>401 Unauthorized</code> (вместо перенаправления на страницу входа, как в случае",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        401
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:158",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 158,
+      "snippet": "<a name=\"db\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/inside.html:174",
+      "file": "market-web/src/main/resources/templates/inside.html",
+      "line": 174,
+      "snippet": "<a name=\"customization\"></a>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/login.html:36",
+      "file": "market-web/src/main/resources/templates/login.html",
+      "line": 36,
+      "snippet": "name=\"email\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/login.html:49",
+      "file": "market-web/src/main/resources/templates/login.html",
+      "line": 49,
+      "snippet": "name=\"password\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/login.html:59",
+      "file": "market-web/src/main/resources/templates/login.html",
+      "line": 59,
+      "snippet": "name=\"_spring_security_remember_me\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:18",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 18,
+      "snippet": "<h1 class=\"post-title\" th:text=\"'Регион ' + ${selectedRegion.name}\"></h1>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:23",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 23,
+      "snippet": "th:alt=\"${selectedRegion.name}\" th:src=\"@{'/img/regions/' + ${selectedRegion.name} + '.jpg'}\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:24",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 24,
+      "snippet": "width=\"200\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:33",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 33,
+      "snippet": "<!--<object data=\"${pageContext.request.contextPath}${initParam.productImagePath}${product.distillery.title}/${product.name}.jpg\"",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:40",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 40,
+      "snippet": "th:src=\"@{'/img/products/' + ${product.distillery} + '/' + ${product.name} + '.jpg'}\" width=\"90%\"/>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:46",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 46,
+      "snippet": "<input name=\"productId\" th:value=\"${product.productId}\" type=\"hidden\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:47",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 47,
+      "snippet": "<input name=\"quantity\" type=\"hidden\" value=\"1\">",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:60",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 60,
+      "snippet": "<div class=\"product-item product-label\" th:text=\"${product.distillery} + ' ' + ${product.name}\"></div>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:130",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 130,
+      "snippet": "if (o[this.name]) {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:131",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 131,
+      "snippet": "if (!o[this.name].push) {",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:132",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 132,
+      "snippet": "o[this.name] = [o[this.name]];",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:134",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 134,
+      "snippet": "o[this.name].push(this.value || '');",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/regions.html:136",
+      "file": "market-web/src/main/resources/templates/regions.html",
+      "line": 136,
+      "snippet": "o[this.name] = this.value || '';",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:37",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 37,
+      "snippet": "<pre style=\"width: 95%;\">[<br/>    {<br/>        \"productId\": 1,<br/>        \"distillery\": \"Ardbeg\",<br/>        \"name\": \"Ten\",<br/>        \"price\": 4030,<br/> ",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:40",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 40,
+      "snippet": "<pre style=\"width: 85%;\">{<br/>    \"productId\": 2,<br/>    \"distillery\": \"Balvenie\",<br/>    \"name\": \"12 y.o. Doublewood\",<br/>    \"price\": 4100,<br/>    \"age\":",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:53",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 53,
+      "snippet": "<pre style=\"width: 75%;\">заголовок:   Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                 \"email\": \"ivan.petrov@yandex.ru\",<br> ",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        123,
+        456
+      ],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:54",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 54,
+      "snippet": "<p>Ответ приложения при успешном создании аккаунта: <code>200 Ok</code>.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:57",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 57,
+      "snippet": "HTTP-состояние <code>406 Not Acceptable</code> с соответствующими пояснениями.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:58",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 58,
+      "snippet": "<p>Например, об ошибке в имени <code>\"name\": \"name@#$%^\"</code>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:60",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 60,
+      "snippet": "<pre style=\"width: 100%;\">{<br/>    \"message\": \"Ошибка валидации параметра\",<br/>    \"description\": \"uri=/register\",<br/>    \"entityName\": \"userDTO\",<br/>    \"f",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:71",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 71,
+      "snippet": "style=\"width: 100%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"user\":",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:78",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 78,
+      "snippet": "<pre style=\"width: 100%;\">заголовок:   Status Code: 201 Created<br>             Location: /customer/orders/13<br>             Content-Type: application/json; ch",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 162,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

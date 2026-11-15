@@ -1,0 +1,152 @@
+{
+  "item_id": "I029",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.760561+00:00",
+  "end_time": "2026-11-15T05:58:35.278294+00:00",
+  "target_proposition": {
+    "side": "operation_presence",
+    "method": "POST",
+    "path_template": "/version/v1/tan",
+    "scenario": "POST tan returns 400 for registration token input; route missing from spec; should route be documented?",
+    "observed_status": 400,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K03/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:138",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "The external-profile test creates a session fixture, POSTs prefix + /tan, and asserts 201 at 146. TestUtils.PREFIX_API_VERSION is /version/v1 at 51. It establishes route presence only.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "The external-profile test creates a session fixture, POSTs prefix + /tan, and asserts 201 at 146. TestUtils.PREFIX_API_VERSION is /version/v1 at 51. It establishes route presence only."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "The external-profile test creates a session fixture, POSTs prefix + /tan, and asserts 201 at 146. TestUtils.PREFIX_API_VERSION is /version/v1 at 51. It establishes route presence only."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "The external-profile test creates a session fixture, POSTs prefix + /tan, and asserts 201 at 146. TestUtils.PREFIX_API_VERSION is /version/v1 at 51. It establishes route presence only."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    },
+    {
+      "category": "E-DOC",
+      "location": "K03/source/docs/architecture-overview.md:203",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "The Create TAN use case names POST /tan (204), verifies registration/session state, and allows 400 (208–215). This independently identifies the route implemented under the common /version/v1 prefix.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "The Create TAN use case names POST /tan (204), verifies registration/session state, and allows 400 (208–215). This independently identifies the route implemented under the common /version/v1 prefix."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "The Create TAN use case names POST /tan (204), verifies registration/session state, and allows 400 (208–215). This independently identifies the route implemented under the common /version/v1 prefix."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "The Create TAN use case names POST /tan (204), verifies registration/session state, and allows 400 (208–215). This independently identifies the route implemented under the common /version/v1 prefix."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-METHOD",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "The TAN-generation route is explicitly mapped, documented and independently tested. Its absence is a specification defect; rejection of an unregistered token is a separate documented branch.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K03/source",
+    "K03/spec.json",
+    "--method",
+    "POST",
+    "--path",
+    "/version/v1/tan",
+    "--status",
+    "400",
+    "--json"
+  ],
+  "search_finished_time": "2026-11-15T05:42:25.933089+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K03/source",
+      "spec": "K03/spec.json",
+      "exchanges": "K03/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "NA",
+  "raw_result": "search_F1/I029.json",
+  "tool_exitcode": 2,
+  "coverage_resolution": "Manual fallback resolves Java mapping and relevant test/doc coverage after the tool rejects the absent spec operation.",
+  "evidence_locators": [
+    "K03/source/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java:96",
+    "K03/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:138",
+    "K03/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:146",
+    "K03/source/docs/architecture-overview.md:204",
+    "K03/spec.json:#/paths/~1version~1v1~1tan/post",
+    "K03/r1/exchanges.jsonl:2"
+  ]
+}

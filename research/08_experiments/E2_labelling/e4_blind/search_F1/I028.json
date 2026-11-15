@@ -1,0 +1,176 @@
+{
+  "operation": {
+    "method": "PUT",
+    "path": "/v2/tags/{id}"
+  },
+  "observed_status": 400,
+  "field": null,
+  "spec": {
+    "file": "K01/spec.json",
+    "path": "/v2/tags/{id}",
+    "statuses": [
+      "200"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1v2~1tags~1{id}/put"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "supports_spec",
+  "evidence_types_found": [
+    "E-TEST"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:81",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/TagResource.java",
+      "line": 81,
+      "snippet": "public Tag update(@Auth @ApiParam(hidden = true) AuthResult authResult, @Context HttpServletResponse response, @PathParam(\"id\") long id, Tag updatedTag) {",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/v2/tags/{id}",
+      "methods": [
+        "PUT"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+      "file": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java",
+      "line": 56,
+      "snippet": "assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_OK);",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-TEST",
+      "location": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:64",
+      "file": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java",
+      "line": 64,
+      "snippet": "assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_OK);",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-TEST",
+      "location": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:74",
+      "file": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java",
+      "line": 74,
+      "snippet": "assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_NO_CONTENT);",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        204
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:82",
+      "file": "api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java",
+      "line": 82,
+      "snippet": "assertThat(response.getStatus()).isEqualTo(HttpURLConnection.HTTP_OK);",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 130,
+    "skipped_binary_or_encoding": 12,
+    "skipped_large": 1,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}
