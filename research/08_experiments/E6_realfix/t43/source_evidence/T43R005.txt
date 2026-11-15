@@ -1,0 +1,421 @@
+[parent contract] 1b636828d6cb8299c181b877f0cc6b4acc42540f:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4047
+4047:   /ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files:
+4048:     get:
+4049:       description: "Get a list of objects that contain the relative path and file\
+4050:         \ type. The descriptors are intended for use with the /tools/{id}/versions/{version_id}/{type}/descriptor/{relative_path\
+4051:         \ : .+} endpoint. Returns a zip file of all files when format=zip is specified."
+4052:       operationId: toolsIdVersionsVersionIdTypeFilesGet
+4053:       parameters:
+4054:       - description: "A unique identifier of the tool, scoped to this registry, for\
+4055:           \ example `123456`."
+4056:         in: path
+4057:         name: id
+4058:         required: true
+4059:         schema:
+4060:           type: string
+4061:       - description: The output type of the descriptor.
+4062:         in: path
+4063:         name: type
+4064:         required: true
+4065:         schema:
+4066:           type: string
+4067:           enum:
+4068:           - CWL
+4069:           - WDL
+4070:           - NFL
+4071:           - GALAXY
+4072:           - SMK
+4073:           - SERVICE
+4074:           - JUPYTER
+4075:       - description: "An identifier of the tool version, scoped to this registry,\
+4076:           \ for example `v1`. We recommend that versions use semantic versioning https://semver.org/spec/v2.0.0.html\
+4077:           \  (For example, `1.0.0` instead of `develop`)"
+4078:         in: path
+4079:         name: version_id
+4080:         required: true
+4081:         schema:
+4082:           type: string
+4083:       - description: Returns a zip file of all files when format=zip is specified.
+4084:         in: query
+4085:         name: format
+4086:         schema:
+4087:           type: string
+4088:           enum:
+4089:           - zip
+4090:       responses:
+4091:         "200":
+4092:           content:
+4093:             application/json:
+4094:               schema:
+4095:                 type: array
+4096:                 items:
+4097:                   $ref: '#/components/schemas/ToolFile'
+4098:             application/zip:
+4099:               schema:
+4100:                 type: array
+4101:                 items:
+4102:                   $ref: '#/components/schemas/ToolFile'
+4103:           description: The array of File JSON responses.
+4104:         "404":
+4105:           content:
+4106:             application/json:
+4107:               schema:
+4108:                 $ref: '#/components/schemas/Error'
+4109:             application/zip:
+4110:               schema:
+4111:                 $ref: '#/components/schemas/Error'
+4112:           description: The tool can not be output in the specified type.
+4113:       security:
+4114:       - BEARER: []
+4115:       summary: Get a list of objects that contain the relative path and file type
+4116:       tags:
+4117:       - GA4GHV20
+
+[fix contract] eaf62453e965052d0799519d8414c5f943ad9cf0:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4047
+4047:   /ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files:
+4048:     get:
+4049:       description: "Get a list of objects that contain the relative path and file\
+4050:         \ type. The descriptors are intended for use with the /tools/{id}/versions/{version_id}/{type}/descriptor/{relative_path\
+4051:         \ : .+} endpoint. Returns a zip file of all files when format=zip is specified."
+4052:       operationId: toolsIdVersionsVersionIdTypeFilesGet
+4053:       parameters:
+4054:       - description: "A unique identifier of the tool, scoped to this registry, for\
+4055:           \ example `123456`."
+4056:         in: path
+4057:         name: id
+4058:         required: true
+4059:         schema:
+4060:           type: string
+4061:       - description: The output type of the descriptor.
+4062:         in: path
+4063:         name: type
+4064:         required: true
+4065:         schema:
+4066:           type: string
+4067:           enum:
+4068:           - CWL
+4069:           - WDL
+4070:           - NFL
+4071:           - GALAXY
+4072:           - SMK
+4073:           - SERVICE
+4074:           - JUPYTER
+4075:       - description: "An identifier of the tool version, scoped to this registry,\
+4076:           \ for example `v1`. We recommend that versions use semantic versioning https://semver.org/spec/v2.0.0.html\
+4077:           \  (For example, `1.0.0` instead of `develop`)"
+4078:         in: path
+4079:         name: version_id
+4080:         required: true
+4081:         schema:
+4082:           type: string
+4083:       - description: Returns a zip file of all files when format=zip is specified.
+4084:         in: query
+4085:         name: format
+4086:         schema:
+4087:           type: string
+4088:           enum:
+4089:           - zip
+4090:       responses:
+4091:         "200":
+4092:           content:
+4093:             application/json:
+4094:               schema:
+4095:                 type: array
+4096:                 items:
+4097:                   $ref: '#/components/schemas/ToolFile'
+4098:             application/zip:
+4099:               schema:
+4100:                 type: array
+4101:                 items:
+4102:                   $ref: '#/components/schemas/ToolFile'
+4103:           description: The array of File JSON responses.
+4104:         "404":
+4105:           content:
+4106:             application/json:
+4107:               schema:
+4108:                 $ref: '#/components/schemas/Error'
+4109:             application/zip:
+4110:               schema:
+4111:                 $ref: '#/components/schemas/Error'
+4112:           description: The tool can not be output in the specified type.
+4113:       security:
+4114:       - BEARER: []
+4115:       summary: Get a list of objects that contain the relative path and file type
+4116:       tags:
+4117:       - GA4GHV20
+
+[parent route] 1b636828d6cb8299c181b877f0cc6b4acc42540f:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:885
+885:     public Response toolsIdVersionsVersionIdTypeFilesGet(String id, DescriptorType type, String versionId, String format, SecurityContext securityContext, ContainerRequestContext value,
+886:         Optional<User> user) {
+887: 
+888:         // check for incompatible format option and header combination
+889:         boolean zipFormat = "zip".equalsIgnoreCase(format);
+890:         boolean jsonOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.equals(MediaType.APPLICATION_JSON_TYPE));
+891:         if (zipFormat && jsonOnly) {
+892:             return Response.status(Status.BAD_REQUEST).build();
+893:         }
+894: 
+895:         // accept header should also work
+
+[parent implementation] 1b636828d6cb8299c181b877f0cc6b4acc42540f:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:885
+850:                 return status.getReasonPhrase() + " : " + additionalMessage;
+851:             }
+852:         };
+853:     }
+854: 
+855:     /**
+856:      * Return a matching source file
+857:      *
+858:      * @param sourceFiles      files to look through
+859:      * @param searchPathParam       file to look for, could be relative or absolute
+860:      * @param workingDirectory working directory if relevant
+861:      * @return
+862:      */
+863:     @SuppressWarnings("lgtm[java/path-injection]")
+864:     public Optional<SourceFile> lookForFilePath(Set<SourceFile> sourceFiles, String searchPathParam, String workingDirectory) {
+865:         String targetPath;
+866:         if (searchPathParam.startsWith("/")) {
+867:             // treat searchPath as an absolute path
+868:             targetPath = cleanRelativePath(searchPathParam).toLowerCase();
+869:         } else {
+870:             // treat searchPath as a relative path
+871:             String relativeSearchPath = cleanRelativePath(searchPathParam);
+872:             // assemble normalized absolute path
+873:             targetPath = Paths.get(workingDirectory, relativeSearchPath).normalize().toString().toLowerCase(); // lgtm[java/path-injection]
+874:         }
+875: 
+876:         // assembled map from paths normalized relative to the root (not the main descriptor) to files
+877:         Map<String, SourceFile> calculatedPathMap = sourceFiles.stream().collect(Collectors.toMap(sourceFile -> {
+878:             return cleanRelativePath(sourceFile.getAbsolutePath()).toLowerCase();
+879:         }, sourceFile -> sourceFile));
+880: 
+881:         return Optional.ofNullable(calculatedPathMap.get(targetPath));
+882:     }
+883: 
+884:     @Override
+885:     public Response toolsIdVersionsVersionIdTypeFilesGet(String id, DescriptorType type, String versionId, String format, SecurityContext securityContext, ContainerRequestContext value,
+886:         Optional<User> user) {
+887: 
+888:         // check for incompatible format option and header combination
+889:         boolean zipFormat = "zip".equalsIgnoreCase(format);
+890:         boolean jsonOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.equals(MediaType.APPLICATION_JSON_TYPE));
+891:         if (zipFormat && jsonOnly) {
+892:             return Response.status(Status.BAD_REQUEST).build();
+893:         }
+894: 
+895:         // accept header should also work
+896:         boolean consumesHeaderZipOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.getType().equals("application") && mediaType.getSubtype().equals("zip"));
+897: 
+898:         ParsedRegistryID parsedID = null;
+899:         try {
+900:             parsedID = new ParsedRegistryID(id);
+901:         } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+902:             return BAD_DECODE_REGISTRY_RESPONSE;
+903:         }
+904:         Entry<?, ?> entry = getEntry(parsedID, user);
+905:         List<String> primaryDescriptorPaths = new ArrayList<>();
+906:         try {
+907:             versionDAO.enableNameFilter(versionId);
+908: 
+909:             if (entry instanceof Workflow workflow) {
+910:                 Set<WorkflowVersion> workflowVersions = workflow.getWorkflowVersions();
+911:                 Optional<WorkflowVersion> first = workflowVersions.stream()
+912:                     .filter(workflowVersion -> workflowVersion.getName().equals(versionId)).findFirst();
+913:                 if (first.isPresent()) {
+914:                     WorkflowVersion workflowVersion = first.get();
+915:                     // Matching the workflow path in a workflow automatically indicates that the file is a primary descriptor
+916:                     primaryDescriptorPaths.add(workflowVersion.getWorkflowPath());
+917:                     Set<SourceFile> sourceFiles = workflowVersion.getSourceFiles();
+918:                     if ("zip".equalsIgnoreCase(format) || consumesHeaderZipOnly) {
+919:                         return getZipResponse(sourceFiles, workflow.getWorkflowPath(), workflowVersion.getName(), Paths.get(workflowVersion.getWorkingDirectory()));
+920:                     }
+921:                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), workflowVersion.getWorkingDirectory());
+922:                     return Response.ok().entity(toolFiles).build();
+923:                 } else {
+924:                     return Response.noContent().build();
+925:                 }
+926:             } else if (entry instanceof Tool tool) {
+927:                 Set<Tag> versions = tool.getWorkflowVersions();
+928:                 Optional<Tag> first = versions.stream().filter(tag -> tag.getName().equals(versionId)).findFirst();
+929:                 if (first.isPresent()) {
+930:                     Tag tag = first.get();
+931:                     // Matching the CWL path or WDL path in a tool automatically indicates that the file is a primary descriptor
+932:                     primaryDescriptorPaths.add(tag.getCwlPath());
+933:                     primaryDescriptorPaths.add(tag.getWdlPath());
+934:                     Set<SourceFile> sourceFiles = tag.getSourceFiles();
+935:                     if ("zip".equalsIgnoreCase(format) || consumesHeaderZipOnly) {
+936:                         return getZipResponse(sourceFiles, tool.getToolPath(), tag.getName(), Paths.get(tag.getWorkingDirectory()));
+937:                     }
+938:                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), tag.getWorkingDirectory());
+939:                     return Response.ok().entity(toolFiles).build();
+940:                 } else {
+941:                     return Response.noContent().build();
+942:                 }
+943:             } else {
+944:                 return Response.status(Status.NOT_FOUND).build();
+945:             }
+946:         } finally {
+947:             versionDAO.disableNameFilter();
+948:         }
+949:     }
+950: 
+951:     private Response getZipResponse(Set<SourceFile> sourceFiles, String dockstoreID, String name, Path path) {
+952:         String fileName = EntryVersionHelper.generateZipFileName(dockstoreID, name);
+953: 
+954:         return Response.ok().entity((StreamingOutput) output -> EntryVersionHelper.writeStreamAsZipStatic(sourceFiles, output, path))
+955:             .header("Content-Type", "application/zip")
+956:             .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"").build();
+957:     }
+958: 
+959:     /**
+960:      * Converts SourceFile.FileType to ToolFile.FileTypeEnum
+961:      *
+962:      * @param fileType The SourceFile.FileType
+963:      * @return The ToolFile.FileTypeEnum
+964:      */
+965:     private static ToolFile.FileTypeEnum fileTypeToToolFileFileTypeEnum(DescriptorLanguage.FileType fileType) {
+966:         if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.TEST_FILE) {
+967:             return ToolFile.FileTypeEnum.TEST_FILE;
+968:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.CONTAINERFILE) {
+969:             return ToolFile.FileTypeEnum.CONTAINERFILE;
+970:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.SECONDARY_DESCRIPTOR) {
+971:             return ToolFile.FileTypeEnum.SECONDARY_DESCRIPTOR;
+972:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.PRIMARY_DESCRIPTOR) {
+973:             return ToolFile.FileTypeEnum.PRIMARY_DESCRIPTOR;
+974:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.GENERIC_DESCRIPTOR) {
+975:             return ToolFile.FileTypeEnum.SECONDARY_DESCRIPTOR;
+976:         }
+977:         return ToolFile.FileTypeEnum.OTHER;
+978:     }
+979: 
+980:     /**
+
+[fix implementation] eaf62453e965052d0799519d8414c5f943ad9cf0:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:885
+850:                 return status.getReasonPhrase() + " : " + additionalMessage;
+851:             }
+852:         };
+853:     }
+854: 
+855:     /**
+856:      * Return a matching source file
+857:      *
+858:      * @param sourceFiles      files to look through
+859:      * @param searchPathParam       file to look for, could be relative or absolute
+860:      * @param workingDirectory working directory if relevant
+861:      * @return
+862:      */
+863:     @SuppressWarnings("lgtm[java/path-injection]")
+864:     public Optional<SourceFile> lookForFilePath(Set<SourceFile> sourceFiles, String searchPathParam, String workingDirectory) {
+865:         String targetPath;
+866:         if (searchPathParam.startsWith("/")) {
+867:             // treat searchPath as an absolute path
+868:             targetPath = cleanRelativePath(searchPathParam).toLowerCase();
+869:         } else {
+870:             // treat searchPath as a relative path
+871:             String relativeSearchPath = cleanRelativePath(searchPathParam);
+872:             // assemble normalized absolute path
+873:             targetPath = Paths.get(workingDirectory, relativeSearchPath).normalize().toString().toLowerCase(); // lgtm[java/path-injection]
+874:         }
+875: 
+876:         // assembled map from paths normalized relative to the root (not the main descriptor) to files
+877:         Map<String, SourceFile> calculatedPathMap = sourceFiles.stream().collect(Collectors.toMap(sourceFile -> {
+878:             return cleanRelativePath(sourceFile.getAbsolutePath()).toLowerCase();
+879:         }, sourceFile -> sourceFile));
+880: 
+881:         return Optional.ofNullable(calculatedPathMap.get(targetPath));
+882:     }
+883: 
+884:     @Override
+885:     public Response toolsIdVersionsVersionIdTypeFilesGet(String id, DescriptorType type, String versionId, String format, SecurityContext securityContext, ContainerRequestContext value,
+886:         Optional<User> user) {
+887: 
+888:         // check for incompatible format option and header combination
+889:         boolean zipFormat = "zip".equalsIgnoreCase(format);
+890:         boolean jsonOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.equals(MediaType.APPLICATION_JSON_TYPE));
+891:         if (zipFormat && jsonOnly) {
+892:             return Response.status(Status.BAD_REQUEST).build();
+893:         }
+894: 
+895:         // accept header should also work
+896:         boolean consumesHeaderZipOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.getType().equals("application") && mediaType.getSubtype().equals("zip"));
+897: 
+898:         ParsedRegistryID parsedID = null;
+899:         try {
+900:             parsedID = new ParsedRegistryID(id);
+901:         } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+902:             return BAD_DECODE_REGISTRY_RESPONSE;
+903:         }
+904:         Entry<?, ?> entry = getEntry(parsedID, user);
+905:         List<String> primaryDescriptorPaths = new ArrayList<>();
+906:         try {
+907:             versionDAO.enableNameFilter(versionId);
+908: 
+909:             if (entry instanceof Workflow workflow) {
+910:                 Set<WorkflowVersion> workflowVersions = workflow.getWorkflowVersions();
+911:                 Optional<WorkflowVersion> first = workflowVersions.stream()
+912:                     .filter(workflowVersion -> workflowVersion.getName().equals(versionId)).findFirst();
+913:                 if (first.isPresent()) {
+914:                     WorkflowVersion workflowVersion = first.get();
+915:                     // Matching the workflow path in a workflow automatically indicates that the file is a primary descriptor
+916:                     primaryDescriptorPaths.add(workflowVersion.getWorkflowPath());
+917:                     Set<SourceFile> sourceFiles = workflowVersion.getSourceFiles();
+918:                     if ("zip".equalsIgnoreCase(format) || consumesHeaderZipOnly) {
+919:                         return getZipResponse(sourceFiles, workflow.getWorkflowPath(), workflowVersion.getName(), Paths.get(workflowVersion.getWorkingDirectory()));
+920:                     }
+921:                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), workflowVersion.getWorkingDirectory());
+922:                     return Response.ok().entity(toolFiles).build();
+923:                 }
+924:             } else if (entry instanceof Tool tool) {
+925:                 Set<Tag> versions = tool.getWorkflowVersions();
+926:                 Optional<Tag> first = versions.stream().filter(tag -> tag.getName().equals(versionId)).findFirst();
+927:                 if (first.isPresent()) {
+928:                     Tag tag = first.get();
+929:                     // Matching the CWL path or WDL path in a tool automatically indicates that the file is a primary descriptor
+930:                     primaryDescriptorPaths.add(tag.getCwlPath());
+931:                     primaryDescriptorPaths.add(tag.getWdlPath());
+932:                     Set<SourceFile> sourceFiles = tag.getSourceFiles();
+933:                     if ("zip".equalsIgnoreCase(format) || consumesHeaderZipOnly) {
+934:                         return getZipResponse(sourceFiles, tool.getToolPath(), tag.getName(), Paths.get(tag.getWorkingDirectory()));
+935:                     }
+936:                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), tag.getWorkingDirectory());
+937:                     return Response.ok().entity(toolFiles).build();
+938:                 }
+939:             }
+940:             return Response.status(Status.NOT_FOUND).build();
+941:         } finally {
+942:             versionDAO.disableNameFilter();
+943:         }
+944:     }
+945: 
+946:     private Response getZipResponse(Set<SourceFile> sourceFiles, String dockstoreID, String name, Path path) {
+947:         String fileName = EntryVersionHelper.generateZipFileName(dockstoreID, name);
+948: 
+949:         return Response.ok().entity((StreamingOutput) output -> EntryVersionHelper.writeStreamAsZipStatic(sourceFiles, output, path))
+950:             .header("Content-Type", "application/zip")
+951:             .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"").build();
+952:     }
+953: 
+954:     /**
+955:      * Converts SourceFile.FileType to ToolFile.FileTypeEnum
+956:      *
+957:      * @param fileType The SourceFile.FileType
+958:      * @return The ToolFile.FileTypeEnum
+959:      */
+960:     private static ToolFile.FileTypeEnum fileTypeToToolFileFileTypeEnum(DescriptorLanguage.FileType fileType) {
+961:         if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.TEST_FILE) {
+962:             return ToolFile.FileTypeEnum.TEST_FILE;
+963:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.CONTAINERFILE) {
+964:             return ToolFile.FileTypeEnum.CONTAINERFILE;
+965:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.SECONDARY_DESCRIPTOR) {
+966:             return ToolFile.FileTypeEnum.SECONDARY_DESCRIPTOR;
+967:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.PRIMARY_DESCRIPTOR) {
+968:             return ToolFile.FileTypeEnum.PRIMARY_DESCRIPTOR;
+969:         } else if (fileType.getCategory() == DescriptorLanguage.FileTypeCategory.GENERIC_DESCRIPTOR) {
+970:             return ToolFile.FileTypeEnum.SECONDARY_DESCRIPTOR;
+971:         }
+972:         return ToolFile.FileTypeEnum.OTHER;
+973:     }
+974: 
+975:     /**
+976:      * Converts a list of SourceFile to a list of ToolFile.
+977:      *

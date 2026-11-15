@@ -1,0 +1,188 @@
+[parent contract] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:api/rhsm-subscriptions-api-v1-spec.yaml:467
+467:     GranularityType:
+468:       description: "Describes the significance of each date in the snapshot list. For example if the
+469:           granularity is set to 'weekly', the dates in the snapshot list will represent the start
+470:           of a seven day period."
+471:       type: string
+472:       enum: [ Hourly, Daily, Weekly, Monthly, Quarterly, Yearly ]
+473:     ServiceLevelType:
+
+[parent contract] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:api/rhsm-subscriptions-api-v1-spec.yaml:225
+225:       operationId: getTallyReportData
+226:       responses:
+227:         '200':
+228:           description: 'The request for a tally report was successful.'
+229:           content:
+230:             application/vnd.api+json:
+231:               schema:
+232:                 $ref: "#/components/schemas/TallyReportData"
+233:         '400':
+234:           $ref: "../spec/error-responses.yaml#/$defs/BadRequest"
+235:         '403':
+236:           $ref: "../spec/error-responses.yaml#/$defs/Forbidden"
+237:         '404':
+238:           $ref: "../spec/error-responses.yaml#/$defs/ResourceNotFound"
+239:         '500':
+240:           $ref: "../spec/error-responses.yaml#/$defs/InternalServerError"
+241:       tags:
+
+[fix contract] d32201cd13fed85ddc1c13990125767c1167438a:api/rhsm-subscriptions-api-v1-spec.yaml:225
+225:       operationId: getTallyReportData
+226:       responses:
+227:         '200':
+228:           description: 'The request for a tally report was successful.'
+229:           content:
+230:             application/vnd.api+json:
+231:               schema:
+232:                 $ref: "#/components/schemas/TallyReportData"
+233:         '400':
+234:           $ref: "../spec/error-responses.yaml#/$defs/BadRequest"
+235:         '403':
+236:           $ref: "../spec/error-responses.yaml#/$defs/Forbidden"
+237:         '404':
+238:           $ref: "../spec/error-responses.yaml#/$defs/ResourceNotFound"
+239:         '500':
+240:           $ref: "../spec/error-responses.yaml#/$defs/InternalServerError"
+241:       tags:
+
+[parent route] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:api/rhsm-subscriptions-api-v1-spec.yaml:125
+125:   /v1/tally/products/{product_id}/{metric_id}:
+126:     description: "Operations on a data set of a given tally report."
+127:     parameters:
+128:       - name: product_id
+129:         in: path
+130:         required: true
+131:         schema:
+132:           $ref: '#/components/schemas/ProductId'
+133:         description: "The product to fetch graph data for"
+134:       - name: metric_id
+135:         in: path
+136:         required: true
+137:         schema:
+138:           $ref: '#/components/schemas/MetricId'
+139:         description: "The metric ID to fetch graph data for"
+140:       - name: category
+141:         in: query
+142:         schema:
+143:           $ref: '#/components/schemas/ReportCategory'
+144:         description: 'The category to fetch graph data for (optional)'
+145:       - name: granularity
+146:         in: query
+147:         required: true
+148:         schema:
+149:           $ref: '#/components/schemas/GranularityType'
+150:         description: "Include only report data matching the specified granularity."
+151:       - name: sla
+152:         in: query
+153:         schema:
+
+[parent route] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:src/main/java/org/candlepin/subscriptions/resource/api/v1/TallyResource.java:117
+114: 
+115:   @Override
+116:   @ReportingAccessRequired
+117:   public TallyReportData getTallyReportData(
+118:       ProductId productId,
+119:       MetricId metricId,
+120:       GranularityType granularityType,
+121:       OffsetDateTime beginning,
+122:       OffsetDateTime ending,
+123:       ReportCategory category,
+124:       ServiceLevelType sla,
+125:       UsageType usageType,
+126:       BillingProviderType billingProviderType,
+127:       String billingAcctId,
+
+[parent route] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:36
+32: import org.slf4j.MDC;
+33: 
+34: /** ParamConverterProvider to enable use of enums in query params. */
+35: @Provider
+36: public class EnumParamConverterProvider implements ParamConverterProvider {
+37:   public static final String INVALID_VALUE_EXCEPTION_MSG = "%s is not a valid value for %s";
+38: 
+39:   @SuppressWarnings("linelength")
+40:   @Override
+41:   public <T> ParamConverter<T> getConverter(
+42:       Class<T> rawType, Type genericType, Annotation[] annotations) {
+43:     if (!rawType.isEnum()) {
+44:       return null;
+45:     }
+46: 
+47:     return new EnumParamConverter<>(rawType);
+48:   }
+49: 
+50:   /**
+51:    * ParamConverter that case-insensitively matches enums
+52:    *
+53:    * @param <T> the enum type
+54:    */
+55:   public static class EnumParamConverter<T> implements ParamConverter<T> {
+56: 
+57:     private final Class<T> className;
+58:     private final Map<String, T> stringToEnumMap;
+59: 
+60:     public EnumParamConverter(Class<T> className) {
+61:       this.className = className;
+62: 
+63:       stringToEnumMap =
+64:           Arrays.stream(className.getEnumConstants())
+
+[parent implementation] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:82
+76:       if (result != null) {
+77:         return result;
+78:       } else {
+79:         // Combined with our logging configuration, this tells the OnMdcEvaluator class to suppress
+80:         // the stacktrace
+81:         MDC.put("INVALID_" + className.getSimpleName().toUpperCase(), Boolean.TRUE.toString());
+82:         throw new IllegalArgumentException(
+83:             String.format(INVALID_VALUE_EXCEPTION_MSG, value, className));
+84:       }
+85:     }
+86: 
+
+[parent implementation] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:36
+31:  * another mapper. This mapper will always produce a 500 HTTP response containing the message from
+32:  * the exception.
+33:  */
+34: @Component
+35: @Provider
+36: public class DefaultExceptionMapper extends BaseExceptionMapper<Throwable> {
+37: 
+38:   @Override
+39:   protected Error buildError(Throwable exception) {
+40:     return new Error()
+41:         .code(ErrorCode.UNHANDLED_EXCEPTION_ERROR.getCode())
+42:         .status(String.valueOf(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()))
+43:         .title("An internal server error has occurred. Check the server logs for further details.")
+44:         .detail(exception.getMessage());
+45:   }
+46: }
+
+[parent implementation] 6bde7db546b836db8ddcbe85771a97ec8219cf4c:swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/WebApplicationExceptionMapper.java:36
+36: public class WebApplicationExceptionMapper extends BaseExceptionMapper<WebApplicationException> {
+37:   @Override
+38:   protected Error buildError(WebApplicationException wae) {
+39:     // Because WebApplicationException is an HTTP-oriented wrapper around an exception, we handle
+40:     // it a little differently. We assume that the message makes a good error title, and we use
+41:     // the wrapped exception's message as detail (if a wrapped exception is present).
+42:     Error error =
+43:         new Error()
+44:             .code(ErrorCode.REQUEST_PROCESSING_ERROR.getCode())
+45:             .status(String.valueOf(wae.getResponse().getStatus()))
+46:             .title(wae.getMessage());
+47:     if (wae.getCause() != null) {
+48:       error.setDetail(wae.getCause().getMessage());
+49:     }
+
+[fix implementation] d32201cd13fed85ddc1c13990125767c1167438a:swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:83
+77:       if (result != null) {
+78:         return result;
+79:       } else {
+80:         // Combined with our logging configuration, this tells the OnMdcEvaluator class to suppress
+81:         // the stacktrace
+82:         MDC.put("INVALID_" + className.getSimpleName().toUpperCase(), Boolean.TRUE.toString());
+83:         throw new BadRequestException(String.format(INVALID_VALUE_EXCEPTION_MSG, value, className));
+84:       }
+85:     }
+86: 
+87:     @Override

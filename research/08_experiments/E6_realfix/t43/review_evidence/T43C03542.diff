@@ -1,0 +1,14 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
+index 52d2563f9..857658706 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
+@@ -391,7 +391,7 @@ public class BridgeResourceImpl extends AbstractApi implements BridgesApi {
+                         List.of())
+                 .withBridgeTls(convertTls(bridge.getTlsConfiguration()))
+                 .withWebsocketConfiguration(convertWebsocketConfig(bridge.getWebsocketConfiguration()))
+-                .persist(bridge.getPersist());
++                .persist(bridge.getPersist() == null || bridge.getPersist());
+         return builder.build();
+     }
+ 
+

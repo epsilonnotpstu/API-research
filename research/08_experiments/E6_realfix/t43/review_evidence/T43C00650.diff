@@ -1,0 +1,156 @@
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/component/ResultUploadDialog.java b/src/main/java/ru/iopump/qa/allure/gui/component/ResultUploadDialog.java
+index d716f3c..ab613e8 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/component/ResultUploadDialog.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/component/ResultUploadDialog.java
+@@ -1,7 +1,5 @@
+ package ru.iopump.qa.allure.gui.component;
+ 
+-import static ru.iopump.qa.util.Str.format;
+-
+ import com.vaadin.flow.component.Component;
+ import com.vaadin.flow.component.ComponentEventListener;
+ import com.vaadin.flow.component.button.Button;
+@@ -13,15 +11,18 @@ import com.vaadin.flow.component.html.Paragraph;
+ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+ import com.vaadin.flow.component.upload.Upload;
+ import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+-import java.io.File;
+-import java.io.IOException;
+-import java.io.InputStream;
+-import javax.annotation.Nonnull;
+ import lombok.extern.slf4j.Slf4j;
+ import org.apache.commons.io.IOUtils;
+ import org.springframework.web.multipart.MultipartFile;
+ import ru.iopump.qa.allure.controller.AllureResultController;
+ 
++import javax.annotation.Nonnull;
++import java.io.File;
++import java.io.IOException;
++import java.io.InputStream;
++
++import static ru.iopump.qa.util.Str.format;
++
+ @Slf4j
+ public class ResultUploadDialog extends Dialog { //NOPMD
+ 
+@@ -31,7 +32,7 @@ public class ResultUploadDialog extends Dialog { //NOPMD
+     private final Div infoContainer;
+     private final Button close = new Button("Ok", e -> onClickCloseAndDiscard());
+ 
+-    public ResultUploadDialog(AllureResultController allureResultController) {
++    public ResultUploadDialog(AllureResultController allureResultController, int maxFileSizeBytes) {
+         this.buffer = new MemoryBuffer();
+         this.infoContainer = new Div();
+ 
+@@ -39,7 +40,7 @@ public class ResultUploadDialog extends Dialog { //NOPMD
+         upload.setMaxFiles(1);
+         upload.setDropLabel(new Label("Upload allure results as Zip archive (.zip)"));
+         upload.setAcceptedFileTypes(".zip");
+-        upload.setMaxFileSize(5 * 1024 * 1024);
++        upload.setMaxFileSize(maxFileSizeBytes);
+ 
+         upload.addSucceededListener(event -> {
+             try {
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/view/ResultsView.java b/src/main/java/ru/iopump/qa/allure/gui/view/ResultsView.java
+index de51ff4..81447e1 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/view/ResultsView.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/view/ResultsView.java
+@@ -1,8 +1,5 @@
+ package ru.iopump.qa.allure.gui.view; //NOPMD
+ 
+-import static ru.iopump.qa.allure.gui.MainLayout.ALLURE_SERVER;
+-import static ru.iopump.qa.allure.gui.component.Col.prop;
+-
+ import com.google.common.collect.ImmutableList;
+ import com.vaadin.flow.component.Tag;
+ import com.vaadin.flow.component.button.Button;
+@@ -15,11 +12,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+ import com.vaadin.flow.data.provider.ListDataProvider;
+ import com.vaadin.flow.router.PageTitle;
+ import com.vaadin.flow.router.Route;
+-import java.lang.reflect.Proxy;
+-import java.util.Collection;
+-import java.util.List;
+-import javax.annotation.PostConstruct;
+ import lombok.extern.slf4j.Slf4j;
++import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+ import ru.iopump.qa.allure.controller.AllureReportController;
+ import ru.iopump.qa.allure.controller.AllureResultController;
+ import ru.iopump.qa.allure.gui.DateTimeResolver;
+@@ -32,6 +26,14 @@ import ru.iopump.qa.allure.gui.dto.GenerateDto;
+ import ru.iopump.qa.allure.model.ResultResponse;
+ import ru.iopump.qa.util.StreamUtil;
+ 
++import javax.annotation.PostConstruct;
++import java.lang.reflect.Proxy;
++import java.util.Collection;
++import java.util.List;
++
++import static ru.iopump.qa.allure.gui.MainLayout.ALLURE_SERVER;
++import static ru.iopump.qa.allure.gui.component.Col.prop;
++
+ @Tag("results-view")
+ @PageTitle("Results | " + ALLURE_SERVER)
+ @Route(value = "results", layout = MainLayout.class)
+@@ -52,39 +54,41 @@ public class ResultsView extends VerticalLayout {
+ 
+     public ResultsView(final AllureResultController allureResultController,
+                        final AllureReportController allureReportController,
+-                       final DateTimeResolver dateTimeResolver) {
++                       final DateTimeResolver dateTimeResolver,
++                       final MultipartProperties multipartProperties) {
+         this.dateTimeResolver = dateTimeResolver;
+         this.dateTimeResolver.retrieve();
+ 
+         this.results = new FilteredGrid<>(
+-            asProvider(allureResultController),
+-            cols()
++                asProvider(allureResultController),
++                cols()
+         );
+         this.generateButton = new Button("Generate report");
+         this.uploadButton = new Button("Upload result");
+ 
+         this.generateDialog = new ReportGenerateDialog(allureReportController);
+-        this.uploadDialog = new ResultUploadDialog(allureResultController);
++        this.uploadDialog = new ResultUploadDialog(allureResultController,
++                (int) multipartProperties.getMaxFileSize().toBytes());
+ 
+         uploadDialog.onClose(event -> results.getGrid().getDataProvider().refreshAll());
+ 
+         this.deleteSelection = new Button("Delete selection",
+-            new Icon(VaadinIcon.CLOSE_CIRCLE),
+-            event -> {
+-                for (ResultResponse resultResponse : results.getGrid().getSelectedItems()) {
+-                    String uuid = resultResponse.getUuid();
+-                    try {
+-                        allureResultController.deleteResult(uuid);
+-                        Notification.show("Delete success: " + uuid, 2000, Notification.Position.TOP_START);
+-                    } catch (Exception e) { //NOPMD
+-                        Notification.show("Deleting error: " + e.getLocalizedMessage(),
+-                            5000,
+-                            Notification.Position.TOP_START);
+-                        log.error("Deleting error", e);
++                new Icon(VaadinIcon.CLOSE_CIRCLE),
++                event -> {
++                    for (ResultResponse resultResponse : results.getGrid().getSelectedItems()) {
++                        String uuid = resultResponse.getUuid();
++                        try {
++                            allureResultController.deleteResult(uuid);
++                            Notification.show("Delete success: " + uuid, 2000, Notification.Position.TOP_START);
++                        } catch (Exception e) { //NOPMD
++                            Notification.show("Deleting error: " + e.getLocalizedMessage(),
++                                    5000,
++                                    Notification.Position.TOP_START);
++                            log.error("Deleting error", e);
++                        }
+                     }
+-                }
+-                results.getGrid().deselectAll();
+-                results.getGrid().getDataProvider().refreshAll();
++                    results.getGrid().deselectAll();
++                    results.getGrid().getDataProvider().refreshAll();
+             });
+         deleteSelection.addThemeVariants(ButtonVariant.LUMO_ERROR);
+ 
+

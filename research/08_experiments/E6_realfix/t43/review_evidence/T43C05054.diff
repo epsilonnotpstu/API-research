@@ -1,0 +1,73 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 272e3d2cb..0abcc5a1f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -84,4 +84,5 @@
+ * EPMRPP-23741 - Update the info from RP notification center in invitation email
+ * EPMRPP-23744 - Error handling: When the invitation is sent to email address that already available in DB, ws returns incorrect error message
+ * EPMRPP-23468 - User with project role=PM/LEAD unable to invite user
+-* EPMRPP-23692 - Demo data: fix line-breakes in Logs
+\ No newline at end of file
++* EPMRPP-23692 - Demo data: fix line-breakes in Logs
++* EPMRPP-24570 - Status statistics is not updated in case user deletes items from SUITE/TEST levels
+diff --git a/src/main/java/com/epam/ta/reportportal/core/item/DeleteTestItemHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/item/DeleteTestItemHandlerImpl.java
+index a206ce64d..a44b385f6 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/item/DeleteTestItemHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/item/DeleteTestItemHandlerImpl.java
+@@ -150,4 +150,4 @@ class DeleteTestItemHandlerImpl implements DeleteTestItemHandler {
+ 			expect(userConfig, hasProjectRoles(Lists.newArrayList(PROJECT_MANAGER, LEAD))).verify(ACCESS_DENIED);
+ 		}
+ 	}
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/statistics/StepBasedStatisticsFacade.java b/src/main/java/com/epam/ta/reportportal/core/statistics/StepBasedStatisticsFacade.java
+index ab2fda80a..7fcf562fe 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/statistics/StepBasedStatisticsFacade.java
++++ b/src/main/java/com/epam/ta/reportportal/core/statistics/StepBasedStatisticsFacade.java
+@@ -43,7 +43,7 @@ public class StepBasedStatisticsFacade extends StatisticsFacadeImpl implements S
+ 
+ 	@Override
+ 	public TestItem resetExecutionStatistics(TestItem testItem) {
+-		if (!testItem.hasChilds() && testItem.getType().awareStatistics()) {
++		if (testItem.getType().awareStatistics()) {
+ 			return super.resetExecutionStatistics(testItem);
+ 		} else {
+ 			return testItem;
+@@ -52,10 +52,10 @@ public class StepBasedStatisticsFacade extends StatisticsFacadeImpl implements S
+ 
+ 	@Override
+ 	public TestItem deleteExecutionStatistics(TestItem testItem) {
+-		if (!testItem.hasChilds() && testItem.getType().awareStatistics()) {
++		if (testItem.getType().awareStatistics()) {
+ 			return super.deleteExecutionStatistics(testItem);
+ 		} else {
+ 			return testItem;
+ 		}
+ 	}
+-}
+\ No newline at end of file
++}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java b/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
+index fedfa90c5..4e48ca13e 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
++++ b/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
+@@ -48,7 +48,7 @@ public class TestBasedStatisticsFacade extends StatisticsFacadeImpl implements S
+     @Override
+     public TestItem resetExecutionStatistics(TestItem testItem) {
+         TestItemType type = testItem.getType();
+-        if (type.awareStatistics() && type.sameLevel(TestItemType.TEST)) {
++        if (type.awareStatistics()) {
+             return super.resetExecutionStatistics(testItem);
+         } else {
+             return testItem;
+@@ -58,7 +58,7 @@ public class TestBasedStatisticsFacade extends StatisticsFacadeImpl implements S
+     @Override
+     public TestItem deleteExecutionStatistics(TestItem testItem) {
+         TestItemType type = testItem.getType();
+-        if (type.awareStatistics() && type.sameLevel(TestItemType.TEST)) {
++        if (type.awareStatistics()) {
+             return super.deleteExecutionStatistics(testItem);
+         } else {
+             return testItem;
+

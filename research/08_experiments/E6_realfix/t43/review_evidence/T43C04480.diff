@@ -1,0 +1,360 @@
+diff --git a/swatch-contracts/TEST_PLAN.md b/swatch-contracts/TEST_PLAN.md
+index 5afe834a5..9cef0b2a2 100644
+--- a/swatch-contracts/TEST_PLAN.md
++++ b/swatch-contracts/TEST_PLAN.md
+@@ -473,50 +473,49 @@ Test cases should be testable locally and in an ephemeral environment.
+ 
+ ## Contract Termination
+ 
+-**contracts-termination-TC001 - A contract remains active after receiving a non-termination event.**
+-- **Description:** Verify that a UMB message with a non-terminating status (i.e., `"status": "SUBSCRIBED"`) does not cause a contract to be terminated.
+-- **Setup:** Ensure a contract exists and is currently in an active state.
+-- **Action:** Simulate a UMB message from the IT partner gateway for the active contract, with the field "status": "SUBSCRIBED".
++**contracts-termination-TC001 - A contract remains active after receiving a message with a future end date.**
++- **Description:** Verify that a UMB message with an end date in the future does not cause a contract to be terminated. The backend determines contract state solely based on start/end dates, not the status field.
++- **Setup:** Ensure a contract exists and is currently in an active state (end date in the future).
++- **Action:** Simulate a UMB message from the IT partner gateway for the active contract, with an end date in the future.
+ - **Verification:** Check the contract using the GET API.
+ - **Expected Result:**
+-  - The end date is empty or higher than now.
++  - The end date remains in the future (contract stays active).
+ 
+-**contracts-update-TC002 - Terminate an existing and active contract.**
+-- **Description:*** Verify that an active contract can be successfully terminated when a UMB message with a status: "UNSUBSCRIBED" is received.
++**contracts-termination-TC002 - Update the end date of an existing and active contract.**
++- **Description:** Verify that an active contract's end date is updated when a UMB message with a different end date is received. The backend uses the entitlement dates from the message, not the status field.
+ - **Setup:** Ensure a contract exists and is currently in an active state.
+-- **Action:** Simulate a UMB message from the IT partner gateway for the active contract, with the field `"status": "UNSUBSCRIBED"`.
++- **Action:** Simulate a UMB message from the IT partner gateway for the active contract, with a new end date.
+ - **Verification:** Check the contract using the GET API.
+ - **Expected Result:**
+   - The end date should be the one contained in the UMB message.
+ 
+-**contracts-termination-TC003 - Receive a termination event for an already terminated contract.**
+-- **Description:** Verify that receiving a UMB message with `"status": "UNSUBSCRIBED"` for a contract that is already in a terminated state does not cause an error or change its status.
+-- **Setup:** Ensure a contract exists and its status is already 'TERMINATED'.
+-- **Action:** Simulate a UMB message from the IT partner gateway for the terminated contract, with the field `"status": "UNSUBSCRIBED"`.
++**contracts-termination-TC003 - Update the end date for an already terminated contract.**
++- **Description:** Verify that receiving a UMB message for a contract that is already terminated (end date in the past) updates the end date without errors.
++- **Setup:** Ensure a contract exists and is already terminated (end date in the past).
++- **Action:** Simulate a UMB message from the IT partner gateway for the terminated contract, with a new end date.
+ - **Verification:** Check the contract using the GET API.
+ - **Expected Result:**
+   - No errors should be logged.
+-  - The contract's status should remain “TERMINATED”.
+-  - The end date is updated.
++  - The end date is updated to the value from the message.
+ 
+-**contracts-termination-TC004 - Receive a termination event for a non-existing contract.**
+-- **Description:** Verify that a contract with a subscription_number but no corresponding record in the Subscriptions table can be correctly terminated when a UMB message with a `"status": "UNSUBSCRIBED"` is received.
++**contracts-termination-TC004 - Process a message for a non-existing contract.**
++- **Description:** Verify that a UMB message for a contract that does not yet exist in the database results in the contract being created.
+ - **Setup:** Ensure a contract does not exist in the Contract table.
+-- **Action:** Simulate a UMB message from the IT partner gateway for the contract unexisting contract, and with the field `"status": "UNSUBSCRIBED"`.
++- **Action:** Simulate a UMB message from the IT partner gateway for the non-existing contract.
+ - **Verification:** Check the contract using the GET API.
+ - **Expected result:**
+   - The contract is created.
+-  - Its end date is empty or higher than now.
++  - Its end date matches the value from the message.
+ 
+-**contracts-termination-TC005 - Receive a subscribed event for a terminated contract.**
+-- **Description:** Verify that a terminated contract can be re-enabled when a UMB message with `"status": "SUBSCRIBED"` is received for the same org, SKU, subscription, and billing account ID with a new date.
+-- **Setup:** Ensure a contract exists and is currently in a terminated state (has an end date).
+-- **Action:** Simulate a UMB message from the IT partner gateway for the terminated contract, with the field `"status": "SUBSCRIBED"` and a new date.
++**contracts-termination-TC005 - Update a terminated contract with a future end date to reactivate it.**
++- **Description:** Verify that a terminated contract (end date in the past) becomes active again when a UMB message with a future end date is received for the same org, SKU, subscription, and billing account ID.
++- **Setup:** Ensure a contract exists and is currently in a terminated state (end date in the past).
++- **Action:** Simulate a UMB message from the IT partner gateway for the terminated contract, with a future end date.
+ - **Verification:** Check the contract using the GET API.
+ - **Expected Result:**
+-  1. The contract is updated and returns to active status.
+-  2. The contract's end date is cleared or set to a future date.
+-  3. The contract status reflects the re-subscription.
++  1. The contract is updated.
++  2. The contract's end date is set to the future date from the message.
++  3. The contract is effectively active again (end date > now).
+ 
+ **contracts-termination-TC006 - Ensure capacity has decreased after a contract is terminated.**
+ - **Description:** Verify that the capacity of the contract is decreased after a contract is terminated.
+diff --git a/swatch-contracts/ct/java/api/PartnerApiStubs.java b/swatch-contracts/ct/java/api/PartnerApiStubs.java
+index e835ad851..91dcdcd24 100644
+--- a/swatch-contracts/ct/java/api/PartnerApiStubs.java
++++ b/swatch-contracts/ct/java/api/PartnerApiStubs.java
+@@ -100,11 +100,10 @@ public class PartnerApiStubs {
+         request.contracts.stream()
+             .map(
+                 contract -> {
+-                  String status = request.status != null ? request.status : "SUBSCRIBED";
+                   if (contract.getBillingProvider() == BillingProvider.AWS) {
+-                    return buildAwsContractBody(contract, status);
++                    return buildAwsContractBody(contract);
+                   } else if (contract.getBillingProvider() == BillingProvider.AZURE) {
+-                    return buildAzureContractBody(contract, status);
++                    return buildAzureContractBody(contract);
+                   } else {
+                     throw new UnsupportedOperationException(
+                         contract.getBillingProvider() + " is not supported!");
+@@ -132,30 +131,21 @@ public class PartnerApiStubs {
+     private final String orgId;
+     private final List<Contract> contracts;
+     private final boolean queryByOrgIdOnly;
+-    private final String status;
+ 
+     private PartnerSubscriptionsStubRequest(
+-        String orgId, List<Contract> contracts, boolean queryByOrgIdOnly, String status) {
++        String orgId, List<Contract> contracts, boolean queryByOrgIdOnly) {
+       this.orgId = orgId;
+       this.contracts = contracts;
+       this.queryByOrgIdOnly = queryByOrgIdOnly;
+-      this.status = status;
+     }
+ 
+     public static PartnerSubscriptionsStubRequest forContract(Contract contract) {
+-      return new PartnerSubscriptionsStubRequest(
+-          contract.getOrgId(), List.of(contract), false, "SUBSCRIBED");
+-    }
+-
+-    public static PartnerSubscriptionsStubRequest forContractWithStatus(
+-        Contract contract, String status) {
+-      return new PartnerSubscriptionsStubRequest(
+-          contract.getOrgId(), List.of(contract), false, status);
++      return new PartnerSubscriptionsStubRequest(contract.getOrgId(), List.of(contract), false);
+     }
+ 
+     public static PartnerSubscriptionsStubRequest forContractsInOrgId(
+         String orgId, Contract... contracts) {
+-      return new PartnerSubscriptionsStubRequest(orgId, List.of(contracts), true, "SUBSCRIBED");
++      return new PartnerSubscriptionsStubRequest(orgId, List.of(contracts), true);
+     }
+   }
+ 
+@@ -167,21 +157,9 @@ public class PartnerApiStubs {
+    * @return AWS contract response body map
+    */
+   private Map<String, Object> buildAwsContractBody(Contract contract) {
+-    return buildAwsContractBody(contract, "SUBSCRIBED");
+-  }
+-
+-  /**
+-   * Build AWS contract response body for Partner Gateway API with custom status.
+-   *
+-   * @param contract the contract data
+-   * @param status the status (e.g., "SUBSCRIBED", "UNSUBSCRIBED")
+-   * @return AWS contract response body map
+-   */
+-  private Map<String, Object> buildAwsContractBody(Contract contract, String status) {
+     var body = new java.util.HashMap<String, Object>();
+     body.put("rhAccountId", contract.getOrgId());
+     body.put("sourcePartner", "aws_marketplace");
+-    body.put("status", status);
+     body.put("entitlementDates", buildEntitlementDates(contract));
+     body.put(
+         "partnerIdentities",
+@@ -211,24 +189,12 @@ public class PartnerApiStubs {
+    * @return Azure contract response body map
+    */
+   private Map<String, Object> buildAzureContractBody(Contract contract) {
+-    return buildAzureContractBody(contract, "SUBSCRIBED");
+-  }
+-
+-  /**
+-   * Build Azure contract response body for Partner Gateway API with custom status.
+-   *
+-   * @param contract the contract data
+-   * @param status the status (e.g., "SUBSCRIBED", "UNSUBSCRIBED")
+-   * @return Azure contract response body map
+-   */
+-  private Map<String, Object> buildAzureContractBody(Contract contract, String status) {
+     var contractDetails = new java.util.HashMap<>(buildContractDetails(contract));
+     contractDetails.put("planId", contract.getPlanId());
+ 
+     var body = new java.util.HashMap<String, Object>();
+     body.put("rhAccountId", contract.getOrgId());
+     body.put("sourcePartner", "azure_marketplace");
+-    body.put("status", status);
+     body.put("entitlementDates", buildEntitlementDates(contract));
+     body.put(
+         "partnerIdentities",
+diff --git a/swatch-contracts/ct/java/tests/ContractsTerminationComponentTest.java b/swatch-contracts/ct/java/tests/ContractsTerminationComponentTest.java
+index 23efab1e8..ad0dc0708 100644
+--- a/swatch-contracts/ct/java/tests/ContractsTerminationComponentTest.java
++++ b/swatch-contracts/ct/java/tests/ContractsTerminationComponentTest.java
+@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
+ import static utils.DateUtils.assertDatesAreEqual;
+ 
+ import api.ContractsArtemisService;
+-import api.PartnerApiStubs;
+ import com.redhat.swatch.component.tests.api.Artemis;
+ import com.redhat.swatch.component.tests.api.TestPlanName;
+ import com.redhat.swatch.component.tests.utils.AwaitilityUtils;
+@@ -60,19 +59,17 @@ public class ContractsTerminationComponentTest extends BaseContractComponentTest
+   private static final double ROSA_CORES_CAPACITY = 8.0;
+   private static final double RHEL_CORES_CAPACITY = 4.0;
+   private static final double RHEL_SOCKETS_CAPACITY = 1.0;
+-  private static final String SUBSCRIBED = "SUBSCRIBED";
+-  private static final String UNSUBSCRIBED = "UNSUBSCRIBED";
+ 
+   @Artemis static ContractsArtemisService artemis = new ContractsArtemisService();
+ 
+   @TestPlanName("contracts-termination-TC001")
+   @Test
+-  void shouldRemainActiveAfterReceivingANonTerminationEvent() {
++  void shouldRemainActiveAfterReceivingMessageWithFutureEndDate() {
+     // Given: An active contract exists
+     Contract initialContract = givenContractCreatedViaMessageBroker();
+ 
+-    // When: A UMB message is received with status "SUBSCRIBED"
+-    whenUpdateContractWithStatusViaMessageBroker(initialContract, SUBSCRIBED);
++    // When: A UMB message is received with a future end date
++    whenUpdateContractViaMessageBroker(initialContract);
+ 
+     // Then: The existing contract should remain active
+     var actual = thenContractIsUpdatedViaMessageBroker(initialContract);
+@@ -84,15 +81,14 @@ public class ContractsTerminationComponentTest extends BaseContractComponentTest
+ 
+   @TestPlanName("contracts-termination-TC002")
+   @Test
+-  void shouldUpdateEndDateAfterReceivingATerminationEvent() {
++  void shouldUpdateEndDateAfterReceivingMessageWithNewEndDate() {
+     // Given: An active contract exists
+     Contract initialContract = givenContractCreatedViaMessageBroker();
+ 
+-    // When: A UMB message is received with status "UNSUBSCRIBED"
+-    Contract updatedContract =
+-        whenUpdateContractWithStatusViaMessageBroker(initialContract, UNSUBSCRIBED);
++    // When: A UMB message is received with a new end date
++    Contract updatedContract = whenUpdateContractViaMessageBroker(initialContract);
+ 
+-    // Then: The existing contract should remain active
++    // Then: The contract end date should be updated to the value from the message
+     var actual = thenContractIsUpdatedViaMessageBroker(initialContract);
+     assertNotNull(actual.getEndDate(), "End date should not be null");
+     assertDatesAreEqual(updatedContract.getEndDate(), actual.getEndDate());
+@@ -100,15 +96,14 @@ public class ContractsTerminationComponentTest extends BaseContractComponentTest
+ 
+   @TestPlanName("contracts-termination-TC003")
+   @Test
+-  void shouldUpdateEndDateForExistingTerminatedContractAfterReceivingATerminationEvent() {
+-    // Given: A terminated contract exists
++  void shouldUpdateEndDateForExistingTerminatedContractAfterReceivingMessage() {
++    // Given: A terminated contract exists (end date in the past)
+     Contract terminatedContract = givenContractTerminatedViaMessageBroker();
+ 
+-    // When: A UMB message is received with status "UNSUBSCRIBED"
+-    Contract updatedContract =
+-        whenUpdateContractWithStatusViaMessageBroker(terminatedContract, UNSUBSCRIBED);
++    // When: A UMB message is received with a new end date
++    Contract updatedContract = whenUpdateContractViaMessageBroker(terminatedContract);
+ 
+-    // Then: The existing contract should remain active
++    // Then: The contract end date should be updated to the value from the message
+     var actual = thenContractIsUpdatedViaMessageBroker(updatedContract);
+     assertDatesAreEqual(actual.getEndDate(), updatedContract.getEndDate());
+   }
+@@ -116,36 +111,36 @@ public class ContractsTerminationComponentTest extends BaseContractComponentTest
+   @TestPlanName("contracts-termination-TC004")
+   @Test
+   void shouldCreateContractAfterReceivingMessageForNonExistingContract() {
+-    // Given non-existing contract
++    // Given: No contract exists
+ 
+-    // When: A UMB message is received with status "UNSUBSCRIBED"
++    // When: A UMB message is received for a non-existing contract
+     Contract contract =
+         Contract.buildRosaContract(orgId, BillingProvider.AWS, Map.of(CORES, ROSA_CORES_CAPACITY));
+     wiremock.forProductAPI().stubOfferingData(contract.getOffering());
+     wiremock.forSearchApi().stubGetSubscriptionBySubscriptionNumber(contract);
+     service.syncOffering(contract.getOffering().getSku());
+-    whenUpdateContractWithStatusViaMessageBroker(contract, UNSUBSCRIBED);
++    whenUpdateContractViaMessageBroker(contract);
+ 
+     // Wait for the contract to be processed
+     AwaitilityUtils.until(() -> service.getContracts(contract).size(), is(1));
+ 
+-    // Then: The existing contract should remain active
++    // Then: The contract should be created with the end date from the message
+     var actual = thenContractIsCreatedViaMessageBroker(contract);
+     assertNotNull(actual.getEndDate(), "End date should not be null");
+-    assertTrue(actual.getEndDate().isAfter(OffsetDateTime.now()), "End date should be updated");
++    assertTrue(
++        actual.getEndDate().isAfter(OffsetDateTime.now()), "End date should be in the future");
+   }
+ 
+   @TestPlanName("contracts-termination-TC005")
+   @Test
+-  void shouldUpdateEndDateForExistingTerminatedContractAfterReceivingANonTerminationEvent() {
+-    // Given: A terminated contract exists
++  void shouldReactivateTerminatedContractAfterReceivingMessageWithFutureEndDate() {
++    // Given: A terminated contract exists (end date in the past)
+     Contract terminatedContract = givenContractTerminatedViaMessageBroker();
+ 
+-    // When: A UMB message is received with status "SUBSCRIBED"
+-    Contract updatedContract =
+-        whenUpdateContractWithStatusViaMessageBroker(terminatedContract, SUBSCRIBED);
++    // When: A UMB message is received with a future end date
++    Contract updatedContract = whenUpdateContractViaMessageBroker(terminatedContract);
+ 
+-    // Then: The existing contract should remain active
++    // Then: The contract should be reactivated with the future end date
+     var actual = thenContractIsUpdatedViaMessageBroker(updatedContract);
+     assertNotNull(actual.getEndDate(), "End date should not be null");
+     assertDatesAreEqual(updatedContract.getEndDate(), actual.getEndDate());
+@@ -242,15 +237,10 @@ public class ContractsTerminationComponentTest extends BaseContractComponentTest
+     return sub;
+   }
+ 
+-  private Contract whenUpdateContractWithStatusViaMessageBroker(
+-      Contract initialContract, String status) {
++  private Contract whenUpdateContractViaMessageBroker(Contract initialContract) {
+     Contract updatedContract =
+         initialContract.toBuilder().endDate(OffsetDateTime.now().plusDays(30)).build();
+-    wiremock
+-        .forPartnerAPI()
+-        .stubPartnerSubscriptions(
+-            PartnerApiStubs.PartnerSubscriptionsStubRequest.forContractWithStatus(
+-                updatedContract, status));
++    wiremock.forPartnerAPI().stubPartnerSubscriptions(forContract(updatedContract));
+     artemis.forContracts().sendAsText(updatedContract);
+     return updatedContract;
+   }
+diff --git a/swatch-contracts/docs/adr/0001-contract-termination-through-umb.md b/swatch-contracts/docs/adr/0001-contract-termination-through-umb.md
+index ec4edc487..31e6af6e3 100644
+--- a/swatch-contracts/docs/adr/0001-contract-termination-through-umb.md
++++ b/swatch-contracts/docs/adr/0001-contract-termination-through-umb.md
+@@ -1,4 +1,4 @@
+-### 0001 - Use UMB Message End Date for Contract Termination
++### 0001 - Use UMB Message End Date for Contract Lifecycle Management
+ 
+ * **Status:** Accepted
+ * **Deciders:** @karshah
+@@ -8,19 +8,21 @@
+ 
+ ### Context
+ 
+-The SWATCH service needs to correctly terminate contracts based on `UNSUBSCRIBED` events received via the UMB message bus from the IT partner gateway. A key open point and challenge is determining the appropriate `end_date` for the contract record, as the `UNSUBSCRIBED` UMB message may not always provide this field directly, particularly for pay-as-you-go (PAYGO) contracts. This decision is critical for the test plan, implementation, and the accuracy of downstream services like Billable Usage. The service is not the source of truth for contract status, and must rely on messages from the IT partner gateway.
++The SWATCH service needs to correctly manage the contract lifecycle (creation, updates, and termination) based on messages received via the UMB message bus from the IT partner gateway. A key challenge is determining the appropriate `end_date` for the contract record. This decision is critical for the test plan, implementation, and the accuracy of downstream services like Billable Usage. The service is not the source of truth for contract state, and must rely on messages from the IT partner gateway.
++
++Note: Although the partner entitlement message schema includes a `status` field (e.g., `SUBSCRIBED`, `UNSUBSCRIBED`), the swatch-contracts backend does not use this field in any business logic. Contract state (active or terminated) is determined exclusively by the `start_date` and `end_date` from the message. A contract is considered active when `start_date <= now` and (`end_date >= now` or `end_date` is null), and terminated when `end_date < now`.
+ 
+ ### Decision
+ 
+-We will use the end date provided in the UMB message as the `end_date` for contract termination. The UMB message should be treated as the source of truth for termination. If a `UNSUBSCRIBED` message is received for an existing contract, the `end_date` will be updated with the timestamp from the message. Ideally, the end date won’t be present for that contract. However, if an event is "UNSUBSCRIBED" this will function as an upsert, overwriting any previous termination date for that contract. In the scenario where a termination event is received for a non-existing contract, a new contract will be created in a terminated state, populated with the `end_date` from the message. This approach avoids impact to other services.
++We will use the entitlement dates (`start_date` and `end_date`) provided in the UMB message as the source of truth for contract lifecycle management. When a UMB message is received for an existing contract, the `end_date` will be updated with the value from the message, functioning as an upsert that overwrites any previous end date. When a message is received for a non-existing contract, a new contract will be created with the dates from the message. This approach avoids impacting other services.
+ 
+ ### Consequences
+ 
+ * **Positive:**
+-    * **Data Integrity:** The `end_date` in our system will always be based on the most recent, authoritative timestamp from the source, reducing data discrepancies.
+-    * **Simplicity:** The logic for termination is simplified by directly using the provided timestamp, avoiding complex assumptions or manual calculations.
+-    * **Robustness:** The system will gracefully handle termination events for both existing and non-existing contracts without causing errors or negatively impacting other services.
++    * **Data Integrity:** The `end_date` in our system will always be based on the most recent, authoritative dates from the source, reducing data discrepancies.
++    * **Simplicity:** The logic is simplified by directly using the provided dates, avoiding complex assumptions about status semantics or manual calculations.
++    * **Robustness:** The system will gracefully handle messages for both existing and non-existing contracts without causing errors or negatively impacting other services.
+     * **Test Alignment:** This decision directly addresses the open points in our test plan and provides a clear path for unit and API level testing.
+ 
+ * **Negative:**
+-    * **Dependency:** This approach creates a strong dependency on the IT partner gateway to consistently provide an `end_date` within `UNSUBSCRIBED` messages.
+\ No newline at end of file
++    * **Dependency:** This approach creates a strong dependency on the IT partner gateway to consistently provide correct `start_date` and `end_date` values in its messages.
+

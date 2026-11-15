@@ -1,0 +1,119 @@
+diff --git a/src/main/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequest.java b/src/main/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequest.java
+index 8db52d51..108610b6 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequest.java
++++ b/src/main/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequest.java
+@@ -1,5 +1,11 @@
+ package com.zufar.icedlatte.cart.api.dto;
+ 
++import java.util.Objects;
+ import java.util.UUID;
+ 
+-public record AddCartItemRequest(UUID productId, int productQuantity) {}
++public record AddCartItemRequest(UUID productId, int productQuantity) {
++
++    public AddCartItemRequest {
++        Objects.requireNonNull(productId, "productId must not be null");
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java b/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
+index 61422ba2..deab2984 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
++++ b/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
+@@ -134,6 +134,9 @@ public class ShoppingCartService implements CartCheckoutApi {
+         List<UUID> productIds = shoppingCart.getItems().stream()
+                 .map(ShoppingCartItem::getProductId)
+                 .toList();
++        if (productIds.isEmpty()) {
++            return Map.of();
++        }
+         return productCatalogApi.getProductsByIds(productIds).stream()
+                 .collect(Collectors.toMap(ProductSnapshot::id, Function.identity()));
+     }
+@@ -220,6 +223,9 @@ public class ShoppingCartService implements CartCheckoutApi {
+         if (itemIds.isEmpty()) {
+             throw new InvalidCartItemRequestException("Cart item ids to delete must not be empty.");
+         }
++        if (itemIds.stream().anyMatch(Objects::isNull)) {
++            throw new InvalidCartItemRequestException("Cart item ids to delete must not contain null values.");
++        }
+     }
+ 
+     @Override
+diff --git a/src/test/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequestTest.java b/src/test/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequestTest.java
+new file mode 100644
+index 00000000..6512c687
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/cart/api/dto/AddCartItemRequestTest.java
+@@ -0,0 +1,16 @@
++package com.zufar.icedlatte.cart.api.dto;
++
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++
++@DisplayName("AddCartItemRequest")
++class AddCartItemRequestTest {
++
++    @Test
++    @DisplayName("rejects missing product id")
++    void rejectsMissingProductId() {
++        assertThatThrownBy(() -> new AddCartItemRequest(null, 1)).isInstanceOf(NullPointerException.class);
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java b/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
+index 1eab7e17..3f6bee21 100644
+--- a/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
+@@ -93,7 +93,6 @@ class ShoppingCartServiceTest {
+ 
+         when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.empty());
+         when(shoppingCartRepository.saveAndFlush(any(ShoppingCart.class))).thenReturn(savedCart);
+-        when(productCatalogApi.getProductsByIds(any())).thenReturn(List.of());
+ 
+         ShoppingCartDto result = shoppingCartService.getByUserId(userId);
+ 
+@@ -105,6 +104,24 @@ class ShoppingCartServiceTest {
+         assertThat(captor.getValue().getItems()).isEmpty();
+     }
+ 
++    @Test
++    @DisplayName("getByUserId does not call product catalog for an empty cart")
++    void getByUserIdDoesNotCallProductCatalogForEmptyCart() {
++        UUID userId = UUID.randomUUID();
++        ShoppingCart shoppingCart = ShoppingCart.builder()
++                .id(UUID.randomUUID())
++                .userId(userId)
++                .items(new HashSet<>())
++                .createdAt(OffsetDateTime.now())
++                .build();
++        when(shoppingCartRepository.findShoppingCartByUserId(userId)).thenReturn(Optional.of(shoppingCart));
++
++        ShoppingCartDto result = shoppingCartService.getByUserId(userId);
++
++        assertThat(result.getItems()).isEmpty();
++        verifyNoInteractions(productCatalogApi);
++    }
++
+     @Test
+     @DisplayName("getByUserIdOrThrow fails when the user has no cart")
+     void getByUserIdOrThrowFailsWhenCartMissing() {
+@@ -334,6 +351,17 @@ class ShoppingCartServiceTest {
+         verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
+     }
+ 
++    @Test
++    @DisplayName("deleteItems rejects null item ids before touching repositories")
++    void deleteItemsRejectsNullItemIds() {
++        UUID userId = UUID.randomUUID();
++
++        assertThatThrownBy(() -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
++                .isInstanceOf(InvalidCartItemRequestException.class);
++
++        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++    }
++
+     private static ProductSnapshot productDto(UUID id, BigDecimal price) {
+         return new ProductSnapshot(
+                 id, "New coffee", "Desc", price, 10, true, null, BigDecimal.valueOf(4.5), 12, "Brand", "Seller", 250);
+

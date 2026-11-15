@@ -1,0 +1,84 @@
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+index 324f4bd..d825685 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+@@ -51,7 +51,10 @@ internal enum class SdJwtVcValidationErrorCodeTO {
+     IssuerCertificateIsNotTrusted,
+     UnableToLookupDID,
+     UnableToDetermineVerificationMethod,
++    TypeMetadataValidationFailure,
++    TypeMetadataResolutionFailure,
+     StatusCheckFailed,
++    StatusNotValid,
+     UnexpectedError,
+     InvalidIssuerChain,
+ }
+@@ -144,4 +147,27 @@ private fun SdJwtVcValidationError.toSdJwtVcValidationError(): SdJwtVcValidation
+     )
+ 
+ private fun SdJwtVcValidationErrorCode.toSdJwtVcValidationErrorCodeTO(): SdJwtVcValidationErrorCodeTO =
+-    SdJwtVcValidationErrorCodeTO.valueOf(name)
++    when (this) {
++        SdJwtVcValidationErrorCode.IsUnparsable -> SdJwtVcValidationErrorCodeTO.IsUnparsable
++        SdJwtVcValidationErrorCode.ContainsInvalidJwt -> SdJwtVcValidationErrorCodeTO.ContainsInvalidJwt
++        SdJwtVcValidationErrorCode.IsMissingHolderPublicKey -> SdJwtVcValidationErrorCodeTO.IsMissingHolderPublicKey
++        SdJwtVcValidationErrorCode.UnsupportedHolderPublicKey -> SdJwtVcValidationErrorCodeTO.UnsupportedHolderPublicKey
++        SdJwtVcValidationErrorCode.ContainsInvalidKeyBindingJwt -> SdJwtVcValidationErrorCodeTO.ContainsInvalidKeyBindingJwt
++        SdJwtVcValidationErrorCode.ContainsKeyBindingJwt -> SdJwtVcValidationErrorCodeTO.ContainsKeyBindingJwt
++        SdJwtVcValidationErrorCode.IsMissingKeyBindingJwt -> SdJwtVcValidationErrorCodeTO.IsMissingKeyBindingJwt
++        SdJwtVcValidationErrorCode.ContainsInvalidDisclosures -> SdJwtVcValidationErrorCodeTO.ContainsInvalidDisclosures
++        SdJwtVcValidationErrorCode.ContainsUnsupportedHashingAlgorithm -> SdJwtVcValidationErrorCodeTO.ContainsUnsupportedHashingAlgorithm
++        SdJwtVcValidationErrorCode.ContainsNonUniqueDigests -> SdJwtVcValidationErrorCodeTO.ContainsNonUniqueDigests
++        SdJwtVcValidationErrorCode.ContainsNonUniqueDisclosures -> SdJwtVcValidationErrorCodeTO.ContainsNonUniqueDisclosures
++        SdJwtVcValidationErrorCode.ContainsDisclosuresWithNoDigests -> SdJwtVcValidationErrorCodeTO.ContainsDisclosuresWithNoDigests
++        SdJwtVcValidationErrorCode.UnsupportedVerificationMethod -> SdJwtVcValidationErrorCodeTO.UnsupportedVerificationMethod
++        SdJwtVcValidationErrorCode.UnableToResolveIssuerMetadata -> SdJwtVcValidationErrorCodeTO.UnableToResolveIssuerMetadata
++        SdJwtVcValidationErrorCode.IssuerCertificateIsNotTrusted -> SdJwtVcValidationErrorCodeTO.IssuerCertificateIsNotTrusted
++        SdJwtVcValidationErrorCode.UnableToLookupDID -> SdJwtVcValidationErrorCodeTO.UnableToLookupDID
++        SdJwtVcValidationErrorCode.UnableToDetermineVerificationMethod -> SdJwtVcValidationErrorCodeTO.UnableToDetermineVerificationMethod
++        SdJwtVcValidationErrorCode.TypeMetadataValidationFailure -> SdJwtVcValidationErrorCodeTO.TypeMetadataValidationFailure
++        SdJwtVcValidationErrorCode.TypeMetadataResolutionFailure -> SdJwtVcValidationErrorCodeTO.TypeMetadataResolutionFailure
++        SdJwtVcValidationErrorCode.StatusCheckFailed -> SdJwtVcValidationErrorCodeTO.StatusCheckFailed
++        SdJwtVcValidationErrorCode.StatusNotValid -> SdJwtVcValidationErrorCodeTO.StatusNotValid
++        SdJwtVcValidationErrorCode.UnexpectedError -> SdJwtVcValidationErrorCodeTO.UnexpectedError
++    }
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/SdJwtVcValidationErrorCodeTOTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/SdJwtVcValidationErrorCodeTOTest.kt
+new file mode 100644
+index 0000000..11c28b9
+--- /dev/null
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/SdJwtVcValidationErrorCodeTOTest.kt
+@@ -0,0 +1,33 @@
++/*
+[REDACTED attribution]
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package eu.europa.ec.eudi.verifier.endpoint.port.input
++
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidationErrorCode
++import kotlin.test.Test
++import kotlin.test.assertTrue
++
++internal class SdJwtVcValidationErrorCodeTOTest {
++    /**
++     * Every validation outcome must be expressible on the wire, otherwise
++     * /utilities/validations/sdJwtVc cannot report it.
++     */
++    @Test
++    fun `every validation error code has a counterpart in the wire enum`() {
++        val wire = SdJwtVcValidationErrorCodeTO.entries.map { it.name }.toSet()
++        val missing = SdJwtVcValidationErrorCode.entries.map { it.name }.filterNot { it in wire }
++        assertTrue(missing.isEmpty(), "SdJwtVcValidationErrorCodeTO is missing $missing")
++    }
++}
+

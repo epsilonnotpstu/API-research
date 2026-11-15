@@ -1,0 +1,128 @@
+[parent contract] 33c7374cfd03e5a7cdb565021a64f19e3ec36d38:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4080
+4080:       - description: Returns a zip file of all files when format=zip is specified.
+4081:         in: query
+4082:         name: format
+4083:         schema:
+4084:           type: string
+4085:           enum:
+4086:           - zip
+4087:       responses:
+4088:         "200":
+4089:           content:
+4090:             application/json:
+4091:               schema:
+4092:                 type: array
+4093:                 items:
+4094:                   $ref: '#/components/schemas/ToolFile'
+4095:             application/zip:
+4096:               schema:
+4097:                 type: array
+4098:                 items:
+4099:                   $ref: '#/components/schemas/ToolFile'
+4100:           description: The array of File JSON responses.
+4101:         "404":
+4102:           content:
+4103:             application/json:
+
+[fix contract] 3258fe287c002cb53a8dd36a40174307c24efadd:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4080
+4080:       - description: Returns a zip file of all files when format=zip is specified.
+4081:         in: query
+4082:         name: format
+4083:         schema:
+4084:           type: string
+4085:           enum:
+4086:           - zip
+4087:       responses:
+4088:         "200":
+4089:           content:
+4090:             application/json:
+4091:               schema:
+4092:                 type: array
+4093:                 items:
+4094:                   $ref: '#/components/schemas/ToolFile'
+4095:             application/zip:
+4096:               schema:
+4097:                 type: array
+4098:                 items:
+4099:                   $ref: '#/components/schemas/ToolFile'
+4100:           description: The array of File JSON responses.
+4101:         "404":
+4102:           content:
+4103:             application/json:
+
+[parent route] 33c7374cfd03e5a7cdb565021a64f19e3ec36d38:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4044
+4044:   /ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files:
+4045:     get:
+4046:       description: "Get a list of objects that contain the relative path and file\
+4047:         \ type. The descriptors are intended for use with the /tools/{id}/versions/{version_id}/{type}/descriptor/{relative_path\
+4048:         \ : .+} endpoint. Returns a zip file of all files when format=zip is specified."
+4049:       operationId: toolsIdVersionsVersionIdTypeFilesGet
+4050:       parameters:
+4051:       - description: "A unique identifier of the tool, scoped to this registry, for\
+4052:           \ example `123456`."
+
+[parent implementation] 33c7374cfd03e5a7cdb565021a64f19e3ec36d38:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:924
+924:     private Response getZipResponse(Set<SourceFile> sourceFiles, String dockstoreID, String name, Path path) {
+925:         String fileName = EntryVersionHelper.generateZipFileName(dockstoreID, name);
+926: 
+927:         return Response.ok().entity((StreamingOutput) output -> EntryVersionHelper.writeStreamAsZipStatic(sourceFiles, output, path))
+928:             .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"").build();
+929:     }
+930: 
+931:     /**
+
+[parent implementation] 33c7374cfd03e5a7cdb565021a64f19e3ec36d38:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:858
+858:     public Response toolsIdVersionsVersionIdTypeFilesGet(String id, DescriptorType type, String versionId, String format, SecurityContext securityContext, ContainerRequestContext value,
+859:         Optional<User> user) {
+860: 
+861:         // check for incompatible format option and header combination
+862:         boolean zipFormat = "zip".equalsIgnoreCase(format);
+863:         boolean jsonOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.equals(MediaType.APPLICATION_JSON_TYPE));
+864:         if (zipFormat && jsonOnly) {
+865:             return Response.status(Status.BAD_REQUEST).build();
+866:         }
+867: 
+868:         // accept header should also work
+869:         boolean consumesHeaderZipOnly = value.getAcceptableMediaTypes().stream().allMatch(mediaType -> mediaType.getType().equals("application") && mediaType.getSubtype().equals("zip"));
+870: 
+871:         ParsedRegistryID parsedID = null;
+872:         try {
+873:             parsedID = new ParsedRegistryID(id);
+874:         } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+875:             return BAD_DECODE_REGISTRY_RESPONSE;
+876:         }
+877:         Entry<?, ?> entry = getEntry(parsedID, user);
+878:         List<String> primaryDescriptorPaths = new ArrayList<>();
+879:         try {
+880:             versionDAO.enableNameFilter(versionId);
+881: 
+882:             if (entry instanceof Workflow workflow) {
+883:                 Set<WorkflowVersion> workflowVersions = workflow.getWorkflowVersions();
+884:                 Optional<WorkflowVersion> first = workflowVersions.stream()
+885:                     .filter(workflowVersion -> workflowVersion.getName().equals(versionId)).findFirst();
+886:                 if (first.isPresent()) {
+887:                     WorkflowVersion workflowVersion = first.get();
+888:                     // Matching the workflow path in a workflow automatically indicates that the file is a primary descriptor
+889:                     primaryDescriptorPaths.add(workflowVersion.getWorkflowPath());
+890:                     Set<SourceFile> sourceFiles = workflowVersion.getSourceFiles();
+891:                     if ("zip".equalsIgnoreCase(format) || consumesHeaderZipOnly) {
+892:                         return getZipResponse(sourceFiles, workflow.getWorkflowPath(), workflowVersion.getName(), Paths.get(workflowVersion.getWorkingDirectory()));
+893:                     }
+894:                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), workflowVersion.getWorkingDirectory());
+895:                     return Response.ok().entity(toolFiles).build();
+896:                 } else {
+897:                     return Response.noContent().build();
+898:                 }
+899:             } else if (entry instanceof Tool tool) {
+900:                 Set<Tag> versions = tool.getWorkflowVersions();
+
+[fix implementation] 3258fe287c002cb53a8dd36a40174307c24efadd:dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:924
+924:     private Response getZipResponse(Set<SourceFile> sourceFiles, String dockstoreID, String name, Path path) {
+925:         String fileName = EntryVersionHelper.generateZipFileName(dockstoreID, name);
+926: 
+927:         return Response.ok().entity((StreamingOutput) output -> EntryVersionHelper.writeStreamAsZipStatic(sourceFiles, output, path))
+928:             .header("Content-Type", "application/zip")
+929:             .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"").build();
+930:     }
+931: 
+932:     /**

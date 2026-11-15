@@ -1,0 +1,32 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/model/adapters/AdapterStatusModelConversionUtils.java b/hivemq-edge/src/main/java/com/hivemq/api/model/adapters/AdapterStatusModelConversionUtils.java
+index dd8f363e6..9a04383c2 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/model/adapters/AdapterStatusModelConversionUtils.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/model/adapters/AdapterStatusModelConversionUtils.java
+@@ -41,12 +41,12 @@ public class AdapterStatusModelConversionUtils {
+                 OffsetDateTime.ofInstant(Instant.ofEpochMilli(protocolAdapterWrapper.getTimeOfLastStartAttempt()),
+                         ZoneOffset.UTC);
+ 
++        System.err.println(offsetDateTime);
+         return new Status().runtime(convertRuntimeStatus(protocolAdapterWrapper.getRuntimeStatus()))
+                 .connection(convertConnectionStatus(protocolAdapterWrapper.getConnectionStatus()))
+                 .id(protocolAdapterWrapper.getId())
+                 .type(ApiConstants.ADAPTER_TYPE)
+-                //TODO
+-               // .startedAt(offsetDateTime)
++                .startedAt(offsetDateTime)
+                 .message(protocolAdapterWrapper.getErrorMessage());
+     }
+ 
+diff --git a/hivemq-edge/src/main/java/com/hivemq/http/JaxrsObjectMapperProvider.java b/hivemq-edge/src/main/java/com/hivemq/http/JaxrsObjectMapperProvider.java
+index 6e3c46a8d..ab82d053b 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/http/JaxrsObjectMapperProvider.java
++++ b/hivemq-edge/src/main/java/com/hivemq/http/JaxrsObjectMapperProvider.java
+@@ -47,6 +47,7 @@ public class JaxrsObjectMapperProvider extends JacksonJaxbJsonProvider {
+                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true)
+                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
++                .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                 .serializationInclusion(JsonInclude.Include.NON_NULL)
+                 .enable(SerializationFeature.INDENT_OUTPUT)
+                 .visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+

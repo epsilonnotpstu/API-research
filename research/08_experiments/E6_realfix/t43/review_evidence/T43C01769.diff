@@ -1,0 +1,87 @@
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/api/AccountingRuleApiResource.java b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/api/AccountingRuleApiResource.java
+index 6aabbd0c1a..8173094bf7 100755
+--- a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/api/AccountingRuleApiResource.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/api/AccountingRuleApiResource.java
+@@ -198,8 +198,20 @@ public class AccountingRuleApiResource {
+ 
+         } else {
+ 
+-            final Collection<CodeValueData> allowedCreditTagOptions = retrieveSelectedTags(allowedTagOptions, accountingRuleData.getCreditTags());
+-            final Collection<CodeValueData> allowedDebitTagOptions = retrieveSelectedTags(allowedTagOptions, accountingRuleData.getDebitTags());
++            final Collection<CodeValueData> allowedCreditTagOptions;
++            final Collection<CodeValueData> allowedDebitTagOptions;
++
++            if (accountingRuleData.getCreditTags() != null) {
++                allowedCreditTagOptions = retrieveSelectedTags(allowedTagOptions, accountingRuleData.getCreditTags());
++            } else {
++                allowedCreditTagOptions = allowedTagOptions;
++            }
++
++            if (accountingRuleData.getDebitTags() != null) {
++                allowedDebitTagOptions = retrieveSelectedTags(allowedTagOptions, accountingRuleData.getDebitTags());
++            } else {
++                allowedDebitTagOptions = allowedTagOptions;
++            }
+ 
+             accountingRuleData = new AccountingRuleData(accountingRuleData, allowedAccounts, allowedOffices, allowedCreditTagOptions,
+                     allowedDebitTagOptions);
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/serialization/AccountingRuleCommandFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/serialization/AccountingRuleCommandFromApiJsonDeserializer.java
+index 4bdcfcc5ee..fa32cb3865 100755
+--- a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/serialization/AccountingRuleCommandFromApiJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/serialization/AccountingRuleCommandFromApiJsonDeserializer.java
+@@ -63,7 +63,7 @@ public class AccountingRuleCommandFromApiJsonDeserializer {
+                 .ignoreIfNull().integerGreaterThanZero();
+ 
+         final Long officeId = this.fromApiJsonHelper.extractLongNamed(AccountingRuleJsonInputParams.OFFICE_ID.getValue(), element);
+-        baseDataValidator.reset().parameter(AccountingRuleJsonInputParams.OFFICE_ID.getValue()).value(officeId).ignoreIfNull()
++        baseDataValidator.reset().parameter(AccountingRuleJsonInputParams.OFFICE_ID.getValue()).value(officeId).notNull()
+                 .integerGreaterThanZero();
+ 
+         final String name = this.fromApiJsonHelper.extractStringNamed(AccountingRuleJsonInputParams.NAME.getValue(), element);
+@@ -85,6 +85,30 @@ public class AccountingRuleCommandFromApiJsonDeserializer {
+                 .arrayNotEmpty();
+         validateCreditOrDebitTagArray(debitTags, baseDataValidator, AccountingRuleJsonInputParams.DEBIT_ACCOUNT_TAGS.getValue());
+ 
++        if (creditTags == null && accountToCreditId == null) {
++            final String creditTag = AccountingRuleJsonInputParams.CREDIT_ACCOUNT_TAGS.getValue();
++            final String creditAccount = AccountingRuleJsonInputParams.ACCOUNT_TO_CREDIT.getValue();
++            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(creditAccount).append(".or.")
++                    .append(creditTag).append(".required");
++            final StringBuilder defaultUserMessage = new StringBuilder("The parameter ").append(creditAccount).append(" or")
++                    .append(creditTag).append(" required");
++            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultUserMessage.toString(),
++                    creditAccount + "," + creditTag, new Object[] { creditAccount, creditTag });
++            dataValidationErrors.add(error);
++        }
++
++        if (debitTags == null && accountToDebitId == null) {
++            final String debitTag = AccountingRuleJsonInputParams.DEBIT_ACCOUNT_TAGS.getValue();
++            final String debitAccount = AccountingRuleJsonInputParams.ACCOUNT_TO_DEBIT.getValue();
++            final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(debitAccount).append(".or.")
++                    .append(debitTag).append(".required");
++            final StringBuilder defaultUserMessage = new StringBuilder("The parameter ").append(debitAccount).append(" or")
++                    .append(debitTag).append(" required");
++            final ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultUserMessage.toString(),
++                    debitAccount + "," + debitTag, new Object[] { debitAccount, debitTag });
++            dataValidationErrors.add(error);
++        }
++
+         final String allowMultipleCredits = this.fromApiJsonHelper.extractStringNamed(
+                 AccountingRuleJsonInputParams.ALLOW_MULTIPLE_CREDIT_ENTRIES.getValue(), element);
+         baseDataValidator.reset().parameter(AccountingRuleJsonInputParams.ALLOW_MULTIPLE_CREDIT_ENTRIES.getValue())
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/service/AccountingRuleWritePlatformServiceJpaRepositoryImpl.java b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/service/AccountingRuleWritePlatformServiceJpaRepositoryImpl.java
+index ba2b3916fe..c728872e4e 100755
+--- a/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/service/AccountingRuleWritePlatformServiceJpaRepositoryImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/accounting/rule/service/AccountingRuleWritePlatformServiceJpaRepositoryImpl.java
+@@ -112,8 +112,8 @@ public class AccountingRuleWritePlatformServiceJpaRepositoryImpl implements Acco
+         // get the GL Accounts or tags to Debit and Credit
+         final String[] debitTags = command.arrayValueOfParameterNamed(AccountingRuleJsonInputParams.DEBIT_ACCOUNT_TAGS.getValue());
+         final String[] creditTags = command.arrayValueOfParameterNamed(AccountingRuleJsonInputParams.CREDIT_ACCOUNT_TAGS.getValue());
+-        final Set<String> incomingDebitTags = new HashSet<String>(Arrays.asList(debitTags));
+-        final Set<String> incomingCreditTags = new HashSet<String>(Arrays.asList(creditTags));
++        final Set<String> incomingDebitTags = debitTags == null ? new HashSet<String>(): new HashSet<String>(Arrays.asList(debitTags));
++        final Set<String> incomingCreditTags = creditTags == null ? new HashSet<String>() : new HashSet<String>(Arrays.asList(creditTags));
+         final Long accountToDebitId = command.longValueOfParameterNamed(AccountingRuleJsonInputParams.ACCOUNT_TO_DEBIT.getValue());
+         final Long accountToCreditId = command.longValueOfParameterNamed(AccountingRuleJsonInputParams.ACCOUNT_TO_CREDIT.getValue());
+ 
+

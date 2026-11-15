@@ -1,0 +1,61 @@
+diff --git a/src/main/java/com/epam/ta/reportportal/core/integration/plugin/impl/GetPluginHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/integration/plugin/impl/GetPluginHandlerImpl.java
+index 4c2c838aa..13cf65173 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/integration/plugin/impl/GetPluginHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/integration/plugin/impl/GetPluginHandlerImpl.java
+@@ -23,7 +23,6 @@ import com.epam.ta.reportportal.ws.model.integration.IntegrationTypeResource;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ 
+-import java.util.Comparator;
+ import java.util.List;
+ import java.util.stream.Collectors;
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/ws/converter/converters/IntegrationConverter.java b/src/main/java/com/epam/ta/reportportal/ws/converter/converters/IntegrationConverter.java
+index 3892bd793..561534aed 100644
+--- a/src/main/java/com/epam/ta/reportportal/ws/converter/converters/IntegrationConverter.java
++++ b/src/main/java/com/epam/ta/reportportal/ws/converter/converters/IntegrationConverter.java
+@@ -24,10 +24,9 @@ import com.epam.ta.reportportal.ws.model.integration.AuthFlowEnum;
+ import com.epam.ta.reportportal.ws.model.integration.IntegrationResource;
+ import com.epam.ta.reportportal.ws.model.integration.IntegrationTypeResource;
+ 
+-import java.util.Collections;
++import java.util.HashMap;
+ import java.util.Map;
+ import java.util.function.Function;
+-import java.util.stream.Collectors;
+ 
+ import static java.util.Optional.ofNullable;
+ 
+@@ -45,10 +44,11 @@ public final class IntegrationConverter {
+ 		resource.setEnabled(integration.isEnabled());
+ 		ofNullable(integration.getProject()).ifPresent(p -> resource.setProjectId(p.getId()));
+ 		ofNullable(integration.getParams()).ifPresent(it -> {
+-			Map<String, Object> params = ofNullable(it.getParams()).map(p -> p.entrySet()
++			Map<String, Object> params = new HashMap<>();
++			ofNullable(it.getParams()).ifPresent(p -> p.entrySet()
+ 					.stream()
+ 					.filter(entry -> !EmailSettingsEnum.PASSWORD.getAttribute().equalsIgnoreCase(entry.getKey()))
+-					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))).orElseGet(Collections::emptyMap);
++					.forEach(param -> params.put(param.getKey(), param.getValue())));
+ 			resource.setIntegrationParams(params);
+ 		});
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/ws/handler/impl/QueryHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/ws/handler/impl/QueryHandlerImpl.java
+index 864a720b5..1563623a6 100644
+--- a/src/main/java/com/epam/ta/reportportal/ws/handler/impl/QueryHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/ws/handler/impl/QueryHandlerImpl.java
+@@ -1,11 +1,11 @@
+ package com.epam.ta.reportportal.ws.handler.impl;
+ 
+-import com.epam.ta.reportportal.exception.ReportPortalException;
+ import com.epam.ta.reportportal.dao.*;
+ import com.epam.ta.reportportal.entity.integration.Integration;
++import com.epam.ta.reportportal.entity.item.TestItem;
+ import com.epam.ta.reportportal.entity.log.Log;
+ import com.epam.ta.reportportal.entity.project.Project;
+-import com.epam.ta.reportportal.entity.item.TestItem;
++import com.epam.ta.reportportal.exception.ReportPortalException;
+ import com.epam.ta.reportportal.ws.handler.QueryHandler;
+ import com.epam.ta.reportportal.ws.rabbit.QueryRQ;
+ import com.google.common.collect.ImmutableMap;
+

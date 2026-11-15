@@ -1,0 +1,70 @@
+diff --git a/swatch-contracts/ct/java/tests/CapacityReportPaginationComponentTest.java b/swatch-contracts/ct/java/tests/CapacityReportPaginationComponentTest.java
+index b4fdafe45..de34fcb97 100644
+--- a/swatch-contracts/ct/java/tests/CapacityReportPaginationComponentTest.java
++++ b/swatch-contracts/ct/java/tests/CapacityReportPaginationComponentTest.java
+@@ -35,7 +35,6 @@ import com.redhat.swatch.contract.test.model.GranularityType;
+ import com.redhat.swatch.contract.test.model.PageLinks;
+ import domain.Product;
+ import java.time.OffsetDateTime;
+-import org.junit.jupiter.api.Disabled;
+ import org.junit.jupiter.api.Test;
+ 
+ public class CapacityReportPaginationComponentTest extends BaseContractComponentTest {
+@@ -44,7 +43,6 @@ public class CapacityReportPaginationComponentTest extends BaseContractComponent
+   private static final int PAGE_SIZE = 10;
+   private static final int DAYS_TO_QUERY = DATA_POINTS_COUNT - 1; // 99 days to get 100 data points
+ 
+-  @Disabled(value = "Test disabled due to pagination bug to be fixed in SWATCH-4520.")
+   @TestPlanName("capacity-report-pagination-TC001")
+   @Test
+   void shouldGeneratePaginatedCapacityReport() {
+@@ -93,7 +91,6 @@ public class CapacityReportPaginationComponentTest extends BaseContractComponent
+         equalTo(DATA_POINTS_COUNT));
+   }
+ 
+-  @Disabled(value = "Test disabled due to pagination bug to be fixed in SWATCH-4520.")
+   @TestPlanName("capacity-report-pagination-TC002")
+   @Test
+   void shouldNavigatePaginationLinks() {
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Page.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Page.java
+index c31ad122a..a8bea345a 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Page.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Page.java
+@@ -35,7 +35,7 @@ public class Page<T> {
+   }
+ 
+   public boolean hasNext() {
+-    return pageable.getNextOffset() < content.size();
++    return pageable.getNextOffset() < pageable.getSize();
+   }
+ 
+   public Integer getPreviousOffset() {
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Pageable.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Pageable.java
+index 120b14529..c4c9d4782 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Pageable.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resteasy/Pageable.java
+@@ -21,21 +21,15 @@
+ package com.redhat.swatch.contract.resteasy;
+ 
+ import lombok.AllArgsConstructor;
++import lombok.Getter;
+ 
++@Getter
+ @AllArgsConstructor
+ public class Pageable {
+   final Integer pageSize;
+   final Integer offset;
+   final Integer size;
+ 
+-  public Integer getPageSize() {
+-    return pageSize;
+-  }
+-
+-  public Integer getOffset() {
+-    return offset;
+-  }
+-
+   public Integer getNextOffset() {
+     if (pageSize == null) {
+       return 0;
+

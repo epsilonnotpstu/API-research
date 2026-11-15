@@ -1,0 +1,91 @@
+[parent contract] df3ab492ca38905f07e46b90e68f8f77860f4f61:cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:61
+56:         queryParams = @OpenApiParam(name="format",
+57:                                     required = false, 
+58:                                     deprecated = true,
+59:                                     description = "(Deprecated in favor of Accept header Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)"
+60:                                     ),        
+61:         responses = { @OpenApiResponse(status="200",
+62:                                        description = "A list of offices.",
+63:                                        content = {
+64:                                            @OpenApiContent(from = OfficeFormatV1.class, type = ""),
+65:                                            @OpenApiContent(from = Office.class, isArray = true,type=Formats.JSONV2),
+66:                                            @OpenApiContent(from = OfficeFormatV1.class, type = Formats.JSON ),
+67:                                            @OpenApiContent(from = TabV1Office.class, type = Formats.TAB ),
+68:                                            @OpenApiContent(from = CsvV1Office.class, type = Formats.CSV )
+69:                                        }
+70:                       ),
+71:                       @OpenApiResponse(status="501",description = "The format requested is not implemented"),
+72:                       @OpenApiResponse(status="400", description = "Invalid Parameter combination")
+73:                     },
+74:         /*
+75:         headers = {
+76:             @OpenApiParam(name="Accept",
+77:                           description="Specifies the encoding format of the response. Valid values are shown in the Response descriptions below"                          
+78:                           )
+79: 
+
+[fix contract] 785d6f315b6573fa0c5a34f3db97f868135128f1:cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:61
+56:         queryParams = @OpenApiParam(name="format",
+57:                                     required = false, 
+58:                                     deprecated = true,
+59:                                     description = "(Deprecated in favor of Accept header Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)"
+60:                                     ),        
+61:         responses = { @OpenApiResponse(status="200",
+62:                                        description = "A list of offices.",
+63:                                        content = {
+64:                                            @OpenApiContent(from = OfficeFormatV1.class, type = ""),
+65:                                            @OpenApiContent(from = Office.class, isArray = true,type=Formats.JSONV2),
+66:                                            @OpenApiContent(from = OfficeFormatV1.class, type = Formats.JSON ),
+67:                                            @OpenApiContent(from = TabV1Office.class, type = Formats.TAB ),
+68:                                            @OpenApiContent(from = CsvV1Office.class, type = Formats.CSV )
+69:                                        }
+70:                       ),
+71:                       @OpenApiResponse(status="501",description = "The format requested is not implemented"),
+72:                       @OpenApiResponse(status="400", description = "Invalid Parameter combination")
+73:                     },
+74:         /*
+75:         headers = {
+76:             @OpenApiParam(name="Accept",
+77:                           description="Specifies the encoding format of the response. Valid values are shown in the Response descriptions below"                          
+78:                           )
+79: 
+
+[parent route] df3ab492ca38905f07e46b90e68f8f77860f4f61:cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java:81
+78:                 .routes( () -> {      
+79:                     //get("/", ctx -> { ctx.result("welcome to the CWMS REST APi").contentType("text/plain");});              
+80:                     crud("/locations/:location_code", new LocationController(metrics));
+81:                     crud("/offices/:office", new OfficeController(metrics));
+82:                     crud("/units/:unit_name", new UnitsController(metrics));
+83:                     crud("/parameters/:param_name", new ParametersController(metrics));
+
+[parent implementation] df3ab492ca38905f07e46b90e68f8f77860f4f61:cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:92
+88:                 final Timer.Context time_context  = getAllRequestsTime.time();
+89:                 CwmsDataManager cdm = new CwmsDataManager(ctx);
+90:             ) {                                            
+91:                 List<Office> offices = cdm.getOffices();
+92:                 String format_parm = ctx.queryParam("format","");
+93:                 String format_header = ctx.header(Header.ACCEPT);
+94:                 String contentType = FormatFactory.parseHeaderAndQueryParm(format_header, format_parm);                
+95:                 OutputFormatter formatter = FormatFactory.formatFor(contentType);
+96:                 String result = formatter.format(offices);
+97:                 if ( result != null ){
+98:                     ctx.result(result);
+99:                     requestResultSize.update(result.length());
+100:                 } else {
+101:                     throw new NotImplementedError("Format " +  contentType + " is not implemented for this end point");
+102:                 }
+103:                 
+104:         } catch (SQLException ex) {
+
+[fix implementation] 785d6f315b6573fa0c5a34f3db97f868135128f1:cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:98
+93:                 String format_header = ctx.header(Header.ACCEPT);
+94:                 String contentType = FormatFactory.parseHeaderAndQueryParm(format_header, format_parm);                
+95:                 OutputFormatter formatter = FormatFactory.formatFor(contentType);
+96:                 String result = formatter.format(offices);
+97:                 if ( result != null ){
+98:                     ctx.result(result).contentType(formatter.getContentType());
+99:                     requestResultSize.update(result.length());
+100:                 } else {
+101:                     throw new NotImplementedError("Format " +  contentType + " is not implemented for this end point");
+102:                 }
+103:                 

@@ -1,0 +1,44 @@
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/scoped/paymentaccess/FintechPaymentAccess.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/scoped/paymentaccess/FintechPaymentAccess.java
+index 42a1faa12..8da9117f6 100644
+--- a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/scoped/paymentaccess/FintechPaymentAccess.java
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/scoped/paymentaccess/FintechPaymentAccess.java
+@@ -67,8 +67,7 @@ public class FintechPaymentAccess implements PaymentAccess {
+             return Collections.emptyList();
+         }
+ 
+-        EncryptionService psuEncryptionService = psuKeyBasedEncryptionService(serviceSession);
+-
++        EncryptionService psuEncryptionService = !serviceSession.getAuthSession().isPsuAnonymous() ? psuKeyBasedEncryptionService(serviceSession) : null;
+         return payments.stream()
+                 .map(it -> toProtocolFacingPayment(it, serviceSession, psuEncryptionService))
+                 .collect(Collectors.toList());
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+index 09347a5b6..34d7a7ebe 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+@@ -7,7 +7,7 @@ import de.adorsys.opba.protocol.api.dto.request.payments.PaymentInfoRequest;
+ import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
+ import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.SuccessResult;
+ import de.adorsys.opba.protocol.api.pis.GetPaymentInfoState;
+-import de.adorsys.opba.protocol.api.services.scoped.consent.ProtocolFacingConsent;
++import de.adorsys.opba.protocol.api.services.scoped.consent.ProtocolFacingPayment;
+ import de.adorsys.opba.protocol.bpmnshared.dto.DtoMapper;
+ import de.adorsys.opba.protocol.xs2a.context.pis.Xs2aPisContext;
+ import de.adorsys.opba.protocol.xs2a.entrypoint.ExtendWithServiceContext;
+@@ -45,13 +45,13 @@ public class Xs2aGetPaymentInfoEntrypoint implements GetPaymentInfoState {
+     @Override
+     @Transactional
+     public CompletableFuture<Result<PaymentInfoBody>> execute(ServiceContext<PaymentInfoRequest> context) {
+-        ProtocolFacingConsent consent = context.getRequestScoped().consentAccess().getFirstByCurrentSession();
++        ProtocolFacingPayment consent = context.getRequestScoped().paymentAccess().getFirstByCurrentSession();
+ 
+         ValidatedPathHeaders<PaymentInfoParameters, PaymentInfoHeaders> params = extractor.forExecution(prepareContext(context));
+ 
+         Response<SinglePaymentInitiationInformationWithStatusResponse> paymentInformation = pis.getSinglePaymentInformation(
+                 context.getRequest().getPaymentProduct().toString(),
+-                consent.getConsentId(),
++                consent.getPaymentId(),
+                 params.getHeaders().toHeaders(),
+                 params.getPath().toParameters()
+         );
+

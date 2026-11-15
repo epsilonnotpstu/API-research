@@ -1,0 +1,14 @@
+diff --git a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
+index 7df587b47..afce5515f 100644
+--- a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
++++ b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
+@@ -97,7 +97,7 @@ public class HbciContext extends BaseContext {
+ 
+     public void setHbciDialogConsent(HbciConsent hbciDialogConsent) {
+         this.hbciDialogConsent = hbciDialogConsent;
+-        this.hbciTanSubmit = (HbciTanSubmit) hbciDialogConsent.getHbciTanSubmit();
++        this.hbciTanSubmit = null == hbciDialogConsent ? null : (HbciTanSubmit) hbciDialogConsent.getHbciTanSubmit();
+     }
+ 
+     @JsonIgnore
+

@@ -1,0 +1,245 @@
+diff --git a/documentation/book/api/definitions.adoc b/documentation/book/api/definitions.adoc
+index b2ea0b2..ef72fff 100644
+--- a/documentation/book/api/definitions.adoc
++++ b/documentation/book/api/definitions.adoc
+@@ -18,11 +18,11 @@ __optional__|Resets the offset position for the consumer.
+ If set to `earliest`, messages are read from the first offset.
+ If set to `latest`, messages are read from the latest offset.|string
+ |**consumer.request.timeout.ms** +
+-__optional__|Sets the maximum amount of time, in milliseconds, for the consumer to wait for messages for a request. If the timeout period is reached without a response, an error is returned.|string
++__optional__|Sets the maximum amount of time, in milliseconds, for the consumer to wait for messages for a request. If the timeout period is reached without a response, an error is returned.|integer
+ |**enable.auto.commit** +
+-__optional__|If set to `true`, message offsets are committed automatically for the consumer. If set to `false`, message offsets must be committed manually.|string
++__optional__|If set to `true`, message offsets are committed automatically for the consumer. If set to `false`, message offsets must be committed manually.|boolean
+ |**fetch.min.bytes** +
+-__optional__|Sets the minimum ammount of data, in bytes, for the consumer to receive. The broker waits until the data to send exceeds this amount.|string
++__optional__|Sets the minimum ammount of data, in bytes, for the consumer to receive. The broker waits until the data to send exceeds this amount.|integer
+ |**format** +
+ __optional__|The allowable message format for the consumer, which can be `binary` (default) or `json`. The messages are converted into a JSON format.|string
+ |**name** +
+diff --git a/documentation/book/api/paths.adoc b/documentation/book/api/paths.adoc
+index 6fba4db..3904d45 100644
+--- a/documentation/book/api/paths.adoc
++++ b/documentation/book/api/paths.adoc
+@@ -56,9 +56,9 @@ __required__|Name and configuration of the consumer. The name is unique within t
+   "name" : "consumer1",
+   "format" : "binary",
+   "auto.offset.reset" : "earliest",
+-  "enable.auto.commit" : "false",
+-  "fetch.min.bytes" : "512",
+-  "consumer.request.timeout.ms" : "30000"
++  "enable.auto.commit" : false,
++  "fetch.min.bytes" : 512,
++  "consumer.request.timeout.ms" : 30000
+ }
+ ----
+ 
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+index 5feef51..5ff6770 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+@@ -98,10 +98,17 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+         Properties config = new Properties();
+         addConfigParameter(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+             bodyAsJson.getString(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, null), config);
+-        addConfigParameter(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
+-            bodyAsJson.getString(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, null), config);
+-        addConfigParameter(ConsumerConfig.FETCH_MIN_BYTES_CONFIG,
+-            bodyAsJson.getString(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, null), config);
++        // OpenAPI validation handles boolean and integer, quoted or not as string, in the same way
++        // instead of raising a validation error due to this: https://github.com/vert-x3/vertx-web/issues/1375
++        Object enableAutoCommit = bodyAsJson.getValue(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG);
++        addConfigParameter(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, 
++            enableAutoCommit != null ? String.valueOf(enableAutoCommit) : null, config);
++        Object fetchMinBytes = bodyAsJson.getValue(ConsumerConfig.FETCH_MIN_BYTES_CONFIG);
++        addConfigParameter(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 
++            fetchMinBytes != null ? String.valueOf(fetchMinBytes) : null, config);
++        Object requestTimeoutMs = bodyAsJson.getValue("consumer." + ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG);
++        addConfigParameter(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG,
++            requestTimeoutMs != null ? String.valueOf(requestTimeoutMs) : null, config);
+         addConfigParameter(ConsumerConfig.CLIENT_ID_CONFIG, this.name, config);
+ 
+         // create the consumer
+diff --git a/src/main/resources/openapi.json b/src/main/resources/openapi.json
+index 2ff94db..f52b77b 100644
+--- a/src/main/resources/openapi.json
++++ b/src/main/resources/openapi.json
+@@ -1248,15 +1248,15 @@
+                     },
+                     "fetch.min.bytes": {
+                         "description": "Sets the minimum ammount of data, in bytes, for the consumer to receive. The broker waits until the data to send exceeds this amount.",
+-                        "type": "string"
++                        "type": "integer"
+                     },
+                     "consumer.request.timeout.ms": {
+                         "description": "Sets the maximum amount of time, in milliseconds, for the consumer to wait for messages for a request. If the timeout period is reached without a response, an error is returned.",
+-                        "type": "string"
++                        "type": "integer"
+                     },
+                     "enable.auto.commit": {
+                         "description": "If set to `true`, message offsets are committed automatically for the consumer. If set to `false`, message offsets must be committed manually.",
+-                        "type": "string"
++                        "type": "boolean"
+                     }
+                 },
+                 "additionalProperties": false,
+@@ -1264,9 +1264,9 @@
+                     "name": "consumer1",
+                     "format": "binary",
+                     "auto.offset.reset": "earliest",
+-                    "enable.auto.commit": "false",
+-                    "fetch.min.bytes": "512",
+-                    "consumer.request.timeout.ms": "30000"
++                    "enable.auto.commit": false,
++                    "fetch.min.bytes": 512,
++                    "consumer.request.timeout.ms": 30000
+                 }
+             },
+             "OffsetCommitSeek": {
+diff --git a/src/main/resources/openapiv2.json b/src/main/resources/openapiv2.json
+index 804b0c2..56fc455 100644
+--- a/src/main/resources/openapiv2.json
++++ b/src/main/resources/openapiv2.json
+@@ -1071,15 +1071,15 @@
+         },
+         "fetch.min.bytes": {
+           "description": "Sets the minimum ammount of data, in bytes, for the consumer to receive. The broker waits until the data to send exceeds this amount.",
+-          "type": "string"
++          "type": "integer"
+         },
+         "consumer.request.timeout.ms": {
+           "description": "Sets the maximum amount of time, in milliseconds, for the consumer to wait for messages for a request. If the timeout period is reached without a response, an error is returned.",
+-          "type": "string"
++          "type": "integer"
+         },
+         "enable.auto.commit": {
+           "description": "If set to `true`, message offsets are committed automatically for the consumer. If set to `false`, message offsets must be committed manually.",
+-          "type": "string"
++          "type": "boolean"
+         }
+       },
+       "additionalProperties": false,
+@@ -1087,9 +1087,9 @@
+         "name": "consumer1",
+         "format": "binary",
+         "auto.offset.reset": "earliest",
+-        "enable.auto.commit": "false",
+-        "fetch.min.bytes": "512",
+-        "consumer.request.timeout.ms": "30000"
++        "enable.auto.commit": false,
++        "fetch.min.bytes": 512,
++        "consumer.request.timeout.ms": 30000
+       }
+     },
+     "OffsetCommitSeek": {
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/ConsumerTest.java b/src/test/java/io/strimzi/kafka/bridge/http/ConsumerTest.java
+index 743302f..d153309 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/ConsumerTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/ConsumerTest.java
+@@ -54,6 +54,105 @@ public class ConsumerTest extends HttpBridgeTestBase {
+         assertTrue(context.awaitCompletion(TEST_TIMEOUT, TimeUnit.SECONDS));
+     }
+ 
++    @Test
++    void createConsumerEnableAutoCommit(VertxTestContext context) throws InterruptedException, TimeoutException, ExecutionException {
++        // both "true" ("false") and true (false) works due to https://github.com/vert-x3/vertx-web/issues/1375
++        // and the current OpenAPI validation doesn't recognize the first one as invalid
++        
++        JsonObject consumerJson = new JsonObject()
++            .put("name", name)
++            .put("enable.auto.commit", true);
++
++        // create consumer
++        consumerService().createConsumer(context, groupId, consumerJson);
++
++        consumerJson
++            .put("name", name + "-1")
++            .put("enable.auto.commit", "true");
++
++        // create consumer
++        consumerService().createConsumer(context, groupId, consumerJson);
++
++        consumerJson
++            .put("name", name + "-2")
++            .put("enable.auto.commit", "foo");
++
++        // create consumer
++        CompletableFuture<Boolean> create = new CompletableFuture<>();
++        consumerService().createConsumerRequest(groupId, consumerJson)
++                .sendJsonObject(consumerJson, ar -> {
++                    context.verify(() -> {
++                        assertTrue(ar.succeeded());
++                        HttpResponse<JsonObject> response = ar.result();
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.statusCode());
++                        HttpBridgeError error = HttpBridgeError.fromJson(response.body());
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), error.getCode());
++                        assertEquals("Validation error on: body.enable.auto.commit - $.enable.auto.commit: string found, boolean expected",
++                                error.getMessage());
++                    });
++                    create.complete(true);
++                });
++
++        create.get(TEST_TIMEOUT, TimeUnit.SECONDS);
++
++        context.completeNow();
++        assertTrue(context.awaitCompletion(TEST_TIMEOUT, TimeUnit.SECONDS));
++    }
++
++    @Test
++    void createConsumerFetchMinBytes(VertxTestContext context) throws InterruptedException, TimeoutException, ExecutionException {
++        this.createConsumerIntegerParam(context, "fetch.min.bytes");
++    }
++
++    @Test
++    void createConsumerRequestTimeoutMs(VertxTestContext context) throws InterruptedException, TimeoutException, ExecutionException {
++        this.createConsumerIntegerParam(context, "consumer.request.timeout.ms");
++    }
++
++    private void createConsumerIntegerParam(VertxTestContext context, String param) throws InterruptedException, TimeoutException, ExecutionException {
++        // both "100" and 100 works due to https://github.com/vert-x3/vertx-web/issues/1375
++        // and the current OpenAPI validation doesn't recognize the first one as invalid
++        
++        JsonObject consumerJson = new JsonObject()
++            .put("name", name)
++            .put(param, 100);
++
++        // create consumer
++        consumerService().createConsumer(context, groupId, consumerJson);
++
++        consumerJson
++            .put("name", name + "-1")
++            .put(param, "100");
++
++        // create consumer
++        consumerService().createConsumer(context, groupId, consumerJson);
++
++        consumerJson
++            .put("name", name + "-2")
++            .put(param, "foo");
++
++        // create consumer
++        CompletableFuture<Boolean> create = new CompletableFuture<>();
++        consumerService().createConsumerRequest(groupId, consumerJson)
++                .sendJsonObject(consumerJson, ar -> {
++                    context.verify(() -> {
++                        assertTrue(ar.succeeded());
++                        HttpResponse<JsonObject> response = ar.result();
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.statusCode());
++                        HttpBridgeError error = HttpBridgeError.fromJson(response.body());
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), error.getCode());
++                        assertEquals("Validation error on: body." + param + " - $." + param + ": string found, integer expected",
++                                error.getMessage());
++                    });
++                    create.complete(true);
++                });
++
++        create.get(TEST_TIMEOUT, TimeUnit.SECONDS);
++
++        context.completeNow();
++        assertTrue(context.awaitCompletion(TEST_TIMEOUT, TimeUnit.SECONDS));
++    }
++
+     @Test
+     void createConsumerWithForwardedHeaders(VertxTestContext context) throws InterruptedException {
+         // this test emulates a create consumer request coming from an API gateway/proxy
+

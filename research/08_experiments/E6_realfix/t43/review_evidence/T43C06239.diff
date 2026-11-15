@@ -1,0 +1,141 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7cedf84..f47bc3a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,6 +5,7 @@
+ * Moved to UBI9 micro as the base container image.
+ * Dependency updates (Kafka 4.4.0, Vert.x 5.2.3, Netty 4.2.20.Final, JMX Prometheus collector 1.7.0, Strimzi Kafka OAuth 0.18.1, Kubernetes Config Provider 1.3.0).
+ * Use Java 25 as the runtime in the Bridge container (leaving the language level at Java 21) for supporting Post-Quantum Hybrid Key Exchange.
++* Fixed binary producer records with a non-string or invalid base64 key/value being silently accepted or rejected with an unclear error, now returning a clear validation error.
+ 
+ ## 1.2.1
+ 
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java b/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java
+index def1d52..6a90139 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java
+@@ -45,10 +45,10 @@ public class HttpBinaryMessageConverter implements MessageConverter<byte[], byte
+ 
+         if (!json.isEmpty()) {
+             if (json.has("key")) {
+-                key = Base64.getDecoder().decode(json.get("key").asText());
++                key = decodeBase64(json.get("key"), "key");
+             }
+             if (json.has("value")) {
+-                value = Base64.getDecoder().decode(json.get("value").asText());
++                value = decodeBase64(json.get("value"), "value");
+             }
+             if (json.has("timestamp")) {
+                 timestamp = json.get("timestamp").asLong();
+@@ -72,6 +72,17 @@ public class HttpBinaryMessageConverter implements MessageConverter<byte[], byte
+         return new ProducerRecord<>(kafkaTopic, partitionFromBody, timestamp, key, value, headers);
+     }
+ 
++    private byte[] decodeBase64(JsonNode node, String field) {
++        if (!node.isTextual()) {
++            throw new IllegalStateException("Because the embedded format is 'binary', the " + field + " must be a valid base64 encoded string");
++        }
++        try {
++            return Base64.getDecoder().decode(node.asText());
++        } catch (IllegalArgumentException e) {
++            throw new IllegalStateException("Because the embedded format is 'binary', the " + field + " must be a valid base64 encoded string");
++        }
++    }
++
+     @Override
+     public List<ProducerRecord<byte[], byte[]>> toKafkaRecords(String kafkaTopic, Integer partition, byte[] messages) {
+ 
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/ProducerIT.java b/src/test/java/io/strimzi/kafka/bridge/http/ProducerIT.java
+index 08e140e..3649fee 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/ProducerIT.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/ProducerIT.java
+@@ -509,6 +509,88 @@ public class ProducerIT extends AbstractIT {
+         assertThat(error.message(), is("Because the embedded format is 'text', the key must be a string"));
+     }
+ 
++    @Test
++    void sendBinaryMessageWithNonStringKey(BridgeTestContext bridgeTestContext) {
++        String topic = bridgeTestContext.getTopicName();
++        bridgeTestContext.getAdminClientFacade().createTopic(bridgeTestContext.getTopicName(), 1);
++
++        ObjectNode keyObj = MAPPER.createObjectNode().put("my-key", "This is a json key");
++
++        ObjectNode root = MAPPER.createObjectNode();
++        ArrayNode records = root.putArray("records");
++        ObjectNode recordNode = MAPPER.createObjectNode();
++        recordNode.set("key", keyObj);
++        recordNode.put("value", "SGVsbG8=");
++        records.add(recordNode);
++
++        HttpProducerService httpProducerService = new HttpProducerService(bridgeTestContext.getHttpService());
++        HttpResponse<String> response = httpProducerService.sendJsonNodeRecordsRequest(topic, root, BridgeContentType.KAFKA_JSON_BINARY);
++        assertThat(response.statusCode(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++
++        HttpBridgeError error = HttpBridgeError.fromJson(HttpResponseUtils.getResponseAsJsonNode(response.body()));
++        assertThat(error.code(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++        assertThat(error.message(), is("Because the embedded format is 'binary', the key must be a valid base64 encoded string"));
++    }
++
++    @Test
++    void sendBinaryMessageWithNonStringValue(BridgeTestContext bridgeTestContext) {
++        String topic = bridgeTestContext.getTopicName();
++        bridgeTestContext.getAdminClientFacade().createTopic(bridgeTestContext.getTopicName(), 1);
++
++        ObjectNode valueObj = MAPPER.createObjectNode().put("message", "Hi, This is kafka bridge");
++
++        ObjectNode root = MAPPER.createObjectNode();
++        ArrayNode records = root.putArray("records");
++        records.add(MAPPER.createObjectNode().set("value", valueObj));
++
++        HttpProducerService httpProducerService = new HttpProducerService(bridgeTestContext.getHttpService());
++        HttpResponse<String> response = httpProducerService.sendJsonNodeRecordsRequest(topic, root, BridgeContentType.KAFKA_JSON_BINARY);
++        assertThat(response.statusCode(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++
++        HttpBridgeError error = HttpBridgeError.fromJson(HttpResponseUtils.getResponseAsJsonNode(response.body()));
++        assertThat(error.code(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++        assertThat(error.message(), is("Because the embedded format is 'binary', the value must be a valid base64 encoded string"));
++    }
++
++    @Test
++    void sendBinaryMessageWithInvalidBase64Key(BridgeTestContext bridgeTestContext) {
++        String topic = bridgeTestContext.getTopicName();
++        bridgeTestContext.getAdminClientFacade().createTopic(bridgeTestContext.getTopicName(), 1);
++
++        ObjectNode root = MAPPER.createObjectNode();
++        ArrayNode records = root.putArray("records");
++        ObjectNode recordNode = MAPPER.createObjectNode();
++        recordNode.put("key", "not-valid-base64!!!");
++        recordNode.put("value", "SGVsbG8=");
++        records.add(recordNode);
++
++        HttpProducerService httpProducerService = new HttpProducerService(bridgeTestContext.getHttpService());
++        HttpResponse<String> response = httpProducerService.sendJsonNodeRecordsRequest(topic, root, BridgeContentType.KAFKA_JSON_BINARY);
++        assertThat(response.statusCode(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++
++        HttpBridgeError error = HttpBridgeError.fromJson(HttpResponseUtils.getResponseAsJsonNode(response.body()));
++        assertThat(error.code(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++        assertThat(error.message(), is("Because the embedded format is 'binary', the key must be a valid base64 encoded string"));
++    }
++
++    @Test
++    void sendBinaryMessageWithInvalidBase64Value(BridgeTestContext bridgeTestContext) {
++        String topic = bridgeTestContext.getTopicName();
++        bridgeTestContext.getAdminClientFacade().createTopic(bridgeTestContext.getTopicName(), 1);
++
++        ObjectNode root = MAPPER.createObjectNode();
++        ArrayNode records = root.putArray("records");
++        records.add(MAPPER.createObjectNode().put("value", "not-valid-base64!!!"));
++
++        HttpProducerService httpProducerService = new HttpProducerService(bridgeTestContext.getHttpService());
++        HttpResponse<String> response = httpProducerService.sendJsonNodeRecordsRequest(topic, root, BridgeContentType.KAFKA_JSON_BINARY);
++        assertThat(response.statusCode(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++
++        HttpBridgeError error = HttpBridgeError.fromJson(HttpResponseUtils.getResponseAsJsonNode(response.body()));
++        assertThat(error.code(), is(HttpResponseStatus.UNPROCESSABLE_ENTITY.code()));
++        assertThat(error.message(), is("Because the embedded format is 'binary', the value must be a valid base64 encoded string"));
++    }
++
+     @Test
+     void sendMessageWithNullValueTest(BridgeTestContext bridgeTestContext) {
+         String topic = "sendMessageWithNullValueTest";
+

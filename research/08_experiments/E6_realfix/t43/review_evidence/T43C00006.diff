@@ -1,0 +1,585 @@
+diff --git a/src/main/java/com/zufar/icedlatte/cart/api/ShoppingCartCreator.java b/src/main/java/com/zufar/icedlatte/cart/api/ShoppingCartCreator.java
+index 82ce2962..44399fd7 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/api/ShoppingCartCreator.java
++++ b/src/main/java/com/zufar/icedlatte/cart/api/ShoppingCartCreator.java
+@@ -23,12 +23,11 @@ public class ShoppingCartCreator {
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ShoppingCart getOrCreate(UUID userId) {
+-        ShoppingCart cart = shoppingCartRepository.findShoppingCartByUserId(userId).orElse(null);
+-        if (cart == null) {
+-            log.info("The shopping cart was not found.");
+-            cart = createNewShoppingCart(userId);
+-        }
+-        return cart;
++        return shoppingCartRepository.findShoppingCartByUserId(userId)
++                .orElseGet(() -> {
++                    log.info("The shopping cart was not found.");
++                    return createNewShoppingCart(userId);
++                });
+     }
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+diff --git a/src/main/java/com/zufar/icedlatte/common/audit/AuditAspect.java b/src/main/java/com/zufar/icedlatte/common/audit/AuditAspect.java
+index 3f2eefc9..453b945c 100644
+--- a/src/main/java/com/zufar/icedlatte/common/audit/AuditAspect.java
++++ b/src/main/java/com/zufar/icedlatte/common/audit/AuditAspect.java
+@@ -34,18 +34,13 @@ public class AuditAspect {
+         if (result == null) {
+             return "unknown";
+         }
+-        
+         try {
+             Field field = result.getClass().getDeclaredField("id");
+             field.setAccessible(true);
+             Object id = field.get(result);
+             return id != null ? id.toString() : "unknown";
+-        } catch (NoSuchFieldException e) {
+-            log.warn("Could not find 'id' field on type {}: {}", result.getClass().getSimpleName(), e.getMessage(), e);
+-            return "unknown";
+-        } catch (IllegalAccessException e) {
+-            log.warn("Could not access 'id' field on type {}: {}", result.getClass().getSimpleName(), e.getMessage(), e);
+-            return "unknown";
++        } catch (NoSuchFieldException | IllegalAccessException e) {
++            return result.toString();
+         }
+     }
+ }
+\ No newline at end of file
+diff --git a/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java b/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
+index 365b044e..35aa3466 100644
+--- a/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
++++ b/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
+@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
+         String message = exception
+                 .getBindingResult()
+                 .getAllErrors().stream()
+-                .map(error -> String.format("{ ErrorMessage: %s", error))
++                .map(error -> String.format("{ ErrorMessage: %s }", error))
+                 .toList()
+                 .toString();
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/common/util/Utils.java b/src/main/java/com/zufar/icedlatte/common/util/Utils.java
+index 2ef80f41..2f40c281 100644
+--- a/src/main/java/com/zufar/icedlatte/common/util/Utils.java
++++ b/src/main/java/com/zufar/icedlatte/common/util/Utils.java
+@@ -13,12 +13,10 @@ public final class Utils {
+                                                 final Integer size,
+                                                 final String sortAttribute,
+                                                 final String sortDirection) {
+-        Sort sort;
+-        if (sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()))
+-            sort = Sort.by(sortAttribute).ascending();
+-        else
+-            sort = Sort.by(sortAttribute).descending();
+-
++        Sort sort = Sort.by(sortAttribute);
++        sort = Sort.Direction.fromString(sortDirection) == Sort.Direction.ASC
++                ? sort.ascending()
++                : sort.descending();
+         return PageRequest.of(page, size, sort);
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/email/api/token/TokenTimeExpirationCache.java b/src/main/java/com/zufar/icedlatte/email/api/token/TokenTimeExpirationCache.java
+index bd4a98ad..05a92518 100644
+--- a/src/main/java/com/zufar/icedlatte/email/api/token/TokenTimeExpirationCache.java
++++ b/src/main/java/com/zufar/icedlatte/email/api/token/TokenTimeExpirationCache.java
+@@ -12,19 +12,19 @@ import java.util.concurrent.TimeUnit;
+ @Component
+ public class TokenTimeExpirationCache {
+ 
+-    private final Integer EXPIRE_TIME;
++    private final int expireTime;
+     private final Cache<String, OffsetDateTime> tokenCache;
+ 
+     public TokenTimeExpirationCache(@Value("${temporary-cache.time.token}") Integer expireTime) {
+-        this.EXPIRE_TIME = expireTime;
++        this.expireTime = expireTime;
+         this.tokenCache = CacheBuilder.newBuilder()
+-                .expireAfterWrite(EXPIRE_TIME, TimeUnit.MINUTES)
++                .expireAfterWrite(expireTime, TimeUnit.MINUTES)
+                 .build();
+     }
+ 
+     public void manageEmailSendingRate(String email) {
+-        OffsetDateTime expireTime = OffsetDateTime.now().plus(EXPIRE_TIME, TimeUnit.MINUTES.toChronoUnit());
+-        tokenCache.put(email, expireTime);
++        OffsetDateTime expireDateTime = OffsetDateTime.now().plus(expireTime, TimeUnit.MINUTES.toChronoUnit());
++        tokenCache.put(email, expireDateTime);
+     }
+ 
+     public void validateTimeToken(String email) {
+diff --git a/src/main/java/com/zufar/icedlatte/favorite/api/FavoriteListProvider.java b/src/main/java/com/zufar/icedlatte/favorite/api/FavoriteListProvider.java
+index b359a7e0..6c7bdbbe 100644
+--- a/src/main/java/com/zufar/icedlatte/favorite/api/FavoriteListProvider.java
++++ b/src/main/java/com/zufar/icedlatte/favorite/api/FavoriteListProvider.java
+@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Propagation;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.time.OffsetDateTime;
++import java.util.HashSet;
+ import java.util.UUID;
+-import java.util.concurrent.ConcurrentHashMap;
+ 
+ @Service
+ @RequiredArgsConstructor
+@@ -35,7 +35,7 @@ public class FavoriteListProvider {
+     private FavoriteListEntity createNewFavoriteList(UUID userId) {
+         return FavoriteListEntity.builder()
+                 .userId(userId)
+-                .favoriteItems(ConcurrentHashMap.newKeySet())
++                .favoriteItems(new HashSet<>())
+                 .updatedAt(OffsetDateTime.now())
+                 .build();
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/order/entity/Order.java b/src/main/java/com/zufar/icedlatte/order/entity/Order.java
+index 16a47da2..8bcb9e10 100644
+--- a/src/main/java/com/zufar/icedlatte/order/entity/Order.java
++++ b/src/main/java/com/zufar/icedlatte/order/entity/Order.java
+@@ -8,6 +8,8 @@ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.EnumType;
+ import jakarta.persistence.Enumerated;
++import jakarta.persistence.GeneratedValue;
++import jakarta.persistence.GenerationType;
+ import jakarta.persistence.Id;
+ import jakarta.persistence.JoinColumn;
+ import jakarta.persistence.OneToMany;
+@@ -36,6 +38,7 @@ import java.util.UUID;
+ public class Order extends AuditableEntity {
+ 
+     @Id
++    @GeneratedValue(strategy = GenerationType.UUID)
+     private UUID id;
+ 
+     @Column(name = "user_id", updatable = false, nullable = false)
+@@ -67,9 +70,6 @@ public class Order extends AuditableEntity {
+ 
+     @PrePersist
+     public void prePersist() {
+-        if (this.id == null) {
+-            this.id = UUID.randomUUID();
+-        }
+         for (OrderItem orderItem : items) {
+             orderItem.setOrderId(this.id);
+         }
+diff --git a/src/main/java/com/zufar/icedlatte/order/entity/OrderItem.java b/src/main/java/com/zufar/icedlatte/order/entity/OrderItem.java
+index 6ecec59b..b1c66eb2 100644
+--- a/src/main/java/com/zufar/icedlatte/order/entity/OrderItem.java
++++ b/src/main/java/com/zufar/icedlatte/order/entity/OrderItem.java
+@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
+ import jakarta.persistence.GeneratedValue;
+ import jakarta.persistence.GenerationType;
+ import jakarta.persistence.Id;
+-import jakarta.persistence.JoinColumn;
+ import jakarta.persistence.Table;
+ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+@@ -29,7 +28,7 @@ public class OrderItem {
+     @GeneratedValue(strategy = GenerationType.UUID)
+     private UUID id;
+ 
+-    @JoinColumn(name = "order_id", nullable = false)
++    @Column(name = "order_id", nullable = false)
+     private UUID orderId;
+ 
+     @Column(name = "product_id")
+diff --git a/src/main/java/com/zufar/icedlatte/payment/api/WebhookEventHandler.java b/src/main/java/com/zufar/icedlatte/payment/api/WebhookEventHandler.java
+index c324ce33..f0c3f6c1 100644
+--- a/src/main/java/com/zufar/icedlatte/payment/api/WebhookEventHandler.java
++++ b/src/main/java/com/zufar/icedlatte/payment/api/WebhookEventHandler.java
+@@ -22,11 +22,14 @@ public class WebhookEventHandler {
+     private final Map<String, SessionScenarioHandler> handlers;
+ 
+     public void handlePaymentEvent(final Event stripePaymentEvent, final Session stripeSession) {
+-
+-        if (!Objects.nonNull(stripeSession) || !Objects.nonNull(stripePaymentEvent)) {
++        if (Objects.isNull(stripeSession) || Objects.isNull(stripePaymentEvent)) {
++            return;
++        }
++        SessionScenarioHandler handler = handlers.get(stripePaymentEvent.getType());
++        if (handler == null) {
++            log.warn("No handler registered for Stripe event type: {}", stripePaymentEvent.getType());
+             return;
+         }
+-        handlers.get(stripePaymentEvent.getType())
+-                .handle(stripeSession);
++        handler.handle(stripeSession);
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java b/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
+index 2b1e7edb..8ecb1c3c 100644
+--- a/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
++++ b/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
+@@ -68,7 +68,7 @@ public class ProductReviewValidator {
+     }
+ 
+     /**
+-     * Check if the product's review deletion is allowed
++     * Check if the product and review both exist
+      */
+     public void validateProductIdIsValid(final UUID productId, final UUID productReviewId) {
+         if (!productInfoRepository.existsById(productId)) {
+diff --git a/src/main/java/com/zufar/icedlatte/security/api/LoginAttemptFactory.java b/src/main/java/com/zufar/icedlatte/security/api/LoginAttemptFactory.java
+index 8928a830..64f06471 100644
+--- a/src/main/java/com/zufar/icedlatte/security/api/LoginAttemptFactory.java
++++ b/src/main/java/com/zufar/icedlatte/security/api/LoginAttemptFactory.java
+@@ -1,14 +1,11 @@
+ package com.zufar.icedlatte.security.api;
+ 
+ import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
+-import org.springframework.context.annotation.Scope;
+ import org.springframework.stereotype.Component;
+-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+ 
+ import java.time.LocalDateTime;
+ 
+ @Component
+-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+ public class LoginAttemptFactory {
+ 
+     public LoginAttemptEntity createInitialFailedLoggedAttemptEntity(String userEmail) {
+diff --git a/src/main/java/com/zufar/icedlatte/security/api/ResetLoginAttemptsService.java b/src/main/java/com/zufar/icedlatte/security/api/ResetLoginAttemptsService.java
+index b9cc2d22..51bc073e 100644
+--- a/src/main/java/com/zufar/icedlatte/security/api/ResetLoginAttemptsService.java
++++ b/src/main/java/com/zufar/icedlatte/security/api/ResetLoginAttemptsService.java
+@@ -1,6 +1,5 @@
+ package com.zufar.icedlatte.security.api;
+ 
+-import com.zufar.icedlatte.security.entity.LoginAttemptEntity;
+ import com.zufar.icedlatte.security.repository.LoginAttemptRepository;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+@@ -16,18 +15,17 @@ public class ResetLoginAttemptsService {
+ 
+     private final LoginAttemptRepository loginAttemptRepository;
+     private final UserAccountLocker userAccountLocker;
+-    private final LoginAttemptFactory loginAttemptFactory;
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void reset(final String userEmail) {
+         loginAttemptRepository.findByUserEmail(userEmail)
+                 .ifPresent(existingLoginAttempt -> {
+                     userAccountLocker.unlockUserAccount(userEmail);
+-
+-                    LoginAttemptEntity newLoginAttempt = loginAttemptFactory.createInitialFailedLoggedAttemptEntity(userEmail);
+-                    newLoginAttempt.setId(existingLoginAttempt.getId());
+-
+-                    loginAttemptRepository.save(newLoginAttempt);
++                    existingLoginAttempt.setAttempts(0);
++                    existingLoginAttempt.setIsUserLocked(false);
++                    existingLoginAttempt.setExpirationDatetime(null);
++                    existingLoginAttempt.setLastModified(java.time.LocalDateTime.now());
++                    loginAttemptRepository.save(existingLoginAttempt);
+                     log.info("Login attempts reset for user {}.", userEmail);
+                 });
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/security/api/UserRegistrationService.java b/src/main/java/com/zufar/icedlatte/security/api/UserRegistrationService.java
+index 94449e98..15b29d07 100644
+--- a/src/main/java/com/zufar/icedlatte/security/api/UserRegistrationService.java
++++ b/src/main/java/com/zufar/icedlatte/security/api/UserRegistrationService.java
+@@ -24,7 +24,6 @@ public class UserRegistrationService {
+     private final UserRepository userCrudRepository;
+     private final RegistrationDtoConverter registrationDtoConverter;
+     private final PasswordEncoder passwordEncoder;
+-    private final UserEntityDefaultsProvider userEntityDefaultsProvider;
+ 
+     public boolean isEmailAvailable(final String email) {
+         return userCrudRepository.findByEmail(email).isEmpty();
+@@ -44,7 +43,10 @@ public class UserRegistrationService {
+         newUserEntity.setEmail(email);
+         newUserEntity.setPassword(encryptedPassword);
+         newUserEntity.addAuthority(defaultUserGrantedAuthority);
+-        userEntityDefaultsProvider.applyDefaults(newUserEntity);
++        newUserEntity.setAccountNonExpired(true);
++        newUserEntity.setAccountNonLocked(true);
++        newUserEntity.setCredentialsNonExpired(true);
++        newUserEntity.setEnabled(true);
+ 
+         UserEntity userEntity = userCrudRepository.save(newUserEntity);
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/security/entity/LoginAttemptEntity.java b/src/main/java/com/zufar/icedlatte/security/entity/LoginAttemptEntity.java
+index 91ddbc65..89f1f6c8 100644
+--- a/src/main/java/com/zufar/icedlatte/security/entity/LoginAttemptEntity.java
++++ b/src/main/java/com/zufar/icedlatte/security/entity/LoginAttemptEntity.java
+@@ -35,7 +35,7 @@ public class LoginAttemptEntity {
+     @Column(name = "attempts", nullable = false)
+     private Integer attempts;
+ 
+-    @Column(name = "expiration_datetime", nullable = true)
++    @Column(name = "expiration_datetime")
+     private LocalDateTime expirationDatetime;
+ 
+     @Column(name = "is_user_locked", nullable = false)
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/InMemoryJwtBlacklistService.java b/src/main/java/com/zufar/icedlatte/security/jwt/InMemoryJwtBlacklistService.java
+index 9f267204..ba099848 100644
+--- a/src/main/java/com/zufar/icedlatte/security/jwt/InMemoryJwtBlacklistService.java
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/InMemoryJwtBlacklistService.java
+@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
+ @Slf4j
+ @Service
+ @ConditionalOnMissingBean(RedisJwtBlacklistService.class)
+-public class InMemoryJwtBlacklistService {
++public class InMemoryJwtBlacklistService implements JwtBlacklistService {
+ 
+     private final ConcurrentMap<String, TokenEntry> blacklistedTokens = new ConcurrentHashMap<>();
+     private final AtomicInteger tokenCount = new AtomicInteger(0);
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistService.java b/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistService.java
+new file mode 100644
+index 00000000..29fc8af0
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistService.java
+@@ -0,0 +1,6 @@
++package com.zufar.icedlatte.security.jwt;
++
++public interface JwtBlacklistService {
++    void blacklistToken(String token);
++    boolean isBlacklisted(String token);
++}
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistValidator.java b/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistValidator.java
+index b0fbae35..bcdca000 100644
+--- a/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistValidator.java
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/JwtBlacklistValidator.java
+@@ -1,85 +1,33 @@
+ package com.zufar.icedlatte.security.jwt;
+ 
+ import com.zufar.icedlatte.security.exception.JwtTokenBlacklistedException;
++import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+-import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.util.StringUtils;
+ 
+ @Slf4j
+ @Service
++@RequiredArgsConstructor
+ public class JwtBlacklistValidator {
+ 
+-    private final RedisJwtBlacklistService redisService;
+-    private final InMemoryJwtBlacklistService inMemoryService;
+-
+-    public JwtBlacklistValidator(@Autowired(required = false) RedisJwtBlacklistService redisService,
+-                                 @Autowired(required = false) InMemoryJwtBlacklistService inMemoryService) {
+-        this.redisService = redisService;
+-        this.inMemoryService = inMemoryService;
+-
+-        if (this.redisService != null) {
+-            log.info("Using Redis JWT blacklist service");
+-        } else if (this.inMemoryService != null) {
+-            log.info("Using in-memory JWT blacklist service");
+-        } else {
+-            log.warn("No JWT blacklist service available - tokens cannot be blacklisted");
+-        }
+-    }
++    private final JwtBlacklistService blacklistService;
+ 
+     public void addToBlacklist(String token) {
+         if (!StringUtils.hasText(token)) {
+             log.warn("Attempted to blacklist empty or null token");
+             return;
+         }
+-        try {
+-            if (redisService != null) {
+-                redisService.blacklistToken(token);
+-                log.debug("Token successfully blacklisted using Redis service");
+-            } else if (inMemoryService != null) {
+-                inMemoryService.blacklistToken(token);
+-                log.debug("Token successfully blacklisted using in-memory service");
+-            } else {
+-                log.error("No blacklist service available - token cannot be blacklisted");
+-                throw new IllegalStateException("Blacklist service unavailable");
+-            }
+-        } catch (IllegalStateException ex) {
+-            log.error("Failed to blacklist token: {}", ex.getMessage(), ex);
+-            throw ex;
+-        } catch (RuntimeException ex) {
+-            log.error("Failed to blacklist token: {}", ex.getMessage(), ex);
+-            throw new IllegalStateException("Token blacklisting failed", ex);
+-        }
++        blacklistService.blacklistToken(token);
+     }
+ 
+     public void validate(String token) {
+         if (!StringUtils.hasText(token)) {
+-            log.warn("Token validation failed: empty or null token");
+             throw new JwtTokenBlacklistedException("Invalid token format");
+         }
+-
+-        try {
+-            if (checkTokenBlacklisted(token)) {
+-                log.warn("Token validation failed: token is blacklisted");
+-                throw new JwtTokenBlacklistedException("Token has been revoked");
+-            }
+-            log.debug("Token validation successful: token is not blacklisted");
+-        } catch (JwtTokenBlacklistedException ex) {
+-            throw ex;
+-        } catch (RuntimeException ex) {
+-            log.error("Token validation failed due to service error: {}", ex.getMessage(), ex);
+-            throw new JwtTokenBlacklistedException("Token validation service unavailable");
+-        }
+-    }
+-
+-    private boolean checkTokenBlacklisted(String token) {
+-        if (redisService != null) {
+-            return redisService.isBlacklisted(token);
+-        } else if (inMemoryService != null) {
+-            return inMemoryService.isBlacklisted(token);
+-        } else {
+-            log.error("No blacklist service available - failing secure for token validation");
+-            return true; // Fail secure
++        if (blacklistService.isBlacklisted(token)) {
++            log.warn("Token validation failed: token is blacklisted");
++            throw new JwtTokenBlacklistedException("Token has been revoked");
+         }
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/RedisJwtBlacklistService.java b/src/main/java/com/zufar/icedlatte/security/jwt/RedisJwtBlacklistService.java
+index 259d0b53..67c023b3 100644
+--- a/src/main/java/com/zufar/icedlatte/security/jwt/RedisJwtBlacklistService.java
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/RedisJwtBlacklistService.java
+@@ -21,7 +21,7 @@ import java.util.HexFormat;
+ @Service
+ @RequiredArgsConstructor
+ @ConditionalOnProperty(name = "spring.data.redis.host")
+-public class RedisJwtBlacklistService {
++public class RedisJwtBlacklistService implements JwtBlacklistService {
+ 
+     private static final String BLACKLIST_KEY_PREFIX = "jwt:blacklist:";
+     private static final String BLACKLIST_VALUE = "revoked";
+diff --git a/src/main/java/com/zufar/icedlatte/user/api/UserAvatarLinkUpdater.java b/src/main/java/com/zufar/icedlatte/user/api/UserAvatarLinkUpdater.java
+index a2f55827..ea9b496b 100644
+--- a/src/main/java/com/zufar/icedlatte/user/api/UserAvatarLinkUpdater.java
++++ b/src/main/java/com/zufar/icedlatte/user/api/UserAvatarLinkUpdater.java
+@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.stereotype.Service;
+ 
+-import java.io.IOException;
+-import java.util.UUID;
+ 
+ @Slf4j
+ @Service
+@@ -17,10 +15,7 @@ public class UserAvatarLinkUpdater {
+     private final UserAvatarLinkProvider userAvatarLinkProvider;
+ 
+     public UserDto update(final UserDto userDto) {
+-        final UUID userId = userDto.getId();
+-        String userAvatarLink = null;
+-        userAvatarLink = userAvatarLinkProvider.getLink(userId);
+-        userDto.setAvatarLink(userAvatarLink);
++        userDto.setAvatarLink(userAvatarLinkProvider.getLink(userDto.getId()));
+         return userDto;
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/user/endpoint/UserEndpoint.java b/src/main/java/com/zufar/icedlatte/user/endpoint/UserEndpoint.java
+index 742f0275..80ef9a06 100644
+--- a/src/main/java/com/zufar/icedlatte/user/endpoint/UserEndpoint.java
++++ b/src/main/java/com/zufar/icedlatte/user/endpoint/UserEndpoint.java
+@@ -59,13 +59,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
+     @Override
+     @PatchMapping
+     public ResponseEntity<Void> changeUserPassword(@Valid @RequestBody ChangeUserPasswordRequest changeUserPasswordRequest) {
+-        // Validate input to prevent code injection
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+-            return ResponseEntity.badRequest().build();
+-        }
+-        
+[REDACTED credential-related line]
+         changeUserPasswordOperationPerformer.changeUserPassword(changeUserPasswordRequest);
+[REDACTED credential-related line]
+@@ -85,19 +78,6 @@ public class UserEndpoint implements com.zufar.icedlatte.openapi.user.api.UserAp
+     @Override
+     @PostMapping(path = "/avatar", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+     public ResponseEntity<Void> uploadUserAvatar(@Validated @RequestPart("file") MultipartFile file) {
+-        // Validate file input to prevent code injection
+-        if (file == null || file.isEmpty() || file.getOriginalFilename() == null) {
+-            log.warn("Invalid file upload: null or empty file");
+-            return ResponseEntity.badRequest().build();
+-        }
+-        
+-        // Validate file type and size
+-        String contentType = file.getContentType();
+-        if (contentType == null || !contentType.startsWith("image/")) {
+-            log.warn("Invalid file type: {}", contentType);
+-            return ResponseEntity.badRequest().build();
+-        }
+-        
+         var userId = securityPrincipalProvider.getUserId();
+         log.info("Uploading avatar for user: {}", userId);
+         userAvatarUploader.uploadUserAvatar(userId, file);
+diff --git a/src/main/java/com/zufar/icedlatte/user/exception/InvalidOldPasswordException.java b/src/main/java/com/zufar/icedlatte/user/exception/InvalidOldPasswordException.java
+index 204447cb..bcd52421 100644
+--- a/src/main/java/com/zufar/icedlatte/user/exception/InvalidOldPasswordException.java
++++ b/src/main/java/com/zufar/icedlatte/user/exception/InvalidOldPasswordException.java
+@@ -1,14 +1,8 @@
+ package com.zufar.icedlatte.user.exception;
+ 
+-import lombok.Getter;
+-
+-@Getter
+ public class InvalidOldPasswordException extends RuntimeException {
+ 
+-    private final String userName;
+-
+     public InvalidOldPasswordException(String userEmail) {
+[REDACTED credential-related line]
+-        this.userName = null;
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/user/exception/UserNotFoundException.java b/src/main/java/com/zufar/icedlatte/user/exception/UserNotFoundException.java
+index 0e8649fc..4c9a5a16 100644
+--- a/src/main/java/com/zufar/icedlatte/user/exception/UserNotFoundException.java
++++ b/src/main/java/com/zufar/icedlatte/user/exception/UserNotFoundException.java
+@@ -1,18 +1,13 @@
+ package com.zufar.icedlatte.user.exception;
+ 
+-import lombok.Getter;
+-
+ import java.util.UUID;
+ 
+-@Getter
+ public class UserNotFoundException extends RuntimeException {
+ 
+     private final UUID userId;
+-    private final String userName;
+ 
+     public UserNotFoundException(UUID userId) {
+         super(String.format("User with id = %s is not found.", userId));
+         this.userId = userId;
+-        this.userName = null;
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/user/exception/handler/UserExceptionHandler.java b/src/main/java/com/zufar/icedlatte/user/exception/handler/UserExceptionHandler.java
+index e72f9a8a..457e3994 100644
+--- a/src/main/java/com/zufar/icedlatte/user/exception/handler/UserExceptionHandler.java
++++ b/src/main/java/com/zufar/icedlatte/user/exception/handler/UserExceptionHandler.java
+@@ -24,9 +24,9 @@ public class UserExceptionHandler {
+     private final ErrorDebugMessageCreator errorDebugMessageCreator;
+ 
+     @ExceptionHandler(UserNotFoundException.class)
+-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
++    @ResponseStatus(HttpStatus.NOT_FOUND)
+     public ApiErrorResponse handleUserNotFoundException(final UserNotFoundException exception) {
+-        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.UNAUTHORIZED);
++        ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+         log.warn("Handle user not found exception: failed: message: {}, debugMessage: {}",
+                 apiErrorResponse.message(), errorDebugMessageCreator.buildErrorDebugMessage(exception));
+         return apiErrorResponse;
+diff --git a/src/main/java/com/zufar/icedlatte/user/repository/AddressRepository.java b/src/main/java/com/zufar/icedlatte/user/repository/AddressRepository.java
+deleted file mode 100644
+index 6ecf50a8..00000000
+--- a/src/main/java/com/zufar/icedlatte/user/repository/AddressRepository.java
++++ /dev/null
+@@ -1,9 +0,0 @@
+-package com.zufar.icedlatte.user.repository;
+-
+-import com.zufar.icedlatte.user.entity.Address;
+-import org.springframework.data.jpa.repository.JpaRepository;
+-
+-import java.util.UUID;
+-
+-public interface AddressRepository  extends JpaRepository<Address, UUID> {
+-}
+

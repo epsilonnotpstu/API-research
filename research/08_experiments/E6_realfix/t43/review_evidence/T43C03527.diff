@@ -1,0 +1,541 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptyMappingsForAssetMapperError.java b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptyMappingsForAssetMapperError.java
+new file mode 100644
+index 000000000..fbf63fdd2
+--- /dev/null
++++ b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptyMappingsForAssetMapperError.java
+@@ -0,0 +1,32 @@
++/*
+[REDACTED attribution]
++ *
++ *  Licensed under the Apache License, Version 2.0 (the "License");
++ *  you may not use this file except in compliance with the License.
++ *  You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ *  Unless required by applicable law or agreed to in writing, software
++ *  distributed under the License is distributed on an "AS IS" BASIS,
++ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ *  See the License for the specific language governing permissions and
++ *  limitations under the License.
++ */
++
++package com.hivemq.api.errors.pulse;
++
++import com.hivemq.http.HttpStatus;
++import com.hivemq.http.error.ProblemDetails;
++
++import java.util.List;
++
++public class EmptyMappingsForAssetMapperError extends ProblemDetails {
++    public EmptyMappingsForAssetMapperError() {
++        super("EmptyMappingsForAssetMapperError",
++                "Empty Mappings for Asset Mapper",
++                "The mappings for the asset mapper is empty.",
++                HttpStatus.BAD_REQUEST_400,
++                List.of());
++    }
++}
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptySourcesForAssetMapperError.java b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptySourcesForAssetMapperError.java
+new file mode 100644
+index 000000000..ea070d638
+--- /dev/null
++++ b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/EmptySourcesForAssetMapperError.java
+@@ -0,0 +1,32 @@
++/*
+[REDACTED attribution]
++ *
++ *  Licensed under the Apache License, Version 2.0 (the "License");
++ *  you may not use this file except in compliance with the License.
++ *  You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ *  Unless required by applicable law or agreed to in writing, software
++ *  distributed under the License is distributed on an "AS IS" BASIS,
++ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ *  See the License for the specific language governing permissions and
++ *  limitations under the License.
++ */
++
++package com.hivemq.api.errors.pulse;
++
++import com.hivemq.http.HttpStatus;
++import com.hivemq.http.error.ProblemDetails;
++
++import java.util.List;
++
++public class EmptySourcesForAssetMapperError extends ProblemDetails {
++    public EmptySourcesForAssetMapperError() {
++        super("EmptySourcesForAssetMapperError",
++                "Empty Sources for Asset Mapper",
++                "The sources for the asset mapper is empty.",
++                HttpStatus.BAD_REQUEST_400,
++                List.of());
++    }
++}
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/AssetMapperSourcesAndMappingsSizeMismatchError.java b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/MissingEntityTypePulseAgentForAssetMapperError.java
+similarity index 67%
+rename from hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/AssetMapperSourcesAndMappingsSizeMismatchError.java
+rename to hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/MissingEntityTypePulseAgentForAssetMapperError.java
+index 07edd522e..f08aca415 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/AssetMapperSourcesAndMappingsSizeMismatchError.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/errors/pulse/MissingEntityTypePulseAgentForAssetMapperError.java
+@@ -16,16 +16,17 @@
+ 
+ package com.hivemq.api.errors.pulse;
+ 
++import com.hivemq.combining.model.EntityType;
+ import com.hivemq.http.HttpStatus;
+ import com.hivemq.http.error.ProblemDetails;
+ 
+ import java.util.List;
+ 
+-public class AssetMapperSourcesAndMappingsSizeMismatchError extends ProblemDetails {
+-    public AssetMapperSourcesAndMappingsSizeMismatchError(final int sourcesSize, final int mappingsSize) {
+-        super("AssetMapperSourcesAndMappingsSizeMismatchError",
+-                "Asset Mapper Sources and Mappings Size Mismatch",
+-                "The sources size " + sourcesSize + " and mappings size " + mappingsSize + " do not match.",
++public class MissingEntityTypePulseAgentForAssetMapperError extends ProblemDetails {
++    public MissingEntityTypePulseAgentForAssetMapperError() {
++        super("MissingEntityTypePulseAgentForAssetMapperError",
++                "Missing Entity Type Pulse Agent for Asset Mapper",
++                "The entity type '" + EntityType.PULSE_AGENT.name() + "' for asset mapper is missing.",
+                 HttpStatus.BAD_REQUEST_400,
+                 List.of());
+     }
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/PulseApiImpl.java b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/PulseApiImpl.java
+index deaab1560..3212d6661 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/PulseApiImpl.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/PulseApiImpl.java
+@@ -25,19 +25,19 @@ import com.hivemq.api.errors.pulse.ActivationTokenInvalidError;
+ import com.hivemq.api.errors.pulse.ActivationTokenNotDeletedError;
+ import com.hivemq.api.errors.pulse.AssetMapperNotFoundError;
+ import com.hivemq.api.errors.pulse.AssetMapperReferencedError;
+-import com.hivemq.api.errors.pulse.AssetMapperSourcesAndMappingsSizeMismatchError;
++import com.hivemq.api.errors.pulse.EmptyMappingsForAssetMapperError;
++import com.hivemq.api.errors.pulse.EmptySourcesForAssetMapperError;
+ import com.hivemq.api.errors.pulse.InvalidDataIdentifierReferenceForAssetMapperError;
+-import com.hivemq.api.errors.pulse.InvalidDataIdentifierReferenceTypeForAssetMapperError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetMappingIdError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetSchemaError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetTopicError;
+ import com.hivemq.api.errors.pulse.ManagedAssetAlreadyExistsError;
+ import com.hivemq.api.errors.pulse.ManagedAssetNotFoundError;
++import com.hivemq.api.errors.pulse.MissingEntityTypePulseAgentForAssetMapperError;
+ import com.hivemq.api.errors.pulse.PulseAgentDeactivatedError;
+ import com.hivemq.api.errors.pulse.PulseAgentNotConnectedError;
+ import com.hivemq.api.model.ItemsResponse;
+ import com.hivemq.combining.model.DataCombiner;
+-import com.hivemq.combining.model.DataIdentifierReference;
+ import com.hivemq.combining.model.EntityType;
+ import com.hivemq.configuration.entity.pulse.PulseAssetEntity;
+ import com.hivemq.configuration.entity.pulse.PulseEntity;
+@@ -170,7 +170,7 @@ public class PulseApiImpl implements PulseApi {
+             if (assets.getMappingIdSet().contains(mappingId.toString())) {
+                 return ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError(mappingId));
+             }
+-            if (assetMappingExtractor.getPulseAssetMappingIdSet().contains(mappingId.toString())) {
++            if (assetMappingExtractor.getMappingIdSet().contains(mappingId.toString())) {
+                 return ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError(mappingId));
+             }
+             final PulseAgentAsset asset = assets.get(optionalAssetIndex.getAsInt());
+@@ -205,7 +205,7 @@ public class PulseApiImpl implements PulseApi {
+             final DataCombiner dataCombiner = optionalDataCombiner.get();
+             final PulseAgentAssets assets =
+                     PulseAgentAssets.fromPersistence(existingPulseEntity.getPulseAssetsEntity());
+-            final Set<String> mappingIdSet = dataCombiner.getPulseAssetMappingIdSet();
++            final Set<String> mappingIdSet = dataCombiner.getMappingIdSet();
+             final PulseAgentAssets newAssets = new PulseAgentAssets();
+             final AtomicBoolean updated = new AtomicBoolean(false);
+             assets.stream().map(asset -> {
+@@ -251,7 +251,7 @@ public class PulseApiImpl implements PulseApi {
+             }
+             final PulseAgentAsset asset = assets.get(optionalAssetIndex.getAsInt());
+             final UUID mappingId = asset.getMapping().getId();
+-            if (mappingId != null && assetMappingExtractor.getPulseAssetMappingIdSet().contains(mappingId.toString())) {
++            if (mappingId != null && assetMappingExtractor.getMappingIdSet().contains(mappingId.toString())) {
+                 return ErrorResponseUtil.errorResponse(new AssetMapperReferencedError(assetId));
+             }
+             assets.remove(optionalAssetIndex.getAsInt());
+@@ -401,8 +401,8 @@ public class PulseApiImpl implements PulseApi {
+             final DataCombiner oldDataCombiner = optionalDataCombiner.get();
+             final boolean updated = assetMappingExtractor.updateDataCombiner(newDataCombiner);
+             if (updated) {
+-                final Set<String> oldMappingIdSet = oldDataCombiner.getPulseAssetMappingIdSet();
+-                final Set<String> newMappingIdSet = newDataCombiner.getPulseAssetMappingIdSet();
++                final Set<String> oldMappingIdSet = oldDataCombiner.getMappingIdSet();
++                final Set<String> newMappingIdSet = newDataCombiner.getMappingIdSet();
+                 final Set<String> toBeRemovedMappingIdSet = Sets.difference(oldMappingIdSet, newMappingIdSet);
+                 if (!toBeRemovedMappingIdSet.isEmpty()) {
+                     final PulseAgentAssets assets =
+@@ -552,81 +552,48 @@ public class PulseApiImpl implements PulseApi {
+     private @NotNull Optional<Response> checkAssetMapper(
+             final @NotNull DataCombiner dataCombiner,
+             final @NotNull Map<String, PulseAssetEntity> assetEntityMap) {
+-        final int referenceSize = dataCombiner.entityReferences().size();
+-        final int combiningSize = dataCombiner.dataCombinings().size();
+-        if (referenceSize != combiningSize) {
+-            return Optional.of(ErrorResponseUtil.errorResponse(new AssetMapperSourcesAndMappingsSizeMismatchError(
+-                    referenceSize,
+-                    combiningSize)));
+-        }
+-        for (int i = 0; i < combiningSize; i++) {
+-            final var entityReference = dataCombiner.entityReferences().get(i);
+-            final var dataCombining = dataCombiner.dataCombinings().get(i);
+-            // Check that the primary reference is used in only one instruction.
+-            final DataIdentifierReference primaryReference = dataCombining.sources().primaryReference();
+-            int primaryReferenceCount = 0;
+-            if (entityReference.type() == EntityType.PULSE_AGENT) {
+-                if (primaryReference.type() != DataIdentifierReference.Type.PULSE_ASSET) {
+-                    return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceTypeForAssetMapperError(
+-                            primaryReference.type())));
+-                }
+-                for (final var instruction : dataCombining.instructions()) {
+-                    final var dataIdentifierReference = instruction.dataIdentifierReference();
+-                    if (dataIdentifierReference != null) {
+-                        if (dataIdentifierReference.type() != DataIdentifierReference.Type.PULSE_ASSET) {
+-                            return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceTypeForAssetMapperError(
+-                                    dataIdentifierReference.type())));
+-                        }
+-                        if (Objects.equals(dataIdentifierReference, primaryReference)) {
+-                            primaryReferenceCount++;
+-                        }
+-                    }
+-                    final String assetId = dataCombining.destination().assetId();
+-                    final var asset = assetEntityMap.get(assetId);
+-                    if (asset == null) {
+-                        return Optional.of(ErrorResponseUtil.errorResponse(new ManagedAssetNotFoundError(assetId)));
+-                    }
+-                    if (!Objects.equals(dataCombining.destination().topic(), asset.getTopic())) {
+-                        return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetTopicError(assetId)));
+-                    }
+-                    // There are some cases where the schema is still data-url encoded, so we need to decode it before comparing.
+-                    final String schema =
+-                            PulseAgentAssetSchemaConverter.INSTANCE.toInternalEntity(dataCombining.destination()
+-                                    .schema());
+-                    if (!Objects.equals(schema, asset.getSchema())) {
+-                        return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetSchemaError(assetId)));
+-                    }
+-                    final UUID mappingId = asset.getMapping().getId();
+-                    if (mappingId == null) {
+-                        return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError("null")));
+-                    }
+-                    final UUID dataCombiningId = dataCombining.id();
+-                    if (!Objects.equals(mappingId, dataCombiningId)) {
+-                        return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError(
+-                                dataCombiningId)));
+-                    }
+-                }
+-            } else {
+-                if (primaryReference.type() == DataIdentifierReference.Type.PULSE_ASSET) {
+-                    return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceTypeForAssetMapperError(
+-                            primaryReference.type())));
+-                }
+-                for (final var instruction : dataCombining.instructions()) {
+-                    final var dataIdentifierReference = instruction.dataIdentifierReference();
+-                    if (dataIdentifierReference != null) {
+-                        if (dataIdentifierReference.type() == DataIdentifierReference.Type.PULSE_ASSET) {
+-                            return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceTypeForAssetMapperError(
+-                                    dataIdentifierReference.type())));
+-                        }
+-                        if (Objects.equals(dataIdentifierReference, primaryReference)) {
+-                            primaryReferenceCount++;
+-                        }
+-                    }
+-                }
++        if (dataCombiner.entityReferences().isEmpty()) {
++            return Optional.of(ErrorResponseUtil.errorResponse(new EmptySourcesForAssetMapperError()));
++        }
++        if (dataCombiner.dataCombinings().isEmpty()) {
++            return Optional.of(ErrorResponseUtil.errorResponse(new EmptyMappingsForAssetMapperError()));
++        }
++        if (dataCombiner.entityReferences()
++                .stream()
++                .noneMatch(entityReference -> entityReference.type() == EntityType.PULSE_AGENT)) {
++            return Optional.of(ErrorResponseUtil.errorResponse(new MissingEntityTypePulseAgentForAssetMapperError()));
++        }
++        for (final var dataCombining : dataCombiner.dataCombinings()) {
++            if (!dataCombining.isPrimaryReferenceFound()) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceForAssetMapperError(
++                        dataCombining.sources().primaryReference().id())));
+             }
+-            if (primaryReferenceCount != 1) {
++            final String assetId = dataCombining.destination().assetId();
++            final var asset = assetEntityMap.get(assetId);
++            if (asset == null) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new ManagedAssetNotFoundError(assetId)));
++            }
++            if (!Objects.equals(dataCombining.destination().topic(), asset.getTopic())) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetTopicError(assetId)));
++            }
++            // There are some cases where the schema is still data-url encoded, so we need to decode it before comparing.
++            final String schema =
++                    PulseAgentAssetSchemaConverter.INSTANCE.toInternalEntity(dataCombining.destination().schema());
++            if (!Objects.equals(schema, asset.getSchema())) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetSchemaError(assetId)));
++            }
++            final Optional<String> optionalDuplicateMappingId = dataCombining.getFirstDuplicateMappingId();
++            if (optionalDuplicateMappingId.isPresent()) {
+                 return Optional.of(ErrorResponseUtil.errorResponse(new InvalidDataIdentifierReferenceForAssetMapperError(
+-                        primaryReference.id())));
++                        optionalDuplicateMappingId.get())));
++            }
++            final UUID mappingId = asset.getMapping().getId();
++            if (mappingId == null) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError("null")));
++            }
++            final UUID dataCombiningId = dataCombining.id();
++            if (!Objects.equals(mappingId, dataCombiningId)) {
++                return Optional.of(ErrorResponseUtil.errorResponse(new InvalidManagedAssetMappingIdError(dataCombiningId)));
+             }
+         }
+         return Optional.empty();
+diff --git a/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombiner.java b/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombiner.java
+index cb1ebdc80..fcf16b8cb 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombiner.java
++++ b/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombiner.java
+@@ -24,11 +24,12 @@ import com.hivemq.edge.api.model.EntityReferenceList;
+ import org.jetbrains.annotations.NotNull;
+ 
+ import java.util.ArrayList;
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Optional;
+ import java.util.Set;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+-import java.util.stream.IntStream;
+ 
+ public record DataCombiner(UUID id, String name, String description, List<EntityReference> entityReferences,
+                            List<DataCombining> dataCombinings) {
+@@ -82,15 +83,8 @@ public record DataCombiner(UUID id, String name, String description, List<Entity
+         return new DataCombinerEntity(id, name, description, sources, combining);
+     }
+ 
+-    public @NotNull List<DataCombining> getPulseAssetDataCombinings() {
+-        return IntStream.range(0, Math.min(entityReferences.size(), dataCombinings.size()))
+-                .filter(i -> entityReferences.get(i).type() == EntityType.PULSE_AGENT)
+-                .mapToObj(i -> dataCombinings().get(i))
+-                .toList();
+-    }
+-
+-    public @NotNull Set<String> getPulseAssetMappingIdSet() {
+-        return getPulseAssetDataCombinings().stream()
++    public @NotNull Set<String> getMappingIdSet() {
++        return dataCombinings().stream()
+                 .map(DataCombining::id)
+                 .map(UUID::toString)
+                 .collect(Collectors.toSet());
+diff --git a/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombining.java b/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombining.java
+index 5f256afc8..4c28fa284 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombining.java
++++ b/hivemq-edge/src/main/java/com/hivemq/combining/model/DataCombining.java
+@@ -20,7 +20,11 @@ import com.hivemq.configuration.entity.combining.DataCombiningEntity;
+ import com.hivemq.persistence.mappings.fieldmapping.Instruction;
+ import org.jetbrains.annotations.NotNull;
+ 
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Objects;
++import java.util.Optional;
++import java.util.Set;
+ import java.util.UUID;
+ 
+ public record DataCombining(UUID id, DataCombiningSources sources, DataCombiningDestination destination,
+@@ -53,4 +57,27 @@ public record DataCombining(UUID id, DataCombiningSources sources, DataCombining
+                 destination().toPersistence(),
+                 instructions().stream().map(InstructionEntity::from).toList());
+     }
++
++    public boolean isPrimaryReferenceFound() {
++        final DataIdentifierReference primaryReference = sources().primaryReference();
++        return instructions().stream()
++                .map(com.hivemq.persistence.mappings.fieldmapping.Instruction::dataIdentifierReference)
++                .filter(Objects::nonNull)
++                .anyMatch(reference -> Objects.equals(reference, primaryReference));
++    }
++
++    public @NotNull Optional<String> getFirstDuplicateMappingId() {
++        final Set<String> idSet = new HashSet<>();
++        for (final String id : instructions().stream()
++                .map(Instruction::dataIdentifierReference)
++                .filter(Objects::nonNull)
++                .map(DataIdentifierReference::id)
++                .filter(Objects::nonNull)
++                .toList()) {
++            if (!idSet.add(id)) {
++                return Optional.of(id);
++            }
++        }
++        return Optional.empty();
++    }
+ }
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/reader/AssetMappingExtractor.java b/hivemq-edge/src/main/java/com/hivemq/configuration/reader/AssetMappingExtractor.java
+index 1e7cdb6d1..902ab120e 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/reader/AssetMappingExtractor.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/reader/AssetMappingExtractor.java
+@@ -17,9 +17,9 @@ package com.hivemq.configuration.reader;
+ 
+ import com.google.common.collect.ImmutableList;
+ import com.hivemq.combining.model.DataCombiner;
+-import com.hivemq.combining.model.EntityType;
+ import com.hivemq.configuration.entity.HiveMQConfigEntity;
+ import com.hivemq.configuration.entity.combining.DataCombinerEntity;
++import com.hivemq.configuration.entity.combining.DataCombiningEntity;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+@@ -30,7 +30,6 @@ import java.util.UUID;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ import java.util.function.Consumer;
+ import java.util.stream.Collectors;
+-import java.util.stream.IntStream;
+ 
+ public class AssetMappingExtractor
+         implements ReloadableExtractor<List<@NotNull DataCombinerEntity>, List<@NotNull DataCombiner>> {
+@@ -136,14 +135,11 @@ public class AssetMappingExtractor
+         config.getAssetMapperEntities().addAll(this.config);
+     }
+ 
+-    public @NotNull Set<String> getPulseAssetMappingIdSet() {
++    public @NotNull Set<String> getMappingIdSet() {
+         return config.stream()
+-                .flatMap(dataCombinerEntity -> IntStream.range(0,
+-                                Math.min(dataCombinerEntity.getEntityReferenceEntities().size(),
+-                                        dataCombinerEntity.getDataCombiningEntities().size()))
+-                        .filter(i -> dataCombinerEntity.getEntityReferenceEntities().get(i).getType() ==
+-                                EntityType.PULSE_AGENT)
+-                        .mapToObj(i -> dataCombinerEntity.getDataCombiningEntities().get(i).getId()))
++                .flatMap(dataCombinerEntity -> dataCombinerEntity.getDataCombiningEntities()
++                        .stream()
++                        .map(DataCombiningEntity::getId))
+                 .map(UUID::toString)
+                 .collect(Collectors.toSet());
+     }
+diff --git a/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplAddAssetMapperTest.java b/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplAddAssetMapperTest.java
+index cf17dc30d..2f232088b 100644
+--- a/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplAddAssetMapperTest.java
++++ b/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplAddAssetMapperTest.java
+@@ -18,19 +18,22 @@ package com.hivemq.api.resources.impl.pulse;
+ 
+ import com.hivemq.api.errors.AlreadyExistsError;
+ import com.hivemq.api.errors.ConfigWritingDisabled;
+-import com.hivemq.api.errors.pulse.AssetMapperSourcesAndMappingsSizeMismatchError;
+-import com.hivemq.api.errors.pulse.InvalidDataIdentifierReferenceTypeForAssetMapperError;
++import com.hivemq.api.errors.pulse.EmptyMappingsForAssetMapperError;
++import com.hivemq.api.errors.pulse.EmptySourcesForAssetMapperError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetMappingIdError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetSchemaError;
+ import com.hivemq.api.errors.pulse.InvalidManagedAssetTopicError;
+ import com.hivemq.api.errors.pulse.ManagedAssetNotFoundError;
++import com.hivemq.api.errors.pulse.MissingEntityTypePulseAgentForAssetMapperError;
+ import com.hivemq.combining.model.DataCombiner;
+ import com.hivemq.configuration.entity.pulse.PulseAssetEntity;
+ import com.hivemq.configuration.entity.pulse.PulseAssetMappingEntity;
+ import com.hivemq.configuration.entity.pulse.PulseAssetMappingStatus;
+ import com.hivemq.edge.api.model.Combiner;
+ import com.hivemq.edge.api.model.DataCombining;
++import com.hivemq.edge.api.model.DataCombiningList;
+ import com.hivemq.edge.api.model.DataIdentifierReference;
++import com.hivemq.edge.api.model.EntityReferenceList;
+ import com.hivemq.edge.api.model.EntityType;
+ import jakarta.ws.rs.core.Response;
+ import org.junit.jupiter.api.Test;
+@@ -76,6 +79,28 @@ public class PulseApiImplAddAssetMapperTest extends AbstractPulseApiImplTest {
+         }
+     }
+ 
++    @Test
++    public void whenSourcesAreEmpty_thenReturnsEmptySourcesForAssetMapperError() {
++        final Combiner combiner =
++                createCombiner(EntityType.PULSE_AGENT, DataIdentifierReference.TypeEnum.PULSE_ASSET).sources(
++                        EntityReferenceList.builder().build()).mappings(DataCombiningList.builder().build());
++        try (final Response response = pulseApi.addAssetMapper(combiner)) {
++            assertThat(response.getStatus()).isEqualTo(400);
++            assertThat(response.getEntity()).isInstanceOf(EmptySourcesForAssetMapperError.class);
++        }
++    }
++
++    @Test
++    public void whenMappingsAreEmpty_thenReturnsEmptyMappingsForAssetMapperError() {
++        final Combiner combiner =
++                createCombiner(EntityType.PULSE_AGENT, DataIdentifierReference.TypeEnum.PULSE_ASSET).mappings(
++                        DataCombiningList.builder().build());
++        try (final Response response = pulseApi.addAssetMapper(combiner)) {
++            assertThat(response.getStatus()).isEqualTo(400);
++            assertThat(response.getEntity()).isInstanceOf(EmptyMappingsForAssetMapperError.class);
++        }
++    }
++
+     @Test
+     public void whenTypeIsPulseAssetAndTopicMismatches_thenReturnsInvalidManagedAssetTopicError() {
+         final Combiner combiner = createCombiner(EntityType.PULSE_AGENT, DataIdentifierReference.TypeEnum.PULSE_ASSET);
+@@ -158,23 +183,7 @@ public class PulseApiImplAddAssetMapperTest extends AbstractPulseApiImplTest {
+     }
+ 
+     @Test
+-    public void whenEntityTypeIsNotPulseAgentAndTypeIsPulseAsset_thenReturnsInvalidDataIdentifierReferenceTypeForAssetMapperError() {
+-        Stream.of(EntityType.values())
+-                .filter(entityType -> entityType != EntityType.PULSE_AGENT)
+-                .forEach(entityType -> {
+-                    final Combiner combiner = createCombiner(entityType, DataIdentifierReference.TypeEnum.PULSE_ASSET);
+-                    when(assetMappingExtractor.getCombinerById(any())).thenReturn(Optional.empty());
+-                    when(pulseAssetsEntity.getPulseAssetEntities()).thenReturn(List.of());
+-                    try (final Response response = pulseApi.addAssetMapper(combiner)) {
+-                        assertThat(response.getStatus()).isEqualTo(400);
+-                        assertThat(response.getEntity()).isInstanceOf(
+-                                InvalidDataIdentifierReferenceTypeForAssetMapperError.class);
+-                    }
+-                });
+-    }
+-
+-    @Test
+-    public void whenEntityTypeIsNotPulseAgentAndTypeIsNotPulseAsset_thenReturnsOK() {
++    public void whenEntityTypeIsNotPulseAgentAndTypeIsNotPulseAsset_thenReturnsMissingEntityTypePulseAgentForAssetMapperError() {
+         Stream.of(EntityType.values())
+                 .filter(entityType -> entityType != EntityType.PULSE_AGENT)
+                 .forEach(entityType -> Stream.of(DataIdentifierReference.TypeEnum.values())
+@@ -184,25 +193,13 @@ public class PulseApiImplAddAssetMapperTest extends AbstractPulseApiImplTest {
+                             when(assetMappingExtractor.getCombinerById(any())).thenReturn(Optional.empty());
+                             when(pulseAssetsEntity.getPulseAssetEntities()).thenReturn(List.of());
+                             try (final Response response = pulseApi.addAssetMapper(combiner)) {
+-                                assertThat(response.getStatus()).isEqualTo(200);
++                                assertThat(response.getStatus()).isEqualTo(400);
++                                assertThat(response.getEntity()).isInstanceOf(
++                                        MissingEntityTypePulseAgentForAssetMapperError.class);
+                             }
+                         }));
+     }
+ 
+-    @Test
+-    public void whenSizesMismatch_thenReturnsAssetMapperSourcesAndMappingsSizeMismatchError() {
+-        final Combiner combiner = createCombiner(EntityType.PULSE_AGENT, DataIdentifierReference.TypeEnum.PULSE_ASSET);
+-        final List<DataCombining> mappings = new ArrayList<>(combiner.getMappings().getItems());
+-        mappings.addAll(combiner.getMappings().getItems());
+-        combiner.getMappings().setItems(mappings);
+-        when(assetMappingExtractor.getCombinerById(any())).thenReturn(Optional.empty());
+-        when(pulseAssetsEntity.getPulseAssetEntities()).thenReturn(List.of());
+-        try (final Response response = pulseApi.addAssetMapper(combiner)) {
+-            assertThat(response.getStatus()).isEqualTo(400);
+-            assertThat(response.getEntity()).isInstanceOf(AssetMapperSourcesAndMappingsSizeMismatchError.class);
+-        }
+-    }
+-
+     @Test
+     public void whenAllCorrect_thenReturnsOK() {
+         final Combiner combiner = createCombiner(EntityType.PULSE_AGENT, DataIdentifierReference.TypeEnum.PULSE_ASSET);
+diff --git a/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplDeleteManagedAssetTest.java b/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplDeleteManagedAssetTest.java
+index 647a82a7c..86a8a889f 100644
+--- a/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplDeleteManagedAssetTest.java
++++ b/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/pulse/PulseApiImplDeleteManagedAssetTest.java
+@@ -80,7 +80,7 @@ public class PulseApiImplDeleteManagedAssetTest extends AbstractPulseApiImplTest
+                         .build())
+                 .build();
+         when(pulseAssetsEntity.getPulseAssetEntities()).thenReturn(List.of(expectedAsset.toPersistence()));
+-        when(assetMappingExtractor.getPulseAssetMappingIdSet()).thenReturn(Set.of(mappingId.toString()));
++        when(assetMappingExtractor.getMappingIdSet()).thenReturn(Set.of(mappingId.toString()));
+         try (final Response response = pulseApi.deleteManagedAsset(id)) {
+             assertThat(response.getStatus()).isEqualTo(400);
+             assertThat(response.getEntity()).isInstanceOf(AssetMapperReferencedError.class);
+

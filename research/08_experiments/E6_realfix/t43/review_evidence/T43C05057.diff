@@ -1,0 +1,26 @@
+diff --git a/src/main/java/com/epam/ta/reportportal/core/statistics/StatisticsFacadeImpl.java b/src/main/java/com/epam/ta/reportportal/core/statistics/StatisticsFacadeImpl.java
+index 9ebc47869..d6df0dab4 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/statistics/StatisticsFacadeImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/statistics/StatisticsFacadeImpl.java
+@@ -148,6 +148,7 @@ public class StatisticsFacadeImpl implements StatisticsFacade {
+ 
+ 	@Override
+ 	public TestItem identifyStatus(TestItem testItem) {
++		testItem.setStatus(StatisticsHelper.getStatusFromStatistics(testItem.getStatistics()));
+ 		return testItem;
+ 	}
+ }
+\ No newline at end of file
+diff --git a/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java b/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
+index 971d610ca..f171d0059 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
++++ b/src/main/java/com/epam/ta/reportportal/core/statistics/TestBasedStatisticsFacade.java
+@@ -70,6 +70,7 @@ public class TestBasedStatisticsFacade extends StatisticsFacadeImpl implements S
+     public TestItem identifyStatus(TestItem testItem) {
+         if (testItem.getType().sameLevel(TestItemType.TEST)) {
+             if (testItemRepository.hasChildrenWithStatuses(testItem.getId(), Status.FAILED, Status.SKIPPED)) {
++                testItem.setStatus(Status.FAILED);
+                 return testItem;
+             }
+         }
+

@@ -1,0 +1,102 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java
+index 304511f3..69b22dba 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java
+@@ -70,9 +70,9 @@ public final class WaterContractCreateController extends WaterSupplyControllerBa
+             required = true),
+         queryParams = {
+             @OpenApiParam(name = FAIL_IF_EXISTS, description = "If true, the contract will not be stored if "
+-                    + "it already exists.", type = Boolean.class),
++                    + "it already exists. Default is true", type = Boolean.class),
+             @OpenApiParam(name = IGNORE_NULLS, description = "If true, null fields will be ignored "
+-                    + "when storing the contract.", type = Boolean.class)
++                    + "when storing the contract. Default is false", type = Boolean.class)
+         },
+         responses = {
+             @OpenApiResponse(status = STATUS_204, description = "Water contract successfully stored to CWMS."),
+@@ -102,8 +102,8 @@ public final class WaterContractCreateController extends WaterSupplyControllerBa
+             ContentType contentType = Formats.parseHeader(formatHeader, WaterUserContract.class);
+             ctx.contentType(contentType.toString());
+             WaterUserContract waterContract = Formats.parseContent(contentType, ctx.body(), WaterUserContract.class);
+-            boolean failIfExists = Boolean.parseBoolean(ctx.queryParam(FAIL_IF_EXISTS));
+-            boolean ignoreNulls = Boolean.parseBoolean(ctx.queryParam(IGNORE_NULLS));
++            boolean failIfExists = ctx.queryParamAsClass(FAIL_IF_EXISTS, Boolean.class).getOrDefault(true);
++            boolean ignoreNulls = ctx.queryParamAsClass(IGNORE_NULLS, Boolean.class).getOrDefault(false);
+             String newContractName = ctx.pathParam(WATER_USER);
+             WaterContractDao contractDao = getContractDao(dsl);
+             contractDao.storeWaterContract(waterContract, failIfExists, ignoreNulls);
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java
+index 0b0b8304..6e967d45 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java
+@@ -43,7 +43,6 @@ import cwms.cda.data.dto.CwmsId;
+ import cwms.cda.data.dto.StatusResponse;
+ import cwms.cda.data.dto.watersupply.WaterUserContract;
+ import io.javalin.http.Context;
+-import io.javalin.http.Handler;
+ import io.javalin.plugin.openapi.annotations.HttpMethod;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+ import io.javalin.plugin.openapi.annotations.OpenApiParam;
+@@ -83,13 +82,14 @@ public final class WaterContractDeleteController extends WaterSupplyControllerBa
+             DSLContext dsl = getDslContext(ctx);
+             String contractName = ctx.pathParam(CONTRACT_NAME);
+             DeleteMethod deleteMethod = getDeleteMethod(ctx.queryParam(METHOD));
++            DeleteMethod method = deleteMethod == null ? DeleteMethod.DELETE_KEY : deleteMethod;
+             String locationId = ctx.pathParam(PROJECT_ID);
+             String entityName = ctx.pathParam(WATER_USER);
+             String office = ctx.pathParam(OFFICE);
+             WaterContractDao contractDao = getContractDao(dsl);
+             CwmsId projectLocation = CwmsId.buildCwmsId(office, locationId);
+             WaterUserContract contract = contractDao.getWaterContract(contractName, projectLocation, entityName);
+-            contractDao.deleteWaterContract(contract, deleteMethod);
++            contractDao.deleteWaterContract(contract, method);
+             StatusResponse re = new StatusResponse(contract.getOfficeId(),
+                     "Water Contract Deleted Successfully", contractName);
+             ctx.status(HttpServletResponse.SC_OK).json(re);
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java
+index ff6e36fd..cfa0c808 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java
+@@ -37,7 +37,6 @@ import cwms.cda.data.dto.watersupply.WaterUser;
+ import cwms.cda.formatters.ContentType;
+ import cwms.cda.formatters.Formats;
+ import io.javalin.http.Context;
+-import io.javalin.http.Handler;
+ import io.javalin.plugin.openapi.annotations.HttpMethod;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+ import io.javalin.plugin.openapi.annotations.OpenApiContent;
+@@ -82,7 +81,7 @@ public final class WaterUserCreateController extends WaterSupplyControllerBase {
+             ContentType contentType = Formats.parseHeader(formatHeader, WaterUser.class);
+             ctx.contentType(contentType.toString());
+             WaterUser user = Formats.parseContent(contentType, ctx.body(), WaterUser.class);
+-            boolean failIfExists = Boolean.parseBoolean(ctx.queryParam(FAIL_IF_EXISTS));
++            boolean failIfExists = ctx.queryParamAsClass(FAIL_IF_EXISTS, Boolean.class).getOrDefault(true);
+             WaterContractDao contractDao = getContractDao(dsl);
+             contractDao.storeWaterUser(user, failIfExists);
+             StatusResponse re = new StatusResponse(user.getProjectId().getOfficeId(),
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java
+index aaacb463..235ebf68 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java
+@@ -41,7 +41,6 @@ import cwms.cda.data.dao.watersupply.WaterContractDao;
+ import cwms.cda.data.dto.CwmsId;
+ import cwms.cda.data.dto.StatusResponse;
+ import io.javalin.http.Context;
+-import io.javalin.http.Handler;
+ import io.javalin.plugin.openapi.annotations.HttpMethod;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+ import io.javalin.plugin.openapi.annotations.OpenApiParam;
+@@ -82,10 +81,11 @@ public final class WaterUserDeleteController extends WaterSupplyControllerBase {
+             String office = ctx.pathParam(OFFICE);
+             String locationId = ctx.pathParam(PROJECT_ID);
+             DeleteMethod deleteMode = getDeleteMethod(ctx.queryParam(METHOD));
++            DeleteMethod method = deleteMode == null ? DeleteMethod.DELETE_KEY : deleteMode;
+             String entityName = ctx.pathParam(WATER_USER);
+             CwmsId location = CwmsId.buildCwmsId(office, locationId);
+             WaterContractDao contractDao = getContractDao(dsl);
+-            contractDao.deleteWaterUser(location, entityName, deleteMode);
++            contractDao.deleteWaterUser(location, entityName, method);
+             StatusResponse re = new StatusResponse(office, "Water user deleted successfully.", entityName);
+             ctx.status(HttpServletResponse.SC_OK).json(re);
+         }
+

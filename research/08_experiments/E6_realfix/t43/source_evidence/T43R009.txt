@@ -1,0 +1,100 @@
+[parent contract] d674ae2c64c071406e89a852e02d34463dda378a:hivemq-edge/src/main/java/com/hivemq/api/resources/ProtocolAdaptersApi.java:347
+344:     @GET
+345:     @Path("/adapters/{adapterId}/tags")
+346:     @Operation(summary = "Get the domain tags for the device connected through this adapter.",
+347:                operationId = "get-adapter-domainTags",
+348:                description = "Get the domain tags for the device connected through this adapter.",
+349:                responses = {
+350:                        @ApiResponse(responseCode = "200",
+351:                                     description = "Success",
+352:                                     content = @Content(mediaType = APPLICATION_JSON,
+353:                                                        schema = @Schema(implementation = DomainTagModelList.class),
+354:                                                        examples = {
+355:                                                                @ExampleObject(description = "An example for domain tags in opc ua",
+356:                                                                               name = "opc ua domain tags example",
+357:                                                                               summary = "Example for domain tags for opc ua ",
+358:                                                                               value = TagResourceExamples.EXAMPLE_OPC_UA)}))})
+359:     @Produces(APPLICATION_JSON)
+360:     @NotNull
+361:     Response getDomainTagsForAdapter(
+362:             @NotNull @Parameter(name = "adapterId",
+363:                                 description = "The adapter id.",
+364:                                 required = true,
+365:                                 in = ParameterIn.PATH) @PathParam("adapterId") String adapterId);
+
+[fix contract] d39e26f08218cff220c885779654a38596ec5df2:hivemq-edge/src/main/java/com/hivemq/api/resources/ProtocolAdaptersApi.java:347
+344:     @GET
+345:     @Path("/adapters/{adapterId}/tags")
+346:     @Operation(summary = "Get the domain tags for the device connected through this adapter.",
+347:                operationId = "get-adapter-domainTags",
+348:                description = "Get the domain tags for the device connected through this adapter.",
+349:                responses = {
+350:                        @ApiResponse(responseCode = "200",
+351:                                     description = "Success",
+352:                                     content = @Content(mediaType = APPLICATION_JSON,
+353:                                                        schema = @Schema(implementation = DomainTagModelList.class),
+354:                                                        examples = {
+355:                                                                @ExampleObject(description = "An example for domain tags in opc ua",
+356:                                                                               name = "opc ua domain tags example",
+357:                                                                               summary = "Example for domain tags for opc ua ",
+358:                                                                               value = TagResourceExamples.EXAMPLE_OPC_UA)}))})
+359:     @Produces(APPLICATION_JSON)
+360:     @NotNull
+361:     Response getDomainTagsForAdapter(
+362:             @NotNull @Parameter(name = "adapterId",
+363:                                 description = "The adapter id.",
+364:                                 required = true,
+365:                                 in = ParameterIn.PATH) @PathParam("adapterId") String adapterId);
+
+[parent route] d674ae2c64c071406e89a852e02d34463dda378a:hivemq-edge/src/main/java/com/hivemq/api/resources/ProtocolAdaptersApi.java:69
+67: public interface ProtocolAdaptersApi {
+68: 
+69:     String PATH = "/api/v1/management/protocol-adapters";
+70: 
+71:     //########   SCHEMAS   #########
+
+[parent implementation] d674ae2c64c071406e89a852e02d34463dda378a:hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java:430
+430:     public @NotNull Response getDomainTagsForAdapter(final @NotNull String adapterId) {
+431:         return protocolAdapterManager.getTagsForAdapter(adapterId).map(tags -> {
+432:             if (tags.isEmpty()) {
+433:                 return Response.ok().build();
+434:             } else {
+435:                 final List<DomainTagModel> domainTagModels =
+436:                         tags.stream().map(DomainTagModel::fromDomainTag).collect(Collectors.toList());
+437:                 final DomainTagModelList domainTagModelList = new DomainTagModelList(domainTagModels);
+438:                 return Response.ok().entity(domainTagModelList).build();
+439:             }
+440:         }).orElse(Response.status(Response.Status.NOT_FOUND).build());
+441:     }
+442: 
+443:     @Override
+444:     public @NotNull Response addAdapterDomainTag(
+445:             final @NotNull String adapterId, final @NotNull DomainTagModel domainTag) {
+
+[fix implementation] d39e26f08218cff220c885779654a38596ec5df2:hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java:430
+430:     public @NotNull Response getDomainTagsForAdapter(final @NotNull String adapterId) {
+431:         return protocolAdapterManager.getTagsForAdapter(adapterId).map(tags -> {
+432:             if (tags.isEmpty()) {
+433:                 return Response.ok(new DomainTagModelList(List.of())).build();
+434:             } else {
+435:                 final List<DomainTagModel> domainTagModels =
+436:                         tags.stream().map(DomainTagModel::fromDomainTag).collect(Collectors.toList());
+437:                 return Response.ok(new DomainTagModelList(domainTagModels)).build();
+438:             }
+439:         }).orElse(Response.status(Response.Status.NOT_FOUND).build());
+440:     }
+441: 
+442:     @Override
+443:     public @NotNull Response addAdapterDomainTag(
+444:             final @NotNull String adapterId, final @NotNull DomainTagModel domainTag) {
+445:         final DomainTagAddResult domainTagAddResult =
+
+[parent implementation] d674ae2c64c071406e89a852e02d34463dda378a:hivemq-edge/src/main/java/com/hivemq/api/model/tags/DomainTagModelList.java:31
+28: public class DomainTagModelList extends ItemsResponse<DomainTagModel> {
+29: 
+30:     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+31:     public DomainTagModelList(
+32:             @JsonProperty("items") final @NotNull List<DomainTagModel> items) {
+33:         super(items);
+34:     }
+35: 

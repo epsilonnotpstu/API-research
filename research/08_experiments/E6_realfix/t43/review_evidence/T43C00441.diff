@@ -1,0 +1,391 @@
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+index d0b07729f..013431373 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+@@ -5,6 +5,8 @@
+ 
+ package io.openlineage.spark.agent;
+ 
++import static io.openlineage.client.OpenLineage.RunEvent.EventType.COMPLETE;
++import static io.openlineage.client.OpenLineage.RunEvent.EventType.FAIL;
+ import static io.openlineage.spark.agent.util.ScalaConversionUtils.asJavaOptional;
+ 
+ import io.micrometer.core.instrument.MeterRegistry;
+@@ -79,7 +81,7 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+       ScalaConversionUtils.toScalaFn(SparkContext$.MODULE$::getActive);
+ 
+   private final String sparkVersion = package$.MODULE$.SPARK_VERSION();
+-
++  private boolean failedJobsFound = false;
+   /**
+    * Id of the last active job. Has to be stored within the listener, as some jobs use both
+    * RddExecutionContext and SparkSQLExecutionContext. jobId is required for to collect job metrics
+@@ -243,6 +245,7 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+     }
+     log.debug("onJobEnd called [{}].", jobEnd);
+     ExecutionContext context = rddExecutionRegistry.remove(jobEnd.jobId());
++
+     meterRegistry.counter("openlineage.spark.event.job.end").increment();
+     circuitBreaker.run(
+         () -> {
+@@ -251,6 +254,9 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+           }
+           return null;
+         });
++    if (context.getStatus() == FAIL) {
++      failedJobsFound = true;
++    }
+   }
+ 
+   @Override
+@@ -308,7 +314,9 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+ 
+     circuitBreaker.run(
+         () -> {
+-          getSparkApplicationExecutionContext().end(applicationEnd);
++          getSparkApplicationExecutionContext()
++              .updateStatus(failedJobsFound ? FAIL : COMPLETE)
++              .end(applicationEnd);
+           return null;
+         });
+     close();
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/RddExecutionContext.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/RddExecutionContext.java
+index e26f0057d..199814442 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/RddExecutionContext.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/RddExecutionContext.java
+@@ -279,6 +279,7 @@ class RddExecutionContext implements ExecutionContext {
+     FacetUtils.attachSmartDebugFacet(olContext, runFacetsBuilder);
+ 
+     EventType eventType = getEventType(jobEnd.jobResult());
++    updateStatus(eventType);
+     OpenLineage.RunEvent event =
+         olContext
+             .getOpenLineage()
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContext.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContext.java
+index dd98c78ad..33909705e 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContext.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContext.java
+@@ -5,7 +5,6 @@
+ 
+ package io.openlineage.spark.agent.lifecycle;
+ 
+-import static io.openlineage.client.OpenLineage.RunEvent.EventType.COMPLETE;
+ import static io.openlineage.client.OpenLineage.RunEvent.EventType.START;
+ import static io.openlineage.spark.agent.util.TimeUtils.toZonedTime;
+ 
+@@ -118,7 +117,7 @@ class SparkApplicationExecutionContext implements ExecutionContext {
+                         .getOpenLineage()
+                         .newRunEventBuilder()
+                         .eventTime(toZonedTime(applicationEnd.time())))
+-                .eventType(COMPLETE)
++                .eventType(getStatus())
+                 .jobBuilder(getJobBuilder())
+                 .jobFacetsBuilder(getJobFacetsBuilder())
+                 .overwriteRunId(Optional.of(olContext.getApplicationUuid()))
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+index 3bab385c4..b4fc908ad 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+@@ -329,6 +329,7 @@ class SparkSQLExecutionContext implements ExecutionContext {
+       eventType = COMPLETE;
+     }
+     emittedOnJobEnd = true;
++    updateStatus(eventType);
+ 
+     RunEvent event =
+         runEventBuilder.buildRun(
+diff --git a/integration/spark/app/src/test/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java b/integration/spark/app/src/test/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java
+index 5da037089..9e489c67c 100644
+--- a/integration/spark/app/src/test/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java
++++ b/integration/spark/app/src/test/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java
+@@ -246,4 +246,55 @@ class OpenLineageSparkListenerTest {
+ 
+     verify(emitter, never()).emit(any());
+   }
++
++  @Test
++  void testApplicationEndWithFailedJobUpdatesStatusToFail() {
++    OpenLineageSparkListener listener = new OpenLineageSparkListener(sparkConf);
++    listener.skipInitializationForTests(
++        new StaticExecutionContextFactory(
++            emitter, new SimpleMeterRegistry(), new SparkOpenLineageConfig()));
++
++    // Create a failed job end event
++    SparkListenerJobEnd failedJobEnd = mock(SparkListenerJobEnd.class);
++    org.apache.spark.scheduler.JobFailed jobFailed =
++        mock(org.apache.spark.scheduler.JobFailed.class);
++    when(jobFailed.exception()).thenReturn(new RuntimeException("Test job failure"));
++    when(failedJobEnd.jobResult()).thenReturn(jobFailed);
++    when(failedJobEnd.time()).thenReturn(System.currentTimeMillis());
++    when(failedJobEnd.jobId()).thenReturn(1);
++
++    // Simulate job lifecycle: start then fail
++    SparkListenerJobStart jobStart = mock(SparkListenerJobStart.class);
++    when(jobStart.jobId()).thenReturn(1);
++    when(jobStart.time()).thenReturn(System.currentTimeMillis());
++    when(jobStart.stageIds())
++        .thenReturn(ScalaConversionUtils.fromList(java.util.Collections.emptyList()));
++    // Mock properties to avoid NullPointerException
++    java.util.Properties properties = new java.util.Properties();
++    when(jobStart.properties()).thenReturn(properties);
++
++    try (MockedStatic<EventFilterUtils> mockedFilter = mockStatic(EventFilterUtils.class)) {
++      mockedFilter.when(() -> EventFilterUtils.isDisabled(any(), any())).thenReturn(false);
++
++      listener.onJobStart(jobStart);
++      listener.onJobEnd(failedJobEnd);
++
++      // Now end the application
++      SparkListenerApplicationEnd appEnd = mock(SparkListenerApplicationEnd.class);
++      when(appEnd.time()).thenReturn(System.currentTimeMillis());
++
++      listener.onApplicationEnd(appEnd);
++    }
++
++    // Capture all emitted events
++    ArgumentCaptor<OpenLineage.RunEvent> lineageEvent =
++        ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
++    verify(emitter, times(3)).emit(lineageEvent.capture()); // job start, job fail, app end
++
++    // Get the last event (application end)
++    OpenLineage.RunEvent lastEvent = lineageEvent.getAllValues().get(2);
++
++    // Verify the application end event has FAIL status
++    assertThat(lastEvent.getEventType()).isEqualTo(OpenLineage.RunEvent.EventType.FAIL);
++  }
+ }
+diff --git a/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/ExecutionContextDefaultMethodsTest.java b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/ExecutionContextDefaultMethodsTest.java
+new file mode 100644
+index 000000000..87d6a6827
+--- /dev/null
++++ b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/ExecutionContextDefaultMethodsTest.java
+@@ -0,0 +1,103 @@
++/*
+[REDACTED attribution]
++/* SPDX-License-Identifier: Apache-2.0
++*/
++
++package io.openlineage.spark.agent.lifecycle;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import io.openlineage.client.OpenLineage.RunEvent.EventType;
++import org.apache.spark.scheduler.ActiveJob;
++import org.apache.spark.scheduler.SparkListenerApplicationEnd;
++import org.apache.spark.scheduler.SparkListenerApplicationStart;
++import org.apache.spark.scheduler.SparkListenerJobEnd;
++import org.apache.spark.scheduler.SparkListenerJobStart;
++import org.apache.spark.scheduler.SparkListenerStageCompleted;
++import org.apache.spark.scheduler.SparkListenerStageSubmitted;
++import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionEnd;
++import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionStart;
++import org.junit.jupiter.api.Test;
++
++/**
++ * Tests for ExecutionContext interface default methods. Uses a minimal mock implementation to test
++ * the default status tracking behavior.
++ */
++class ExecutionContextDefaultMethodsTest {
++
++  /**
++   * Minimal mock implementation that only uses default methods from ExecutionContext. This allows
++   * us to test the interface's default behavior in isolation.
++   */
++  private static class MockExecutionContext implements ExecutionContext {
++    @Override
++    public void setActiveJob(ActiveJob activeJob) {}
++
++    @Override
++    public void start(SparkListenerApplicationStart applicationStart) {}
++
++    @Override
++    public void start(SparkListenerJobStart jobStart) {}
++
++    @Override
++    public void start(SparkListenerSQLExecutionStart sqlStart) {}
++
++    @Override
++    public void start(SparkListenerStageSubmitted stageSubmitted) {}
++
++    @Override
++    public void end(SparkListenerApplicationEnd applicationEnd) {}
++
++    @Override
++    public void end(SparkListenerJobEnd jobEnd) {}
++
++    @Override
++    public void end(SparkListenerSQLExecutionEnd sqlEnd) {}
++
++    @Override
++    public void end(SparkListenerStageCompleted stageCompleted) {}
++
++    // getStatus() and updateStatus() will use the interface's default implementations
++  }
++
++  @Test
++  void testDefaultGetStatusReturnsStart() {
++    ExecutionContext context = new MockExecutionContext();
++
++    // Default implementation uses shared static status initialized to START
++    assertThat(context.getStatus()).isEqualTo(EventType.START);
++  }
++
++  @Test
++  void testDefaultUpdateToRunningAndComplete() {
++    ExecutionContext context = new MockExecutionContext();
++
++    assertThat(context.updateStatus(EventType.RUNNING).getStatus()).isEqualTo(EventType.RUNNING);
++    assertThat(context.getStatus()).isEqualTo(EventType.RUNNING);
++
++    assertThat(context.updateStatus(EventType.COMPLETE).getStatus()).isEqualTo(EventType.COMPLETE);
++    assertThat(context.getStatus()).isEqualTo(EventType.COMPLETE);
++  }
++
++  @Test
++  void testDefaultCannotChangeCompleteToFail() {
++    ExecutionContext context = new MockExecutionContext();
++
++    assertThat(context.updateStatus(EventType.COMPLETE).getStatus()).isEqualTo(EventType.COMPLETE);
++    assertThat(context.getStatus()).isEqualTo(EventType.COMPLETE);
++
++    assertThat(context.updateStatus(EventType.FAIL).getStatus()).isEqualTo(EventType.COMPLETE);
++    assertThat(context.getStatus()).isEqualTo(EventType.COMPLETE);
++  }
++
++  @Test
++  void testDefaultCannotChangeFailToComplete() {
++    ExecutionContext context = new MockExecutionContext();
++
++    assertThat(context.updateStatus(EventType.COMPLETE).getStatus()).isEqualTo(EventType.COMPLETE);
++    assertThat(context.getStatus()).isEqualTo(EventType.COMPLETE);
++
++    assertThat(context.updateStatus(EventType.FAIL).getStatus()).isEqualTo(EventType.COMPLETE);
++    assertThat(context.getStatus()).isEqualTo(EventType.COMPLETE);
++  }
++}
+diff --git a/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContextTest.java b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContextTest.java
+index a62b3ac6a..13d821dc2 100644
+--- a/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContextTest.java
++++ b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkApplicationExecutionContextTest.java
+@@ -54,9 +54,7 @@ class SparkApplicationExecutionContextTest {
+   private final EventEmitter eventEmitter = mock(EventEmitter.class);
+   private final OpenLineageEventHandlerFactory eventHandlerFactory =
+       mock(OpenLineageEventHandlerFactory.class);
+-  private SparkApplicationExecutionContext context =
+-      new SparkApplicationExecutionContext(
+-          eventEmitter, olContext, new OpenLineageRunEventBuilder(olContext, eventHandlerFactory));
++  private SparkApplicationExecutionContext context;
+ 
+   @AfterEach
+   void reset() {
+@@ -87,6 +85,9 @@ class SparkApplicationExecutionContextTest {
+ 
+   @Test
+   void testSingleStartIsSent(SparkSession spark) {
++
++    // Create a new context for each test
++    context = getContext();
+     ArgumentCaptor<RunEvent> lineageEvent = ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
+     try (MockedStatic<EventFilterUtils> ignored = mockStatic(EventFilterUtils.class)) {
+       when(EventFilterUtils.isDisabled(any(), any())).thenReturn(false);
+@@ -100,7 +101,11 @@ class SparkApplicationExecutionContextTest {
+   }
+ 
+   @Test
+-  void testSingleEndIsSent(SparkSession spark) {
++  void testSingleEndCompleteIsSent(SparkSession spark) {
++
++    // Create a new context for each test
++    context = getContext();
++    context.updateStatus(EventType.COMPLETE);
+     ArgumentCaptor<RunEvent> lineageEvent = ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
+     try (MockedStatic<EventFilterUtils> ignored = mockStatic(EventFilterUtils.class)) {
+       when(EventFilterUtils.isDisabled(any(), any())).thenReturn(false);
+@@ -113,6 +118,24 @@ class SparkApplicationExecutionContextTest {
+         .hasFieldOrPropertyWithValue("eventType", EventType.COMPLETE);
+   }
+ 
++  @Test
++  void testSingleEndFailIsSent(SparkSession spark) {
++
++    // Create a new context for each test
++    context = getContext();
++    context.updateStatus(EventType.FAIL);
++    ArgumentCaptor<RunEvent> lineageEvent = ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
++    try (MockedStatic<EventFilterUtils> ignored = mockStatic(EventFilterUtils.class)) {
++      when(EventFilterUtils.isDisabled(any(), any())).thenReturn(false);
++
++      context.end(mock(SparkListenerApplicationEnd.class));
++    }
++    verify(eventEmitter, times(1)).emit(lineageEvent.capture());
++
++    assertThat(lineageEvent.getAllValues().get(0))
++        .hasFieldOrPropertyWithValue("eventType", EventType.FAIL);
++  }
++
+   @Test
+   void testRunAndJobAreSet(SparkSession spark) {
+     ArgumentCaptor<RunEvent> lineageEvent = ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
+@@ -207,11 +230,7 @@ class SparkApplicationExecutionContextTest {
+                 }));
+ 
+     // need to new context to inject eventHandlerFactory
+-    SparkApplicationExecutionContext context =
+-        new SparkApplicationExecutionContext(
+-            eventEmitter,
+-            olContext,
+-            new OpenLineageRunEventBuilder(olContext, eventHandlerFactory));
++    SparkApplicationExecutionContext context = getContext();
+ 
+     ArgumentCaptor<RunEvent> lineageEvent = ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
+     try (MockedStatic<EventFilterUtils> ignored = mockStatic(EventFilterUtils.class)) {
+@@ -230,4 +249,9 @@ class SparkApplicationExecutionContextTest {
+     }
+     assertThat(lineageEvent.getAllValues()).isNotEmpty();
+   }
++
++  private SparkApplicationExecutionContext getContext() {
++    return new SparkApplicationExecutionContext(
++        eventEmitter, olContext, new OpenLineageRunEventBuilder(olContext, eventHandlerFactory));
++  }
+ }
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/ExecutionContext.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/ExecutionContext.java
+index 616ad3340..539afabb4 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/ExecutionContext.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/ExecutionContext.java
+@@ -5,7 +5,11 @@
+ 
+ package io.openlineage.spark.agent.lifecycle;
+ 
++import static io.openlineage.client.OpenLineage.RunEvent.EventType.START;
++
++import io.openlineage.client.OpenLineage.RunEvent.EventType;
+ import java.util.Optional;
++import java.util.concurrent.atomic.AtomicReference;
+ import org.apache.spark.scheduler.ActiveJob;
+ import org.apache.spark.scheduler.SparkListenerApplicationEnd;
+ import org.apache.spark.scheduler.SparkListenerApplicationStart;
+@@ -26,6 +30,8 @@ public interface ExecutionContext {
+   String CAMEL_TO_SNAKE_CASE =
+       "[\\s\\-_]?((?<=.)[A-Z](?=[a-z\\s\\-_])|(?<=[^A-Z])[A-Z]|((?<=[\\s\\-_])[a-z\\d]))";
+ 
++  AtomicReference<EventType> status = new AtomicReference<>(START);
++
+   void setActiveJob(ActiveJob activeJob);
+ 
+   void start(SparkListenerApplicationStart applicationStart);
+@@ -49,4 +55,13 @@ public interface ExecutionContext {
+   }
+ 
+   default void setActiveJobId(Integer activeJobId) {}
++
++  default EventType getStatus() {
++    return status.get();
++  }
++
++  default ExecutionContext updateStatus(EventType newStatus) {
++    status.updateAndGet(c -> newStatus);
++    return this;
++  }
+ }
+

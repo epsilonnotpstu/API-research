@@ -1,0 +1,95 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/event/EventController.java b/src/main/java/org/candlepin/subscriptions/event/EventController.java
+index 810dd2f6f..fddd78822 100644
+--- a/src/main/java/org/candlepin/subscriptions/event/EventController.java
++++ b/src/main/java/org/candlepin/subscriptions/event/EventController.java
+@@ -45,6 +45,7 @@ import org.candlepin.subscriptions.db.EventRecordRepository;
+ import org.candlepin.subscriptions.db.model.EventKey;
+ import org.candlepin.subscriptions.db.model.EventRecord;
+ import org.candlepin.subscriptions.db.model.config.OptInType;
++import org.candlepin.subscriptions.exception.ErrorCode;
+ import org.candlepin.subscriptions.json.Event;
+ import org.candlepin.subscriptions.json.Event.BillingProvider;
+ import org.candlepin.subscriptions.json.Measurement;
+@@ -244,9 +245,7 @@ public class EventController {
+ 
+   private Optional<Event> processEvent(Event eventToProcess) {
+     if (!validateServiceInstanceEvent(eventToProcess)) {
+-      log.warn(
+-          "An invalid service instance event was encountered and will be skipped. {}",
+-          eventToProcess);
++      log.warn(ErrorCode.INVALID_EVENT_CONSUMER_ERROR.toString(), eventToProcess);
+       return Optional.empty();
+     }
+ 
+@@ -296,14 +295,14 @@ public class EventController {
+         SubscriptionDefinition.getAllProductTagsWithPaygEligibleByRoleOrEngIds(
+             role, event.getProductIds(), null, event.getConversion());
+ 
+-    log.debug(
++    log.info(
+         "matching product tags for role={}, productIds={}, productName={}, conversion={}: {}",
+         role,
+         event.getProductIds(),
+         null,
+         event.getConversion(),
+         matchingProductTags);
+-    log.debug("event.product_tags={}", event.getProductTag());
++    log.info("event.product_tags={}", event.getProductTag());
+ 
+     if (matchingProductTags.isEmpty()
+         || (event.getProductTag() != null
+diff --git a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
+index 4e95b2886..f1e31cb3f 100644
+--- a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
++++ b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
+@@ -20,12 +20,15 @@
+  */
+ package org.candlepin.subscriptions.exception;
+ 
++import lombok.Getter;
++
+ /**
+  * Represents the various application codes.
+  *
+  * <p>SUBSCRIPTIONS1XXX: General application error code space. SUBSCRIPTIONS2XXX: Insights Inventory
+  * API related application error code space.
+  */
++@Getter
+ public enum ErrorCode {
+ 
+   /**
+@@ -96,27 +99,23 @@ public enum ErrorCode {
+   OFFERING_MISSING_ERROR(3003, "Sku not present in Offering"),
+ 
+   CONTRACT_NOT_AVAILABLE(3004, "Expected contract missing"),
++
++  INVALID_EVENT_CONSUMER_ERROR(
++      3005, "An invalid service instance event was encountered and will be skipped. {}"),
++
+   /** An unexpected exception was thrown by the Swatch Billable Usage Service */
+   BILLABLE_USAGE_SERVICE_ERROR(4000, "Swatch Billable Usage Service Error");
+ 
+   private static final String CODE_PREFIX = "SUBSCRIPTIONS";
+ 
+-  private String code;
+-  private String description;
++  private final String code;
++  private final String description;
+ 
+   ErrorCode(int intCode, String description) {
+     this.code = CODE_PREFIX + intCode;
+     this.description = description;
+   }
+ 
+-  public String getCode() {
+-    return this.code;
+-  }
+-
+-  public String getDescription() {
+-    return this.description;
+-  }
+-
+   @Override
+   public String toString() {
+     return String.format("%s: %s", code, description);
+

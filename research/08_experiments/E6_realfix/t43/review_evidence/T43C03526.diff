@@ -1,0 +1,78 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/model/status/Status.java b/hivemq-edge/src/main/java/com/hivemq/api/model/status/Status.java
+index 1978e7723..60189d60e 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/model/status/Status.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/model/status/Status.java
+@@ -136,21 +136,21 @@ public class Status {
+         return runtime;
+     }
+ 
+-    public static Status unknown(@NotNull final String connectionType, @NotNull final String entityId){
++    public static Status unknown(@NotNull final RUNTIME_STATUS runtimeStatus, @NotNull final String connectionType, @NotNull final String entityId){
+         Preconditions.checkNotNull(connectionType);
+         Preconditions.checkNotNull(entityId);
+-        return new Status(RUNTIME_STATUS.STOPPED, CONNECTION_STATUS.UNKNOWN, entityId, connectionType, null, null, null);
++        return new Status(runtimeStatus, CONNECTION_STATUS.UNKNOWN, entityId, connectionType, null, null, null);
+     }
+ 
+-    public static Status connected(@NotNull final String connectionType, @NotNull final String entityId){
++    public static Status connected(@NotNull final RUNTIME_STATUS runtimeStatus, @NotNull final String connectionType, @NotNull final String entityId){
+         Preconditions.checkNotNull(connectionType);
+         Preconditions.checkNotNull(entityId);
+-        return new Status(RUNTIME_STATUS.STARTED, CONNECTION_STATUS.CONNECTED, entityId, connectionType, null, null, null);
++        return new Status(runtimeStatus, CONNECTION_STATUS.CONNECTED, entityId, connectionType, null, null, null);
+     }
+ 
+-    public static Status disconnected(@NotNull final String connectionType, @NotNull final String entityId){
++    public static Status disconnected(@NotNull final RUNTIME_STATUS runtimeStatus, @NotNull final String connectionType, @NotNull final String entityId){
+         Preconditions.checkNotNull(connectionType);
+         Preconditions.checkNotNull(entityId);
+-        return new Status(RUNTIME_STATUS.STARTED, CONNECTION_STATUS.DISCONNECTED, entityId, connectionType, null, null, null);
++        return new Status(runtimeStatus, CONNECTION_STATUS.DISCONNECTED, entityId, connectionType, null, null, null);
+     }
+ }
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
+index 040fa338c..3c032f094 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java
+@@ -228,9 +228,10 @@ public class BridgeResourceImpl extends AbstractApi implements BridgeApi {
+ 
+         Preconditions.checkNotNull(bridgeId);
+         boolean connected = bridgeService.isConnected(bridgeId);
++        Status.RUNTIME_STATUS runtimeStatus = bridgeService.isRunning(bridgeId) ? Status.RUNTIME_STATUS.STARTED : Status.RUNTIME_STATUS.STOPPED;
+         Status status = connected ?
+-                Status.connected(ApiConstants.BRIDGE_TYPE, bridgeId) :
+-                Status.disconnected(ApiConstants.BRIDGE_TYPE, bridgeId);
++                Status.connected(runtimeStatus, ApiConstants.BRIDGE_TYPE, bridgeId) :
++                Status.disconnected(runtimeStatus, ApiConstants.BRIDGE_TYPE, bridgeId);
+         if(!connected){
+             status.setMessage(getLastErrorInternal(bridgeId));
+         }
+diff --git a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java
+index f483aa363..a7ef883ae 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java
++++ b/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java
+@@ -297,7 +297,7 @@ public class ProtocolAdaptersResourceImpl extends AbstractApi implements Protoco
+                     optionalAdapterInstance.get().getAdapter());
+         }
+         else {
+-            return Status.unknown(ApiConstants.ADAPTER_TYPE, adapterId);
++            return Status.unknown(Status.RUNTIME_STATUS.STOPPED, ApiConstants.ADAPTER_TYPE, adapterId);
+         }
+     }
+ 
+diff --git a/hivemq-edge/src/main/java/com/hivemq/bridge/BridgeService.java b/hivemq-edge/src/main/java/com/hivemq/bridge/BridgeService.java
+index 68a7a7e2e..bd8c18c43 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/bridge/BridgeService.java
++++ b/hivemq-edge/src/main/java/com/hivemq/bridge/BridgeService.java
+@@ -205,6 +205,10 @@ public class BridgeService {
+         return false;
+     }
+ 
++    public boolean isRunning(@NotNull final String bridgeName) {
++        return activeBridges().contains(bridgeName);
++    }
++
+     public boolean restartBridge(@NotNull final String bridgeName) {
+         if (bridgeToClientMap.containsKey(bridgeName)) {
+             stopBridge(bridgeName);
+

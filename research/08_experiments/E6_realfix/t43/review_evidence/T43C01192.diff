@@ -1,0 +1,196 @@
+diff --git a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/WorkflowIT.java b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/WorkflowIT.java
+index ffea98208..1128af922 100644
+--- a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/WorkflowIT.java
++++ b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/WorkflowIT.java
+@@ -500,6 +500,44 @@ public class WorkflowIT extends BaseIT {
+         assertNotNull(frozenToolTableJson);
+     }
+ 
++    /**
++     * Tests for https://github.com/dockstore/dockstore/issues/3928
++     */
++    @Test
++    public void testNextflowTableToolAndDagContent() {
++        final ApiClient webClient = getWebClient(USER_2_USERNAME, testingPostgres);
++        WorkflowsApi workflowApi = new WorkflowsApi(webClient);
++
++        // Test getting the tool table and dag for a nextflow workflow that has a nextflow.config and main.nf
++        Workflow workflow = manualRegisterAndPublish(workflowApi, "DockstoreTestUser2/hello-nextflow-workflow", "", "nfl", SourceControl.GITHUB, "/nextflow.config", false);
++        WorkflowVersion masterVersion = workflow.getWorkflowVersions().stream().filter(wv -> wv.getName().equals("master")).findFirst().get();
++        String masterToolJsonFromApi = workflowApi.getTableToolContent(workflow.getId(), masterVersion.getId());
++        String masterToolJson = testingPostgres.runSelectStatement(String.format("select tooltablejson from workflowversion where id = '%s'", masterVersion.getId()), String.class);
++        assertNotNull(masterToolJson);
++        assertFalse(masterToolJson.isEmpty());
++        assertEquals(masterToolJsonFromApi, masterToolJson);
++
++        String masterDagJsonFromApi = workflowApi.getWorkflowDag(workflow.getId(), masterVersion.getId());
++        String masterDagJson = testingPostgres.runSelectStatement(String.format("select dagjson from workflowversion where id = '%s'", masterVersion.getId()), String.class);
++        assertNotNull(masterDagJson);
++        assertFalse(masterDagJson.isEmpty());
++        assertEquals(masterDagJsonFromApi, masterDagJson);
++
++        // Test getting the tool table and dag for a nextflow workflow that has a nextflow.config but is missing main.nf
++        WorkflowVersion missingMainScriptVersion = workflow.getWorkflowVersions().stream().filter(wv -> wv.getName().equals("missingMainScriptFile")).findFirst().get();
++        String missingMainScriptToolJsonFromApi = workflowApi.getTableToolContent(workflow.getId(), missingMainScriptVersion.getId());
++        String missingMainScriptToolJson = testingPostgres.runSelectStatement(String.format("select tooltablejson from workflowversion where id = '%s'", missingMainScriptVersion.getId()), String.class);
++        assertNotNull(missingMainScriptToolJson);
++        assertFalse(missingMainScriptToolJson.isEmpty());
++        assertEquals(missingMainScriptToolJsonFromApi, missingMainScriptToolJson);
++
++        String missingMainScriptDagJsonFromApi = workflowApi.getWorkflowDag(workflow.getId(), missingMainScriptVersion.getId());
++        String missingMainScriptDagJson = testingPostgres.runSelectStatement(String.format("select dagjson from workflowversion where id = '%s'", missingMainScriptVersion.getId()), String.class);
++        assertNotNull(missingMainScriptDagJson);
++        assertFalse(missingMainScriptDagJson.isEmpty());
++        assertEquals(missingMainScriptDagJsonFromApi, missingMainScriptDagJson);
++    }
++
+     /**
+      * This tests that you are able to download zip files for versions of a workflow
+      */
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/languages/NextflowHandler.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/languages/NextflowHandler.java
+index b8b430c91..ac0ce51aa 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/languages/NextflowHandler.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/languages/NextflowHandler.java
+@@ -370,6 +370,8 @@ public class NextflowHandler extends AbstractLanguageHandler implements Language
+     private List<String> getInputDependencyList(GroovySourceAST processAST) {
+         GroovySourceAST inputAST = getFirstAstWithKeyword(processAST, "input", true);
+         if (inputAST != null) {
++            // Stops from parsing outside the input AST
++            inputAST.setNextSibling(null);
+             return getListOfIO(inputAST);
+         } else {
+             return new ArrayList<>();
+@@ -525,73 +527,77 @@ public class NextflowHandler extends AbstractLanguageHandler implements Language
+     private Map<String, List<String>> getCallsToDependencies(String mainDescriptor) {
+         //TODO: create proper dependency arrays, for now just list processes sequentially
+         Map<String, List<String>> map = new HashMap<>();
+-        try {
+-            List<GroovySourceAST> processList = getGroovySourceASTList(mainDescriptor, "process");
+-            Map<String, List<String>> processNameToInputChannels = new HashMap<>();
+-            Map<String, List<String>> processNameToOutputChannels = new HashMap<>();
+-
+-            processList.forEach((GroovySourceAST processAST) -> {
+-                String processName = getProcessValue(processAST);
+-
+-                // Get a list of all channels that the process depends on
+-                List<String> inputs = getInputDependencyList(processAST);
+-                processNameToInputChannels.put(processName, inputs);
+-
+-                // Get a list of all channels that the process writes to
+-                List<String> outputs = getOutputDependencyList(processAST);
+-                processNameToOutputChannels.put(processName, outputs);
+-            });
+-
+-            // Create a map of process name to dependent processes
+-            processNameToInputChannels.keySet().forEach((String processName) -> {
+-                List<String> dependencies = new ArrayList<>();
+-                processNameToInputChannels.get(processName).forEach((String channelRead) -> {
+-                    processNameToOutputChannels.keySet().forEach((String dependentProcessName) -> {
+-                        Optional<String> temp = processNameToOutputChannels.get(dependentProcessName).stream()
+-                            .filter(channelWrite -> Objects.equals(channelRead, channelWrite)).findFirst();
+-
+-                        if (temp.isPresent()) {
+-                            dependencies.add(dependentProcessName);
+-                        }
++        if (mainDescriptor != null) {
++            try {
++                List<GroovySourceAST> processList = getGroovySourceASTList(mainDescriptor, "process");
++                Map<String, List<String>> processNameToInputChannels = new HashMap<>();
++                Map<String, List<String>> processNameToOutputChannels = new HashMap<>();
++
++                processList.forEach((GroovySourceAST processAST) -> {
++                    String processName = getProcessValue(processAST);
++                    if (processName != null) {
++                        // Get a list of all channels that the process depends on
++                        List<String> inputs = getInputDependencyList(processAST);
++                        processNameToInputChannels.put(processName, inputs);
++
++                        // Get a list of all channels that the process writes to
++                        List<String> outputs = getOutputDependencyList(processAST);
++                        processNameToOutputChannels.put(processName, outputs);
++                    }
++                });
++
++                // Create a map of process name to dependent processes
++                processNameToInputChannels.keySet().forEach((String processName) -> {
++                    List<String> dependencies = new ArrayList<>();
++                    processNameToInputChannels.get(processName).forEach((String channelRead) -> {
++                        processNameToOutputChannels.keySet().forEach((String dependentProcessName) -> {
++                            Optional<String> temp = processNameToOutputChannels.get(dependentProcessName).stream().filter(channelWrite -> Objects.equals(channelRead, channelWrite)).findFirst();
++
++                            if (temp.isPresent()) {
++                                dependencies.add(dependentProcessName);
++                            }
++                        });
+                     });
++                    map.put(processName, dependencies);
+                 });
+-                map.put(processName, dependencies);
+-            });
+-        } catch (IOException | TokenStreamException | RecognitionException e) {
+-            LOG.warn("could not parse", e);
++            } catch (IOException | TokenStreamException | RecognitionException e) {
++                LOG.warn("could not parse", e);
++            }
+         }
+         return map;
+     }
+ 
+     protected Map<String, DockerParameter> getCallsToDockerMap(String mainDescriptor, String defaultContainer) {
+         Map<String, DockerParameter> map = new HashMap<>();
+-        try {
+-            List<GroovySourceAST> processList = getGroovySourceASTList(mainDescriptor, "process");
+-
+-            for (GroovySourceAST processAST : processList) {
+-                String processName = getProcessValue(processAST);
+-                if (processName == null) {
+-                    continue;
+-                }
+-                GroovySourceAST containerAST = getFirstAstWithKeyword(processAST, "container", false);
+-                String containerName;
+-                if (containerAST != null) {
+-                    containerName = containerAST.getNextSibling().getFirstChild().getText();
+-                } else {
+-                    containerName = defaultContainer;
+-                }
+-
+-                if (containerName != null) {
+-                    if (containerName.startsWith("$")) { // Parameterized container name
+-                        map.put(processName, new DockerParameter(containerName, DockerImageReference.DYNAMIC));
++        if (mainDescriptor != null) {
++            try {
++                List<GroovySourceAST> processList = getGroovySourceASTList(mainDescriptor, "process");
++
++                for (GroovySourceAST processAST : processList) {
++                    String processName = getProcessValue(processAST);
++                    if (processName == null) {
++                        continue;
++                    }
++                    GroovySourceAST containerAST = getFirstAstWithKeyword(processAST, "container", false);
++                    String containerName;
++                    if (containerAST != null) {
++                        containerName = containerAST.getNextSibling().getFirstChild().getText();
+                     } else {
+-                        map.put(processName, new DockerParameter(containerName, DockerImageReference.LITERAL));
++                        containerName = defaultContainer;
++                    }
++
++                    if (containerName != null) {
++                        if (containerName.startsWith("$")) { // Parameterized container name
++                            map.put(processName, new DockerParameter(containerName, DockerImageReference.DYNAMIC));
++                        } else {
++                            map.put(processName, new DockerParameter(containerName, DockerImageReference.LITERAL));
++                        }
++                        LOG.debug("found container: " + containerName + " in process " + processName);
+                     }
+-                    LOG.debug("found container: " + containerName + " in process " + processName);
+                 }
++            } catch (IOException | TokenStreamException | RecognitionException e) {
++                LOG.warn("could not parse", e);
+             }
+-        } catch (IOException | TokenStreamException | RecognitionException e) {
+-            LOG.warn("could not parse", e);
+         }
+         return map;
+     }
+

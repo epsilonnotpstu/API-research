@@ -1,0 +1,155 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1351ce7e0..55c2f63f1 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -50,4 +50,13 @@
+ 
+ ### Bugfixes
+ 
+-* Expose JVM args as ENV variable to make it configurable 
+\ No newline at end of file
++* Expose JVM args as ENV variable to make it configurable 
++
++
++## 3.0.0
++##### Released: XXX XXX 2017
++
++### Bugfixes
++
++* EPMRPP-23001 - In case login contains only underscore symbol the unclassified error (500) is returned 
++
+diff --git a/src/main/java/com/epam/ta/reportportal/core/configs/SecurityConfiguration.java b/src/main/java/com/epam/ta/reportportal/core/configs/SecurityConfiguration.java
+index dbb56673a..3952da817 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/configs/SecurityConfiguration.java
++++ b/src/main/java/com/epam/ta/reportportal/core/configs/SecurityConfiguration.java
+@@ -138,7 +138,7 @@ class SecurityConfiguration {
+                             "/**/user/registration/info*",
+                             "/**/user/registration**",
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+ 
+                             "/documentation.html")
+diff --git a/src/main/java/com/epam/ta/reportportal/core/user/impl/CreateUserHandler.java b/src/main/java/com/epam/ta/reportportal/core/user/impl/CreateUserHandler.java
+index 5f2c23c89..8bfc9aa86 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/user/impl/CreateUserHandler.java
++++ b/src/main/java/com/epam/ta/reportportal/core/user/impl/CreateUserHandler.java
+@@ -21,7 +21,6 @@
+ 
+ package com.epam.ta.reportportal.core.user.impl;
+ 
+-import com.epam.reportportal.commons.Safe;
+ import com.epam.ta.reportportal.commons.EntityUtils;
+ import com.epam.ta.reportportal.commons.Preconditions;
+ import com.epam.ta.reportportal.commons.validation.Suppliers;
+@@ -37,11 +36,13 @@ import com.epam.ta.reportportal.database.entity.user.*;
+ import com.epam.ta.reportportal.database.personal.PersonalProjectUtils;
+ import com.epam.ta.reportportal.events.UserCreatedEvent;
+ import com.epam.ta.reportportal.exception.ReportPortalException;
++import com.epam.ta.reportportal.util.Predicates;
+ import com.epam.ta.reportportal.util.email.EmailService;
+ import com.epam.ta.reportportal.util.email.MailServiceFactory;
+ import com.epam.ta.reportportal.ws.converter.builders.RestorePasswordBidBuilder;
+ import com.epam.ta.reportportal.ws.converter.builders.UserBuilder;
+ import com.epam.ta.reportportal.ws.converter.builders.UserCreationBidBuilder;
++import com.epam.ta.reportportal.ws.model.ErrorType;
+ import com.epam.ta.reportportal.ws.model.OperationCompletionRS;
+ import com.epam.ta.reportportal.ws.model.YesNoRS;
+ import com.epam.ta.reportportal.ws.model.project.email.ProjectEmailConfig;
+@@ -118,6 +119,9 @@ public class CreateUserHandler implements ICreateUserHandler {
+ 		expect(userRepository.exists(newUsername), equalTo(false))
+ 				.verify(USER_ALREADY_EXISTS, Suppliers.formattedSupplier("login='{}'", newUsername));
+ 
++		expect(newUsername, Predicates.SPECIAL_CHARS_ONLY.negate()).verify(ErrorType.INCORRECT_REQUEST,
++				Suppliers.formattedSupplier("Username '{}' consists only of special characters", newUsername));
++
+ 		String projectName = EntityUtils.normalizeProjectName(request.getDefaultProject());
+ 		Project defaultProject = projectRepository.findOne(projectName);
+ 		expect(defaultProject, notNull()).verify(PROJECT_NOT_FOUND, projectName);
+@@ -207,7 +211,8 @@ public class CreateUserHandler implements ICreateUserHandler {
+ 			emailService.setAddressFrom(projectEmailConfig == null ? null : projectEmailConfig.getFrom());
+ 			emailService.sendConfirmationEmail("User registration confirmation", new String[] { bid.getEmail() }, emailLink.toString());
+ 		} catch (Exception e) {
+-			fail().withError(EMAIL_CONFIGURATION_IS_INCORRECT, Suppliers.formattedSupplier("Unable to send email for bid '{}'.", bid.getId()));
++			fail().withError(EMAIL_CONFIGURATION_IS_INCORRECT,
++					Suppliers.formattedSupplier("Unable to send email for bid '{}'.", bid.getId()));
+ 		}
+ 
+ 		CreateUserBidRS response = new CreateUserBidRS();
+diff --git a/src/main/java/com/epam/ta/reportportal/util/Predicates.java b/src/main/java/com/epam/ta/reportportal/util/Predicates.java
+new file mode 100644
+index 000000000..c5ab9177f
+--- /dev/null
++++ b/src/main/java/com/epam/ta/reportportal/util/Predicates.java
+@@ -0,0 +1,45 @@
++/*
+[REDACTED attribution]
++ *
++ *
++ * This file is part of EPAM Report Portal.
++ * https://github.com/reportportal/service-api
++ *
++ * Report Portal is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * Report Portal is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with Report Portal.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++package com.epam.ta.reportportal.util;
++
++import com.google.common.base.CharMatcher;
++
++import java.util.function.Predicate;
++
++/**
++ * Set of common predicates
++ *
+[REDACTED personal attribution]
++ */
++public class Predicates {
++
++	private static final String SPECIAL_CHARACTERS = "-/@#$%^&_+=()";
++
++	private Predicates() {
++		//statics only
++	}
++
++	/**
++	 * Checker whether string contains special characters only
++	 */
++	public static Predicate<String> SPECIAL_CHARS_ONLY = str -> CharMatcher.anyOf(SPECIAL_CHARACTERS).matchesAllOf(str);
++}
+diff --git a/src/test/java/com/epam/ta/reportportal/util/PredicatesTest.java b/src/test/java/com/epam/ta/reportportal/util/PredicatesTest.java
+new file mode 100644
+index 000000000..a286427f3
+--- /dev/null
++++ b/src/test/java/com/epam/ta/reportportal/util/PredicatesTest.java
+@@ -0,0 +1,17 @@
++package com.epam.ta.reportportal.util;
++
++import org.junit.Assert;
++import org.junit.Test;
++
++/**
+[REDACTED personal attribution]
++ */
++public class PredicatesTest {
++
++	@Test
++	public void checkSpecialCharacters() {
++		Assert.assertTrue("Incorrect predicate behavior: only spec chars", Predicates.SPECIAL_CHARS_ONLY.test("_"));
++		Assert.assertFalse("Incorrect predicate behavior: spec chars after ASCII", Predicates.SPECIAL_CHARS_ONLY.test("a_"));
++		Assert.assertFalse("Incorrect predicate behavior: spec chars before ASCII", Predicates.SPECIAL_CHARS_ONLY.test("_a"));
++	}
++}
+\ No newline at end of file
+

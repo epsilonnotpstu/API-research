@@ -1,0 +1,996 @@
+diff --git a/migration.sql b/migration.sql
+index 50c590a..7af0911 100644
+--- a/migration.sql
++++ b/migration.sql
+@@ -1,4 +1,46 @@
+ -- version 2.10.0
+ -- New column
+ ALTER TABLE REPORT_ENTITY
+-    ADD COLUMN BUILD_URL varchar(255) NOT NULL DEFAULT ''
+\ No newline at end of file
++    ADD COLUMN BUILD_URL varchar(255) NOT NULL DEFAULT ''
++
++-- version 2.11.0
++-- Auth tables (app_user, app_api_token, app_system_settings). Idempotent so it
++-- coexists with ddl-auto:update. DEBT: replace ddl-auto:update with a versioned
++-- Flyway migration (see .claude/rules/avoid.md #11).
++CREATE TABLE IF NOT EXISTS app_user (
++    id uuid PRIMARY KEY,
++    version bigint NOT NULL DEFAULT 0,
++    username varchar(128) NOT NULL,
++    display_name varchar(128) NOT NULL,
++    role varchar(16) NOT NULL,
++    created_at timestamp NOT NULL,
++    password_hash varchar(128),
++    password_temporary boolean NOT NULL DEFAULT false,
++    blocked boolean NOT NULL DEFAULT false,
++    main_admin boolean NOT NULL DEFAULT false,
++    last_login_at timestamp
++);
++CREATE UNIQUE INDEX IF NOT EXISTS ux_app_user_username ON app_user (username);
++
++CREATE TABLE IF NOT EXISTS app_api_token (
++    id uuid PRIMARY KEY,
++    version bigint NOT NULL DEFAULT 0,
++    user_id uuid NOT NULL REFERENCES app_user (id),
++    name varchar(128) NOT NULL,
++    token_hash varchar(64) NOT NULL,
++    token_lookup varchar(16) NOT NULL,
++    created_at timestamp NOT NULL,
++    expires_at timestamp,
++    last_used_at timestamp,
++    revoked_at timestamp
++);
++CREATE UNIQUE INDEX IF NOT EXISTS ux_app_api_token_hash ON app_api_token (token_hash);
++CREATE INDEX IF NOT EXISTS idx_api_token_lookup ON app_api_token (token_lookup);
++
++CREATE TABLE IF NOT EXISTS app_system_settings (
++    id uuid PRIMARY KEY,
++    version bigint NOT NULL DEFAULT 0,
++    require_api_auth boolean NOT NULL DEFAULT false,
++    updated_at timestamp NOT NULL,
++    updated_by_username varchar(128)
++);
+\ No newline at end of file
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/ApiTokenEntity.java b/src/main/java/ru/iopump/qa/allure/entity/ApiTokenEntity.java
+index 61548c5..f7684eb 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/ApiTokenEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/ApiTokenEntity.java
+@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
+ import jakarta.persistence.JoinColumn;
+ import jakarta.persistence.ManyToOne;
+ import jakarta.persistence.Table;
++import jakarta.persistence.Version;
+ import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.NotNull;
+ import lombok.AllArgsConstructor;
+@@ -45,6 +46,11 @@ public class ApiTokenEntity {
+     @Id
+     private UUID id;
+ 
++    @Version
++    @Column(nullable = false, columnDefinition = "bigint default 0")
++    @Builder.Default
++    private long version = 0;
++
+     @NotNull
+     @ManyToOne(fetch = FetchType.EAGER, optional = false)
+     @JoinColumn(name = "user_id", nullable = false)
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/SystemSettingsEntity.java b/src/main/java/ru/iopump/qa/allure/entity/SystemSettingsEntity.java
+index 7c355ca..75c2373 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/SystemSettingsEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/SystemSettingsEntity.java
+@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
+ import jakarta.persistence.Id;
+ import jakarta.persistence.Table;
++import jakarta.persistence.Version;
+ import jakarta.validation.constraints.NotNull;
+ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+@@ -38,6 +39,11 @@ public class SystemSettingsEntity {
+     @Id
+     private UUID id;
+ 
++    @Version
++    @Column(nullable = false, columnDefinition = "bigint default 0")
++    @Builder.Default
++    private long version = 0;
++
+     @Column(name = "require_api_auth", nullable = false)
+     @Builder.Default
+     private boolean requireApiAuth = false;
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/UserEntity.java b/src/main/java/ru/iopump/qa/allure/entity/UserEntity.java
+index 35b9ebf..fcd5726 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/UserEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/UserEntity.java
+@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
+ import jakarta.persistence.Enumerated;
+ import jakarta.persistence.Id;
+ import jakarta.persistence.Table;
++import jakarta.persistence.Version;
+ import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.NotNull;
+ import lombok.AllArgsConstructor;
+@@ -46,6 +47,11 @@ public class UserEntity {
+     @Id
+     private UUID id;
+ 
++    @Version
++    @Column(nullable = false, columnDefinition = "bigint default 0")
++    @Builder.Default
++    private long version = 0;
++
+     @NotBlank
+     @Column(nullable = false, unique = true, length = 128)
+     private String username;
+diff --git a/src/main/java/ru/iopump/qa/allure/repo/UserRepository.java b/src/main/java/ru/iopump/qa/allure/repo/UserRepository.java
+index 0769ce7..a2ab341 100644
+--- a/src/main/java/ru/iopump/qa/allure/repo/UserRepository.java
++++ b/src/main/java/ru/iopump/qa/allure/repo/UserRepository.java
+@@ -1,7 +1,11 @@
+ package ru.iopump.qa.allure.repo;
+ 
++import jakarta.persistence.LockModeType;
+ import lombok.NonNull;
+ import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Lock;
++import org.springframework.data.jpa.repository.Query;
++import org.springframework.data.repository.query.Param;
+ import org.springframework.stereotype.Repository;
+ import ru.iopump.qa.allure.entity.UserEntity;
+ 
+@@ -20,4 +24,15 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+ 
+     @NonNull
+     Optional<UserEntity> findByMainAdminTrue();
++
++    /**
++     * Load a user row under a pessimistic write lock. Used to serialize the
++     * check-then-act token-cap enforcement in
++     * {@link ru.iopump.qa.allure.service.ApiTokenService#createToken}: concurrent
++     * creates for the same owner block on this row lock and run their count+insert
++     * one at a time, so the per-user limit cannot be over-shot by a race.
++     */
++    @Lock(LockModeType.PESSIMISTIC_WRITE)
++    @Query("select u from UserEntity u where u.id = :id")
++    Optional<UserEntity> findByIdForUpdate(@Param("id") @NonNull UUID id);
+ }
+diff --git a/src/main/java/ru/iopump/qa/allure/security/SecurityConfiguration.java b/src/main/java/ru/iopump/qa/allure/security/SecurityConfiguration.java
+index 8030e46..89e1482 100644
+--- a/src/main/java/ru/iopump/qa/allure/security/SecurityConfiguration.java
++++ b/src/main/java/ru/iopump/qa/allure/security/SecurityConfiguration.java
+@@ -1,9 +1,12 @@
+ package ru.iopump.qa.allure.security;
+ 
+ import lombok.extern.slf4j.Slf4j;
++import org.springframework.boot.ApplicationRunner;
+ import org.springframework.boot.web.servlet.FilterRegistrationBean;
+ import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.context.annotation.Bean;
++import org.springframework.core.Ordered;
++import org.springframework.core.annotation.Order;
+ import org.springframework.http.HttpMethod;
+ import org.springframework.context.annotation.Configuration;
+ import org.springframework.security.authentication.AuthenticationManager;
+@@ -36,8 +39,10 @@ import static org.springframework.security.config.Customizer.withDefaults;
+ 
+ /**
+  * Security wiring. Auth is always on; anonymous traffic is accepted for read-only
+- * {@code /app/**} GET traffic (guest read-only UI) and for {@code /api/**} while the
+- * runtime flag {@code requireApiAuth} is {@code false}.
++ * {@code /app/**} GET traffic (guest read-only UI) and for {@code /api/**} and
++ * {@code /allure/**} while the runtime flag {@code requireApiAuth} is {@code false}.
++ * Both {@code /api/**} and {@code /allure/**} share the same {@link #apiAuthorizationManager()}
++ * rule, so toggling {@code requireApiAuth} to {@code true} re-gates report content as well.
+  * <p>
+  * Mutations are protected at the matcher level: every POST/DELETE under
+  * {@code /app/reports/**} and {@code /app/results/**}, the token-minting
+@@ -50,12 +55,12 @@ import static org.springframework.security.config.Customizer.withDefaults;
+  * Legacy {@code basic.auth.enable} is honored for backward compatibility: when set
+  * to {@code true} every request that is not an unauthenticated static asset
+  * ({@code /css|/js|/img}, {@code /favicon.ico}) requires authentication. That
+- * specifically re-gates {@code /api/**} (writes) and {@code /allure/**} (report
+- * content), which in default mode are otherwise reachable while {@code requireApiAuth}
+- * is {@code false}, so deployments that relied on the flag for protection are not
+- * silently opened up on upgrade. Static assets stay public so the login page can
+- * render. The flag is deprecated; operators should migrate to the runtime
+- * {@code requireApiAuth} toggle (admin settings UI).
++ * specifically forces {@code /api/**} (writes) and {@code /allure/**} (report content)
++ * to authenticated() unconditionally, regardless of the {@code requireApiAuth} toggle,
++ * so deployments that relied on the flag for protection are not silently opened up on
++ * upgrade. Static assets stay public so the login page can render. The flag is
++ * deprecated; operators should migrate to the runtime {@code requireApiAuth} toggle
++ * (admin settings UI).
+  * Basic auth against the database is always available via {@link DbUserDetailsService}.
+  */
+ @Configuration
+@@ -137,7 +142,12 @@ public class SecurityConfiguration {
+                         .requestMatchers("/app/signin").authenticated()
+                         .anyRequest().authenticated();
+                 } else {
+-                    it.requestMatchers("/allure/**").permitAll()
++                    // /allure/** (generated report content) is gated by the SAME runtime
++                    // toggle as /api/**: when requireApiAuth is true, anonymous report reads
++                    // are blocked (401); when false, the guest read-only fallback still serves
++                    // them. Without this, report content stayed anonymously open regardless of
++                    // the toggle (F9).
++                    it.requestMatchers("/allure/**").access(apiAuthorizationManager)
+                         .requestMatchers("/api/**").access(apiAuthorizationManager)
+                         .requestMatchers("/app/signin").authenticated();
+                     // Mutations require an authenticated, non-guest principal even though
+@@ -205,6 +215,31 @@ public class SecurityConfiguration {
+         return providerManager;
+     }
+ 
++    /**
++     * Emits a prominent startup WARN when the effective security posture is OPEN — i.e. the
++     * runtime {@code requireApiAuth} toggle is {@code false} AND legacy {@code basic.auth.enable}
++     * is {@code false}. In that state {@code /api/**} and {@code /allure/**} are anonymously
++     * reachable (guest fallback). Runs with the lowest precedence so it executes AFTER
++     * {@link SystemSettingsService} (also an {@link ApplicationRunner}) has seeded the DB-backed
++     * snapshot, so the value read here is the authoritative runtime posture, not the bootstrap
++     * yaml default.
++     */
++    @Bean
++    @Order(Ordered.LOWEST_PRECEDENCE)
++    public ApplicationRunner openPostureStartupWarning() {
++        return args -> {
++            final boolean requireApiAuth = systemSettingsService.isRequireApiAuth();
++            if (!requireApiAuth && !legacyBasicAuthEnabled) {
++                log.warn("[ALLURE SERVER SECURITY] OPEN POSTURE: 'require API auth' is OFF and "
++                    + "'basic.auth.enable' is false — /api/** and /allure/** are ANONYMOUSLY "
++                    + "REACHABLE (guest fallback). To lock down: enable the 'require API auth' "
++                    + "toggle in /app/admin/settings (runtime, authoritative) OR set "
++                    + "'basic.auth.enable=true' (deprecated). This is intentional backward-compat "
++                    + "behavior; ignore if this server is meant to be publicly readable.");
++            }
++        };
++    }
++
+     ///// PRIVATE /////
+ 
+     private AuthorizationManager<RequestAuthorizationContext> apiAuthorizationManager() {
+diff --git a/src/main/java/ru/iopump/qa/allure/service/ApiTokenService.java b/src/main/java/ru/iopump/qa/allure/service/ApiTokenService.java
+index 6b743c7..0d9ee8b 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/ApiTokenService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/ApiTokenService.java
+@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
+ import ru.iopump.qa.allure.entity.ApiTokenEntity;
+ import ru.iopump.qa.allure.entity.UserEntity;
+ import ru.iopump.qa.allure.repo.ApiTokenRepository;
++import ru.iopump.qa.allure.repo.UserRepository;
+ 
+ import java.math.BigInteger;
+ import java.security.MessageDigest;
+@@ -44,6 +45,7 @@ public class ApiTokenService {
+         "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray();
+ 
+     private final ApiTokenRepository apiTokenRepository;
++    private final UserRepository userRepository;
+     private final TokenPolicy tokenPolicy;
+     private final SecureRandom secureRandom = new SecureRandom();
+ 
+@@ -87,16 +89,28 @@ public class ApiTokenService {
+      * Create and persist a new token for {@code owner}. Returns both the entity
+      * id and the plain token value — the plain value is available ONLY here.
+      *
++     * <p>
++     * The per-user cap is a check-then-act sequence (count active, then insert). To
++     * stop two concurrent creates from both passing the count and over-shooting the
++     * limit, the owning user row is taken under a {@code PESSIMISTIC_WRITE} lock for
++     * the duration of this transaction via {@link UserRepository#findByIdForUpdate}.
++     * Concurrent creates for the same owner serialize on that row lock.
++     *
+      * @param owner token owner (must be persisted)
+      * @param name  human-readable name (e.g. "ci-pipeline")
+      * @param ttl   optional lifetime; {@code null} means no expiration
+      */
++    @Transactional
+     public TokenIssueResult createToken(@NonNull UserEntity owner,
+                                         @NonNull String name,
+                                         Duration ttl) {
+         Preconditions.checkArgument(!name.isBlank(), "token name must not be blank");
+         Preconditions.checkArgument(owner.getId() != null, "owner must be persisted");
+ 
++        // Serialize concurrent creates for this owner: hold a write lock on the user
++        // row so the count+insert below cannot interleave with another create call.
++        userRepository.findByIdForUpdate(owner.getId());
++
+         final Instant now = Instant.now();
+         final int limit = tokenPolicy.maxActiveTokens(owner.getRole());
+         final long active = apiTokenRepository.countActiveByUserId(owner.getId(), now);
+diff --git a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+index 9b11279..5ebe16e 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+@@ -152,10 +152,11 @@ public class JpaReportService {
+         // (uploadReport consumes an already-generated Allure report, not raw results).
+         final Path destination = resultService.unzipAndStore(archiveInputStream, reportsDir);
+         final UUID uuid = UUID.fromString(destination.getFileName().toString());
+-        Preconditions.checkArgument(
+-            Files.list(destination).anyMatch(path -> path.endsWith("index.html")),
+-            "Uploaded archive is not an Allure Report"
+-        );
++        final boolean hasIndex;
++        try (var paths = Files.list(destination)) {
++            hasIndex = paths.anyMatch(path -> path.getFileName().toString().equals("index.html"));
++        }
++        Preconditions.checkArgument(hasIndex, "Uploaded archive is not an Allure Report");
+ 
+         // Find prev report if present
+         final Optional<ReportEntity> prevEntity = repository.findByPathOrderByCreatedDateTimeDesc(reportPath)
+@@ -312,15 +313,15 @@ public class JpaReportService {
+                 );
+ 
+                 // Delete last after max history
+-                long deleted = allReports.stream()
+-                    .skip(max)
+-                    .peek(e -> log.info("Report '{}' will be deleted", e))
+-                    .peek(e -> deleteQuietly(reportsDir.resolve(e.getUuid().toString()).toFile()))
+-                    .peek(repository::delete)
+-                    .count();
++                final var toDelete = allReports.stream().skip(max).toList();
++                toDelete.forEach(e -> {
++                    log.info("Report '{}' will be deleted", e);
++                    deleteQuietly(reportsDir.resolve(e.getUuid().toString()).toFile());
++                    repository.delete(e);
++                });
+ 
+                 // Update level (safety)
+-                created.setLevel(Math.max(created.getLevel() - deleted, 0));
++                created.setLevel(Math.max(created.getLevel() - (long) toDelete.size(), 0L));
+             }
+         }
+     }
+diff --git a/src/main/java/ru/iopump/qa/allure/service/ResultService.java b/src/main/java/ru/iopump/qa/allure/service/ResultService.java
+index 5e54e82..079972e 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/ResultService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/ResultService.java
+@@ -25,6 +25,7 @@ import java.util.Collection;
+ import java.util.Collections;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
++import java.util.stream.Stream;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipInputStream;
+ 
+@@ -71,9 +72,11 @@ public class ResultService {
+         if (!Files.exists(storagePath)) {
+             return Collections.emptySet();
+         }
+-        return Files.walk(storagePath, 1).skip(1)
+-            .filter(p -> isDirectory(p))
+-            .collect(Collectors.toUnmodifiableSet());
++        try (Stream<Path> walk = Files.walk(storagePath, 1)) {
++            return walk.skip(1)
++                .filter(p -> isDirectory(p))
++                .collect(Collectors.toUnmodifiableSet());
++        }
+     }
+ 
+     /**
+@@ -131,36 +134,34 @@ public class ResultService {
+     }
+ 
+     private void checkAndUnzipTo(InputStream zipArchiveIo, Path unzipTo) throws IOException {
+-        ZipInputStream zis = new ZipInputStream(zipArchiveIo);
+         byte[] buffer = new byte[1024];
+-        ZipEntry zipEntry = zis.getNextEntry();
+-        if (zipEntry == null) {
+-            throw new IllegalArgumentException("Passed InputStream is not a Zip Archive or empty");
+-        }
+-        while (zipEntry != null) {
+-            final Path newFile = fromZip(unzipTo, zipEntry);
+-            try (final OutputStream fos = Files.newOutputStream(newFile)) {
+-                int len;
+-                while ((len = zis.read(buffer)) > 0) {
+-                    fos.write(buffer, 0, len);
++        try (ZipInputStream zis = new ZipInputStream(zipArchiveIo)) {
++            ZipEntry zipEntry = zis.getNextEntry();
++            if (zipEntry == null) {
++                throw new IllegalArgumentException("Passed InputStream is not a Zip Archive or empty");
++            }
++            while (zipEntry != null) {
++                final Path newFile = fromZip(unzipTo, zipEntry);
++                try (final OutputStream fos = Files.newOutputStream(newFile)) {
++                    int len;
++                    while ((len = zis.read(buffer)) > 0) {
++                        fos.write(buffer, 0, len);
++                    }
+                 }
++                log.debug("Unzip new entry '{}'", newFile);
++                zipEntry = zis.getNextEntry();
+             }
+-            log.info("Unzip new entry '{}'", newFile);
+-            zipEntry = zis.getNextEntry();
+         }
+-        zis.closeEntry();
+-        zis.close();
+-
+         log.info("Unzipping successfully finished to '{}'", unzipTo);
+     }
+ 
+     private void move(Path from, Path to) throws IOException {
+-        Files.find(from,
+-                1,
+-                (path, basicFileAttributes)
+-                    -> basicFileAttributes.isDirectory() && (path.getFileName().toString()
+-                    .matches("allure-.+|report.*")))
+-            .forEach(
++        try (Stream<Path> nested = Files.find(from,
++            1,
++            (path, basicFileAttributes)
++                -> basicFileAttributes.isDirectory() && (path.getFileName().toString()
++                .matches("allure-.+|report.*")))) {
++            nested.forEach(
+                 nestedResultDir -> {
+                     try {
+                         Files.walkFileTree(nestedResultDir, new MoveFileVisitor(to));
+@@ -169,12 +170,20 @@ public class ResultService {
+                     }
+                 }
+             );
++        }
+         Files.walkFileTree(from, new MoveFileVisitor(to));
+     }
+ 
+-    private Path fromZip(Path unzipTo, ZipEntry zipEntry) {
+-        final Path entryPath = Paths.get(zipEntry.getName());
+-        final Path destinationFileOrDir = unzipTo.resolve(entryPath);
++    private Path fromZip(Path unzipTo, ZipEntry zipEntry) throws IOException {
++        final String entryName = zipEntry.getName();
++        if (Paths.get(entryName).isAbsolute()) {
++            throw new IOException("Zip entry has absolute path: " + entryName);
++        }
++        final Path root = unzipTo.normalize();
++        final Path destinationFileOrDir = root.resolve(entryName).normalize();
++        if (!destinationFileOrDir.startsWith(root)) {
++            throw new IOException("Zip entry escapes target dir: " + entryName);
++        }
+ 
+         if (isDirectory(destinationFileOrDir)) {
+             FileUtil.createDir(destinationFileOrDir);
+diff --git a/src/main/java/ru/iopump/qa/allure/service/UserManagementService.java b/src/main/java/ru/iopump/qa/allure/service/UserManagementService.java
+index 23261eb..b19f7ec 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/UserManagementService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/UserManagementService.java
+@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
+ import lombok.NonNull;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
++import org.springframework.dao.DataIntegrityViolationException;
+ import org.springframework.security.crypto.password.PasswordEncoder;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+@@ -78,9 +79,16 @@ public class UserManagementService {
+             .blocked(false)
+             .mainAdmin(false)
+             .build();
+-        final UserEntity saved = userRepository.save(created);
+[REDACTED credential-related line]
+-        return new TempPasswordResult(saved, tempPassword);
++        try {
++            final UserEntity saved = userRepository.save(created);
+[REDACTED credential-related line]
++            return new TempPasswordResult(saved, tempPassword);
++        } catch (DataIntegrityViolationException ex) {
++            // Concurrency backstop: a second identical username can slip past the findByUsername
++            // pre-check and only collide on the unique constraint at flush. Map it to the same
++            // IllegalArgumentException so the controller renders the friendly flash toast.
++            throw new IllegalArgumentException("User already exists: " + normalizedUsername, ex);
++        }
+     }
+ 
+     public void delete(@NonNull UUID targetId, @NonNull UserEntity actor) {
+diff --git a/src/main/resources/application.yaml b/src/main/resources/application.yaml
+index efe1d72..7f61abe 100644
+--- a/src/main/resources/application.yaml
++++ b/src/main/resources/application.yaml
+@@ -54,8 +54,8 @@ gg:
+ # (app.security.require-api-auth) and remove this flag.
+ basic:
+   auth:
+-    username: admin
+[REDACTED credential-related line]
++    username: ${BASIC_AUTH_USERNAME:admin}
+[REDACTED credential-related line]
+     enable: false
+ 
+ # app.security.require-api-auth controls /api/** protection on FIRST startup only —
+@@ -119,6 +119,6 @@ tms:
+   enabled: false
+   host: tms.localhost
+   api-base-url: https://${tms.host}/api
+[REDACTED credential-related line]
++  token: ${TMS_TOKEN:}
+   issue-key-pattern: "[A-Za-z]+-\\d+"
+   dry-run: false
+diff --git a/src/test/java/ru/iopump/qa/allure/security/AllureContentAuthIntegrationTest.java b/src/test/java/ru/iopump/qa/allure/security/AllureContentAuthIntegrationTest.java
+new file mode 100644
+index 0000000..b8f0fc8
+--- /dev/null
++++ b/src/test/java/ru/iopump/qa/allure/security/AllureContentAuthIntegrationTest.java
+@@ -0,0 +1,119 @@
++package ru.iopump.qa.allure.security;
++
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.test.context.TestPropertySource;
++import org.springframework.test.web.servlet.MockMvc;
++import ru.iopump.qa.allure.properties.AllureProperties;
++import ru.iopump.qa.allure.service.SystemSettingsService;
++
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++/**
++ * Integration test for the {@code /allure/**} (generated report content) authorization
++ * gate (review finding F9). Report content is routed through the SAME
++ * {@code apiAuthorizationManager} rule as {@code /api/**}, so the runtime
++ * {@code requireApiAuth} toggle governs both:
++ * <ul>
++ *   <li>{@code requireApiAuth=true}  — anonymous GET {@code /allure/**} is blocked (401).</li>
++ *   <li>{@code requireApiAuth=false} — guest fallback serves report content (200).</li>
++ * </ul>
++ * A throwaway {@code index.html} is seeded under the configured reports dir so the
++ * permitted case resolves to a concrete 200 (proving the request passed the security
++ * gate AND reached the resource handler), then removed in {@link #cleanup()}.
++ */
++@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
++@AutoConfigureMockMvc
++@TestPropertySource(properties = {
++    "spring.datasource.url=jdbc:h2:mem:allure-content-auth-test-db;DB_CLOSE_DELAY=-1",
++    "spring.jpa.hibernate.ddl-auto=create-drop",
++    "app.security.require-api-auth=false",
++    "basic.auth.enable=false",
++    "gg.jte.development-mode=false",
++    "gg.jte.use-precompiled-templates=true"
++})
++class AllureContentAuthIntegrationTest {
++
++    private static final String REPORT_FOLDER = "f9-content-auth";
++    private static final String INDEX_HTML = "<html><body>f9</body></html>";
++
++    @Autowired
++    private MockMvc mockMvc;
++
++    @Autowired
++    private SystemSettingsService systemSettingsService;
++
++    @Autowired
++    private AllureProperties allureProperties;
++
++    private Path seededReportDir;
++    private String allureRequestPath;
++
++    @AfterEach
++    void cleanup() throws IOException {
++        if (seededReportDir != null && Files.exists(seededReportDir)) {
++            Files.deleteIfExists(seededReportDir.resolve("index.html"));
++            Files.deleteIfExists(seededReportDir);
++        }
++        // Always restore the default OPEN posture so a failing test does not leak state.
++        systemSettingsService.updateRequireApiAuth(false, "test-actor");
++    }
++
++    @Test
++    @DisplayName("should return 200 for anonymous GET /allure/** when requireApiAuth is false (guest fallback)")
++    void allureContent_anonymousAllowed_whenRequireApiAuthFalse() throws Exception {
++        // GIVEN — requireApiAuth is false (bootstrap default) and a real report index exists on disk
++        assertThat(systemSettingsService.isRequireApiAuth())
++            .as("test precondition: requireApiAuth must be false for the guest-fallback case")
++            .isFalse();
++        seedReportIndex();
++
++        // WHEN — anonymous GET of the report content
++        // THEN — the security gate permits anonymous (guest fallback) and the resource handler
++        // resolves the seeded index → concrete 200
++        mockMvc.perform(get(allureRequestPath))
++            .andExpect(status().isOk());
++    }
++
++    @Test
++    @DisplayName("should return 401 for anonymous GET /allure/** when requireApiAuth is true")
++    void allureContent_anonymousBlocked_whenRequireApiAuthTrue() throws Exception {
++        // GIVEN — a real report index on disk AND requireApiAuth toggled to true at runtime
++        seedReportIndex();
++        systemSettingsService.updateRequireApiAuth(true, "test-actor");
++        assertThat(systemSettingsService.isRequireApiAuth())
++            .as("requireApiAuth must be true after the update")
++            .isTrue();
++
++        // WHEN — anonymous GET of the same report content
++        // THEN — 401: the gate denies before the resource handler runs (report content is locked
++        // down by the SAME rule as /api/**), even though the file exists
++        mockMvc.perform(get(allureRequestPath))
++            .andExpect(status().isUnauthorized());
++    }
++
++    ///// helpers /////
++
++    private void seedReportIndex() throws IOException {
++        // Resolve the exact dir the RedirectConfiguration resource handler serves from, so the
++        // /allure/<dir>/<folder>/ request maps to this seeded index.html.
++        final Path reportsRoot = allureProperties.reports().dirPath();
++        seededReportDir = reportsRoot.resolve(REPORT_FOLDER);
++        Files.createDirectories(seededReportDir);
++        Files.writeString(seededReportDir.resolve("index.html"), INDEX_HTML, StandardCharsets.UTF_8);
++
++        // RedirectConfiguration maps "/<dir>/**"; a directory request resolves to its index.html.
++        allureRequestPath = "/" + allureProperties.reports().dir() + REPORT_FOLDER + "/index.html";
++    }
++}
+diff --git a/src/test/java/ru/iopump/qa/allure/security/ApiTokenAuthenticationFilterTest.java b/src/test/java/ru/iopump/qa/allure/security/ApiTokenAuthenticationFilterTest.java
+index 2e632dd..ddea366 100644
+--- a/src/test/java/ru/iopump/qa/allure/security/ApiTokenAuthenticationFilterTest.java
++++ b/src/test/java/ru/iopump/qa/allure/security/ApiTokenAuthenticationFilterTest.java
+@@ -63,9 +63,9 @@ class ApiTokenAuthenticationFilterTest {
+ 
+         // THEN — SecurityContext authenticated, chain invoked, no 401 written
+         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+-        assertThat(authentication)
+-            .as("a valid X-API-Token must populate the SecurityContext")
+-            .isNotNull();
++        assertThat(authentication.isAuthenticated())
++            .as("a valid X-API-Token must populate the SecurityContext with an authenticated token")
++            .isTrue();
+         assertThat(authentication.getPrincipal())
+             .as("principal must be a Spring UserDetails, not the raw JPA entity")
+             .isInstanceOf(org.springframework.security.core.userdetails.UserDetails.class);
+diff --git a/src/test/java/ru/iopump/qa/allure/service/ApiTokenServiceTest.java b/src/test/java/ru/iopump/qa/allure/service/ApiTokenServiceTest.java
+index 010c9c6..98adfb8 100644
+--- a/src/test/java/ru/iopump/qa/allure/service/ApiTokenServiceTest.java
++++ b/src/test/java/ru/iopump/qa/allure/service/ApiTokenServiceTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
++import org.mockito.InOrder;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
+@@ -12,6 +13,7 @@ import ru.iopump.qa.allure.entity.ApiTokenEntity;
+ import ru.iopump.qa.allure.entity.UserEntity;
+ import ru.iopump.qa.allure.entity.UserRole;
+ import ru.iopump.qa.allure.repo.ApiTokenRepository;
++import ru.iopump.qa.allure.repo.UserRepository;
+ 
+ import java.time.Duration;
+ import java.time.Instant;
+@@ -23,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.ArgumentMatchers.eq;
++import static org.mockito.Mockito.inOrder;
+ import static org.mockito.Mockito.never;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+@@ -42,6 +45,9 @@ class ApiTokenServiceTest {
+     @Mock
+     private ApiTokenRepository apiTokenRepository;
+ 
++    @Mock
++    private UserRepository userRepository;
++
+     @Mock
+     private TokenPolicy tokenPolicy;
+ 
+@@ -114,10 +120,11 @@ class ApiTokenServiceTest {
+         when(apiTokenRepository.countActiveByUserId(eq(owner.getId()), any(Instant.class))).thenReturn(0L);
+ 
+         // WHEN — create a token with a 30-day TTL
++        final Duration ttl = Duration.ofDays(30);
+         final ApiTokenService.TokenIssueResult result =
+-            apiTokenService.createToken(owner, "ci-pipeline", Duration.ofDays(30));
++            apiTokenService.createToken(owner, "ci-pipeline", ttl);
+ 
+-        // THEN — plain value is returned, entity persisted with hash and lookup, expiresAt set
++        // THEN — plain value is returned, entity persisted with hash and lookup, expiresAt computed
+         assertThat(result.plainToken())
+             .as("plain token returned from createToken must carry the project prefix")
+             .startsWith(TOKEN_PREFIX);
+@@ -134,14 +141,16 @@ class ApiTokenServiceTest {
+             .as("persisted name matches form input")
+             .isEqualTo("ci-pipeline");
+         assertThat(saved.getExpiresAt())
+-            .as("expiresAt set for non-null TTL")
+-            .isNotNull();
++            .as("expiresAt equals createdAt plus the requested TTL")
++            .isEqualTo(saved.getCreatedAt().plus(ttl));
+         assertThat(saved.getRevokedAt())
+             .as("new token is not revoked")
+             .isNull();
+         assertThat(saved.getUser())
+             .as("owner linked on new token")
+             .isEqualTo(owner);
++        // AND — the owning user row is locked before the count+insert (concurrency guard)
++        verify(userRepository).findByIdForUpdate(owner.getId());
+     }
+ 
+     @Test
+@@ -329,6 +338,24 @@ class ApiTokenServiceTest {
+         verify(apiTokenRepository, never()).save(any());
+     }
+ 
++    @Test
++    @DisplayName("should lock the owner row before counting active tokens when createToken runs")
++    void createTokenLocksOwnerRowBeforeCounting() {
++        // GIVEN — USER role under limit with no existing active tokens
++        when(tokenPolicy.maxActiveTokens(UserRole.USER)).thenReturn(USER_LIMIT);
++        when(apiTokenRepository.countActiveByUserId(eq(owner.getId()), any(Instant.class))).thenReturn(0L);
++
++        // WHEN — create a token
++        apiTokenService.createToken(owner, "ci-pipeline", null);
++
++        // THEN — the pessimistic write lock on the owner row is taken before the count,
++        // so concurrent creates serialize and cannot both pass the per-user cap
++        final InOrder inOrder = inOrder(userRepository, apiTokenRepository);
++        inOrder.verify(userRepository).findByIdForUpdate(owner.getId());
++        inOrder.verify(apiTokenRepository).countActiveByUserId(eq(owner.getId()), any(Instant.class));
++        inOrder.verify(apiTokenRepository).save(any(ApiTokenEntity.class));
++    }
++
+     @Test
+     @DisplayName("should allow creating a new guest token after one of the 5 active tokens is revoked")
+     void createTokenAllowsAfterRevokingOne() {
+diff --git a/src/test/java/ru/iopump/qa/allure/service/ResultServiceTest.java b/src/test/java/ru/iopump/qa/allure/service/ResultServiceTest.java
+index 21977ab..c410606 100644
+--- a/src/test/java/ru/iopump/qa/allure/service/ResultServiceTest.java
++++ b/src/test/java/ru/iopump/qa/allure/service/ResultServiceTest.java
+@@ -2,19 +2,30 @@ package ru.iopump.qa.allure.service;
+ 
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.DisplayName;
+ import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.io.TempDir;
+ import org.springframework.core.io.ClassPathResource;
+ import org.springframework.core.io.Resource;
+ import ru.iopump.qa.util.FileUtil;
+ 
++import java.io.ByteArrayInputStream;
++import java.io.ByteArrayOutputStream;
+ import java.io.IOException;
++import java.io.InputStream;
++import java.nio.charset.StandardCharsets;
+ import java.nio.file.Path;
++import java.util.zip.ZipEntry;
++import java.util.zip.ZipOutputStream;
+ 
++import static org.assertj.core.api.Assertions.assertThat;
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ 
+ @Slf4j
+ public class ResultServiceTest {
+ 
++    private static final String ZIP_SLIP_ENTRY = "../escape.txt";
++
+     private ResultService resultService;
+ 
+     @BeforeEach
+@@ -53,4 +64,40 @@ public class ResultServiceTest {
+         assertThatThrownBy(() -> resultService.unzipAndStore(new ClassPathResource("allure-results-empty.zip").getInputStream()))
+             .isInstanceOf(IllegalArgumentException.class);
+     }
++
++    @Test
++    @DisplayName("should reject zip-slip entry and not write outside the per-UUID dir")
++    public void unzipAndStoreRejectsZipSlip(@TempDir Path targetRoot) {
++        // GIVEN a zip whose only entry escapes the target dir via '../'
++        final InputStream maliciousZip = zipWithEntry(ZIP_SLIP_ENTRY, "pwned");
++
++        // WHEN unzipping into the temp target root
++        // THEN it fails with an IOException naming the offending entry
++        assertThatThrownBy(() -> resultService.unzipAndStore(maliciousZip, targetRoot))
++            .as("zip-slip entry must be rejected")
++            .isInstanceOf(IOException.class)
++            .hasMessageContaining(ZIP_SLIP_ENTRY);
++
++        // AND no file is created outside the per-UUID dir (sibling of targetRoot)
++        assertThat(targetRoot.getParent().resolve("escape.txt"))
++            .as("escaped file must not exist next to the target root")
++            .doesNotExist();
++        assertThat(targetRoot.resolve("escape.txt"))
++            .as("escaped file must not exist inside the target root")
++            .doesNotExist();
++    }
++
++    private static InputStream zipWithEntry(String entryName, String content) {
++        try {
++            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
++            try (ZipOutputStream zos = new ZipOutputStream(baos)) {
++                zos.putNextEntry(new ZipEntry(entryName));
++                zos.write(content.getBytes(StandardCharsets.UTF_8));
++                zos.closeEntry();
++            }
++            return new ByteArrayInputStream(baos.toByteArray());
++        } catch (IOException e) {
++            throw new IllegalStateException("Cannot build test zip", e);
++        }
++    }
+ }
+diff --git a/src/test/java/ru/iopump/qa/allure/service/UserManagementServiceTest.java b/src/test/java/ru/iopump/qa/allure/service/UserManagementServiceTest.java
+index 3cc67e2..a82962c 100644
+--- a/src/test/java/ru/iopump/qa/allure/service/UserManagementServiceTest.java
++++ b/src/test/java/ru/iopump/qa/allure/service/UserManagementServiceTest.java
+@@ -12,6 +12,7 @@ import org.mockito.InOrder;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
++import org.springframework.dao.DataIntegrityViolationException;
+ import org.springframework.security.crypto.password.PasswordEncoder;
+ import ru.iopump.qa.allure.entity.UserEntity;
+ import ru.iopump.qa.allure.entity.UserRole;
+@@ -159,6 +160,22 @@ class UserManagementServiceTest {
+         verify(userRepository, never()).save(any(UserEntity.class));
+     }
+ 
++    @Test
++    @DisplayName("should map a unique-constraint violation to IllegalArgumentException when two admins create the same username concurrently")
++    void createUser_mapsDataIntegrityViolationToIllegalArgument() {
++        // GIVEN — the pre-check passes (no existing user), but the flush loses the unique-constraint race
++        when(userRepository.findByUsername("racer")).thenReturn(Optional.empty());
+[REDACTED credential-related line]
++        when(userRepository.save(any(UserEntity.class)))
++            .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"));
++
++        // WHEN / THEN — the integrity violation is remapped to the same IllegalArgumentException the controller maps
++        assertThatThrownBy(() -> userManagementService.createUser("racer", "Race Loser"))
++            .as("a concurrent duplicate-username insert must surface as IllegalArgumentException, not a raw 500")
++            .isInstanceOf(IllegalArgumentException.class)
++            .hasMessageContaining("User already exists: racer");
++    }
++
+     @Test
+     @DisplayName("should throw MainAdminProtectionException when trying to delete the main admin")
+     void delete_throwsWhenTargetIsMainAdmin() {
+@@ -346,6 +363,113 @@ class UserManagementServiceTest {
+         verify(userRepository).save(mainAdmin);
+     }
+ 
++    @Test
++    @DisplayName("should set blocked=true on the persisted entity when block succeeds")
++    void block_setsBlockedTrue_onPersistedEntity() {
++        // GIVEN — a deletable, non-self, non-main-admin target that starts unblocked
++        otherUser.setBlocked(false);
++        when(userRepository.findById(otherUser.getId())).thenReturn(Optional.of(otherUser));
++        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        // WHEN — admin blocks the target
++        userManagementService.block(otherUser.getId(), admin);
++
++        // THEN — the entity handed to save() carries blocked=true (the actual mutation, not a stub)
++        final ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
++        verify(userRepository).save(captor.capture());
++        assertThat(captor.getValue().isBlocked())
++            .as("block() must flip the persisted entity's blocked flag to true")
++            .isTrue();
++    }
++
++    @Test
++    @DisplayName("should set blocked=false on the persisted entity when unblock succeeds")
++    void unblock_setsBlockedFalse_onPersistedEntity() {
++        // GIVEN — a previously blocked target
++        otherUser.setBlocked(true);
++        when(userRepository.findById(otherUser.getId())).thenReturn(Optional.of(otherUser));
++        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        // WHEN — admin unblocks the target
++        userManagementService.unblock(otherUser.getId(), admin);
++
++        // THEN — the entity handed to save() carries blocked=false
++        final ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
++        verify(userRepository).save(captor.capture());
++        assertThat(captor.getValue().isBlocked())
++            .as("unblock() must flip the persisted entity's blocked flag to false")
++            .isFalse();
++    }
++
++    @Test
++    @DisplayName("should set role=ADMIN on the persisted entity when grantAdmin succeeds")
++    void grantAdmin_setsRoleAdmin_onPersistedEntity() {
++        // GIVEN — a regular USER target that is not the guest system account
++        otherUser.setRole(UserRole.USER);
++        when(userRepository.findById(otherUser.getId())).thenReturn(Optional.of(otherUser));
++        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        // WHEN — admin grants ADMIN to the target
++        userManagementService.grantAdmin(otherUser.getId(), admin);
++
++        // THEN — the entity handed to save() carries role=ADMIN
++        final ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
++        verify(userRepository).save(captor.capture());
++        assertThat(captor.getValue().getRole())
++            .as("grantAdmin() must set the persisted entity's role to ADMIN")
++            .isEqualTo(UserRole.ADMIN);
++    }
++
++    @Test
++    @DisplayName("should set role=USER on the persisted entity when revokeAdmin succeeds")
++    void revokeAdmin_setsRoleUser_onPersistedEntity() {
++        // GIVEN — a non-self, non-main-admin target that currently holds ADMIN
++        otherUser.setRole(UserRole.ADMIN);
++        when(userRepository.findById(otherUser.getId())).thenReturn(Optional.of(otherUser));
++        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
++
++        // WHEN — admin revokes ADMIN from the target
++        userManagementService.revokeAdmin(otherUser.getId(), admin);
++
++        // THEN — the entity handed to save() carries role=USER
++        final ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
++        verify(userRepository).save(captor.capture());
++        assertThat(captor.getValue().getRole())
++            .as("revokeAdmin() must demote the persisted entity's role to USER")
++            .isEqualTo(UserRole.USER);
++    }
++
++    @Test
+[REDACTED credential-related line]
++    void resetPassword_setsTempHashAndFlag_onPersistedEntity() {
++        // GIVEN — a non-guest, non-main-admin target whose password starts non-temporary
++        otherUser.setPasswordTemporary(false);
+[REDACTED credential-related line]
++        when(userRepository.findById(otherUser.getId())).thenReturn(Optional.of(otherUser));
+[REDACTED credential-related line]
++        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
++
+[REDACTED credential-related line]
+[REDACTED credential-related line]
++            userManagementService.resetPassword(otherUser.getId(), admin);
++
++        // THEN — the returned temp password has the expected length
++        assertThat(result.temporaryPassword())
+[REDACTED credential-related line]
++            .hasSize(TEMP_PASSWORD_LENGTH);
++
++        // THEN — the entity handed to save() carries the new encoded hash flagged temporary
++        final ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
++        verify(userRepository).save(captor.capture());
++        final UserEntity saved = captor.getValue();
++        assertThat(saved.getPasswordHash())
+[REDACTED credential-related line]
++            .isEqualTo("$2a$resethash");
++        assertThat(saved.isPasswordTemporary())
+[REDACTED credential-related line]
++            .isTrue();
++    }
++
+     static Stream<Arguments> missingTargetMutations() {
+         return Stream.of(
+             Arguments.of("delete",
+diff --git a/src/test/java/ru/iopump/qa/allure/web/AdminUsersControllerTest.java b/src/test/java/ru/iopump/qa/allure/web/AdminUsersControllerTest.java
+index 0c47411..9bc1e49 100644
+--- a/src/test/java/ru/iopump/qa/allure/web/AdminUsersControllerTest.java
++++ b/src/test/java/ru/iopump/qa/allure/web/AdminUsersControllerTest.java
+@@ -175,8 +175,8 @@ class AdminUsersControllerTest {
+     }
+ 
+     @Test
+-    @DisplayName("should return 403-equivalent redirect with error flash when DELETE targets the main admin")
+-    void deleteMainAdmin_returns403() throws Exception {
++    @DisplayName("should redirect with error flash when DELETE targets the main admin")
++    void deleteMainAdmin_redirectsWithErrorFlash() throws Exception {
+         // GIVEN — service throws MainAdminProtectionException for the main admin
+         doThrow(new MainAdminProtectionException("The main administrator cannot be deleted."))
+             .when(userManagementService).delete(eq(mainAdminEntity.getId()), any(UserEntity.class));
+@@ -200,7 +200,7 @@ class AdminUsersControllerTest {
+ 
+     @Test
+     @DisplayName("should redirect with error flash when DELETE targets the actor themselves")
+-    void deleteSelf_returns403() throws Exception {
++    void deleteSelf_redirectsWithErrorFlash() throws Exception {
+         // GIVEN — service throws SelfProtectionException because actor == target
+         doThrow(new SelfProtectionException("You cannot delete your own account."))
+             .when(userManagementService).delete(eq(adminActor.getId()), any(UserEntity.class));
+

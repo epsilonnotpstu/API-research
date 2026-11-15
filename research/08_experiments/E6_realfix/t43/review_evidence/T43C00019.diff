@@ -1,0 +1,157 @@
+diff --git a/src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java b/src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java
+index f87017dd..80d521d2 100644
+--- a/src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java
++++ b/src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java
+@@ -3,7 +3,7 @@ package com.zufar.icedlatte.product.endpoint;
+ import com.zufar.icedlatte.openapi.dto.ProductIdsDto;
+ import com.zufar.icedlatte.openapi.dto.ProductInfoDto;
+ import com.zufar.icedlatte.openapi.dto.ProductListWithPaginationInfoDto;
+-import com.zufar.icedlatte.product.api.GetProductsRequestValidator;
++import com.zufar.icedlatte.product.validator.GetProductsRequestValidator;
+ import com.zufar.icedlatte.product.api.PageableProductsProvider;
+ import com.zufar.icedlatte.product.api.ProductApi;
+ import lombok.RequiredArgsConstructor;
+@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
+ 
+ import java.math.BigDecimal;
+ import java.util.List;
+-import java.util.Set;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java b/src/main/java/com/zufar/icedlatte/product/validator/GetProductsRequestValidator.java
+similarity index 99%
+rename from src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java
+rename to src/main/java/com/zufar/icedlatte/product/validator/GetProductsRequestValidator.java
+index aab97f28..f74895db 100644
+--- a/src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java
++++ b/src/main/java/com/zufar/icedlatte/product/validator/GetProductsRequestValidator.java
+@@ -1,4 +1,4 @@
+-package com.zufar.icedlatte.product.api;
++package com.zufar.icedlatte.product.validator;
+ 
+ import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+ import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewCreator.java b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewCreator.java
+index b4d3c88b..42e1916b 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewCreator.java
++++ b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewCreator.java
+@@ -6,6 +6,7 @@ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
+ import com.zufar.icedlatte.review.entity.ProductReview;
+ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
++import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+ import com.zufar.icedlatte.user.api.SingleUserProvider;
+ import lombok.RequiredArgsConstructor;
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewDeleter.java b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewDeleter.java
+index 38e99090..823284a4 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewDeleter.java
++++ b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewDeleter.java
+@@ -1,6 +1,7 @@
+ package com.zufar.icedlatte.review.api;
+ 
+ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
++import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.stereotype.Service;
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewLikesUpdater.java b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewLikesUpdater.java
+index a0fed836..269c6fd9 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewLikesUpdater.java
++++ b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewLikesUpdater.java
+@@ -6,6 +6,7 @@ import com.zufar.icedlatte.review.entity.ProductReview;
+ import com.zufar.icedlatte.review.entity.ProductReviewLike;
+ import com.zufar.icedlatte.review.repository.ProductReviewLikeRepository;
+ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
++import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewsProvider.java b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewsProvider.java
+index f9ce0034..5ffda2fc 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewsProvider.java
++++ b/src/main/java/com/zufar/icedlatte/review/api/ProductReviewsProvider.java
+@@ -4,6 +4,7 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
+ import com.zufar.icedlatte.review.converter.ProductReviewDtoConverter;
+ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
++import com.zufar.icedlatte.review.validator.ProductReviewValidator;
+ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+diff --git a/src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java b/src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java
+index b8cf3341..5d6948b5 100644
+--- a/src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java
++++ b/src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java
+@@ -5,7 +5,12 @@ import com.zufar.icedlatte.openapi.dto.ProductReviewRequest;
+ import com.zufar.icedlatte.openapi.dto.ProductReviewDto;
+ import com.zufar.icedlatte.openapi.dto.ProductReviewLikeDto;
+ import com.zufar.icedlatte.openapi.dto.ProductReviewsAndRatingsWithPagination;
+-import com.zufar.icedlatte.review.api.*;
++import com.zufar.icedlatte.review.validator.GetReviewsRequestValidator;
++import com.zufar.icedlatte.review.api.ProductAverageRatingProvider;
++import com.zufar.icedlatte.review.api.ProductReviewCreator;
++import com.zufar.icedlatte.review.api.ProductReviewDeleter;
++import com.zufar.icedlatte.review.api.ProductReviewLikesUpdater;
++import com.zufar.icedlatte.review.api.ProductReviewsProvider;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.data.domain.Pageable;
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/GetReviewsRequestValidator.java b/src/main/java/com/zufar/icedlatte/review/validator/GetReviewsRequestValidator.java
+similarity index 88%
+rename from src/main/java/com/zufar/icedlatte/review/api/GetReviewsRequestValidator.java
+rename to src/main/java/com/zufar/icedlatte/review/validator/GetReviewsRequestValidator.java
+index 93768b99..97c0c85e 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/GetReviewsRequestValidator.java
++++ b/src/main/java/com/zufar/icedlatte/review/validator/GetReviewsRequestValidator.java
+@@ -1,4 +1,4 @@
+-package com.zufar.icedlatte.review.api;
++package com.zufar.icedlatte.review.validator;
+ 
+ import com.zufar.icedlatte.common.validation.pagination.PaginationParametersValidator;
+ import com.zufar.icedlatte.product.exception.GetProductsBadRequestException;
+@@ -28,16 +28,15 @@ public class GetReviewsRequestValidator {
+         StringBuilder paginationErrorMessages = paginationParametersValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection, ALLOWED_SORT_ATTRIBUTES_VALUES);
+         errorMessages.append(paginationErrorMessages);
+ 
+-        StringBuilder getReviewsRequestParametersErrorMessages = validateGetReviewsRequestParameters(productRatings);
+-        errorMessages.append(getReviewsRequestParametersErrorMessages);
+-
++        StringBuilder productRatingsParameterErrorMessages = validateProductRatingsParameter(productRatings);
++        errorMessages.append(productRatingsParameterErrorMessages);
+ 
+         if (!errorMessages.isEmpty()) {
+             throw new GetProductsBadRequestException(errorMessages.toString());
+         }
+     }
+ 
+-    private StringBuilder validateGetReviewsRequestParameters(final List<Integer> productRatings) {
++    private StringBuilder validateProductRatingsParameter(final List<Integer> productRatings) {
+         final StringBuilder errorMessages = new StringBuilder();
+         if ((productRatings != null && productRatings.stream().anyMatch(Objects::isNull))
+                 || (productRatings != null && !ALLOWED_PRODUCT_RATING_VALUES.containsAll(productRatings))) {
+diff --git a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewValidator.java b/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
+similarity index 85%
+rename from src/main/java/com/zufar/icedlatte/review/api/ProductReviewValidator.java
+rename to src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
+index 88ece7e7..b51e3e28 100644
+--- a/src/main/java/com/zufar/icedlatte/review/api/ProductReviewValidator.java
++++ b/src/main/java/com/zufar/icedlatte/review/validator/ProductReviewValidator.java
+@@ -1,7 +1,13 @@
+-package com.zufar.icedlatte.review.api;
++package com.zufar.icedlatte.review.validator;
+ 
+ import com.zufar.icedlatte.product.repository.ProductInfoRepository;
+-import com.zufar.icedlatte.review.exception.*;
++import com.zufar.icedlatte.review.api.ProductReviewProvider;
++import com.zufar.icedlatte.review.exception.DeniedProductReviewCreationException;
++import com.zufar.icedlatte.review.exception.DeniedProductReviewDeletionException;
++import com.zufar.icedlatte.review.exception.EmptyProductReviewException;
++import com.zufar.icedlatte.review.exception.ProductIdsAreNotMatchException;
++import com.zufar.icedlatte.review.exception.ProductNotFoundForReviewException;
++import com.zufar.icedlatte.review.exception.ProductReviewNotFoundException;
+ import com.zufar.icedlatte.review.repository.ProductReviewRepository;
+ import com.zufar.icedlatte.security.api.SecurityPrincipalProvider;
+ import lombok.RequiredArgsConstructor;
+

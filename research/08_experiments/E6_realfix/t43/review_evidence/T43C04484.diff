@@ -1,0 +1,294 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/db/HostRepository.java b/src/main/java/org/candlepin/subscriptions/db/HostRepository.java
+index 5a86b0f63..b2844f0de 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/HostRepository.java
++++ b/src/main/java/org/candlepin/subscriptions/db/HostRepository.java
+@@ -58,21 +58,21 @@ public interface HostRepository extends JpaRepository<Host, UUID> {
+      * @return a page of Host entities matching the criteria.
+      */
+     @Query(
+-        value = "select b from HostTallyBucket b join fetch b.key.host h where " +
++        value = "select b from HostTallyBucket b join fetch b.host h where " +
+             "h.accountNumber = :account and " +
+             "b.key.productId = :product and " +
+             "b.key.sla = :sla and b.key.usage = :usage and " +
+             // Have to do the null check first, otherwise the lower in the LIKE clause has issues with datatypes
+-            "((lower(b.key.host.displayName) LIKE lower(concat('%', :displayNameSubstring,'%')))) and " +
++            "((lower(h.displayName) LIKE lower(concat('%', :displayNameSubstring,'%')))) and " +
+             "b.cores >= :minCores and b.sockets >= :minSockets",
+         // Because we are using a 'fetch join' to avoid having to lazy load each bucket host,
+         // we need to specify how the Page should gets its count when the 'limit' parameter
+         // is used.
+-        countQuery = "select count(b) from HostTallyBucket b join b.key.host h where " +
++        countQuery = "select count(b) from HostTallyBucket b join b.host h where " +
+             "h.accountNumber = :account and " +
+             "b.key.productId = :product and " +
+             "b.key.sla = :sla and b.key.usage = :usage and " +
+-            "((lower(b.key.host.displayName) LIKE lower(concat('%', :displayNameSubstring,'%')))) and " +
++            "((lower(h.displayName) LIKE lower(concat('%', :displayNameSubstring,'%')))) and " +
+             "b.cores >= :minCores and b.sockets >= :minSockets"
+     )
+     Page<TallyHostView> getTallyHostViews(//NOSONAR (exceeds allowed 7 params)
+diff --git a/src/main/java/org/candlepin/subscriptions/db/model/Account.java b/src/main/java/org/candlepin/subscriptions/db/model/Account.java
+index a5cb0826b..de9b737f7 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/model/Account.java
++++ b/src/main/java/org/candlepin/subscriptions/db/model/Account.java
+@@ -51,7 +51,9 @@ public class Account {
+         fetch = FetchType.EAGER,
+         orphanRemoval = true
+     )
+-    @MapKeyColumn(name = "instance_id")
++    // NOTE: insertable = false and updatable=false prevents extraneous update statements (they're handled
++    // in hosts table)
++    @MapKeyColumn(name = "instance_id", updatable = false, insertable = false)
+     private Map<String, Host> serviceInstances = new HashMap<>();
+ 
+     public String getAccountNumber() {
+diff --git a/src/main/java/org/candlepin/subscriptions/db/model/Host.java b/src/main/java/org/candlepin/subscriptions/db/model/Host.java
+index 7e3bf79a2..91ba5767d 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/model/Host.java
++++ b/src/main/java/org/candlepin/subscriptions/db/model/Host.java
+@@ -126,7 +126,7 @@ public class Host implements Serializable {
+     private OffsetDateTime lastSeen;
+ 
+     @OneToMany(
+-        mappedBy = "key.host",
++        mappedBy = "host",
+         cascade = CascadeType.ALL,
+         orphanRemoval = true,
+         fetch = FetchType.EAGER
+@@ -356,7 +356,7 @@ public class Host implements Serializable {
+     }
+ 
+     public void addBucket(HostTallyBucket bucket) {
+-        bucket.getKey().setHost(this);
++        bucket.setHost(this);
+         getBuckets().add(bucket);
+     }
+ 
+diff --git a/src/main/java/org/candlepin/subscriptions/db/model/HostBucketKey.java b/src/main/java/org/candlepin/subscriptions/db/model/HostBucketKey.java
+index a347f9256..754190914 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/model/HostBucketKey.java
++++ b/src/main/java/org/candlepin/subscriptions/db/model/HostBucketKey.java
+@@ -22,17 +22,18 @@ package org.candlepin.subscriptions.db.model;
+ 
+ import java.io.Serializable;
+ import java.util.Objects;
++import java.util.UUID;
+ 
+ import javax.persistence.Column;
+ import javax.persistence.Embeddable;
+-import javax.persistence.FetchType;
+-import javax.persistence.ManyToOne;
+ 
+ /**
+  * An embeddable composite key for a host bucket.
+  */
+ @Embeddable
+ public class HostBucketKey implements Serializable {
++    @Column(name = "host_id")
++    private UUID hostId;
+ 
+     @Column(name = "product_id")
+     private String productId;
+@@ -44,20 +45,25 @@ public class HostBucketKey implements Serializable {
+     @Column(name = "as_hypervisor")
+     private Boolean asHypervisor;
+ 
+-    @ManyToOne(fetch = FetchType.LAZY)
+-    private Host host;
+-
+     public HostBucketKey() {
+     }
+ 
+     public HostBucketKey(Host host, String productId, ServiceLevel sla, Usage usage, Boolean asHypervisor) {
+-        this.host = host;
++        this.hostId = host.getId();
+         this.productId = productId;
+         this.sla = sla;
+         this.usage = usage;
+         this.asHypervisor = asHypervisor;
+     }
+ 
++    public UUID getHostId() {
++        return hostId;
++    }
++
++    public void setHostId(UUID hostId) {
++        this.hostId = hostId;
++    }
++
+     public String getProductId() {
+         return productId;
+     }
+@@ -90,14 +96,6 @@ public class HostBucketKey implements Serializable {
+         this.asHypervisor = asHypervisor;
+     }
+ 
+-    public Host getHost() {
+-        return host;
+-    }
+-
+-    public void setHost(Host host) {
+-        this.host = host;
+-    }
+-
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) {
+@@ -113,7 +111,7 @@ public class HostBucketKey implements Serializable {
+             sla == that.sla &&
+             usage == that.usage &&
+             asHypervisor.equals(that.asHypervisor) &&
+-            host.equals(that.host);
++            hostId.equals(that.hostId);
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/candlepin/subscriptions/db/model/HostTallyBucket.java b/src/main/java/org/candlepin/subscriptions/db/model/HostTallyBucket.java
+index 14b5fa7ea..c1b4b5554 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/model/HostTallyBucket.java
++++ b/src/main/java/org/candlepin/subscriptions/db/model/HostTallyBucket.java
+@@ -28,6 +28,9 @@ import javax.persistence.EmbeddedId;
+ import javax.persistence.Entity;
+ import javax.persistence.EnumType;
+ import javax.persistence.Enumerated;
++import javax.persistence.FetchType;
++import javax.persistence.ManyToOne;
++import javax.persistence.MapsId;
+ import javax.persistence.Table;
+ 
+ 
+@@ -48,12 +51,17 @@ public class HostTallyBucket implements Serializable {
+     @Column(name = "measurement_type")
+     private HardwareMeasurementType measurementType;
+ 
++    @MapsId(value = "hostId")
++    @ManyToOne(fetch = FetchType.LAZY)
++    private Host host;
++
+     public HostTallyBucket() {
+     }
+ 
+     @SuppressWarnings("java:S107")
+     public HostTallyBucket(Host host, String productId, ServiceLevel sla, Usage usage, Boolean asHypervisor,
+         int cores, int sockets, HardwareMeasurementType type) {
++        this.host = host;
+         setKey(new HostBucketKey(host, productId, sla, usage, asHypervisor));
+         this.cores = cores;
+         this.sockets = sockets;
+@@ -92,6 +100,14 @@ public class HostTallyBucket implements Serializable {
+         this.measurementType = measurementType;
+     }
+ 
++    public Host getHost() {
++        return host;
++    }
++
++    public void setHost(Host host) {
++        this.host = host;
++    }
++
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) {
+diff --git a/src/main/java/org/candlepin/subscriptions/db/model/TallyHostView.java b/src/main/java/org/candlepin/subscriptions/db/model/TallyHostView.java
+index 90401d948..8f7e11649 100644
+--- a/src/main/java/org/candlepin/subscriptions/db/model/TallyHostView.java
++++ b/src/main/java/org/candlepin/subscriptions/db/model/TallyHostView.java
+@@ -32,19 +32,19 @@ import java.time.OffsetDateTime;
+  */
+ public interface TallyHostView {
+ 
+-    @Value("#{target.key.host.inventoryId}")
++    @Value("#{target.host.inventoryId}")
+     String getInventoryId();
+ 
+-    @Value("#{target.key.host.insightsId}")
++    @Value("#{target.host.insightsId}")
+     String getInsightsId();
+ 
+-    @Value("#{target.key.host.displayName}")
++    @Value("#{target.host.displayName}")
+     String getDisplayName();
+ 
+     @Value("#{target.measurementType}")
+     String getHardwareMeasurementType();
+ 
+-    @Value("#{target.key.host.hardwareType}")
++    @Value("#{target.host.hardwareType}")
+     String getHardwareType();
+ 
+     @Value("#{target.cores}")
+@@ -53,22 +53,22 @@ public interface TallyHostView {
+     @Value("#{target.sockets}")
+     int getSockets();
+ 
+-    @Value("#{target.key.host.numOfGuests}")
++    @Value("#{target.host.numOfGuests}")
+     Integer getNumberOfGuests();
+ 
+-    @Value("#{target.key.host.subscriptionManagerId}")
++    @Value("#{target.host.subscriptionManagerId}")
+     String getSubscriptionManagerId();
+ 
+-    @Value("#{target.key.host.lastSeen}")
++    @Value("#{target.host.lastSeen}")
+     OffsetDateTime getLastSeen();
+ 
+-    @Value("#{target.key.host.unmappedGuest}")
++    @Value("#{target.host.unmappedGuest}")
+     boolean isUnmappedGuest();
+ 
+-    @Value("#{target.key.host.hypervisor}")
++    @Value("#{target.host.hypervisor}")
+     boolean isHypervisor();
+ 
+-    @Value("#{target.key.host.cloudProvider}")
++    @Value("#{target.host.cloudProvider}")
+     String getCloudProvider();
+ 
+     default Host asApiHost() {
+diff --git a/src/test/java/org/candlepin/subscriptions/db/AccountRepositoryTest.java b/src/test/java/org/candlepin/subscriptions/db/AccountRepositoryTest.java
+index 12f0eb1b0..6f639a98c 100644
+--- a/src/test/java/org/candlepin/subscriptions/db/AccountRepositoryTest.java
++++ b/src/test/java/org/candlepin/subscriptions/db/AccountRepositoryTest.java
+@@ -23,7 +23,11 @@ package org.candlepin.subscriptions.db;
+ import static org.junit.jupiter.api.Assertions.*;
+ 
+ import org.candlepin.subscriptions.db.model.Account;
++import org.candlepin.subscriptions.db.model.HardwareMeasurementType;
+ import org.candlepin.subscriptions.db.model.Host;
++import org.candlepin.subscriptions.db.model.HostTallyBucket;
++import org.candlepin.subscriptions.db.model.ServiceLevel;
++import org.candlepin.subscriptions.db.model.Usage;
+ import org.candlepin.subscriptions.db.model.config.AccountConfig;
+ import org.candlepin.subscriptions.db.model.config.OptInType;
+ 
+@@ -108,6 +112,9 @@ class AccountRepositoryTest {
+         host.setAccountNumber("account123");
+         host.setDisplayName("name");
+         host.setInstanceType("Test");
++        HostTallyBucket bucket = new HostTallyBucket(host, "product", ServiceLevel.PREMIUM,
++            Usage.PRODUCTION, false, 4, 4, HardwareMeasurementType.PHYSICAL);
++        host.getBuckets().add(bucket);
+ 
+         account.getServiceInstances().put(instanceId, host);
+         repo.save(account);
+diff --git a/src/test/java/org/candlepin/subscriptions/tally/MetricUsageCollectorTest.java b/src/test/java/org/candlepin/subscriptions/tally/MetricUsageCollectorTest.java
+index ef8fa485b..174ffe2ee 100644
+--- a/src/test/java/org/candlepin/subscriptions/tally/MetricUsageCollectorTest.java
++++ b/src/test/java/org/candlepin/subscriptions/tally/MetricUsageCollectorTest.java
+@@ -178,11 +178,11 @@ class MetricUsageCollectorTest {
+         Set.of(Usage._ANY, Usage.PRODUCTION).forEach(usage ->
+             Set.of(ServiceLevel._ANY, ServiceLevel.PREMIUM).forEach(sla -> {
+                 HostTallyBucket bucket = new HostTallyBucket();
++                bucket.setHost(instance);
+                 HostBucketKey key = new HostBucketKey();
+                 key.setProductId(MetricUsageCollector.ProductConfig.OPENSHIFT_PRODUCT_ID);
+                 key.setSla(sla);
+                 key.setUsage(usage);
+-                key.setHost(instance);
+                 key.setAsHypervisor(false);
+                 bucket.setKey(key);
+                 expected.add(bucket);
+

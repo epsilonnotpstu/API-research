@@ -1,0 +1,362 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+index 7486a64..6829973 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+@@ -8,8 +8,6 @@ package io.strimzi.kafka.bridge.http;
+ import io.netty.handler.codec.http.HttpResponseStatus;
+ import io.strimzi.kafka.bridge.BridgeContentType;
+ import io.strimzi.kafka.bridge.EmbeddedFormat;
+-import io.strimzi.kafka.bridge.KafkaJsonDeserializer;
+-import io.strimzi.kafka.bridge.KafkaJsonSerializer;
+ import io.strimzi.kafka.bridge.SinkBridgeEndpoint;
+ import io.strimzi.kafka.bridge.SourceBridgeEndpoint;
+ import io.strimzi.kafka.bridge.http.model.HttpBridgeError;
+@@ -187,7 +185,8 @@ public class HttpBridge extends AbstractVerticle {
+         JsonObject body = routingContext.getBodyAsJson();
+         EmbeddedFormat format = EmbeddedFormat.from(body.getString("format", "binary"));
+ 
+-        final SinkBridgeEndpoint sink = this.getHttpSinkBridgeEndpoint(format);
++        final SinkBridgeEndpoint sink = new HttpSinkBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
++                format, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+ 
+         sink.closeHandler(s -> {
+             httpBridgeContext.getHttpSinkEndpoints().remove(sink.name());
+@@ -295,7 +294,8 @@ public class HttpBridge extends AbstractVerticle {
+         SourceBridgeEndpoint source = this.httpBridgeContext.getHttpSourceEndpoints().get(httpServerRequest.connection());
+ 
+         if (source == null) {
+-            source = this.getHttpSourceBridgeEndpoint(contentType);
++            source = new HttpSourceBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
++                    contentTypeToFormat(contentType), new ByteArraySerializer(), new ByteArraySerializer());
+ 
+             source.closeHandler(s -> {
+                 this.httpBridgeContext.getHttpSourceEndpoints().remove(httpServerRequest.connection());
+@@ -329,29 +329,13 @@ public class HttpBridge extends AbstractVerticle {
+         }
+     }
+ 
+-    private HttpSinkBridgeEndpoint getHttpSinkBridgeEndpoint(EmbeddedFormat format) {
+-        switch (format) {
+-            case BINARY:
+-                return new HttpSinkBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
+-                        EmbeddedFormat.BINARY, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+-            case JSON:
+-                return new HttpSinkBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
+-                        EmbeddedFormat.JSON, new KafkaJsonDeserializer<>(Object.class), new KafkaJsonDeserializer<>(Object.class));
+-            default:
+-                return null;
+-        }
+-    }
+-
+-    private HttpSourceBridgeEndpoint getHttpSourceBridgeEndpoint(String contentType) {
++    private EmbeddedFormat contentTypeToFormat(String contentType) {
+         switch (contentType) {
+             case BridgeContentType.KAFKA_JSON_BINARY:
+-                return new HttpSourceBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
+-                        EmbeddedFormat.BINARY, new ByteArraySerializer(), new ByteArraySerializer());
++                return EmbeddedFormat.BINARY;
+             case BridgeContentType.KAFKA_JSON_JSON:
+-                return new HttpSourceBridgeEndpoint<>(this.vertx, this.httpBridgeConfig, this.httpBridgeContext,
+-                        EmbeddedFormat.JSON, new KafkaJsonSerializer(), new KafkaJsonSerializer());
++                return EmbeddedFormat.JSON;
+         }
+         throw new IllegalArgumentException(contentType);
+     }
+-
+ }
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpJsonMessageConverter.java b/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpJsonMessageConverter.java
+index 17d26cf..32e7ccf 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpJsonMessageConverter.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpJsonMessageConverter.java
+@@ -7,6 +7,7 @@ package io.strimzi.kafka.bridge.http.converter;
+ 
+ import io.strimzi.kafka.bridge.converter.MessageConverter;
+ import io.vertx.core.buffer.Buffer;
++import io.vertx.core.json.Json;
+ import io.vertx.core.json.JsonArray;
+ import io.vertx.core.json.JsonObject;
+ import io.vertx.kafka.client.consumer.KafkaConsumerRecord;
+@@ -16,23 +17,23 @@ import io.vertx.kafka.client.producer.KafkaProducerRecord;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+-public class HttpJsonMessageConverter implements MessageConverter<Object, Object, Buffer, Buffer> {
++public class HttpJsonMessageConverter implements MessageConverter<byte[], byte[], Buffer, Buffer> {
+ 
+     @Override
+-    public KafkaProducerRecord<Object, Object> toKafkaRecord(String kafkaTopic, Integer partition, Buffer message) {
++    public KafkaProducerRecord<byte[], byte[]> toKafkaRecord(String kafkaTopic, Integer partition, Buffer message) {
+ 
+         Integer partitionFromBody = null;
+-        Object key = null;
+-        Object value = null;
++        byte[] key = null;
++        byte[] value = null;
+ 
+         JsonObject json = message.toJsonObject();
+ 
+         if (!json.isEmpty()) {
+             if (json.containsKey("key")) {
+-                key = json.getValue("key");
++                key = Json.encodeToBuffer(json.getValue("key")).getBytes();
+             }
+             if (json.containsKey("value")) {
+-                value = json.getValue("value");
++                value = Json.encodeToBuffer(json.getValue("value")).getBytes();
+             }
+             if (json.containsKey("partition")) {
+                 partitionFromBody = json.getInteger("partition");
+@@ -45,15 +46,15 @@ public class HttpJsonMessageConverter implements MessageConverter<Object, Object
+             }
+         }
+ 
+-        KafkaProducerRecord<Object, Object> record = KafkaProducerRecord.create(kafkaTopic, key, value, partitionFromBody);
++        KafkaProducerRecord<byte[], byte[]> record = KafkaProducerRecord.create(kafkaTopic, key, value, partitionFromBody);
+ 
+         return record;
+     }
+ 
+     @Override
+-    public List<KafkaProducerRecord<Object, Object>> toKafkaRecords(String kafkaTopic, Integer partition, Buffer messages) {
++    public List<KafkaProducerRecord<byte[], byte[]>> toKafkaRecords(String kafkaTopic, Integer partition, Buffer messages) {
+ 
+-        List<KafkaProducerRecord<Object, Object>> records = new ArrayList<>();
++        List<KafkaProducerRecord<byte[], byte[]>> records = new ArrayList<>();
+ 
+         JsonObject json = messages.toJsonObject();
+         JsonArray jsonArray = json.getJsonArray("records");
+@@ -67,23 +68,25 @@ public class HttpJsonMessageConverter implements MessageConverter<Object, Object
+     }
+ 
+     @Override
+-    public Buffer toMessage(String address, KafkaConsumerRecord<Object, Object> record) {
++    public Buffer toMessage(String address, KafkaConsumerRecord<byte[], byte[]> record) {
+         throw new UnsupportedOperationException();
+     }
+ 
+     @Override
+-    public Buffer toMessages(KafkaConsumerRecords<Object, Object> records) {
++    public Buffer toMessages(KafkaConsumerRecords<byte[], byte[]> records) {
+ 
+         JsonArray jsonArray = new JsonArray();
+ 
+         for (int i = 0; i < records.size(); i++) {
+ 
+             JsonObject jsonObject = new JsonObject();
+-            KafkaConsumerRecord<Object, Object> record = records.recordAt(i);
++            KafkaConsumerRecord<byte[], byte[]> record = records.recordAt(i);
+ 
+             jsonObject.put("topic", record.topic());
+-            jsonObject.put("key", record.key());
+-            jsonObject.put("value", record.value());
++            jsonObject.put("key", record.key() != null ?
++                    Json.decodeValue(Buffer.buffer(record.key())) : null);
++            jsonObject.put("value", record.value() != null ?
++                    Json.decodeValue(Buffer.buffer(record.value())) : null);
+             jsonObject.put("partition", record.partition());
+             jsonObject.put("offset", record.offset());
+ 
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+index 743aaee..7194bb2 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+@@ -8,8 +8,6 @@ package io.strimzi.kafka.bridge.http;
+ import io.netty.handler.codec.http.HttpResponseStatus;
+ import io.strimzi.kafka.bridge.BridgeContentType;
+ import io.strimzi.kafka.bridge.KafkaClusterTestBase;
+-import io.strimzi.kafka.bridge.KafkaJsonDeserializer;
+-import io.strimzi.kafka.bridge.KafkaJsonSerializer;
+ import io.strimzi.kafka.bridge.amqp.AmqpConfig;
+ import io.strimzi.kafka.bridge.config.KafkaConfig;
+ import io.strimzi.kafka.bridge.config.KafkaConsumerConfig;
+@@ -49,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.stream.Collectors;
+ 
+ @RunWith(VertxUnitRunner.class)
++@SuppressWarnings("checkstyle:JavaNCSS")
+ public class HttpBridgeTest extends KafkaClusterTestBase {
+ 
+     private static final Logger log = LoggerFactory.getLogger(HttpBridgeTest.class);
+@@ -2770,4 +2769,149 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+ 
+         deleteAsync.await();
+     }
++
++    @Test
++    public void sendReceiveJsonMessage(TestContext context) {
++        String topic = "sendReceiveJsonMessage";
++        kafkaCluster.createTopic(topic, 1, 1);
++
++        Async async = context.async();
++
++        JsonObject sentKey = new JsonObject()
++                .put("f1", "v1")
++                .put("array", new JsonArray().add(1).add(2));
++
++        JsonObject sentValue = new JsonObject()
++                .put("array", new JsonArray().add("v1").add("v2"))
++                .put("foo", "bar").put("number", 123)
++                .put("nested", new JsonObject().put("f", "v"));
++
++        JsonArray records = new JsonArray();
++        JsonObject json = new JsonObject();
++        json.put("key", sentKey);
++        json.put("value", sentValue);
++        records.add(json);
++
++        JsonObject root = new JsonObject();
++        root.put("records", records);
++
++        WebClient client = WebClient.create(vertx);
++
++        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topics/" + topic)
++                .putHeader("Content-length", String.valueOf(root.toBuffer().length()))
++                .putHeader("Content-Type", BridgeContentType.KAFKA_JSON_JSON)
++                .as(BodyCodec.jsonObject())
++                .sendJsonObject(root, ar -> {
++                    context.assertTrue(ar.succeeded());
++
++                    HttpResponse<JsonObject> response = ar.result();
++                    JsonObject bridgeResponse = response.body();
++
++                    JsonArray offsets = bridgeResponse.getJsonArray("offsets");
++                    context.assertEquals(1, offsets.size());
++                    JsonObject metadata = offsets.getJsonObject(0);
++                    context.assertEquals(0, metadata.getInteger("partition"));
++                    context.assertEquals(0L, metadata.getLong("offset"));
++
++                    async.complete();
++                });
++
++        async.await();
++
++        Async creationAsync = context.async();
++
++        String name = "my-kafka-consumer";
++        String groupId = "my-group";
++
++        String baseUri = "http://" + BRIDGE_HOST + ":" + BRIDGE_PORT + "/consumers/" + groupId + "/instances/" + name;
++
++        JsonObject consumerConfig = new JsonObject();
++        consumerConfig.put("name", name);
++        consumerConfig.put("format", "json");
++
++        client.post(BRIDGE_PORT, BRIDGE_HOST, "/consumers/" + groupId)
++                .putHeader("Content-length", String.valueOf(consumerConfig.toBuffer().length()))
++                .putHeader("Content-type", BridgeContentType.KAFKA_JSON)
++                .as(BodyCodec.jsonObject())
++                .sendJsonObject(consumerConfig, ar -> {
++                    context.assertTrue(ar.succeeded());
++
++                    HttpResponse<JsonObject> response = ar.result();
++                    JsonObject bridgeResponse = response.body();
++                    String consumerInstanceId = bridgeResponse.getString("instance_id");
++                    String consumerBaseUri = bridgeResponse.getString("base_uri");
++                    context.assertEquals(name, consumerInstanceId);
++                    context.assertEquals(baseUri, consumerBaseUri);
++                    creationAsync.complete();
++                });
++
++        creationAsync.await();
++
++        // subscribe to a topic
++        Async subscriberAsync = context.async();
++
++        JsonArray topics = new JsonArray();
++        topics.add(topic);
++
++        JsonObject topicsRoot = new JsonObject();
++        topicsRoot.put("topics", topics);
++
++        client.post(BRIDGE_PORT, BRIDGE_HOST, baseUri + "/subscription")
++                .putHeader("Content-length", String.valueOf(topicsRoot.toBuffer().length()))
++                .putHeader("Content-type", BridgeContentType.KAFKA_JSON)
++                .as(BodyCodec.jsonObject())
++                .sendJsonObject(topicsRoot, ar -> {
++                    context.assertTrue(ar.succeeded());
++                    context.assertEquals(HttpResponseStatus.NO_CONTENT.code(), ar.result().statusCode());
++                    subscriberAsync.complete();
++                });
++
++        subscriberAsync.await();
++
++        // consume records
++        Async consumeAsync = context.async();
++
++        client.get(BRIDGE_PORT, BRIDGE_HOST, baseUri + "/records" + "?timeout=" + String.valueOf(1000))
++                .putHeader("Accept", BridgeContentType.KAFKA_JSON_JSON)
++                .as(BodyCodec.jsonArray())
++                .send(ar -> {
++                    context.assertTrue(ar.succeeded());
++
++                    HttpResponse<JsonArray> response = ar.result();
++                    JsonObject jsonResponse = response.body().getJsonObject(0);
++
++                    String kafkaTopic = jsonResponse.getString("topic");
++                    int kafkaPartition = jsonResponse.getInteger("partition");
++                    JsonObject key = jsonResponse.getJsonObject("key");
++                    JsonObject value = jsonResponse.getJsonObject("value");
++                    long offset = jsonResponse.getLong("offset");
++
++                    context.assertEquals(topic, kafkaTopic);
++                    context.assertEquals(sentValue, value);
++                    context.assertEquals(0L, offset);
++                    context.assertNotNull(kafkaPartition);
++                    context.assertEquals(sentKey, key);
++
++                    consumeAsync.complete();
++                });
++
++        consumeAsync.await();
++
++        // consumer deletion
++        Async deleteAsync = context.async();
++
++        client.delete(BRIDGE_PORT, BRIDGE_HOST, baseUri)
++                .putHeader("Content-type", BridgeContentType.KAFKA_JSON)
++                .as(BodyCodec.jsonObject())
++                .send(ar -> {
++                    context.assertTrue(ar.succeeded());
++
++                    HttpResponse<JsonObject> response = ar.result();
++                    context.assertEquals(HttpResponseStatus.NO_CONTENT.code(), response.statusCode());
++
++                    deleteAsync.complete();
++                });
++
++        deleteAsync.await();
++    }
+ }
+diff --git a/src/main/java/io/strimzi/kafka/bridge/KafkaJsonDeserializer.java b/src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonDeserializer.java
+similarity index 96%
+rename from src/main/java/io/strimzi/kafka/bridge/KafkaJsonDeserializer.java
+rename to src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonDeserializer.java
+index 4f3c01b..1413413 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/KafkaJsonDeserializer.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonDeserializer.java
+@@ -3,7 +3,7 @@
+  * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+  */
+ 
+-package io.strimzi.kafka.bridge;
++package io.strimzi.kafka.bridge.http;
+ 
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import org.apache.kafka.common.serialization.Deserializer;
+diff --git a/src/main/java/io/strimzi/kafka/bridge/KafkaJsonSerializer.java b/src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonSerializer.java
+similarity index 95%
+rename from src/main/java/io/strimzi/kafka/bridge/KafkaJsonSerializer.java
+rename to src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonSerializer.java
+index a2b5d15..dd347b8 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/KafkaJsonSerializer.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/KafkaJsonSerializer.java
+@@ -3,7 +3,7 @@
+  * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+  */
+ 
+-package io.strimzi.kafka.bridge;
++package io.strimzi.kafka.bridge.http;
+ 
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import org.apache.kafka.common.serialization.Serializer;
+

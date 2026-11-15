@@ -1,0 +1,90 @@
+diff --git a/build.gradle b/build.gradle
+index 31526c3..95799d1 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -41,4 +41,13 @@ wrapper {
+ }
+ vaadin {
+     productionMode = true
++}
++classes {
++    doLast {
++        def resourcesDir = sourceSets.main.output.resourcesDir as File
++        def releaseVersion = System.env.RELEASE_VERSION as String
++        if (releaseVersion) {
++            new File(resourcesDir, "version.info").text = releaseVersion
++        }
++    }
+ }
+\ No newline at end of file
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+index d957269..9e1bddd 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
+ import javax.persistence.Access;
+ import javax.persistence.AccessType;
+ import javax.persistence.Basic;
++import javax.persistence.Column;
+ import javax.persistence.Entity;
+ import javax.persistence.Id;
+ import javax.validation.constraints.NotEmpty;
+@@ -45,6 +46,7 @@ public class ReportEntity {
+     @Builder.Default
+     @PositiveOrZero
+     @Access(AccessType.PROPERTY)
++    @Column(columnDefinition = "bigint not null default '0'")
+     private long size = 0L; //NOPMD
+ 
+     public static long sizeKB(@Nullable Path path) {
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/view/AboutView.java b/src/main/java/ru/iopump/qa/allure/gui/view/AboutView.java
+index 9d3ef4c..36b8e3c 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/view/AboutView.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/view/AboutView.java
+@@ -9,8 +9,15 @@ import com.vaadin.flow.component.html.Paragraph;
+ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+ import com.vaadin.flow.router.PageTitle;
+ import com.vaadin.flow.router.Route;
++import java.io.IOException;
++import java.io.InputStream;
++import java.nio.charset.StandardCharsets;
++import lombok.NonNull;
+ import lombok.extern.slf4j.Slf4j;
++import org.apache.commons.io.IOUtils;
++import org.apache.commons.lang3.StringUtils;
+ import ru.iopump.qa.allure.gui.MainLayout;
++import ru.iopump.qa.util.ResourceUtil;
+ 
+ @Tag("about-view")
+ @PageTitle("About | " + ALLURE_SERVER)
+@@ -19,10 +26,13 @@ import ru.iopump.qa.allure.gui.MainLayout;
+ public class AboutView extends VerticalLayout {
+     public static final String FONT_FAMILY = "font-family";
+     public static final String GERMANIA_ONE = "Cambria";
++    public static final String APP_VERSION = getVersionOrDefault("1.0.0");
++
+     private static final long serialVersionUID = 5122017036734476962L;
+ 
+     public AboutView() {
+         var description = new Div(
++            new Paragraph("Version: " + APP_VERSION),
+             new Paragraph("This is a server to save and aggregate Allure Report results"),
+             new Paragraph(new Anchor("https://docs.qameta.io/allure/", "Allure Reporting Framework")),
+             new Paragraph("Allure Reports are very popular QA Reporting tool in Russia. " +
+@@ -38,4 +48,15 @@ public class AboutView extends VerticalLayout {
+         mainLayout.getStyle().set(FONT_FAMILY, GERMANIA_ONE);
+         add(mainLayout);
+     }
++
++    public static String getVersionOrDefault(@NonNull String defaultVersion) {
++        try (final InputStream inputStream = ResourceUtil.getResourceAsStream("version.info")) {
++            var version = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
++            log.info("App version from version.info = " + version);
++            return StringUtils.isBlank(version) ? defaultVersion : version;
++        } catch (IOException e) {
++            log.error("Version error", e);
++            return defaultVersion;
++        }
++    }
+ }
+

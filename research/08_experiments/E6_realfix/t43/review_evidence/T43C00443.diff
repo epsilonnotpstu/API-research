@@ -1,0 +1,127 @@
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/DatabricksEventFilter.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/DatabricksEventFilter.java
+index cf53503d4..4d7f54a01 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/DatabricksEventFilter.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/DatabricksEventFilter.java
+@@ -38,27 +38,33 @@ public class DatabricksEventFilter implements EventFilter {
+ 
+   @Override
+   public boolean isDisabled(SparkListenerEvent event) {
+-    return isSerializeFromObject() || isWriteIntoDeltaCommand() || isDisabledDatabricksPlan(event);
+-  }
+-
+-  public boolean isDisabledDatabricksPlan(SparkListenerEvent ignoredEvent) {
+     if (!DatabricksUtils.isRunOnDatabricksPlatform(context)
+         || !context.getQueryExecution().isPresent()) {
+       return false;
+     }
+ 
+-    SparkPlan node = context.getQueryExecution().get().executedPlan();
++    return isWriteIntoDeltaCommand() || isDisabledDatabricksPlan(event);
++  }
+ 
+-    // Unwrap SparkPlan from WholeStageCodegen, as that's not a descriptive or helpful job name
+-    if (node instanceof WholeStageCodegenExec) {
+-      node = ((WholeStageCodegenExec) node).child();
+-    }
++  public boolean isDisabledDatabricksPlan(SparkListenerEvent ignoredEvent) {
++    boolean isSerializedFromObject = isSerializeFromObject();
++
++    if (!isSerializedFromObject) {
++      SparkPlan node = context.getQueryExecution().get().executedPlan();
+ 
+-    String nodeName = node.nodeName().replace("_", "");
++      // Unwrap SparkPlan from WholeStageCodegen, as that's not a descriptive or helpful job name
++      if (node instanceof WholeStageCodegenExec) {
++        node = ((WholeStageCodegenExec) node).child();
++      }
+ 
+-    return excludedNodes.stream()
+-        .map(n -> n.replace("_", ""))
+-        .anyMatch(n -> n.equalsIgnoreCase(nodeName));
++      String nodeName = node.nodeName().replace("_", "");
++
++      return excludedNodes.stream()
++          .map(n -> n.replace("_", ""))
++          .anyMatch(n -> n.equalsIgnoreCase(nodeName));
++    } else {
++      return isSerializedFromObject;
++    }
+   }
+ 
+   private boolean isSerializeFromObject() {
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/EventFilterUtils.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/EventFilterUtils.java
+index 530401a7d..4df79fb71 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/EventFilterUtils.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/filters/EventFilterUtils.java
+@@ -9,12 +9,14 @@ import io.openlineage.spark.agent.util.SparkSessionUtils;
+ import io.openlineage.spark.api.OpenLineageContext;
+ import java.util.Optional;
+ import java.util.stream.Stream;
++import lombok.extern.slf4j.Slf4j;
+ import org.apache.spark.SparkContext;
+ import org.apache.spark.scheduler.SparkListenerEvent;
+ import org.apache.spark.sql.SparkSession;
+ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+ import org.apache.spark.sql.execution.QueryExecution;
+ 
++@Slf4j
+ public class EventFilterUtils {
+ 
+   /**
+@@ -28,7 +30,24 @@ public class EventFilterUtils {
+             new SparkNodesFilter(context),
+             new CreateViewFilter(context),
+             new AdaptivePlanEventFilter(context))
+-        .anyMatch(filter -> filter.isDisabled(event.getClass().cast(event)));
++        .anyMatch(
++            filter -> {
++              boolean isDisabled = filter.isDisabled(event.getClass().cast(event));
++              if (isDisabled) {
++                String logicalPlanNode =
++                    getLogicalPlan(context)
++                        .map(plan -> plan.getClass().getCanonicalName())
++                        .orElse("UnparsableLogicalPlan");
++                if (log.isDebugEnabled()) {
++                  log.debug(
++                      "Rejecting event : {} with plan : {} due to filter : {}",
++                      event.toString(),
++                      logicalPlanNode,
++                      filter.getClass().getCanonicalName());
++                }
++              }
++              return isDisabled;
++            });
+   }
+ 
+   static Optional<LogicalPlan> getLogicalPlan(OpenLineageContext context) {
+diff --git a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/filters/DatabricksEventFilterTest.java b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/filters/DatabricksEventFilterTest.java
+index 46945450e..837455efb 100644
+--- a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/filters/DatabricksEventFilterTest.java
++++ b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/filters/DatabricksEventFilterTest.java
+@@ -29,6 +29,7 @@ class DatabricksEventFilterTest {
+   DatabricksEventFilter filter = new DatabricksEventFilter(context);
+   QueryExecution queryExecution = mock(QueryExecution.class, RETURNS_DEEP_STUBS);
+   WholeStageCodegenExec node = mock(WholeStageCodegenExec.class);
++  SerializeFromObject serializedObjectNode = mock(SerializeFromObject.class);
+   SparkListenerEvent sparkListenerEvent = mock(SparkListenerEvent.class);
+ 
+   @BeforeEach
+@@ -84,4 +85,17 @@ class DatabricksEventFilterTest {
+     when(node.nodeName()).thenReturn("collect_Limit");
+     assertThat(filter.isDisabled(event)).isFalse();
+   }
++
++  @Test
++  void testSerializedFromObjectEventIsNotFiltered() {
++    when(queryExecution
++            .sparkSession()
++            .sparkContext()
++            .getConf()
++            .contains("spark.databricks.workspaceUrl"))
++        .thenReturn(false);
++
++    when(queryExecution.optimizedPlan()).thenReturn(serializedObjectNode);
++    assertThat(filter.isDisabled(event)).isFalse();
++  }
+ }
+

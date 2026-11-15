@@ -1,0 +1,226 @@
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauCommandFromApiJsonDeserializer.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauCommandFromApiJsonDeserializer.java
+index fdc9acc371..895ea77576 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauCommandFromApiJsonDeserializer.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauCommandFromApiJsonDeserializer.java
+@@ -42,7 +42,7 @@ import com.google.gson.reflect.TypeToken;
+ @Component
+ public class CreditBureauCommandFromApiJsonDeserializer {
+ 
+-	private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("alias", "is_active"));
++	private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("alias", "is_active","creditBureauId"));
+ 
+ 	private final FromJsonHelper fromApiJsonHelper;
+ 
+@@ -79,6 +79,42 @@ public class CreditBureauCommandFromApiJsonDeserializer {
+ 
+ 		throwExceptionIfValidationWarningsExist(dataValidationErrors);
+ 	}
++	
++	
++	
++	public void validateForUpdate(final String json)
++	{
++		if (StringUtils.isBlank(json)) {
++			throw new InvalidJsonException();
++		}
++		
++		final Type typeOfMap = new TypeToken<Map<String, Object>>() {
++		}.getType();
++		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
++		
++		final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
++		final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
++				.resource("CreditBureau");
++
++		final JsonElement element = this.fromApiJsonHelper.parse(json);
++		
++		
++		final String creditBureauIdParameter = "creditBureauId";
++		if (this.fromApiJsonHelper.parameterExists(creditBureauIdParameter, element)) {
++			final Long creditBureauId = this.fromApiJsonHelper.extractLongNamed("creditBureauId", element);
++			baseDataValidator.reset().parameter("creditBureauId").value(creditBureauId).notNull().notBlank().longGreaterThanZero();
++		}
++		
++		final String is_activeParameter = "is_active";
++		if (this.fromApiJsonHelper.parameterExists(is_activeParameter, element)) {
++			final boolean is_active = this.fromApiJsonHelper.extractBooleanNamed("is_active", element);
++			baseDataValidator.reset().parameter("is_active").value(is_active).notNull().notBlank().trueOrFalseRequired(is_active);
++		}
++		
++		
++		throwExceptionIfValidationWarningsExist(dataValidationErrors);
++
++	}
+ 
+ 	private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
+ 		if (!dataValidationErrors.isEmpty()) {
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauLoanProductCommandFromApiJsonDeserializer.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauLoanProductCommandFromApiJsonDeserializer.java
+index 4aa2fb69f6..76e7fa5a0f 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauLoanProductCommandFromApiJsonDeserializer.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/serialization/CreditBureauLoanProductCommandFromApiJsonDeserializer.java
+@@ -40,8 +40,8 @@ import com.google.gson.reflect.TypeToken;
+ 
+ @Component
+ public class CreditBureauLoanProductCommandFromApiJsonDeserializer {
+-	private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("loan_product_id",
+-			"is_creditcheck_mandatory", "skip_creditcheck_in_failure", "stale_period", "is_active", "locale"));
++	private final Set<String> supportedParameters = new HashSet<>(Arrays.asList("loanProductId",
++			"isCreditcheckMandatory", "skipCreditcheckInFailure", "stalePeriod", "is_active", "locale","creditbureauLoanProductMappingId"));
+ 
+ 	private final FromJsonHelper fromApiJsonHelper;
+ 
+@@ -67,47 +67,47 @@ public class CreditBureauLoanProductCommandFromApiJsonDeserializer {
+ 
+ 		baseDataValidator.reset().value(cb_id).notBlank().integerGreaterThanZero();
+ 
+-		final long loan_product_id = this.fromApiJsonHelper.extractLongNamed("loan_product_id", element);
+-		baseDataValidator.reset().parameter("loan_product_id").value(loan_product_id).notBlank()
++		final long loanProductId = this.fromApiJsonHelper.extractLongNamed("loanProductId", element);
++		baseDataValidator.reset().parameter("loanProductId").value(loanProductId).notBlank()
+ 				.integerGreaterThanZero();
+-		System.out.println("loan product id " + loan_product_id);
++		
+ 			
+-		if(this.fromApiJsonHelper.extractBooleanNamed("is_creditcheck_mandatory",element)!= null)
++		if(this.fromApiJsonHelper.extractBooleanNamed("isCreditcheckMandatory",element)!= null)
+ 		{
+-			final boolean is_creditcheck_mandatory = this.fromApiJsonHelper.extractBooleanNamed("is_creditcheck_mandatory",
++			final boolean isCreditcheckMandatory = this.fromApiJsonHelper.extractBooleanNamed("isCreditcheckMandatory",
+ 					element);
+-			baseDataValidator.reset().parameter("is_creditcheck_mandatory").value(is_creditcheck_mandatory).notBlank()
+-					.trueOrFalseRequired(is_creditcheck_mandatory);	
++			baseDataValidator.reset().parameter("isCreditcheckMandatory").value(isCreditcheckMandatory).notBlank()
++					.trueOrFalseRequired(isCreditcheckMandatory);	
+ 		}
+ 		else
+ 		{
+-			baseDataValidator.reset().parameter("is_creditcheck_mandatory").value(this.fromApiJsonHelper.extractBooleanNamed("is_creditcheck_mandatory",
++			baseDataValidator.reset().parameter("isCreditcheckMandatory").value(this.fromApiJsonHelper.extractBooleanNamed("isCreditcheckMandatory",
+ 					element)).notBlank()
+-			.trueOrFalseRequired(this.fromApiJsonHelper.extractBooleanNamed("is_creditcheck_mandatory",
++			.trueOrFalseRequired(this.fromApiJsonHelper.extractBooleanNamed("isCreditcheckMandatory",
+ 					element));	
+ 		}
+ 		
+ 		
+-		if( this.fromApiJsonHelper.extractBooleanNamed("skip_creditcheck_in_failure", element)!=null)
++		if( this.fromApiJsonHelper.extractBooleanNamed("skipCreditcheckInFailure", element)!=null)
+ 		{
+-			final boolean skip_creditcheck_in_failure = this.fromApiJsonHelper.extractBooleanNamed("skip_creditcheck_in_failure", element);
+-			baseDataValidator.reset().parameter("skip_creditcheck_in_failure").value(skip_creditcheck_in_failure).notBlank().trueOrFalseRequired(skip_creditcheck_in_failure);
++			final boolean skipCreditcheckInFailure = this.fromApiJsonHelper.extractBooleanNamed("skipCreditcheckInFailure", element);
++			baseDataValidator.reset().parameter("skipCreditcheckInFailure").value(skipCreditcheckInFailure).notBlank().trueOrFalseRequired(skipCreditcheckInFailure);
+ 				
+ 		}
+ 		else
+ 		{
+-			baseDataValidator.reset().parameter("skip_creditcheck_in_failure").value(this.fromApiJsonHelper.extractBooleanNamed("skip_creditcheck_in_failure", element)).notBlank().trueOrFalseRequired(this.fromApiJsonHelper.extractBooleanNamed("skip_creditcheck_in_failure", element));	
++			baseDataValidator.reset().parameter("skipCreditcheckInFailure").value(this.fromApiJsonHelper.extractBooleanNamed("skipCreditcheckInFailure", element)).notBlank().trueOrFalseRequired(this.fromApiJsonHelper.extractBooleanNamed("skipCreditcheckInFailure", element));	
+ 		}
+ 		
+ 
+-		if(this.fromApiJsonHelper.extractLongNamed("stale_period", element)!=null)
++		if(this.fromApiJsonHelper.extractLongNamed("stalePeriod", element)!=null)
+ 		{
+-			final long stale_period = this.fromApiJsonHelper.extractLongNamed("stale_period", element);
+-			baseDataValidator.reset().parameter("stale_period").value(stale_period).notBlank().integerGreaterThanZero();	
++			final long stalePeriod = this.fromApiJsonHelper.extractLongNamed("stalePeriod", element);
++			baseDataValidator.reset().parameter("stalePeriod").value(stalePeriod).notBlank().integerGreaterThanZero();	
+ 		}
+ 		else
+ 		{
+-			baseDataValidator.reset().parameter("stale_period").value(this.fromApiJsonHelper.extractLongNamed("stale_period", element)).notBlank().integerGreaterThanZero();		
++			baseDataValidator.reset().parameter("stalePeriod").value(this.fromApiJsonHelper.extractLongNamed("stalePeriod", element)).notBlank().integerGreaterThanZero();		
+ 		}
+ 
+ 		
+@@ -127,6 +127,42 @@ public class CreditBureauLoanProductCommandFromApiJsonDeserializer {
+ 		throwExceptionIfValidationWarningsExist(dataValidationErrors);
+ 
+ 	}
++	
++	
++	
++	public void validateForUpdate(final String json)
++	{
++		if (StringUtils.isBlank(json)) {
++			throw new InvalidJsonException();
++		}
++
++		final Type typeOfMap = new TypeToken<Map<String, Object>>() {
++		}.getType();
++		this.fromApiJsonHelper.checkForUnsupportedParameters(typeOfMap, json, this.supportedParameters);
++
++		final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
++		final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors)
++				.resource("CREDITBUREAU_LOANPRODUCT_MAPPING");
++
++		final JsonElement element = this.fromApiJsonHelper.parse(json);
++		
++		
++		final String creditbureauLoanProductMappingIdParameter = "creditbureauLoanProductMappingId";
++		if (this.fromApiJsonHelper.parameterExists(creditbureauLoanProductMappingIdParameter, element)) {
++			final Long creditbureauLoanProductMappingId = this.fromApiJsonHelper.extractLongNamed("creditbureauLoanProductMappingId", element);
++			baseDataValidator.reset().parameter("creditbureauLoanProductMappingId").value(creditbureauLoanProductMappingId).notNull().notBlank().longGreaterThanZero();
++		}
++		
++		final String is_activeParameter = "is_active";
++		if (this.fromApiJsonHelper.parameterExists(is_activeParameter, element)) {
++			final boolean is_active = this.fromApiJsonHelper.extractBooleanNamed("is_active", element);
++			baseDataValidator.reset().parameter("is_active").value(is_active).notNull().notBlank().trueOrFalseRequired(is_active);
++		}
++		
++		
++		throwExceptionIfValidationWarningsExist(dataValidationErrors);
++			
++	}
+ 
+ 	private void throwExceptionIfValidationWarningsExist(final List<ApiParameterError> dataValidationErrors) {
+ 		if (!dataValidationErrors.isEmpty()) {
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/CreditBureauLoanProductMappingWritePlatformServiceImpl.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/CreditBureauLoanProductMappingWritePlatformServiceImpl.java
+index b6a04a7f14..2440699ba9 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/CreditBureauLoanProductMappingWritePlatformServiceImpl.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/CreditBureauLoanProductMappingWritePlatformServiceImpl.java
+@@ -64,10 +64,9 @@ public class CreditBureauLoanProductMappingWritePlatformServiceImpl implements C
+ 	public CommandProcessingResult addCreditBureauLoanProductMapping(Long creditBureau_id, JsonCommand command) {
+ 		this.context.authenticatedUser();
+ 		
+-		System.out.println("mapping called for creditBureau_id "+creditBureau_id);
+ 		this.fromApiJsonDeserializer.validateForCreate(command.json(), creditBureau_id);
+ 
+-		final long lpid = command.longValueOfParameterNamed("loan_product_id");
++		final long lpid = command.longValueOfParameterNamed("loanProductId");
+ 
+ 		final OrganisationCreditBureau orgcb = this.organisationCreditBureauRepository.getOne(creditBureau_id);
+ 
+@@ -84,6 +83,9 @@ public class CreditBureauLoanProductMappingWritePlatformServiceImpl implements C
+ 
+ 	@Override
+ 	public CommandProcessingResult updateCreditBureauLoanProductMapping(JsonCommand command) {
++		
++		this.context.authenticatedUser();
++		this.fromApiJsonDeserializer.validateForUpdate(command.json());
+ 
+ 		final Long mappingid = command.longValueOfParameterNamed("creditbureauLoanProductMappingId");
+ 		final boolean is_active = command.booleanPrimitiveValueOfParameterNamed("is_active");
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/OrganisationCreditBureauWritePlatflormServiceImpl.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/OrganisationCreditBureauWritePlatflormServiceImpl.java
+index 1131d586bf..f6bceb7a34 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/OrganisationCreditBureauWritePlatflormServiceImpl.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/creditbureau/service/OrganisationCreditBureauWritePlatflormServiceImpl.java
+@@ -72,12 +72,11 @@ public class OrganisationCreditBureauWritePlatflormServiceImpl
+ 	@Transactional
+ 	@Override
+ 	public CommandProcessingResult updateCreditBureau(JsonCommand command) {
+-		// this.context.authenticatedUser();
+-		// this.fromApiJsonDeserializer.validateForCreate(command.json());
++		 this.context.authenticatedUser();
++		this.fromApiJsonDeserializer.validateForUpdate(command.json());
+ 
+ 		final long creditbureauID = command.longValueOfParameterNamed("creditBureauId");
+-		//System.out.println("creditbureauID is " + creditbureauID);
+-
++		
+ 		final boolean is_active = command.booleanPrimitiveValueOfParameterNamed("is_active");
+ 
+ 		final OrganisationCreditBureau orgcb = organisationCreditBureauRepository.getOne(creditbureauID);
+

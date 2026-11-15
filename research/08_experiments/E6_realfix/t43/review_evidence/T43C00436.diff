@@ -1,0 +1,36 @@
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+index 7e5254099..35b761cfc 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+@@ -138,7 +138,7 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+               c ->
+                   circuitBreaker.run(
+                       () -> {
+-                        activeJobId.ifPresent(id -> context.setActiveJobId(id));
++                        activeJobId.ifPresent(id -> c.setActiveJobId(id));
+                         c.end(endEvent);
+                         return null;
+                       }));
+diff --git a/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
+index 4a7bf1fac..1130706cf 100644
+--- a/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
++++ b/integration/spark/app/src/test/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
+@@ -510,7 +510,7 @@ class SparkReadWriteIntegTest {
+         .containsExactlyInAnyOrder(Pair.of(NAME, "string"), Pair.of(AGE, "long"));
+   }
+ 
+-  // @Test
++  @Test
+   void testWriteWithKafkaSourceProvider(SparkSession spark)
+       throws InterruptedException, TimeoutException {
+     kafkaContainer.start();
+@@ -557,7 +557,7 @@ class SparkReadWriteIntegTest {
+         .hasFieldOrPropertyWithValue(NAMESPACE, kafkaNamespace);
+   }
+ 
+-  // @Test
++  @Test
+   void testReadWithKafkaSourceProviderUsingAssignConfig(SparkSession spark)
+       throws InterruptedException, TimeoutException, ExecutionException {
+     kafkaContainer.start();
+

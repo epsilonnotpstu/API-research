@@ -1,0 +1,2963 @@
+diff --git a/integration/spark/integrations/container/pysparkLoadComplete.json b/integration/spark/integrations/container/pysparkLoadComplete.json
+index 9e26dfeeb..f63cdabfe 100644
+--- a/integration/spark/integrations/container/pysparkLoadComplete.json
++++ b/integration/spark/integrations/container/pysparkLoadComplete.json
+@@ -1 +1,27 @@
+-{}
+\ No newline at end of file
++{
++  "eventType" : "COMPLETE",
++  "job" : {
++    "namespace" : "testCreateAsSelectAndLoad",
++    "name" : "open_lineage_integration_cta_s_load.execute_load"
++  },
++  "inputs" : [ ],
++  "outputs" : [ {
++    "namespace" : "file",
++    "name" : "/tmp/ctas_load",
++    "facets" : {
++      "dataSource" : {
++        "name" : "file",
++        "uri" : "file"
++      },
++      "schema" : {
++        "fields" : [ {
++          "name" : "a",
++          "type" : "long"
++        }, {
++          "name" : "b",
++          "type" : "long"
++        } ]
++      }
++    }
++  } ]
++}
+\ No newline at end of file
+diff --git a/integration/spark/integrations/container/pysparkLoadStart.json b/integration/spark/integrations/container/pysparkLoadStart.json
+index 9e26dfeeb..22978204e 100644
+--- a/integration/spark/integrations/container/pysparkLoadStart.json
++++ b/integration/spark/integrations/container/pysparkLoadStart.json
+@@ -1 +1,27 @@
+-{}
+\ No newline at end of file
++{
++  "eventType" : "START",
++  "job" : {
++    "namespace" : "testCreateAsSelectAndLoad",
++    "name" : "open_lineage_integration_cta_s_load.execute_load"
++  },
++  "inputs" : [ ],
++  "outputs" : [ {
++    "namespace" : "file",
++    "name" : "/tmp/ctas_load",
++    "facets" : {
++      "dataSource" : {
++        "name" : "file",
++        "uri" : "file"
++      },
++      "schema" : {
++        "fields" : [ {
++          "name" : "a",
++          "type" : "long"
++        }, {
++          "name" : "b",
++          "type" : "long"
++        } ]
++      }
++    }
++  } ]
++}
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparkrdd/1.json b/integration/spark/integrations/sparkrdd/1.json
+index 04a3163c3..72ee0d746 100644
+--- a/integration/spark/integrations/sparkrdd/1.json
++++ b/integration/spark/integrations/sparkrdd/1.json
+@@ -5,15 +5,11 @@
+     "runId" : "fake_run_id",
+     "facets" : {
+       "parent" : {
+-        "_producer" : "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "run" : {
+-          "runId" : "8d99e33e-2a1c-4254-9600-18f23435fc3b"
+-        },
++        "run" : {},
+         "job" : {
+           "namespace" : "ns_name",
+           "name" : "job_name"
+-        },
+-        "_schemaURL" : "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet"
++        }
+       },
+       "spark_version": {
+       }
+@@ -27,7 +23,5 @@
+     "namespace" : "gs.bucket",
+     "name" : "gs://bucket/data.txt"
+   } ],
+-  "outputs" : [ ],
+-  "producer" : "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL" : "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs" : [ ]
+ }
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparkrdd/2.json b/integration/spark/integrations/sparkrdd/2.json
+index 5a31b3ec5..4e4227217 100644
+--- a/integration/spark/integrations/sparkrdd/2.json
++++ b/integration/spark/integrations/sparkrdd/2.json
+@@ -5,15 +5,12 @@
+     "runId" : "fake_run_id",
+     "facets" : {
+       "parent" : {
+-        "_producer" : "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+         "run" : {
+-          "runId" : "8d99e33e-2a1c-4254-9600-18f23435fc3b"
+         },
+         "job" : {
+           "namespace" : "ns_name",
+           "name" : "job_name"
+-        },
+-        "_schemaURL" : "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet"
++        }
+       },
+       "spark_version": {
+       }
+@@ -27,7 +24,5 @@
+     "namespace" : "gs.bucket",
+     "name" : "gs://bucket/data.txt"
+   } ],
+-  "outputs" : [ ],
+-  "producer" : "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL" : "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs" : [ ]
+ }
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparksql/1.json b/integration/spark/integrations/sparksql/1.json
+index 43958a12e..651f08dd3 100644
+--- a/integration/spark/integrations/sparksql/1.json
++++ b/integration/spark/integrations/sparksql/1.json
+@@ -2,22 +2,15 @@
+   "eventType": "START",
+   "eventTime": "2021-01-01T00:00:00Z",
+   "run": {
+-    "runId": "fake_run_id",
+     "facets": {
+       "parent": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet",
+-        "run": {
+-          "runId": "ea445b5c-22eb-457a-8007-01c7c52b6e54"
+-        },
++        "run": {},
+         "job": {
+           "namespace": "ns_name",
+           "name": "job_name"
+         }
+       },
+       "spark_unknown": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "output": {
+           "description": {
+             "@class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -29,47 +22,14 @@
+                 "explicitMetadata": {
+                   "map": {}
+                 },
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+                 "deterministic": true,
+                 "resolved": true
+               }
+             ],
+-            "origin": {
+-              "line": null,
+-              "startPosition": null
+-            },
+-            "schema": [
+-              {
+-                "name": "count",
+-                "dataType": {
+-                  "numeric": {},
+-                  "integral": {},
+-                  "ordering": {}
+-                },
+-                "nullable": false,
+-                "metadata": {
+-                  "map": {}
+-                },
+-                "comment": null
+-              }
+-            ],
+             "allAttributes": {
+               "attrs": []
+             },
+             "resolved": true,
+-            "constraints": [
+-              {
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+-                "deterministic": true,
+-                "resolved": true
+-              }
+-            ],
+             "statsCache": null,
+             "traceEnabled": false,
+             "streaming": false,
+@@ -87,8 +47,6 @@
+         "inputs": []
+       },
+       "spark.logicalPlan": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "plan": [
+           {
+             "class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -202,7 +160,7 @@
+   },
+   "job": {
+     "namespace": "ns_name",
+-    "name": "word_count.hash_aggregate"
++    "name": "test_spark_sql.hash_aggregate"
+   },
+   "inputs": [
+     {
+@@ -210,8 +168,6 @@
+       "name": "/path/to/data",
+       "facets": {
+         "schema": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SchemaDatasetFacet",
+           "fields": [
+             {
+               "name": "value",
+@@ -220,15 +176,11 @@
+           ]
+         },
+         "dataSource": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DatasourceDatasetFacet",
+           "uri": "file",
+           "name": "file"
+         }
+       }
+     }
+   ],
+-  "outputs": [],
+-  "producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs": []
+ }
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparksql/2.json b/integration/spark/integrations/sparksql/2.json
+index 8955f74b7..991213074 100644
+--- a/integration/spark/integrations/sparksql/2.json
++++ b/integration/spark/integrations/sparksql/2.json
+@@ -2,22 +2,15 @@
+   "eventType": "COMPLETE",
+   "eventTime": "2021-01-01T00:00:00Z",
+   "run": {
+-    "runId": "fake_run_id",
+     "facets": {
+       "parent": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet",
+-        "run": {
+-          "runId": "ea445b5c-22eb-457a-8007-01c7c52b6e54"
+-        },
++        "run": {},
+         "job": {
+           "namespace": "ns_name",
+           "name": "job_name"
+         }
+       },
+       "spark_unknown": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "output": {
+           "description": {
+             "@class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -29,47 +22,14 @@
+                 "explicitMetadata": {
+                   "map": {}
+                 },
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+                 "deterministic": true,
+                 "resolved": true
+               }
+             ],
+-            "origin": {
+-              "line": null,
+-              "startPosition": null
+-            },
+-            "schema": [
+-              {
+-                "name": "count",
+-                "dataType": {
+-                  "numeric": {},
+-                  "integral": {},
+-                  "ordering": {}
+-                },
+-                "nullable": false,
+-                "metadata": {
+-                  "map": {}
+-                },
+-                "comment": null
+-              }
+-            ],
+             "allAttributes": {
+               "attrs": []
+             },
+             "resolved": true,
+-            "constraints": [
+-              {
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+-                "deterministic": true,
+-                "resolved": true
+-              }
+-            ],
+             "statsCache": null,
+             "traceEnabled": false,
+             "streaming": false,
+@@ -87,8 +47,6 @@
+         "inputs": []
+       },
+       "spark.logicalPlan": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "plan": [
+           {
+             "class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -219,7 +177,7 @@
+   },
+   "job": {
+     "namespace": "ns_name",
+-    "name": "word_count.hash_aggregate"
++    "name": "test_spark_sql.hash_aggregate"
+   },
+   "inputs": [
+     {
+@@ -227,8 +185,6 @@
+       "name": "/path/to/data",
+       "facets": {
+         "schema": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SchemaDatasetFacet",
+           "fields": [
+             {
+               "name": "value",
+@@ -237,15 +193,11 @@
+           ]
+         },
+         "dataSource": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DatasourceDatasetFacet",
+           "uri": "file",
+           "name": "file"
+         }
+       }
+     }
+   ],
+-  "outputs": [],
+-  "producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs": []
+ }
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparksql/3.json b/integration/spark/integrations/sparksql/3.json
+index d9a9f334f..1429b607d 100644
+--- a/integration/spark/integrations/sparksql/3.json
++++ b/integration/spark/integrations/sparksql/3.json
+@@ -2,22 +2,15 @@
+   "eventType": "START",
+   "eventTime": "2021-01-01T00:00:00Z",
+   "run": {
+-    "runId": "fake_run_id",
+     "facets": {
+       "parent": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet",
+-        "run": {
+-          "runId": "ea445b5c-22eb-457a-8007-01c7c52b6e54"
+-        },
++        "run": {},
+         "job": {
+           "namespace": "ns_name",
+           "name": "job_name"
+         }
+       },
+       "spark_unknown": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "output": {
+           "description": {
+             "@class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -29,47 +22,14 @@
+                 "explicitMetadata": {
+                   "map": {}
+                 },
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+                 "deterministic": true,
+                 "resolved": true
+               }
+             ],
+-            "origin": {
+-              "line": null,
+-              "startPosition": null
+-            },
+-            "schema": [
+-              {
+-                "name": "count",
+-                "dataType": {
+-                  "numeric": {},
+-                  "integral": {},
+-                  "ordering": {}
+-                },
+-                "nullable": false,
+-                "metadata": {
+-                  "map": {}
+-                },
+-                "comment": null
+-              }
+-            ],
+             "allAttributes": {
+               "attrs": []
+             },
+             "resolved": true,
+-            "constraints": [
+-              {
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+-                "deterministic": true,
+-                "resolved": true
+-              }
+-            ],
+             "statsCache": null,
+             "traceEnabled": false,
+             "streaming": false,
+@@ -87,8 +47,6 @@
+         "inputs": []
+       },
+       "spark.logicalPlan": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "plan": [
+           {
+             "class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -201,7 +159,7 @@
+   },
+   "job": {
+     "namespace": "ns_name",
+-    "name": "word_count.hash_aggregate"
++    "name": "test_spark_sql.hash_aggregate"
+   },
+   "inputs": [
+     {
+@@ -209,8 +167,6 @@
+       "name": "/path/to/data",
+       "facets": {
+         "schema": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SchemaDatasetFacet",
+           "fields": [
+             {
+               "name": "value",
+@@ -219,15 +175,11 @@
+           ]
+         },
+         "dataSource": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DatasourceDatasetFacet",
+           "uri": "file",
+           "name": "file"
+         }
+       }
+     }
+   ],
+-  "outputs": [],
+-  "producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs": []
+ }
+\ No newline at end of file
+diff --git a/integration/spark/integrations/sparksql/4.json b/integration/spark/integrations/sparksql/4.json
+index 2707611eb..c8070eba1 100644
+--- a/integration/spark/integrations/sparksql/4.json
++++ b/integration/spark/integrations/sparksql/4.json
+@@ -2,22 +2,15 @@
+   "eventType": "COMPLETE",
+   "eventTime": "2021-01-01T00:00:00Z",
+   "run": {
+-    "runId": "fake_run_id",
+     "facets": {
+       "parent": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/ParentRunFacet",
+-        "run": {
+-          "runId": "ea445b5c-22eb-457a-8007-01c7c52b6e54"
+-        },
++        "run": {},
+         "job": {
+           "namespace": "ns_name",
+           "name": "job_name"
+         }
+       },
+       "spark_unknown": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "output": {
+           "description": {
+             "@class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -29,47 +22,14 @@
+                 "explicitMetadata": {
+                   "map": {}
+                 },
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+                 "deterministic": true,
+                 "resolved": true
+               }
+             ],
+-            "origin": {
+-              "line": null,
+-              "startPosition": null
+-            },
+-            "schema": [
+-              {
+-                "name": "count",
+-                "dataType": {
+-                  "numeric": {},
+-                  "integral": {},
+-                  "ordering": {}
+-                },
+-                "nullable": false,
+-                "metadata": {
+-                  "map": {}
+-                },
+-                "comment": null
+-              }
+-            ],
+             "allAttributes": {
+               "attrs": []
+             },
+             "resolved": true,
+-            "constraints": [
+-              {
+-                "origin": {
+-                  "line": null,
+-                  "startPosition": null
+-                },
+-                "deterministic": true,
+-                "resolved": true
+-              }
+-            ],
+             "statsCache": null,
+             "traceEnabled": false,
+             "streaming": false,
+@@ -87,8 +47,6 @@
+         "inputs": []
+       },
+       "spark.logicalPlan": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/CustomFacet",
+         "plan": [
+           {
+             "class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+@@ -218,7 +176,7 @@
+   },
+   "job": {
+     "namespace": "ns_name",
+-    "name": "word_count.hash_aggregate"
++    "name": "test_spark_sql.hash_aggregate"
+   },
+   "inputs": [
+     {
+@@ -226,8 +184,6 @@
+       "name": "/path/to/data",
+       "facets": {
+         "schema": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SchemaDatasetFacet",
+           "fields": [
+             {
+               "name": "value",
+@@ -236,15 +192,11 @@
+           ]
+         },
+         "dataSource": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DatasourceDatasetFacet",
+           "uri": "file",
+           "name": "file"
+         }
+       }
+     }
+   ],
+-  "outputs": [],
+-  "producer": "https://github.com/OpenLineage/OpenLineage/tree/$VERSION/integration/spark",
+-  "schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  "outputs": []
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/OpenLineageSparkListener.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+index 67e4b481b..a38881cf6 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+@@ -165,6 +165,7 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+               } else {
+                 context = getExecutionContext(job.jobId());
+               }
++
+               context.setActiveJob(job);
+               context.start(jobStart);
+             });
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/BaseVisitorFactory.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/BaseVisitorFactory.java
+index 634263dfe..247a537f1 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/BaseVisitorFactory.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/BaseVisitorFactory.java
+@@ -69,10 +69,9 @@ abstract class BaseVisitorFactory implements VisitorFactory {
+     list.add(
+         new OutputDatasetVisitor(
+             new SaveIntoDataSourceCommandVisitor(sqlContext, allCommonVisitors)));
+-    list.add(
+-        new OutputDatasetWithMetadataVisitor(new CreateDataSourceTableAsSelectCommandVisitor()));
++    list.add(new OutputDatasetVisitor(new CreateDataSourceTableAsSelectCommandVisitor()));
+     list.add(new OutputDatasetVisitor(new AppendDataVisitor(allCommonVisitors)));
+-    list.add(new OutputDatasetVisitor(new InsertIntoDirVisitor(sqlContext)));
++    list.add(new OutputDatasetVisitor(new InsertIntoDirVisitor()));
+     if (InsertIntoHiveTableVisitor.hasHiveClasses()) {
+       list.add(new OutputDatasetVisitor(new InsertIntoHiveTableVisitor(sqlContext.sparkContext())));
+       list.add(new OutputDatasetVisitor(new InsertIntoHiveDirVisitor()));
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/ContextFactory.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/ContextFactory.java
+index cb077e6bb..894b939f4 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/ContextFactory.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/ContextFactory.java
+@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
+ import org.apache.spark.sql.SQLContext;
+ import org.apache.spark.sql.SparkSession;
+ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
++import org.apache.spark.sql.execution.QueryExecution;
+ import org.apache.spark.sql.execution.SQLExecution;
+ import scala.PartialFunction;
+ 
+@@ -29,7 +30,8 @@ public class ContextFactory {
+   }
+ 
+   public SparkSQLExecutionContext createSparkSQLExecutionContext(long executionId) {
+-    SQLContext sqlContext = SQLExecution.getQueryExecution(executionId).sparkPlan().sqlContext();
++    QueryExecution queryExecution = SQLExecution.getQueryExecution(executionId);
++    SQLContext sqlContext = queryExecution.sparkPlan().sqlContext();
+ 
+     VisitorFactory visitorFactory = VisitorFactoryProvider.getInstance(SparkSession.active());
+ 
+@@ -39,7 +41,8 @@ public class ContextFactory {
+     List<QueryPlanVisitor<LogicalPlan, OpenLineage.OutputDataset>> outputDatasets =
+         visitorFactory.getOutputVisitors(sqlContext, sparkContext.getJobNamespace());
+ 
+-    return new SparkSQLExecutionContext(executionId, sparkContext, outputDatasets, inputDatasets);
++    return new SparkSQLExecutionContext(
++        executionId, sparkContext, queryExecution, outputDatasets, inputDatasets);
+   }
+ 
+   private List<PartialFunction<LogicalPlan, List<OpenLineage.Dataset>>> commonDatasetVisitors(
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+index 2f4b7532b..1f44dadac 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+@@ -25,6 +25,7 @@ import java.util.Map;
+ import java.util.Objects;
+ import java.util.Optional;
+ import java.util.UUID;
++import java.util.concurrent.atomic.AtomicBoolean;
+ import java.util.stream.Collectors;
+ import lombok.extern.slf4j.Slf4j;
+ import org.apache.spark.SparkContext;
+@@ -36,7 +37,6 @@ import org.apache.spark.scheduler.SparkListenerJobStart;
+ import org.apache.spark.sql.SparkSession;
+ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+ import org.apache.spark.sql.execution.QueryExecution;
+-import org.apache.spark.sql.execution.SQLExecution;
+ import org.apache.spark.sql.execution.SparkPlan;
+ import org.apache.spark.sql.execution.WholeStageCodegenExec;
+ import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionEnd;
+@@ -61,29 +61,64 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+   private final OpenLineage openLineage =
+       new OpenLineage(OpenLineageClient.OPEN_LINEAGE_CLIENT_URI);
+ 
++  private AtomicBoolean started = new AtomicBoolean(false);
++  private AtomicBoolean finished = new AtomicBoolean(false);
++  private Optional<Integer> jobId = Optional.empty();
++
+   public SparkSQLExecutionContext(
+       long executionId,
+       OpenLineageContext sparkContext,
++      QueryExecution queryExecution,
+       List<QueryPlanVisitor<LogicalPlan, OpenLineage.OutputDataset>> outputDatasetSupplier,
+       List<QueryPlanVisitor<LogicalPlan, OpenLineage.InputDataset>> inputDatasetSupplier) {
+     this.executionId = executionId;
+     this.sparkContext = sparkContext;
+-    this.queryExecution = SQLExecution.getQueryExecution(executionId);
++    this.queryExecution = queryExecution;
+     this.outputDatasetSupplier = outputDatasetSupplier;
+     this.inputDatasetSupplier = inputDatasetSupplier;
+     this.jobMetrics = JobMetricsHolder.getInstance();
+   }
+ 
+-  public void start(SparkListenerSQLExecutionStart startEvent) {}
++  public void start(SparkListenerSQLExecutionStart startEvent) {
++    log.debug("SparkListenerSQLExecutionStart - executionId: {}", startEvent.executionId());
++    startEvent(startEvent.time());
++  }
+ 
+-  public void end(SparkListenerSQLExecutionEnd endEvent) {}
++  public void end(SparkListenerSQLExecutionEnd endEvent) {
++    log.debug("SparkListenerSQLExecutionEnd - executionId: {}", endEvent.executionId());
++    // TODO: can we get failed event here?
++    // If not, then we probably need to use this only for LogicalPlans that emit no Job events.
++    // Maybe use QueryExecutionListener?
++    endEvent(endEvent.time(), "COMPLETE", null);
++  }
+ 
+   @Override
+   public void setActiveJob(ActiveJob activeJob) {}
+ 
+   @Override
+   public void start(SparkListenerJobStart jobStart) {
+-    log.info("Starting job as part of spark-sql:" + jobStart.jobId());
++    log.debug("SparkListenerJobStart - executionId: " + executionId);
++    jobId = Optional.of(jobStart.jobId());
++    startEvent(jobStart.time());
++  }
++
++  @Override
++  public void end(SparkListenerJobEnd jobEnd) {
++    log.debug("SparkListenerJobEnd - executionId: " + executionId);
++    Exception exception = null;
++    if (jobEnd.jobResult() instanceof JobFailed) {
++      exception = ((JobFailed) jobEnd.jobResult()).exception();
++    }
++    jobId = Optional.of(jobEnd.jobId());
++    endEvent(jobEnd.time(), getEventType(jobEnd.jobResult()), exception);
++  }
++
++  void startEvent(Long time) {
++    if (!started.compareAndSet(false, true)) {
++      log.debug("Start event already emitted: returning");
++      return;
++    }
++
+     if (queryExecution == null) {
+       log.info("No execution info {}", queryExecution);
+       return;
+@@ -106,7 +141,7 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+     OpenLineage.RunEvent event =
+         openLineage
+             .newRunEventBuilder()
+-            .eventTime(toZonedTime(jobStart.time()))
++            .eventTime(toZonedTime(time))
+             .eventType("START")
+             .inputs(inputDatasets)
+             .outputs(outputDatasets)
+@@ -123,7 +158,7 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+             .job(buildJob(queryExecution))
+             .build();
+ 
+-    log.debug("Posting event for start {}: {}", jobStart, event);
++    log.debug("Posting event for start {}: {}", executionId, event);
+     sparkContext.emit(event);
+   }
+ 
+@@ -155,9 +190,12 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+                     runId, sparkContext.getParentJobName(), sparkContext.getJobNamespace()));
+   }
+ 
+-  @Override
+-  public void end(SparkListenerJobEnd jobEnd) {
+-    log.info("Ending job as part of spark-sql:" + jobEnd.jobId());
++  void endEvent(Long time, String eventType, Exception exception) {
++    if (!finished.compareAndSet(false, true)) {
++      log.debug("Event already finished, returning");
++      return;
++    }
++
+     if (queryExecution == null) {
+       log.info("No execution info {}", queryExecution);
+       return;
+@@ -167,6 +205,7 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+       log.debug("Traversing optimized plan {}", optimizedPlan.toJSON());
+       log.debug("Physical plan executed {}", queryExecution.executedPlan().toJSON());
+     }
++
+     PartialFunction<LogicalPlan, List<OpenLineage.OutputDataset>> outputVisitor =
+         merge(outputDatasetSupplier);
+     PartialFunction<LogicalPlan, List<OpenLineage.OutputDataset>> planTraversal =
+@@ -175,7 +214,9 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+         planTraversal.isDefinedAt(optimizedPlan)
+             ? planTraversal.apply(optimizedPlan)
+             : Collections.emptyList();
+-    outputDatasets = populateOutputMetrics(jobEnd.jobId(), outputDatasets);
++    if (jobId.isPresent()) {
++      outputDatasets = populateOutputMetrics(jobId.get(), outputDatasets);
++    }
+ 
+     List<InputDataset> inputDatasets = getInputDatasets();
+     UnknownEntryFacet unknownFacet = unknownEntryFacetListener.build(optimizedPlan).orElse(null);
+@@ -183,8 +224,8 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+     OpenLineage.RunEvent event =
+         openLineage
+             .newRunEventBuilder()
+-            .eventTime(toZonedTime(jobEnd.time()))
+-            .eventType(getEventType(jobEnd.jobResult()))
++            .eventTime(toZonedTime(time))
++            .eventType(eventType)
+             .inputs(inputDatasets)
+             .outputs(outputDatasets)
+             .run(
+@@ -194,14 +235,14 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+                         new SimpleImmutableEntry(
+                             "spark.logicalPlan", buildLogicalPlanFacet(queryExecution.logical())),
+                         new SimpleImmutableEntry(
+-                            "spark.exception", buildJobErrorFacet(jobEnd.jobResult())),
++                            "spark.exception", buildJobErrorFacet(eventType, exception)),
+                         new SimpleImmutableEntry("spark_unknown", unknownFacet),
+                         new SimpleImmutableEntry(
+                             "spark_version", new SparkVersionFacet(SparkSession.active())))))
+             .job(buildJob(queryExecution))
+             .build();
+ 
+-    log.debug("Posting event for start {}: {}", jobEnd, event);
++    log.debug("Posting event for end {}: {}", executionId, event);
+     sparkContext.emit(event);
+   }
+ 
+@@ -276,9 +317,9 @@ public class SparkSQLExecutionContext implements ExecutionContext {
+     return LogicalPlanFacet.builder().plan(plan).build();
+   }
+ 
+-  protected ErrorFacet buildJobErrorFacet(JobResult jobResult) {
+-    if (jobResult instanceof JobFailed && ((JobFailed) jobResult).exception() != null) {
+-      return ErrorFacet.builder().exception(((JobFailed) jobResult).exception()).build();
++  protected ErrorFacet buildJobErrorFacet(String jobResult, Exception exception) {
++    if (jobResult.equals("FAIL") && exception != null) {
++      return ErrorFacet.builder().exception(exception).build();
+     }
+     return null;
+   }
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/InsertIntoDirVisitor.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/InsertIntoDirVisitor.java
+index 75a08e0d1..22651b5f3 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/InsertIntoDirVisitor.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/InsertIntoDirVisitor.java
+@@ -6,7 +6,6 @@ import io.openlineage.spark.agent.util.ScalaConversionUtils;
+ import java.util.Collections;
+ import java.util.List;
+ import org.apache.hadoop.fs.Path;
+-import org.apache.spark.sql.SQLContext;
+ import org.apache.spark.sql.catalyst.catalog.CatalogStorageFormat;
+ import org.apache.spark.sql.catalyst.plans.logical.InsertIntoDir;
+ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+@@ -16,11 +15,6 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+  * OpenLineage.Dataset} being written.
+  */
+ public class InsertIntoDirVisitor extends QueryPlanVisitor<InsertIntoDir, OpenLineage.Dataset> {
+-  private final SQLContext sqlContext;
+-
+-  public InsertIntoDirVisitor(SQLContext sqlContext) {
+-    this.sqlContext = sqlContext;
+-  }
+ 
+   @Override
+   public List<OpenLineage.Dataset> apply(LogicalPlan x) {
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/SaveIntoDataSourceCommandVisitor.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/SaveIntoDataSourceCommandVisitor.java
+index bdf588990..7c40b7c25 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/SaveIntoDataSourceCommandVisitor.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/plan/SaveIntoDataSourceCommandVisitor.java
+@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableMap;
+ import com.google.common.collect.ImmutableMap.Builder;
+ import io.openlineage.client.OpenLineage;
+ import io.openlineage.spark.agent.util.PlanUtils;
++import java.sql.SQLException;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Optional;
+ import java.util.stream.Collectors;
++import lombok.extern.slf4j.Slf4j;
+ import org.apache.spark.sql.SQLContext;
+ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+ import org.apache.spark.sql.execution.datasources.LogicalRelation;
+@@ -23,6 +25,7 @@ import scala.Option;
+  * BaseRelation}, we wrap it with an artificial {@link LogicalRelation} so we can delegate to other
+  * plan visitors.
+  */
++@Slf4j
+ public class SaveIntoDataSourceCommandVisitor
+     extends QueryPlanVisitor<SaveIntoDataSourceCommand, OpenLineage.Dataset> {
+   private final SQLContext sqlContext;
+@@ -59,12 +62,26 @@ public class SaveIntoDataSourceCommandVisitor
+     if (KafkaRelationVisitor.isKafkaSource(command.dataSource())) {
+       return KafkaRelationVisitor.createKafkaDatasets(
+           command.dataSource(), command.options(), command.mode(), command.schema());
+-    } else if (command.dataSource() instanceof RelationProvider) {
+-      RelationProvider p = (RelationProvider) command.dataSource();
+-      relation = p.createRelation(sqlContext, command.options());
+-    } else {
+-      SchemaRelationProvider p = (SchemaRelationProvider) command.dataSource();
+-      relation = p.createRelation(sqlContext, command.options(), x.schema());
++    }
++    try {
++      if (command.dataSource() instanceof RelationProvider) {
++        RelationProvider p = (RelationProvider) command.dataSource();
++        relation = p.createRelation(sqlContext, command.options());
++      } else {
++        SchemaRelationProvider p = (SchemaRelationProvider) command.dataSource();
++        relation = p.createRelation(sqlContext, command.options(), x.schema());
++      }
++    } catch (Exception ex) {
++      // Bad detection of errors in scala
++      if (ex instanceof SQLException) {
++        // This can happen on SparkListenerSQLExecutionStart for example for sqlite, when database
++        // does not exist yet - it will be created as command execution
++        // Still, we can just ignore it on start, because it will work on end
++        // see SparkReadWriteIntegTest.testReadFromFileWriteToJdbc
++        log.warn("Can't create relation: ", ex);
++        return Collections.emptyList();
++      }
++      throw ex;
+     }
+     return Optional.ofNullable(
+             PlanUtils.applyFirst(
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageRunEventTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageRunEventTest.java
+index 3cb57f361..34df11cb5 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageRunEventTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageRunEventTest.java
+@@ -9,6 +9,7 @@ import io.openlineage.spark.agent.client.OpenLineageClient;
+ import io.openlineage.spark.agent.lifecycle.MatchesMapRecursively;
+ import java.io.IOException;
+ import java.net.URI;
++import java.net.URISyntaxException;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
+ import java.time.ZonedDateTime;
+@@ -24,11 +25,14 @@ public class OpenLineageRunEventTest {
+       new TypeReference<Map<String, Object>>() {};
+ 
+   @Test
+-  public void testSerializeRunEvent() throws IOException {
++  public void testSerializeRunEvent() throws IOException, URISyntaxException {
+     ObjectMapper mapper = OpenLineageClient.createMapper();
+ 
+     ZonedDateTime dateTime = ZonedDateTime.parse("2021-01-01T00:00:01.000000000+02:00[UTC]");
+-    OpenLineage ol = new OpenLineage(OpenLineageClient.OPEN_LINEAGE_CLIENT_URI);
++    OpenLineage ol =
++        new OpenLineage(
++            new URI(
++                "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark"));
+ 
+     UUID runId = UUID.fromString("5f24c93c-2ce9-49dc-82e7-95ab4915242f");
+     OpenLineage.RunFacets runFacets =
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java
+new file mode 100644
+index 000000000..dcb91c9d9
+--- /dev/null
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/OpenLineageSparkListenerTest.java
+@@ -0,0 +1,99 @@
++package io.openlineage.spark.agent;
++
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.times;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++import io.openlineage.client.OpenLineage;
++import io.openlineage.spark.agent.lifecycle.SparkSQLExecutionContext;
++import io.openlineage.spark.agent.lifecycle.plan.InsertIntoHadoopFsRelationVisitor;
++import io.openlineage.spark.agent.lifecycle.plan.wrapper.OutputDatasetVisitor;
++import java.util.Collections;
++import java.util.Properties;
++import org.apache.hadoop.fs.Path;
++import org.apache.spark.SparkContext;
++import org.apache.spark.scheduler.SparkListenerJobStart;
++import org.apache.spark.scheduler.StageInfo;
++import org.apache.spark.sql.SaveMode;
++import org.apache.spark.sql.SparkSession;
++import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
++import org.apache.spark.sql.execution.QueryExecution;
++import org.apache.spark.sql.execution.SparkPlan;
++import org.apache.spark.sql.execution.SparkPlanInfo;
++import org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationCommand;
++import org.apache.spark.sql.execution.ui.SparkListenerSQLExecutionStart;
++import org.apache.spark.sql.types.IntegerType$;
++import org.apache.spark.sql.types.Metadata;
++import org.apache.spark.sql.types.StructField;
++import org.apache.spark.sql.types.StructType;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.ArgumentCaptor;
++import scala.Option;
++import scala.collection.Map$;
++import scala.collection.Seq$;
++
++@ExtendWith(SparkAgentTestExtension.class)
++public class OpenLineageSparkListenerTest {
++  @Test
++  public void testSqlEventWithJobEventEmitsOnce(SparkSession sparkSession) {
++    OpenLineageContext context = mock(OpenLineageContext.class);
++    QueryExecution qe = mock(QueryExecution.class);
++    LogicalPlan query = mock(LogicalPlan.class);
++    SparkPlan plan = mock(SparkPlan.class);
++
++    when(query.schema())
++        .thenReturn(
++            new StructType(
++                new StructField[] {
++                  new StructField("key", IntegerType$.MODULE$, false, Metadata.empty())
++                }));
++
++    when(qe.optimizedPlan())
++        .thenReturn(
++            new InsertIntoHadoopFsRelationCommand(
++                new Path("file:///tmp/dir"),
++                null,
++                false,
++                Seq$.MODULE$.empty(),
++                Option.empty(),
++                null,
++                Map$.MODULE$.empty(),
++                query,
++                SaveMode.Overwrite,
++                Option.empty(),
++                Option.empty(),
++                Seq$.MODULE$.<String>empty()));
++
++    when(qe.executedPlan()).thenReturn(plan);
++    when(plan.sparkContext()).thenReturn(SparkContext.getOrCreate());
++    when(plan.nodeName()).thenReturn("execute");
++
++    SparkSQLExecutionContext executionContext =
++        new SparkSQLExecutionContext(
++            1L,
++            context,
++            qe,
++            Collections.singletonList(
++                new OutputDatasetVisitor(new InsertIntoHadoopFsRelationVisitor())),
++            Collections.emptyList());
++
++    executionContext.start(
++        new SparkListenerSQLExecutionStart(
++            1L,
++            "",
++            "",
++            "",
++            new SparkPlanInfo(
++                "name", "string", Seq$.MODULE$.empty(), Map$.MODULE$.empty(), Seq$.MODULE$.empty()),
++            1L));
++    executionContext.start(
++        new SparkListenerJobStart(0, 2L, Seq$.MODULE$.<StageInfo>empty(), new Properties()));
++
++    ArgumentCaptor<OpenLineage.RunEvent> lineageEvent =
++        ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
++
++    verify(context, times(1)).emit(lineageEvent.capture());
++  }
++}
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/SparkContainerIntegrationTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/SparkContainerIntegrationTest.java
+index 2ec6e143b..a1f111dee 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/SparkContainerIntegrationTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/SparkContainerIntegrationTest.java
+@@ -349,10 +349,9 @@ public class SparkContainerIntegrationTest {
+     String startCTASEvent = new String(readAllBytes(eventFolder.resolve("pysparkCTASStart.json")));
+     String completeCTASEvent = new String(readAllBytes(eventFolder.resolve("pysparkCTASEnd.json")));
+ 
+-    //    String startLoadEvent =
+-    //      new String(readAllBytes(eventFolder.resolve("pysparkLoadStart.json")));
+-    //    String completeLoadEvent =
+-    //      new String(readAllBytes(eventFolder.resolve("pysparkLoadComplete.json")));
++    String startLoadEvent = new String(readAllBytes(eventFolder.resolve("pysparkLoadStart.json")));
++    String completeLoadEvent =
++        new String(readAllBytes(eventFolder.resolve("pysparkLoadComplete.json")));
+ 
+     mockServerClient.verify(
+         request()
+@@ -361,12 +360,11 @@ public class SparkContainerIntegrationTest {
+         request()
+             .withPath("/api/v1/lineage")
+             .withBody(json(completeCTASEvent, MatchType.ONLY_MATCHING_FIELDS)));
+-    //      TODO: Those do not fire since LoadDataCommand do not fire SparkListenerJobEnd event
+-    //      request()
+-    //        .withPath("/api/v1/lineage")
+-    //        .withBody(json(startLoadEvent, MatchType.ONLY_MATCHING_FIELDS)),
+-    //      request()
+-    //        .withPath("/api/v1/lineage")
+-    //        .withBody(json(completeLoadEvent, MatchType.ONLY_MATCHING_FIELDS)));
++    request()
++        .withPath("/api/v1/lineage")
++        .withBody(json(startLoadEvent, MatchType.ONLY_MATCHING_FIELDS));
++    request()
++        .withPath("/api/v1/lineage")
++        .withBody(json(completeLoadEvent, MatchType.ONLY_MATCHING_FIELDS));
+   }
+ }
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
+index e7256dc40..10573e22e 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
+@@ -22,6 +22,7 @@ import java.nio.file.Paths;
+ import java.time.Instant;
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.Collections;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Optional;
+@@ -206,8 +207,11 @@ class LogicalPlanSerializerTest {
+     Map<String, Object> expectedHadoopFSNode =
+         objectMapper.readValue(expectedHadoopFSNodePath.toFile(), mapTypeReference);
+ 
+-    assertThat(commandActualNode).satisfies(new MatchesMapRecursively(expectedCommandNode));
+-    assertThat(hadoopFSActualNode).satisfies(new MatchesMapRecursively(expectedHadoopFSNode));
++    assertThat(commandActualNode)
++        .satisfies(new MatchesMapRecursively(expectedCommandNode, Collections.singleton("exprId")));
++    assertThat(hadoopFSActualNode)
++        .satisfies(
++            new MatchesMapRecursively(expectedHadoopFSNode, Collections.singleton("exprId")));
+   }
+ 
+   private CatalogTable getCatalogTable() throws InvocationTargetException, IllegalAccessException {
+@@ -297,7 +301,7 @@ class LogicalPlanSerializerTest {
+ 
+     Map<String, Object> commandActualNode =
+         objectMapper.readValue(logicalPlanSerializer.serialize(command), mapTypeReference);
+-    Map<String, Object> hadoopFSActualNode =
++    Map<String, Object> bigqueryActualNode =
+         objectMapper.readValue(logicalPlanSerializer.serialize(logicalRelation), mapTypeReference);
+ 
+     Path expectedCommandNodePath =
+@@ -310,9 +314,12 @@ class LogicalPlanSerializerTest {
+     Map<String, Object> expectedBigQueryRelationNode =
+         objectMapper.readValue(expectedBigQueryRelationNodePath.toFile(), mapTypeReference);
+ 
+-    assertThat(commandActualNode).satisfies(new MatchesMapRecursively(expectedCommandNode));
+-    assertThat(hadoopFSActualNode)
+-        .satisfies(new MatchesMapRecursively(expectedBigQueryRelationNode));
++    assertThat(commandActualNode)
++        .satisfies(new MatchesMapRecursively(expectedCommandNode, Collections.singleton("exprId")));
++    assertThat(bigqueryActualNode)
++        .satisfies(
++            new MatchesMapRecursively(
++                expectedBigQueryRelationNode, Collections.singleton("exprId")));
+   }
+ 
+   @SuppressWarnings("rawtypes")
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/MatchesMapRecursively.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/MatchesMapRecursively.java
+index f8ed8caca..fa1743b44 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/MatchesMapRecursively.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/MatchesMapRecursively.java
+@@ -2,6 +2,7 @@ package io.openlineage.spark.agent.lifecycle;
+ 
+ import io.openlineage.spark.agent.client.OpenLineageClient;
+ import java.util.HashSet;
++import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.function.Predicate;
+@@ -9,10 +10,10 @@ import org.assertj.core.api.AbstractObjectAssert;
+ import org.assertj.core.api.Condition;
+ 
+ /**
+- * Custom Condition writen for recursive comparison of Map with ability to ignore specified Map keys
+- * AssertJ Built-in recursive comparison is not working with Map type, it can ignore only object
+- * properties Example usage: assertThat(actualMap).satisfies(new MatchesMapRecursively(expectedMap,
+- * new HashSet<>(Arrays.asList("runId"))));
++ * Custom Condition writen for recursive comparison of Map and List with ability to ignore specified
++ * Map keys AssertJ Built-in recursive comparison is not working with Map type, it can ignore only
++ * object properties Example usage: assertThat(actualMap).satisfies(new
++ * MatchesMapRecursively(expectedMap, new HashSet<>(Arrays.asList("runId"))));
+  *
+  * @see AbstractObjectAssert#usingRecursiveComparison()
+  */
+@@ -32,24 +33,58 @@ public class MatchesMapRecursively extends Condition<Map<String, Object>> {
+         target);
+   }
+ 
++  public static Predicate<List<Object>> predicate(List<Object> target, Set<String> omittedKeys) {
++    return (list) -> {
++      if (target.size() != list.size()) {
++        return false;
++      }
++      for (int i = 0; i < target.size(); i++) {
++        boolean eq;
++        if (target.get(i) instanceof Map) {
++          eq =
++              MatchesMapRecursively.predicate((Map<String, Object>) target.get(i), omittedKeys)
++                  .test((Map<String, Object>) target.get(i));
++        } else if (target.get(i) instanceof List) {
++          eq =
++              MatchesMapRecursively.predicate((List<Object>) target.get(i), omittedKeys)
++                  .test((List<Object>) list.get(i));
++        } else if (list.get(i) == null) {
++          eq = true;
++        } else {
++          eq = target.get(i).equals(list.get(i));
++        }
++        if (!eq) {
++          return false;
++        }
++      }
++      return true;
++    };
++  }
++
+   public static Predicate<Map<String, Object>> predicate(
+-      Map<String, Object> target, Set<String> ommittedKeys) {
++      Map<String, Object> target, Set<String> omittedKeys) {
+     return (map) -> {
+       if (!map.keySet().containsAll(target.keySet())) {
+         return false;
+       }
+       for (String k : target.keySet()) {
+-        if (!ommittedKeys.contains(k)) {
++        if (omittedKeys.contains(k)) {
+           continue;
+         }
+         Object val = map.get(k);
+         boolean eq;
+         if (val instanceof Map) {
+           eq =
+-              MatchesMapRecursively.predicate((Map<String, Object>) target.get(k), ommittedKeys)
++              MatchesMapRecursively.predicate((Map<String, Object>) target.get(k), omittedKeys)
+                   .test((Map<String, Object>) val);
++        } else if (val instanceof List) {
++          eq =
++              MatchesMapRecursively.predicate((List<Object>) target.get(k), omittedKeys)
++                  .test((List<Object>) val);
+         } else if (k.equals("_producer") || k.equals("producer")) {
+           eq = OpenLineageClient.OPEN_LINEAGE_CLIENT_URI.toString().equals(val);
++        } else if (val == null) {
++          eq = true;
+         } else {
+           eq = val.equals(target.get(k));
+         }
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
+index d0b461b59..a983b08d8 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/SparkReadWriteIntegTest.java
+@@ -271,6 +271,7 @@ public class SparkReadWriteIntegTest {
+       throws IOException, InterruptedException, TimeoutException {
+     Path testFile = writeTestDataToFile(tempDir);
+     Path parquetDir = tempDir.resolve("parquet").toAbsolutePath();
++    // Two events from CreateViewCommand
+     spark.read().json("file://" + testFile.toAbsolutePath()).createOrReplaceTempView("testdata");
+     spark.sql(
+         "INSERT OVERWRITE DIRECTORY '"
+@@ -284,7 +285,7 @@ public class SparkReadWriteIntegTest {
+     ArgumentCaptor<OpenLineage.RunEvent> lineageEvent =
+         ArgumentCaptor.forClass(OpenLineage.RunEvent.class);
+ 
+-    Mockito.verify(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT, times(4))
++    Mockito.verify(SparkAgentTestExtension.OPEN_LINEAGE_SPARK_CONTEXT, times(6))
+         .emit(lineageEvent.capture());
+     List<OpenLineage.RunEvent> events = lineageEvent.getAllValues();
+     Optional<OpenLineage.RunEvent> completionEvent =
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/StaticExecutionContextFactory.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/StaticExecutionContextFactory.java
+index 203f873cd..f3ead65eb 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/StaticExecutionContextFactory.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/StaticExecutionContextFactory.java
+@@ -90,7 +90,7 @@ public class StaticExecutionContextFactory extends ContextFactory {
+ 
+               SparkSQLExecutionContext sparksql =
+                   new SparkSQLExecutionContext(
+-                      executionId, sparkContext, outputDatasets, inputDatasets) {
++                      executionId, sparkContext, qe, outputDatasets, inputDatasets) {
+                     @Override
+                     public ZonedDateTime toZonedTime(long time) {
+                       return getZonedTime();
+@@ -121,7 +121,11 @@ public class StaticExecutionContextFactory extends ContextFactory {
+         .orElseGet(
+             () ->
+                 new SparkSQLExecutionContext(
+-                    executionId, sparkContext, Collections.emptyList(), Collections.emptyList()));
++                    executionId,
++                    sparkContext,
++                    null,
++                    Collections.emptyList(),
++                    Collections.emptyList()));
+   }
+ 
+   private static List<PartialFunction<LogicalPlan, List<OpenLineage.Dataset>>>
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LoadDataCommandVisitorTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LoadDataCommandVisitorTest.java
+index 858251c1d..dfee6ce60 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LoadDataCommandVisitorTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LoadDataCommandVisitorTest.java
+@@ -3,7 +3,6 @@ package io.openlineage.spark.agent.lifecycle.plan;
+ import static org.assertj.core.api.Assertions.assertThat;
+ 
+ import io.openlineage.client.OpenLineage;
+-import io.openlineage.spark.agent.SparkAgentTestExtension;
+ import java.util.List;
+ import org.apache.spark.sql.SparkSession;
+ import org.apache.spark.sql.catalyst.TableIdentifier$;
+@@ -14,12 +13,10 @@ import org.apache.spark.sql.types.StringType$;
+ import org.apache.spark.sql.types.StructField;
+ import org.apache.spark.sql.types.StructType;
+ import org.junit.jupiter.api.Test;
+-import org.junit.jupiter.api.extension.ExtendWith;
+ import scala.Option;
+ import scala.collection.Map$;
+ import scala.collection.immutable.HashMap;
+ 
+-@ExtendWith(SparkAgentTestExtension.class)
+ class LoadDataCommandVisitorTest {
+   @Test
+   void testLoadDataCommand() {
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LogicalRDDVisitorTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LogicalRDDVisitorTest.java
+index d45ffa745..13928e9e3 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LogicalRDDVisitorTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/plan/LogicalRDDVisitorTest.java
+@@ -31,8 +31,8 @@ import org.junit.jupiter.api.AfterEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.junit.jupiter.api.io.TempDir;
++import scala.collection.Seq$;
+ import scala.collection.immutable.HashMap;
+-import scala.collection.immutable.Seq$;
+ 
+ @ExtendWith(SparkAgentTestExtension.class)
+ class LogicalRDDVisitorTest {
+@@ -55,7 +55,7 @@ class LogicalRDDVisitorTest {
+               new StructField("aString", StringType$.MODULE$, false, new Metadata(new HashMap<>()))
+             });
+     jobConf = new JobConf();
+-    FileInputFormat.addInputPath(jobConf, new org.apache.hadoop.fs.Path("file:///path/to/data/"));
++    FileInputFormat.addInputPath(jobConf, new org.apache.hadoop.fs.Path("file://" + tmpDir));
+     RDD<InternalRow> hadoopRdd =
+         new HadoopRDD<>(
+                 session.sparkContext(),
+@@ -82,7 +82,7 @@ class LogicalRDDVisitorTest {
+     List<OpenLineage.Dataset> datasets = visitor.apply(logicalRDD);
+     assertThat(datasets)
+         .singleElement()
+-        .hasFieldOrPropertyWithValue("name", "/path/to/data")
++        .hasFieldOrPropertyWithValue("name", tmpDir.toString())
+         .hasFieldOrPropertyWithValue("namespace", "file");
+   }
+ }
+diff --git a/integration/spark/src/test/resources/spark_scripts/spark_ctas_load.py b/integration/spark/src/test/resources/spark_scripts/spark_ctas_load.py
+index 93b98cd6a..d4ce5269c 100644
+--- a/integration/spark/src/test/resources/spark_scripts/spark_ctas_load.py
++++ b/integration/spark/src/test/resources/spark_scripts/spark_ctas_load.py
+@@ -21,5 +21,4 @@ df.createOrReplaceTempView('temp')
+ 
+ spark.sql("CREATE TABLE tbl USING hive LOCATION '/tmp/ctas_load' AS SELECT a, b FROM temp")
+ 
+-# TODO: Does not generate event since it does not fire SparkListenerJobEnd
+-# spark.sql(f"LOAD DATA INPATH '/test_data/test_data.csv' INTO TABLE tbl")
++spark.sql(f"LOAD DATA INPATH '/test_data/test_data.csv' INTO TABLE tbl")
+diff --git a/integration/spark/src/test/resources/test_data/serde/aggregate-node.json b/integration/spark/src/test/resources/test_data/serde/aggregate-node.json
+index b5b23e8d7..70c4e173c 100644
+--- a/integration/spark/src/test/resources/test_data/serde/aggregate-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/aggregate-node.json
+@@ -2,32 +2,18 @@
+   "@class": "org.apache.spark.sql.catalyst.plans.logical.Aggregate",
+   "groupingExpressions": [],
+   "aggregateExpressions": [],
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [],
+   "allAttributes": {
+     "attrs": [
+       {
+         "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+         "nullable": false,
+-        "metadata": null,
+         "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+         "deterministic": true,
+         "resolved": true
+       }
+     ]
+   },
+   "resolved": true,
+-  "statsCache": null,
+   "traceEnabled": false,
+   "streaming": false,
+   "canonicalizedPlan": false
+diff --git a/integration/spark/src/test/resources/test_data/serde/bigqueryrelation-node.json b/integration/spark/src/test/resources/test_data/serde/bigqueryrelation-node.json
+index f177caf46..46cf77c7a 100644
+--- a/integration/spark/src/test/resources/test_data/serde/bigqueryrelation-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/bigqueryrelation-node.json
+@@ -1,5 +1,7 @@
+ {
++  "@class": "org.apache.spark.sql.execution.datasources.LogicalRelation",
+   "relation": {
++    "@class": "com.google.cloud.spark.bigquery.BigQueryRelation",
+     "options": {
+       "tableId": {
+         "project": null,
+@@ -14,122 +16,80 @@
+       "credentialsKey": {
+         "present": false
+       },
+-      "credentialsFile": {
+-        "present": false
+-      },
+[REDACTED credential-related line]
+-        "present": false
+-      },
+-      "filter": {
+-        "present": false
+-      },
+-      "schema": {
+-        "present": false
+-      },
++      "credentialsFile": 6,
+[REDACTED credential-related line]
++      "filter": 6,
+       "maxParallelism": {
+-        "asInt": 2,
+-        "present": true
++        "isPresent": true,
++        "asInt": 2
+       },
+       "defaultParallelism": 10,
+-      "temporaryGcsBucket": {
+-        "present": false
+-      },
+-      "persistentGcsBucket": {
+-        "present": false
+-      },
+-      "persistentGcsPath": {
+-        "present": false
+-      },
++      "temporaryGcsBucket": 6,
++      "persistentGcsBucket": 6,
++      "persistentGcsPath": 6,
+       "intermediateFormat": "PARQUET",
+       "readDataFormat": "ARROW",
+       "combinePushedDownFilters": true,
+       "viewsEnabled": false,
+-      "materializationProject": {
+-        "present": false
+-      },
+-      "materializationDataset": {
+-        "present": false
+-      },
+-      "partitionField": {
+-        "present": false
+-      },
++      "materializationProject": 6,
++      "materializationDataset": 6,
++      "partitionField": 6,
+       "partitionExpirationMs": {
+-        "asLong": 2,
+-        "present": true
+-      },
+-      "partitionRequireFilter": {
+-        "present": false
+-      },
+-      "partitionType": {
+-        "present": false
+-      },
+-      "clusteredFields": {
+-        "present": false
+-      },
+-      "createDisposition": {
+-        "present": false
++        "isPresent": true,
++        "asLong": 2
+       },
++      "partitionRequireFilter": 6,
++      "partitionType": 6,
++      "clusteredFields": 6,
++      "createDisposition": 6,
+       "optimizedEmptyProjection": true,
+       "useAvroLogicalTypes": false,
+       "loadSchemaUpdateOptions": [],
+       "materializationExpirationTimeInMinutes": 1440,
+       "maxReadRowsRetries": 3,
++      "pushAllFilters": true,
++      "tableIdWithoutThePartition": 4,
+       "partitionTypeOrDefault": "DAY",
+       "bigQueryClientConnectTimeout": 60000,
+       "bigQueryClientReadTimeout": 60000,
+       "bigQueryClientRetrySettings": {
+         "totalTimeout": {
+           "seconds": 600,
+-          "zero": false,
+           "negative": false,
+-          "units": [
+-            "SECONDS",
+-            "NANOS"
+-          ],
++          "zero": false,
++          "units": ["SECONDS", "NANOS"],
+           "nano": 0
+         },
+         "initialRetryDelay": {
+           "seconds": 1,
+-          "zero": false,
+           "negative": false,
+-          "units": [
+-            "SECONDS",
+-            "NANOS"
+-          ],
++          "zero": false,
++          "units": ["SECONDS", "NANOS"],
+           "nano": 250000000
+         },
+         "retryDelayMultiplier": 1.6,
+         "maxRetryDelay": {
+           "seconds": 5,
+-          "zero": false,
+           "negative": false,
+-          "units": [
+-            "SECONDS",
+-            "NANOS"
+-          ],
++          "zero": false,
++          "units": ["SECONDS", "NANOS"],
+           "nano": 0
+         },
+         "maxAttempts": 0,
+         "jittered": true,
+         "initialRpcTimeout": {
+           "seconds": 60,
+-          "zero": false,
+           "negative": false,
+-          "units": [
+-            "SECONDS",
+-            "NANOS"
+-          ],
++          "zero": false,
++          "units": ["SECONDS", "NANOS"],
+           "nano": 0
+         },
+         "rpcTimeoutMultiplier": 1.6,
+         "maxRpcTimeout": {
+           "seconds": 300,
+-          "zero": false,
+           "negative": false,
+-          "units": [
+-            "SECONDS",
+-            "NANOS"
+-          ],
++          "zero": false,
++          "units": ["SECONDS", "NANOS"],
+           "nano": 0
+         }
+       }
+@@ -152,119 +112,28 @@
+       "numBytes": null,
+       "numLongTermBytes": null,
+       "numRows": null,
+-      "definition": {
+-        "type": {},
+-        "schema": {
+-          "fields": [
+-            {
+-              "name": "name",
+-              "type": {
+-                "standardType": "STRING"
+-              },
+-              "subFields": null,
+-              "mode": null,
+-              "description": null,
+-              "policyTags": null
+-            }
+-          ]
+-        }
+-      },
+-      "encryptionConfiguration": null,
+-      "labels": {},
+-      "requirePartitionFilter": null
+-    },
+-    "tableId": {
+-      "project": null,
+-      "dataset": "dataset",
+-      "table": "test",
+-      "iamresourceName": "projects/null/datasets/dataset/tables/test"
+-    },
+-    "tableName": "dataset.test",
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": true,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
++      "definition": {}
+       }
+-    ],
++    },
+     "traceEnabled": false
+   },
+-  "output": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "a822420c-ca2f-483b-a3c1-4e561ccae8d6"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  ],
++  "output": [{
++    "name": "name",
++    "nullable": false,
++    "metadata": {
++      "map": {}
++    },
++    "qualifier": [],
++    "deterministic": true,
++    "resolved": true
++  }],
+   "catalogTable": null,
+   "isStreaming": false,
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "comment": null
+-    }
+-  ],
+   "allAttributes": {
+     "attrs": []
+   },
+   "resolved": true,
+   "statsCache": null,
+-  "attributeMap": {
+-    "name#1": {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "a822420c-ca2f-483b-a3c1-4e561ccae8d6"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  },
+   "traceEnabled": false,
+   "canonicalizedPlan": false
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/test/resources/test_data/serde/hadoopfsrelation-node.json b/integration/spark/src/test/resources/test_data/serde/hadoopfsrelation-node.json
+index 1a95afbe5..a82ddfb92 100644
+--- a/integration/spark/src/test/resources/test_data/serde/hadoopfsrelation-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/hadoopfsrelation-node.json
+@@ -1,11 +1,8 @@
+ {
+-  "@class":"org.apache.spark.sql.execution.datasources.LogicalRelation",
++  "@class": "org.apache.spark.sql.execution.datasources.LogicalRelation",
+   "relation": {
+-    "@class":"org.apache.spark.sql.execution.datasources.HadoopFsRelation",
++    "@class": "org.apache.spark.sql.execution.datasources.HadoopFsRelation",
+     "location": {
+-      "sparkSession": {
+-        "traceEnabled": false
+-      },
+       "table": {
+         "identifier": {
+           "table": "test",
+@@ -23,27 +20,10 @@
+           "compressed": false,
+           "properties": {}
+         },
+-        "schema": [
+-          {
+-            "name": "name",
+-            "dataType": {
+-              "ordering": {}
+-            },
+-            "nullable": false,
+-            "metadata": {
+-              "map": {}
+-            },
+-            "comment": null
+-          }
+-        ],
+         "provider": null,
+-        "partitionColumnNames": [
+-          "name"
+-        ],
++        "partitionColumnNames": ["name"],
+         "bucketSpec": null,
+         "owner": "",
+-        "createTime": 1631621948,
+-        "lastAccessTime": 1631621948,
+         "createVersion": "v1",
+         "properties": {},
+         "stats": null,
+@@ -56,141 +36,27 @@
+       },
+       "sizeInBytes": 100,
+       "hadoopConf": {
+-        "finalParameters": [
+-          "mapreduce.job.end-notification.max.retry.interval",
+-          "mapreduce.job.end-notification.max.attempts"
+-        ]
++        "finalParameters": ["mapreduce.job.end-notification.max.retry.interval", "mapreduce.job.end-notification.max.attempts"]
+       }
+     },
+-    "partitionSchema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
+-    "dataSchema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
+     "bucketSpec": null,
+     "fileFormat": {},
+-    "options": {},
+-    "sparkSession": {
+-      "traceEnabled": false
+-    },
+-    "overlappedPartCols": {
+-      "name": {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    },
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ]
++    "options": {}
+   },
+-  "output": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "bd5688b3-28fa-4539-9fdc-9f52e777a577"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  ],
++  "output": [{
++    "name": "name",
++    "nullable": false,
++    "qualifier": [],
++    "deterministic": true,
++    "resolved": true
++  }],
+   "catalogTable": null,
+   "isStreaming": false,
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "comment": null
+-    }
+-  ],
+   "allAttributes": {
+     "attrs": []
+   },
+   "resolved": true,
+   "statsCache": null,
+-  "attributeMap": {
+-    "name#1": {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "bd5688b3-28fa-4539-9fdc-9f52e777a577"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  },
+   "traceEnabled": false,
+   "canonicalizedPlan": false
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/test/resources/test_data/serde/insertintods-node.json b/integration/spark/src/test/resources/test_data/serde/insertintods-node.json
+index 18872af47..e909c4715 100644
+--- a/integration/spark/src/test/resources/test_data/serde/insertintods-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/insertintods-node.json
+@@ -1,390 +1,145 @@
+ {
++  "@class": "org.apache.spark.sql.execution.datasources.InsertIntoDataSourceCommand",
+   "logicalRelation": {
+-    "@class":"org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationCommand",
++    "@class": "org.apache.spark.sql.execution.datasources.LogicalRelation",
+     "relation": {
+-      "location": {
+-        "sparkSession": {
+-          "traceEnabled": false
+-        },
+-        "table": {
+-          "identifier": {
+-            "table": "test",
+-            "database": "db",
+-            "identifier": "test"
+-          },
+-          "tableType": {
+-            "name": "MANAGED"
+-          },
+-          "storage": {
+-            "locationUri": null,
+-            "inputFormat": null,
+-            "outputFormat": null,
+-            "serde": null,
+-            "compressed": false,
+-            "properties": {}
+-          },
+-          "schema": [
+-            {
+-              "name": "name",
+-              "dataType": {
+-                "ordering": {}
+-              },
+-              "nullable": false,
+-              "metadata": {
+-                "map": {}
+-              },
+-              "comment": null
+-            }
+-          ],
+-          "provider": null,
+-          "partitionColumnNames": [
+-            "name"
+-          ],
+-          "bucketSpec": null,
+-          "owner": "",
+-          "createTime": 1631621948,
+-          "lastAccessTime": 1631621948,
+-          "createVersion": "v1",
+-          "properties": {},
+-          "stats": null,
+-          "viewText": null,
+-          "comment": null,
+-          "unsupportedFeatures": [],
+-          "tracksPartitionsInCatalog": false,
+-          "schemaPreservesCase": false,
+-          "ignoredProperties": {}
+-        },
+-        "sizeInBytes": 100,
+-        "hadoopConf": {
+-          "finalParameters": [
+-            "mapreduce.job.end-notification.max.retry.interval",
+-            "mapreduce.job.end-notification.max.attempts"
+-          ]
++      "@class": "com.google.cloud.spark.bigquery.BigQueryRelation",
++      "options": {
++        "tableId": {
++          "dataset": "test-dataset",
++          "table": "QUERY",
++          "iamresourceName": "projects/null/datasets/test-dataset/tables/QUERY"
++        },
++        "query": {
++          "present": true
++        },
++        "parentProjectId": "test_serialization",
++        "credentialsKey": {
++          "present": false
++        },
++        "credentialsFile": 7,
+[REDACTED credential-related line]
++        "filter": 7,
++        "maxParallelism": {
++          "isPresent": true,
++          "asInt": 2
++        },
++        "defaultParallelism": 10,
++        "temporaryGcsBucket": 7,
++        "persistentGcsBucket": 7,
++        "persistentGcsPath": 7,
++        "intermediateFormat": "PARQUET",
++        "readDataFormat": "ARROW",
++        "combinePushedDownFilters": true,
++        "viewsEnabled": false,
++        "materializationProject": 7,
++        "materializationDataset": 7,
++        "partitionField": 7,
++        "partitionExpirationMs": {
++          "isPresent": true,
++          "asLong": 2
++        },
++        "partitionRequireFilter": 7,
++        "partitionType": 7,
++        "clusteredFields": 7,
++        "createDisposition": 7,
++        "optimizedEmptyProjection": true,
++        "useAvroLogicalTypes": false,
++        "loadSchemaUpdateOptions": [],
++        "materializationExpirationTimeInMinutes": 1440,
++        "maxReadRowsRetries": 3,
++        "pushAllFilters": true,
++        "tableIdWithoutThePartition": 5,
++        "partitionTypeOrDefault": "DAY",
++        "bigQueryClientConnectTimeout": 60000,
++        "bigQueryClientReadTimeout": 60000,
++        "bigQueryClientRetrySettings": {
++          "totalTimeout": {
++            "seconds": 600,
++            "negative": false,
++            "zero": false,
++            "units": ["SECONDS", "NANOS"],
++            "nano": 0
++          },
++          "initialRetryDelay": {
++            "seconds": 1,
++            "negative": false,
++            "zero": false,
++            "units": ["SECONDS", "NANOS"],
++            "nano": 250000000
++          },
++          "retryDelayMultiplier": 1.6,
++          "maxRetryDelay": {
++            "seconds": 5,
++            "negative": false,
++            "zero": false,
++            "units": ["SECONDS", "NANOS"],
++            "nano": 0
++          },
++          "maxAttempts": 0,
++          "jittered": true,
++          "initialRpcTimeout": {
++            "seconds": 60,
++            "negative": false,
++            "zero": false,
++            "units": ["SECONDS", "NANOS"],
++            "nano": 0
++          },
++          "rpcTimeoutMultiplier": 1.6,
++          "maxRpcTimeout": {
++            "seconds": 300,
++            "negative": false,
++            "zero": false,
++            "units": ["SECONDS", "NANOS"],
++            "nano": 0
++          }
+         }
+       },
+-      "partitionSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+-      "dataSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+-      "bucketSpec": null,
+-      "fileFormat": {},
+-      "options": {},
+-      "sparkSession": {
+-        "traceEnabled": false
+-      },
+-      "overlappedPartCols": {
+-        "name": {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      },
+-      "schema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ]
+-    },
+-    "output": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    ],
+-    "catalogTable": null,
+-    "isStreaming": false,
+-    "origin": {
+-      "line": null,
+-      "startPosition": null
+-    },
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
+-    "allAttributes": {
+-      "attrs": []
+-    },
+-    "resolved": true,
+-    "statsCache": null,
+-    "attributeMap": {
+-      "name#1": {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    },
+-    "traceEnabled": false,
+-    "canonicalizedPlan": false
+-  },
+-  "query": {
+-    "relation": {
+-      "location": {
+-        "sparkSession": {
+-          "traceEnabled": false
+-        },
+-        "table": {
+-          "identifier": {
+-            "table": "test",
+-            "database": "db",
+-            "identifier": "test"
+-          },
+-          "tableType": {
+-            "name": "MANAGED"
+-          },
+-          "storage": {
+-            "locationUri": null,
+-            "inputFormat": null,
+-            "outputFormat": null,
+-            "serde": null,
+-            "compressed": false,
+-            "properties": {}
+-          },
+-          "schema": [
+-            {
++      "table": {
++        "tableId": {
++          "dataset": "dataset",
++          "table": "test",
++          "iamresourceName": "projects/null/datasets/dataset/tables/test"
++        },
++        "definition": {
++          "schema": {
++            "fields": [{
+               "name": "name",
+-              "dataType": {
+-                "ordering": {}
+-              },
+-              "nullable": false,
+-              "metadata": {
+-                "map": {}
+-              },
+-              "comment": null
+-            }
+-          ],
+-          "provider": null,
+-          "partitionColumnNames": [
+-            "name"
+-          ],
+-          "bucketSpec": null,
+-          "owner": "",
+-          "createTime": 1631621948,
+-          "lastAccessTime": 1631621948,
+-          "createVersion": "v1",
+-          "properties": {},
+-          "stats": null,
+-          "viewText": null,
+-          "comment": null,
+-          "unsupportedFeatures": [],
+-          "tracksPartitionsInCatalog": false,
+-          "schemaPreservesCase": false,
+-          "ignoredProperties": {}
+-        },
+-        "sizeInBytes": 100,
+-        "hadoopConf": {
+-          "finalParameters": [
+-            "mapreduce.job.end-notification.max.retry.interval",
+-            "mapreduce.job.end-notification.max.attempts"
+-          ]
+-        }
+-      },
+-      "partitionSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+-      "dataSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+-      "bucketSpec": null,
+-      "fileFormat": {},
+-      "options": {},
+-      "sparkSession": {
+-        "traceEnabled": false
+-      },
+-      "overlappedPartCols": {
+-        "name": {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
++              "type": {
++                "standardType": "STRING"
++              }
++            }]
++          }
+         }
+       },
+-      "schema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ]
++      "traceEnabled": false
+     },
+-    "output": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    ],
+-    "catalogTable": null,
++    "output": [{
++      "name": "name",
++      "nullable": false,
++      "metadata": {
++        "map": {}
++      },
++      "qualifier": [],
++      "deterministic": true,
++      "resolved": true
++    }],
+     "isStreaming": false,
+-    "origin": {
+-      "line": null,
+-      "startPosition": null
+-    },
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
+     "allAttributes": {
+       "attrs": []
+     },
+     "resolved": true,
+-    "statsCache": null,
+-    "attributeMap": {
+-      "name#1": {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    },
+     "traceEnabled": false,
+     "canonicalizedPlan": false
+   },
++  "query": 2,
+   "overwrite": false,
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [],
+   "allAttributes": {
+     "attrs": []
+   },
+   "resolved": true,
+-  "statsCache": null,
+   "metrics": {},
+-  "traceEnabled": false,
+   "streaming": false,
++  "traceEnabled": false,
+   "canonicalizedPlan": false
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/test/resources/test_data/serde/insertintofs-node.json b/integration/spark/src/test/resources/test_data/serde/insertintofs-node.json
+index 900c66645..d6e0c6008 100644
+--- a/integration/spark/src/test/resources/test_data/serde/insertintofs-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/insertintofs-node.json
+@@ -1,5 +1,5 @@
+ {
+-  "@class":"org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationCommand",
++  "@class": "org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationCommand",
+   "outputPath": {
+     "root": false,
+     "uriPathAbsolute": true,
+@@ -17,38 +17,28 @@
+   },
+   "staticPartitions": {},
+   "ifPartitionNotExists": false,
+-  "partitionColumns": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "1a41a881-0cda-4d15-9d33-048db59eb018"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  ],
++  "partitionColumns": [{
++    "name": "name",
++    "nullable": false,
++    "metadata": {
++      "map": {}
++    },
++    "exprId": {
++      "id": 1,
++      "jvmId": "9a566e0c-8f15-4239-9222-8f8dfd4557a1"
++    },
++    "qualifier": [],
++    "deterministic": true,
++    "resolved": true
++  }],
+   "bucketSpec": null,
+   "fileFormat": {},
+   "options": {},
+   "query": {
++    "@class": "org.apache.spark.sql.execution.datasources.LogicalRelation",
+     "relation": {
++      "@class": "org.apache.spark.sql.execution.datasources.HadoopFsRelation",
+       "location": {
+-        "sparkSession": {
+-          "traceEnabled": false
+-        },
+         "table": {
+           "identifier": {
+             "table": "test",
+@@ -66,27 +56,10 @@
+             "compressed": false,
+             "properties": {}
+           },
+-          "schema": [
+-            {
+-              "name": "name",
+-              "dataType": {
+-                "ordering": {}
+-              },
+-              "nullable": false,
+-              "metadata": {
+-                "map": {}
+-              },
+-              "comment": null
+-            }
+-          ],
+           "provider": null,
+-          "partitionColumnNames": [
+-            "name"
+-          ],
++          "partitionColumnNames": ["name"],
+           "bucketSpec": null,
+           "owner": "",
+-          "createTime": 1631630712,
+-          "lastAccessTime": 1631630712,
+           "createVersion": "v1",
+           "properties": {},
+           "stats": null,
+@@ -99,233 +72,74 @@
+         },
+         "sizeInBytes": 100,
+         "hadoopConf": {
+-          "finalParameters": [
+-            "mapreduce.job.end-notification.max.retry.interval",
+-            "mapreduce.job.end-notification.max.attempts"
+-          ]
++          "finalParameters": ["mapreduce.job.end-notification.max.retry.interval", "mapreduce.job.end-notification.max.attempts"]
+         }
+       },
+-      "partitionSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+-      "dataSchema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ],
+       "bucketSpec": null,
+-      "fileFormat": {},
+-      "options": {},
+-      "sparkSession": {
+-        "traceEnabled": false
++      "fileFormat": {
+       },
+-      "overlappedPartCols": {
+-        "name": {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      },
+-      "schema": [
+-        {
+-          "name": "name",
+-          "dataType": {
+-            "ordering": {}
+-          },
+-          "nullable": false,
+-          "metadata": {
+-            "map": {}
+-          },
+-          "comment": null
+-        }
+-      ]
++      "options": {}
+     },
+-    "output": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "exprId": {
+-          "id": 1,
+-          "jvmId": "1a41a881-0cda-4d15-9d33-048db59eb018"
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    ],
++    "output": [{
++      "name": "name",
++      "nullable": false,
++      "qualifier": [],
++      "deterministic": true,
++      "resolved": true
++    }],
+     "catalogTable": null,
+     "isStreaming": false,
+-    "origin": {
+-      "line": null,
+-      "startPosition": null
+-    },
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
+     "allAttributes": {
+       "attrs": []
+     },
+     "resolved": true,
+     "statsCache": null,
+-    "attributeMap": {
+-      "name#1": {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "exprId": {
+-          "id": 1,
+-          "jvmId": "1a41a881-0cda-4d15-9d33-048db59eb018"
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    },
+     "traceEnabled": false,
+     "canonicalizedPlan": false
+   },
+   "mode": "Overwrite",
+   "catalogTable": null,
+   "fileIndex": null,
+-  "outputColumnNames": [
+-    "name"
+-  ],
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [],
+-  "allAttributes": {
+-    "attrs": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "exprId": {
+-          "id": 1,
+-          "jvmId": "1a41a881-0cda-4d15-9d33-048db59eb018"
+-        },
+-        "qualifier": [],
+-        "origin": {
+-          "line": null,
+-          "startPosition": null
+-        },
+-        "deterministic": true,
+-        "resolved": true
+-      }
+-    ]
+-  },
+   "resolved": true,
+   "statsCache": null,
+   "metrics": {
+     "numFiles": {
+-      "metricType": "sum",
+       "metadata": {
+-        "id": 0,
+         "name": "number of written files",
+         "countFailedValues": false
+       },
+-      "org$apache$spark$util$AccumulatorV2$$atDriverSide": true,
+       "zero": true,
+       "atDriverSide": true,
+       "registered": true
+     },
+     "numOutputBytes": {
+-      "metricType": "sum",
+       "metadata": {
+-        "id": 1,
+-        "name": "bytes of written output",
+         "countFailedValues": false
+       },
+-      "org$apache$spark$util$AccumulatorV2$$atDriverSide": true,
+       "zero": true,
+       "atDriverSide": true,
+       "registered": true
+     },
+     "numOutputRows": {
+-      "metricType": "sum",
+       "metadata": {
+-        "id": 2,
+         "name": "number of output rows",
+         "countFailedValues": false
+       },
+-      "org$apache$spark$util$AccumulatorV2$$atDriverSide": true,
+       "zero": true,
+       "atDriverSide": true,
+       "registered": true
+     },
+     "numParts": {
+-      "metricType": "sum",
+       "metadata": {
+-        "id": 3,
+         "name": "number of dynamic part",
+         "countFailedValues": false
+       },
+-      "org$apache$spark$util$AccumulatorV2$$atDriverSide": true,
+       "zero": true,
+       "atDriverSide": true,
+       "registered": true
+     }
+   },
+-  "traceEnabled": false,
+   "streaming": false,
++  "traceEnabled": false,
+   "canonicalizedPlan": false
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/test/resources/test_data/serde/logicalrelation-node.json b/integration/spark/src/test/resources/test_data/serde/logicalrelation-node.json
+index 4b9759813..12a74f781 100644
+--- a/integration/spark/src/test/resources/test_data/serde/logicalrelation-node.json
++++ b/integration/spark/src/test/resources/test_data/serde/logicalrelation-node.json
+@@ -1,27 +1,16 @@
+ {
++  "@class": "org.apache.spark.sql.execution.datasources.LogicalRelation",
+   "relation": {
+-    "schema": [
+-      {
+-        "name": "name",
+-        "dataType": {
+-          "ordering": {}
+-        },
+-        "nullable": false,
+-        "metadata": {
+-          "map": {}
+-        },
+-        "comment": null
+-      }
+-    ],
++    "@class": "org.apache.spark.sql.execution.datasources.jdbc.JDBCRelation",
+     "parts": [],
+     "jdbcOptions": {
+-      "url": "jdbc:postgresql://postgreshost:5432/sparkdata",
+       "asProperties": {
+-        "url": "jdbc:postgresql://postgreshost:5432/sparkdata",
++        "driver": "org.postgresql.Driver",
+         "dbtable": "my_spark_table",
+-        "driver": "org.postgresql.Driver"
++        "url": "jdbc:postgresql://postgreshost:5432/sparkdata"
+       },
+       "asConnectionProperties": {},
++      "url": "jdbc:postgresql://postgreshost:5432/sparkdata",
+       "tableOrQuery": "my_spark_table",
+       "driverClass": "org.postgresql.Driver",
+       "numPartitions": null,
+@@ -42,72 +31,20 @@
+     },
+     "needConversion": false
+   },
+-  "output": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "exprId": {
+-        "id": 1,
+-        "jvmId": "f7dff447-fa8b-4738-b173-7855f66f8614"
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  ],
++  "output": [{
++    "name": "name",
++    "nullable": false,
++    "qualifier": [],
++    "deterministic": true,
++    "resolved": true
++  }],
+   "catalogTable": null,
+   "isStreaming": false,
+-  "origin": {
+-    "line": null,
+-    "startPosition": null
+-  },
+-  "schema": [
+-    {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "comment": null
+-    }
+-  ],
+   "allAttributes": {
+     "attrs": []
+   },
+   "resolved": true,
+   "statsCache": null,
+-  "attributeMap": {
+-    "name#1": {
+-      "name": "name",
+-      "dataType": {
+-        "ordering": {}
+-      },
+-      "nullable": false,
+-      "metadata": {
+-        "map": {}
+-      },
+-      "qualifier": [],
+-      "origin": {
+-        "line": null,
+-        "startPosition": null
+-      },
+-      "deterministic": true,
+-      "resolved": true
+-    }
+-  },
+   "traceEnabled": false,
+   "canonicalizedPlan": false
+ }
+\ No newline at end of file
+diff --git a/integration/spark/src/test/resources/test_data/serde/openlineage-event.json b/integration/spark/src/test/resources/test_data/serde/openlineage-event.json
+index bba0845fc..41765ce58 100644
+--- a/integration/spark/src/test/resources/test_data/serde/openlineage-event.json
++++ b/integration/spark/src/test/resources/test_data/serde/openlineage-event.json
+@@ -4,11 +4,11 @@
+   "run": {
+     "runId": "5f24c93c-2ce9-49dc-82e7-95ab4915242f",
+     "facets": {
+-      "nominalTime": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+-        "nominalStartTime": "2021-01-01T00:00:01Z",
+-        "nominalEndTime": "2021-01-01T00:00:01Z",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/NominalTimeRunFacet"
++      "parent": {
++        "job": {
++          "namespace": "namespace",
++          "name": "jobName"
++        }
+       }
+     }
+   },
+@@ -17,25 +17,19 @@
+     "name": "jobName",
+     "facets": {
+       "documentation": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+-        "description": "test documentation",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DocumentationJobFacet"
++        "description": "test documentation"
+       },
+       "sourceCodeLocation": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+         "type": "git",
+         "url": "https://github.com/apache/spark",
+         "repoUrl": "https://github.com/apache/spark",
+         "path": "/path/to/file",
+         "version": "v1",
+         "tag": "v1.0.0",
+-        "branch": "branch",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SourceCodeLocationJobFacet"
++        "branch": "branch"
+       },
+       "sql": {
+-        "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+-        "query": "SELECT * FROM test",
+-        "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/SQLJobFacet"
++        "query": "SELECT * FROM test"
+       }
+     }
+   },
+@@ -45,7 +39,6 @@
+       "name": "input",
+       "inputFacets": {
+         "dataQualityMetrics": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+           "rowCount": 10,
+           "bytes": 20,
+           "columnMetrics": {
+@@ -60,8 +53,7 @@
+                 "25": 52.0
+               }
+             }
+-          },
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/DataQualityMetricsInputDatasetFacet"
++          }
+         }
+       }
+     }
+@@ -72,14 +64,10 @@
+       "name": "output",
+       "outputFacets": {
+         "outputStatistics": {
+-          "_producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+           "rowCount": 10,
+-          "size": 20,
+-          "_schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/OutputStatisticsOutputDatasetFacet"
++          "size": 20
+         }
+       }
+     }
+-  ],
+-  "producer": "https://github.com/OpenLineage/OpenLineage/tree/0.2.3-SNAPSHOT/integration/spark",
+-  "schemaURL": "https://openlineage.io/spec/1-0-1/OpenLineage.json#/definitions/RunEvent"
++  ]
+ }
+\ No newline at end of file
+

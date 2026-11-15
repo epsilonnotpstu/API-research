@@ -1,0 +1,203 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/subscription/SubscriptionSyncController.java b/src/main/java/org/candlepin/subscriptions/subscription/SubscriptionSyncController.java
+index a32e94fc2..14dd1745f 100644
+--- a/src/main/java/org/candlepin/subscriptions/subscription/SubscriptionSyncController.java
++++ b/src/main/java/org/candlepin/subscriptions/subscription/SubscriptionSyncController.java
+@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
+ import java.util.stream.Stream;
+ import javax.persistence.EntityNotFoundException;
+ import javax.transaction.Transactional;
++import javax.ws.rs.core.Response;
+ import lombok.extern.slf4j.Slf4j;
+ import org.candlepin.subscriptions.capacity.CapacityReconciliationController;
+ import org.candlepin.subscriptions.capacity.files.ProductAllowlist;
+@@ -48,6 +49,8 @@ import org.candlepin.subscriptions.db.model.ReportCriteria;
+ import org.candlepin.subscriptions.db.model.ServiceLevel;
+ import org.candlepin.subscriptions.db.model.Subscription_;
+ import org.candlepin.subscriptions.db.model.Usage;
++import org.candlepin.subscriptions.exception.ErrorCode;
++import org.candlepin.subscriptions.exception.MissingOfferingException;
+ import org.candlepin.subscriptions.registry.TagProfile;
+ import org.candlepin.subscriptions.subscription.api.model.Subscription;
+ import org.candlepin.subscriptions.tally.UsageCalculation.Key;
+@@ -598,7 +601,9 @@ public class SubscriptionSyncController {
+   /**
+    * This will allow any service to lookup the swatch product(s) associated with a given SKU. (This
+    * lookup will use the offering information already stored in the database) and map the
+-   * `product_name` to a swatch `product_tag` via info in `tag_profile.yaml`
++   * `product_name` to a swatch `product_tag` via info in `tag_profile.yaml` If the offering does
++   * not exist then return 404. If it does exist, then return an empty list if there are no tags
++   * found for that particular offering.
+    *
+    * @param sku
+    * @return OfferingProductTags
+@@ -606,9 +611,16 @@ public class SubscriptionSyncController {
+   public OfferingProductTags findProductTags(String sku) {
+     OfferingProductTags productTags = new OfferingProductTags();
+     var productTag = offeringRepository.findProductNameBySku(sku);
+-    if (productTag.isPresent()
+-        && StringUtils.hasText(tagProfile.tagForOfferingProductName(productTag.get()))) {
+-      return productTags.data(List.of(tagProfile.tagForOfferingProductName(productTag.get())));
++    if (productTag.isPresent()) {
++      if (StringUtils.hasText(tagProfile.tagForOfferingProductName(productTag.get()))) {
++        return productTags.data(List.of(tagProfile.tagForOfferingProductName(productTag.get())));
++      }
++    } else {
++      throw new MissingOfferingException(
++          ErrorCode.OFFERING_MISSING_ERROR,
++          Response.Status.NOT_FOUND,
++          String.format("Sku %s not found in Offering", sku),
++          null);
+     }
+     return productTags;
+   }
+diff --git a/src/test/java/org/candlepin/subscriptions/subscription/SubscriptionSyncControllerTest.java b/src/test/java/org/candlepin/subscriptions/subscription/SubscriptionSyncControllerTest.java
+index 5ecd7b424..bde8017e7 100644
+--- a/src/test/java/org/candlepin/subscriptions/subscription/SubscriptionSyncControllerTest.java
++++ b/src/test/java/org/candlepin/subscriptions/subscription/SubscriptionSyncControllerTest.java
+@@ -50,6 +50,7 @@ import org.candlepin.subscriptions.db.model.OrgConfigRepository;
+ import org.candlepin.subscriptions.db.model.ServiceLevel;
+ import org.candlepin.subscriptions.db.model.Subscription;
+ import org.candlepin.subscriptions.db.model.Usage;
++import org.candlepin.subscriptions.exception.MissingOfferingException;
+ import org.candlepin.subscriptions.registry.TagProfile;
+ import org.candlepin.subscriptions.subscription.api.model.ExternalReference;
+ import org.candlepin.subscriptions.subscription.api.model.SubscriptionProduct;
+@@ -490,13 +491,14 @@ class SubscriptionSyncControllerTest {
+   void findProductTagsBySku_WhenSkuNotPresent() {
+     when(offeringRepository.findProductNameBySku("sku")).thenReturn(Optional.empty());
+     when(mockProfile.tagForOfferingProductName("productname1")).thenReturn("producttag");
+-
+-    OfferingProductTags productTags = subscriptionSyncController.findProductTags("sku");
+-    assertNull(productTags.getData());
++    RuntimeException e =
++        assertThrows(
++            MissingOfferingException.class,
++            () -> subscriptionSyncController.findProductTags("sku"));
++    assertEquals("Sku sku not found in Offering", e.getMessage());
+ 
+     when(offeringRepository.findProductNameBySku("sku")).thenReturn(Optional.of("productname"));
+     when(mockProfile.tagForOfferingProductName("productname")).thenReturn(null);
+-
+     OfferingProductTags productTags2 = subscriptionSyncController.findProductTags("sku");
+     assertNull(productTags2.getData());
+   }
+diff --git a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
+index 9dad8e11d..aa0c6855f 100644
+--- a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
++++ b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/ErrorCode.java
+@@ -74,7 +74,9 @@ public enum ErrorCode {
+   SUBSCRIPTION_SERVICE_MARKETPLACE_ID_LOOKUP_ERROR(
+       3001, "Could not find marketplace subscription id"),
+ 
+-  ACCOUNT_MISSING_ERROR(3002, "Account not present according to RH IT services");
++  ACCOUNT_MISSING_ERROR(3002, "Account not present according to RH IT services"),
++
++  OFFERING_MISSING_ERROR(3003, "Sku not present in Offering");
+ 
+   private static final String CODE_PREFIX = "SUBSCRIPTIONS";
+ 
+diff --git a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/MissingOfferingException.java b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/MissingOfferingException.java
+new file mode 100644
+index 000000000..983cc16d5
+--- /dev/null
++++ b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/MissingOfferingException.java
+@@ -0,0 +1,56 @@
++/*
+[REDACTED attribution]
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ * Red Hat trademarks are not licensed under GPLv3. No permission is
++ * granted to use or replicate Red Hat trademarks that are incorporated
++ * in this software or its documentation.
++ */
++package org.candlepin.subscriptions.exception;
++
++import javax.ws.rs.core.Response.Status;
++import lombok.Getter;
++import org.candlepin.subscriptions.utilization.api.model.Error;
++
++/**
++ * Application's base exception class. Provides a means to create an Error object that should be
++ * typically return as part of an error response.
++ */
++public class MissingOfferingException extends RuntimeException {
++
++  @Getter private final Status status;
++  @Getter private final String detail;
++  @Getter private final ErrorCode code;
++
++  public MissingOfferingException(ErrorCode code, Status status, String message, String detail) {
++    this(code, status, message, detail, null);
++  }
++
++  public MissingOfferingException(
++      ErrorCode code, Status status, String message, String detail, Throwable e) {
++    super(message, e);
++    this.code = code;
++    this.status = status;
++    this.detail = detail;
++  }
++
++  public Error error() {
++    return new Error()
++        .code(this.code.getCode())
++        .status(String.valueOf(status.getStatusCode()))
++        .title(this.getMessage())
++        .detail(this.detail);
++  }
++}
+diff --git a/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/OfferingExceptionMapper.java b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/OfferingExceptionMapper.java
+new file mode 100644
+index 000000000..bd0a75f07
+--- /dev/null
++++ b/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/OfferingExceptionMapper.java
+@@ -0,0 +1,36 @@
++/*
+[REDACTED attribution]
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ * Red Hat trademarks are not licensed under GPLv3. No permission is
++ * granted to use or replicate Red Hat trademarks that are incorporated
++ * in this software or its documentation.
++ */
++package org.candlepin.subscriptions.exception.mapper;
++
++import javax.ws.rs.ext.Provider;
++import org.candlepin.subscriptions.exception.MissingOfferingException;
++import org.candlepin.subscriptions.utilization.api.model.Error;
++import org.springframework.stereotype.Component;
++
++/** An exception mapper used to map all MissingOfferingException to an error response. */
++@Component
++@Provider
++public class OfferingExceptionMapper extends BaseExceptionMapper<MissingOfferingException> {
++  @Override
++  protected Error buildError(MissingOfferingException exception) {
++    return exception.error();
++  }
++}
+

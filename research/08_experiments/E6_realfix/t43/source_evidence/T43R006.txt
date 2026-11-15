@@ -1,0 +1,105 @@
+[parent contract] 804de82590eb2e2ad33bdb7bc74a276554fa6850:api/rhsm-subscriptions-api-spec.yaml:434
+434:         - name: beginning
+435:           in: query
+436:           required: false
+437:           schema:
+438:             type: string
+439:             format: date-time
+440:           description: "Defines the start of the report period. Dates should be provided in ISO 8601
+441:             format but the only accepted offset is UTC. E.g. 2017-07-21T17:32:28Z.
+442:             Only applicable for OpenShift-dedicated-metrics and OpenShift-metrics products"
+443:         - name: ending
+444:           in: query
+445:           required: false
+446:           schema:
+447:             type: string
+448:             format: date-time
+449:           description: "Defines the end of the report period. Dates should be provided in ISO 8601
+450:             format but the only accepted offset is UTC. E.g. 2017-07-21T17:32:28Z.
+451:             Only applicable for OpenShift-dedicated-metrics and OpenShift-metrics products"
+452:         - name: sort
+
+[fix contract] 3a45211033dcd56e42a07ee930c0e780328bddee:api/rhsm-subscriptions-api-spec.yaml:434
+434:         - name: beginning
+435:           in: query
+436:           required: false
+437:           schema:
+438:             type: string
+439:             format: date-time
+440:           description: "Defines the start of the report period. Dates should be provided in ISO 8601
+441:             format but the only accepted offset is UTC. E.g. 2017-07-21T17:32:28Z.
+442:             Only applicable for OpenShift-dedicated-metrics and OpenShift-metrics products"
+443:         - name: ending
+444:           in: query
+445:           required: false
+446:           schema:
+447:             type: string
+448:             format: date-time
+449:           description: "Defines the end of the report period. Dates should be provided in ISO 8601
+450:             format but the only accepted offset is UTC. E.g. 2017-07-21T17:32:28Z.
+451:             Only applicable for OpenShift-dedicated-metrics and OpenShift-metrics products"
+452:         - name: sort
+
+[parent route] 804de82590eb2e2ad33bdb7bc74a276554fa6850:api/rhsm-subscriptions-api-spec.yaml:387
+387:   /hosts/products/{product_id}:
+388:     description: 'Operations for hosts for a given account and product'
+389:     parameters:
+390:       - name: product_id
+391:         in: path
+392:         required: true
+393:         schema:
+394:           $ref: '#/components/schemas/ProductId'
+395:         description: "The ID for the product we wish to query"
+396:       - name: offset
+397:         in: query
+398:         schema:
+399:           type: integer
+
+[parent implementation] 804de82590eb2e2ad33bdb7bc74a276554fa6850:src/main/java/org/candlepin/subscriptions/resource/HostsResource.java:127
+127:         boolean isSpecial = Objects.equals(productId, ProductId.OPENSHIFT_DEDICATED_METRICS) ||
+128:             Objects.equals(productId, ProductId.OPENSHIFT_METRICS);
+129: 
+130:         List<org.candlepin.subscriptions.utilization.api.model.Host> payload;
+131:         Page<?> hosts;
+132:         if (isSpecial) {
+133: 
+134:             OffsetDateTime now = OffsetDateTime.now();
+135:             OffsetDateTime start = Optional.of(beginning).orElse(now);
+136:             OffsetDateTime end = Optional.of(ending).orElse(now);
+137: 
+138:             validateBeginningAndEndingDates(start, end);
+139: 
+140:             String month = InstanceMonthlyTotalKey.formatMonthId(start);
+141: 
+142:             hosts = repository.findAllBy(accountNumber, productId.toString(), sanitizedSla, sanitizedUsage,
+143:                 sanitizedDisplayNameSubstring, minCores, minSockets, month, page);
+144:             payload = ((Page<Host>) hosts).getContent().stream().map(Host::asTallyHostViewApiHost)
+145:                 .collect(Collectors.toList());
+146:         }
+147:         else {
+148:             hosts = repository
+149:                 .getTallyHostViews(accountNumber, productId.toString(), sanitizedSla, sanitizedUsage,
+
+[parent route] 804de82590eb2e2ad33bdb7bc74a276554fa6850:src/main/java/org/candlepin/subscriptions/resource/HostsResource.java:94
+94:     public HostReport getHosts(ProductId productId, Integer offset, @Min(1) @Max(100) Integer limit,
+95:         ServiceLevelType sla, UsageType usage, Uom uom, String displayNameContains, OffsetDateTime beginning,
+96:         OffsetDateTime ending, HostReportSort sort, SortDirection dir) {
+97: 
+98:         Sort.Direction dirValue = Sort.Direction.ASC;
+99:         if (dir == SortDirection.DESC) {
+100:             dirValue = Sort.Direction.DESC;
+101:         }
+
+[fix implementation] 3a45211033dcd56e42a07ee930c0e780328bddee:src/main/java/org/candlepin/subscriptions/resource/HostsResource.java:135
+132:         if (isSpecial) {
+133: 
+134:             OffsetDateTime now = OffsetDateTime.now();
+135:             OffsetDateTime start = Optional.ofNullable(beginning).orElse(now);
+136:             OffsetDateTime end = Optional.ofNullable(ending).orElse(now);
+137: 
+138:             validateBeginningAndEndingDates(start, end);
+139: 
+140:             String month = InstanceMonthlyTotalKey.formatMonthId(start);
+141: 
+142:             hosts = repository.findAllBy(accountNumber, productId.toString(), sanitizedSla, sanitizedUsage,
+143:                 sanitizedDisplayNameSubstring, minCores, minSockets, month, page);

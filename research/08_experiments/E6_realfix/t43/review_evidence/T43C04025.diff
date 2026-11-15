@@ -1,0 +1,50 @@
+diff --git a/opba-protocols/protocol-bpmn-shared/src/main/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializer.java b/opba-protocols/protocol-bpmn-shared/src/main/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializer.java
+index 80dccfa96..ea07b6a17 100644
+--- a/opba-protocols/protocol-bpmn-shared/src/main/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializer.java
++++ b/opba-protocols/protocol-bpmn-shared/src/main/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializer.java
+@@ -46,7 +46,7 @@ public class JsonCustomSerializer implements VariableType {
+         }
+ 
+         String value = mapper.writeValueAsString(o);
+-        return value.length() < maxLength;
++        return value.length() <= maxLength;
+     }
+ 
+     @Override
+diff --git a/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializerTest.java b/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializerTest.java
+new file mode 100644
+index 000000000..c69315ffb
+--- /dev/null
++++ b/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/JsonCustomSerializerTest.java
+@@ -0,0 +1,16 @@
++package de.adorsys.opba.protocol.bpmnshared.config.flowable;
++
++public class JsonCustomSerializerTest {
++
++    void serializeLessThanMaxValueTest() {
++
++    }
++
++    void serializeEqualsToMaxValueTest() {
++
++    }
++
++    void serializeMoreThanMaxValueTest() {
++
++    }
++}
+diff --git a/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/LargeJsonCustomSerializerTest.java b/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/LargeJsonCustomSerializerTest.java
+new file mode 100644
+index 000000000..9d4435a99
+--- /dev/null
++++ b/opba-protocols/protocol-bpmn-shared/src/test/java/de/adorsys/opba/protocol/bpmnshared/config/flowable/LargeJsonCustomSerializerTest.java
+@@ -0,0 +1,8 @@
++package de.adorsys.opba.protocol.bpmnshared.config.flowable;
++
++public class LargeJsonCustomSerializerTest {
++
++    void serializeLessThanMaxValueTest() {
++
++    }
++}
+

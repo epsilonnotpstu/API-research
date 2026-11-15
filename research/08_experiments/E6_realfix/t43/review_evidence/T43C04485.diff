@@ -1,0 +1,91 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/tally/TallySnapshotController.java b/src/main/java/org/candlepin/subscriptions/tally/TallySnapshotController.java
+index 20bd69cff..1a966f7f1 100644
+--- a/src/main/java/org/candlepin/subscriptions/tally/TallySnapshotController.java
++++ b/src/main/java/org/candlepin/subscriptions/tally/TallySnapshotController.java
+@@ -250,7 +250,9 @@ public class TallySnapshotController {
+           usageCollector.reconcileSystemDataWithHbi(
+               orgId,
+               SubscriptionDefinition.filterVariants(
+-                      variant -> !variant.getSubscription().isPaygEligible())
++                      variant ->
++                          variant.getSubscription() != null
++                              && !variant.getSubscription().isPaygEligible())
+                   .stream()
+                   .map(Variant::getTag)
+                   .collect(Collectors.toUnmodifiableSet()));
+diff --git a/src/test/java/org/candlepin/subscriptions/tally/AccountResetServiceTest.java b/src/test/java/org/candlepin/subscriptions/tally/AccountResetServiceTest.java
+index c5f900272..be7e35c2a 100644
+--- a/src/test/java/org/candlepin/subscriptions/tally/AccountResetServiceTest.java
++++ b/src/test/java/org/candlepin/subscriptions/tally/AccountResetServiceTest.java
+@@ -56,7 +56,7 @@ import org.springframework.transaction.annotation.Propagation;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @SpringBootTest
+-@ActiveProfiles({"test", "worker"})
++@ActiveProfiles({"worker", "test"})
+ class AccountResetServiceTest {
+   @Autowired private EventRecordRepository eventRecordRepo;
+   @Autowired private HostRepository hostRepo;
+@@ -70,6 +70,12 @@ class AccountResetServiceTest {
+   @BeforeEach
+   @Transactional(propagation = Propagation.REQUIRES_NEW)
+   void setUp() {
++    hostRepo.deleteAll();
++    accountServiceInventoryRepository.deleteAll();
++    eventRecordRepo.deleteAll();
++    tallySnapshotRepository.deleteAll();
++    subscriptionRepository.deleteAll();
++    tallyStateRepository.deleteAll();
+     accountServiceInventoryRepository.save(new AccountServiceInventory("org123", "HBI_HOST"));
+ 
+     Host host = new Host("inventory123", "insights123", "org123", "subman123");
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/ContractEntityMapper.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/ContractEntityMapper.java
+index f960835f5..82ad4e842 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/ContractEntityMapper.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/ContractEntityMapper.java
+@@ -46,7 +46,7 @@ import org.mapstruct.MappingTarget;
+ import org.mapstruct.Named;
+ 
+ @Mapper(
+-    componentModel = "cdi",
++    componentModel = "jakarta-cdi",
+     collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
+     builder = @Builder(disableBuilder = true),
+     uses = {ContractOfferingMapper.class})
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/SubscriptionEntityMapper.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/SubscriptionEntityMapper.java
+index d7fbc5f86..8807926b3 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/SubscriptionEntityMapper.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/model/SubscriptionEntityMapper.java
+@@ -31,7 +31,7 @@ import org.mapstruct.MappingTarget;
+ import org.mapstruct.Named;
+ 
+ @Mapper(
+-    componentModel = "cdi",
++    componentModel = "jakarta-cdi",
+     collectionMappingStrategy = CollectionMappingStrategy.ADDER_PREFERRED,
+     builder = @Builder(disableBuilder = true),
+     uses = {MeasurementMetricIdTransformer.class})
+diff --git a/swatch-core-test/src/main/resources/application-test.yaml b/swatch-core-test/src/main/resources/application-test.yaml
+index 0b39436b5..0011d19f4 100644
+--- a/swatch-core-test/src/main/resources/application-test.yaml
++++ b/swatch-core-test/src/main/resources/application-test.yaml
+@@ -1,14 +1,14 @@
+ rhsm-subscriptions:
+   datasource:
+     url: jdbc:hsqldb:mem:testdb
+-    username: ''
+[REDACTED credential-related line]
++    username: test
+[REDACTED credential-related line]
+     driver-class-name: org.hsqldb.jdbc.JDBCDriver
+     platform: hsqldb
+   inventory-service.datasource:
+     url: jdbc:hsqldb:mem:inventory-testdb
+-    username: ''
+[REDACTED credential-related line]
++    username: test
+[REDACTED credential-related line]
+     driver-class-name: org.hsqldb.jdbc.JDBCDriver
+     platform: hsqldb
+   account-batch-size: 2
+

@@ -1,0 +1,24 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestSourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestSourceBridgeEndpoint.java
+index 8f4aa68..3fd96ee 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestSourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestSourceBridgeEndpoint.java
+@@ -63,12 +63,17 @@ public class RestSourceBridgeEndpoint<K, V> extends RestBridgeEndpoint {
+         this.kafkaBridgeProducer.create();
+     }
+ 
++    @Override
++    public void close() {
++        this.kafkaBridgeProducer.close();
++        super.close();
++    }
++
+     /**
+      * Close the source endpoint
+      */
+     public void maybeClose() {
+         if (this.closing) {
+-            this.kafkaBridgeProducer.close();
+             this.close();
+         }
+     }
+

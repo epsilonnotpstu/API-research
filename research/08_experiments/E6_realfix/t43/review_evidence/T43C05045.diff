@@ -1,0 +1,357 @@
+diff --git a/src/main/java/com/epam/reportportal/base/core/auth/TokenBlacklistService.java b/src/main/java/com/epam/reportportal/base/core/auth/TokenBlacklistService.java
+index 328ad912c..82a2aee81 100644
+--- a/src/main/java/com/epam/reportportal/base/core/auth/TokenBlacklistService.java
++++ b/src/main/java/com/epam/reportportal/base/core/auth/TokenBlacklistService.java
+@@ -16,6 +16,7 @@
+ 
+ package com.epam.reportportal.base.core.auth;
+ 
++import com.epam.reportportal.base.infrastructure.persistence.entity.user.User;
+ import java.time.Instant;
+ 
+ /**
+@@ -38,6 +39,13 @@ public interface TokenBlacklistService {
+    */
+   void revokeSubject(String subject);
+ 
++  /**
++   * Revokes every currently active JWT issued to the given user, by login and external id (if present).
++   *
++   * @param user the user whose tokens should be revoked
++   */
++  void revokeUserTokens(User user);
++
+   /**
+    * Checks whether a JWT identified by the given parameters has been revoked, either directly by {@code jti} or by a
+    * subject-level revocation that post-dates the JWT's {@code iat}.
+diff --git a/src/main/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImpl.java b/src/main/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImpl.java
+index 6f1a8ba4d..73a90fc59 100644
+--- a/src/main/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImpl.java
++++ b/src/main/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImpl.java
+@@ -19,6 +19,7 @@ package com.epam.reportportal.base.core.auth.impl;
+ import com.epam.reportportal.base.core.auth.TokenBlacklistService;
+ import com.epam.reportportal.base.infrastructure.persistence.dao.RevokedTokenRepository;
+ import com.epam.reportportal.base.infrastructure.persistence.entity.RevokedToken;
++import com.epam.reportportal.base.infrastructure.persistence.entity.user.User;
+ import java.time.Instant;
+ import lombok.RequiredArgsConstructor;
+ import org.apache.commons.lang3.StringUtils;
+@@ -55,6 +56,15 @@ public class TokenBlacklistServiceImpl implements TokenBlacklistService {
+     revokedTokenRepository.save(RevokedToken.forSubject(subject));
+   }
+ 
++  @Override
++  @Transactional
++  public void revokeUserTokens(User user) {
++    revokeSubject(user.getLogin());
++    if (StringUtils.isNotBlank(user.getExternalId())) {
++      revokeSubject(user.getExternalId());
++    }
++  }
++
+   @Override
+   @Transactional(readOnly = true)
+   public boolean isRevoked(String jti, String subject, Instant issuedAt) {
+diff --git a/src/main/java/com/epam/reportportal/base/core/project/impl/OrganizationProjectHandlerImpl.java b/src/main/java/com/epam/reportportal/base/core/project/impl/OrganizationProjectHandlerImpl.java
+index 372551f1d..625384bee 100644
+--- a/src/main/java/com/epam/reportportal/base/core/project/impl/OrganizationProjectHandlerImpl.java
++++ b/src/main/java/com/epam/reportportal/base/core/project/impl/OrganizationProjectHandlerImpl.java
+@@ -127,9 +127,7 @@ public class OrganizationProjectHandlerImpl implements OrganizationProjectHandle
+     var rpUser = getPrincipal();
+     OrganizationProjectsPage organizationProjectsPage = new OrganizationProjectsPage();
+ 
+-    if (!rpUser.getUserRole().equals(UserRole.ADMINISTRATOR)
+-        && rpUser.getOrganizationDetails().get(orgId.toString()).getOrgRole()
+-        .equals(OrganizationRole.MEMBER)) {
++    if (!rpUser.getUserRole().equals(UserRole.ADMINISTRATOR) && isOrganizationMember(rpUser, orgId)) {
+ 
+       var projectIds = projectUserRepository.findProjectIdsByUserId(rpUser.getUserId())
+           .stream()
+@@ -168,6 +166,12 @@ public class OrganizationProjectHandlerImpl implements OrganizationProjectHandle
+         projectProfilePagedList.getTotalElements());
+   }
+ 
++  private boolean isOrganizationMember(ReportPortalUser rpUser, Long orgId) {
++    var orgDetails = rpUser.getOrganizationDetails().get(orgId.toString());
++    expect(orgDetails, Objects::nonNull).verify(ErrorType.ACCESS_DENIED);
++    return OrganizationRole.MEMBER.equals(orgDetails.getOrgRole());
++  }
++
+   @Override
+   public ProjectInfo createProject(Long orgId, ProjectBase projectBase) {
+     projectBase.setName(projectBase.getName().trim());
+diff --git a/src/main/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImpl.java b/src/main/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImpl.java
+index fc7b0dc61..649be5cac 100644
+--- a/src/main/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImpl.java
++++ b/src/main/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImpl.java
+@@ -53,7 +53,6 @@ import java.util.List;
+ import java.util.Map;
+ import java.util.Objects;
+ import java.util.stream.Collectors;
+-import org.apache.commons.lang3.StringUtils;
+ import lombok.RequiredArgsConstructor;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.context.ApplicationEventPublisher;
+@@ -128,19 +127,12 @@ public class DeleteUserHandlerImpl implements DeleteUserHandler {
+ 
+     dataStore.deleteUserPhoto(user);
+     userRepository.delete(user);
+-    revokeUserTokens(user);
++    tokenBlacklistService.revokeUserTokens(user);
+     sendEmailAboutDeletion(user, loggedInUser);
+ 
+     return user;
+   }
+ 
+-  private void revokeUserTokens(User user) {
+-    tokenBlacklistService.revokeSubject(user.getLogin());
+-    if (StringUtils.isNotBlank(user.getExternalId())) {
+-      tokenBlacklistService.revokeSubject(user.getExternalId());
+-    }
+-  }
+-
+   private void sendEmailAboutDeletion(User user, ReportPortalUser loggedInUser) {
+     EmailTemplate template = user.getId().equals(loggedInUser.getUserId())
+         ? EmailTemplate.USER_SELF_DELETION_NOTIFICATION
+diff --git a/src/main/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImpl.java b/src/main/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImpl.java
+index 22edad8a4..3298eaef7 100644
+--- a/src/main/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImpl.java
++++ b/src/main/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImpl.java
+@@ -24,6 +24,7 @@ import static com.epam.reportportal.base.infrastructure.rules.exception.ErrorTyp
+ import static com.epam.reportportal.base.infrastructure.rules.exception.ErrorType.USER_ALREADY_EXISTS;
+ import static com.epam.reportportal.base.util.email.EmailRulesValidator.NORMALIZE_EMAIL;
+ 
++import com.epam.reportportal.base.core.auth.TokenBlacklistService;
+ import com.epam.reportportal.base.core.events.domain.ChangeUserTypeEvent;
+ import com.epam.reportportal.base.core.user.UserMutationService;
+ import com.epam.reportportal.base.infrastructure.persistence.commons.ReportPortalUser;
+@@ -56,6 +57,7 @@ public class UserMutationServiceImpl implements UserMutationService {
+   private final UserRepository userRepository;
+   private final ProjectRepository projectRepository;
+   private final ApplicationEventPublisher eventPublisher;
++  private final TokenBlacklistService tokenBlacklistService;
+ 
+   @Override
+   public void updateEmail(User user, String rawEmail, ReportPortalUser editor) {
+@@ -82,7 +84,7 @@ public class UserMutationServiceImpl implements UserMutationService {
+ 
+   @Override
+   public void updateFullName(User user, String fullName, ReportPortalUser editor) {
+-    expect(StringUtils.isNotBlank(fullName), Boolean.TRUE::equals)
++    expect(fullName, StringUtils::isNotBlank)
+         .verify(BAD_REQUEST_ERROR, "Full name must not be empty.");
+ 
+     expect(fullName.length() >= MIN_USER_NAME_LENGTH && fullName.length() <= MAX_USER_NAME_LENGTH,
+@@ -106,11 +108,17 @@ public class UserMutationServiceImpl implements UserMutationService {
+     UserRole newRole = UserRole.findByName(role)
+         .orElseThrow(() -> new ReportPortalException(BAD_REQUEST_ERROR, "Incorrect specified Account Role parameter."));
+ 
++    UserRole oldRole = user.getRole();
++    if (oldRole == newRole) {
++      return;
++    }
++
+     eventPublisher.publishEvent(
+-        new ChangeUserTypeEvent(user.getId(), user.getLogin(), user.getRole(), newRole,
++        new ChangeUserTypeEvent(user.getId(), user.getLogin(), oldRole, newRole,
+             editor.getUserId(), editor.getUsername()));
+ 
+     user.setRole(newRole);
++    tokenBlacklistService.revokeUserTokens(user);
+   }
+ 
+   @Override
+diff --git a/src/main/java/com/epam/reportportal/base/util/OrganizationUserValidator.java b/src/main/java/com/epam/reportportal/base/util/OrganizationUserValidator.java
+index f0d564a45..70d88b561 100644
+--- a/src/main/java/com/epam/reportportal/base/util/OrganizationUserValidator.java
++++ b/src/main/java/com/epam/reportportal/base/util/OrganizationUserValidator.java
+@@ -80,7 +80,8 @@ public class OrganizationUserValidator {
+    * @return true if the user has a manager role, false otherwise
+    */
+   public static boolean isManager(ReportPortalUser user, OrganizationUser organizationUser) {
+-    return user.getOrganizationDetails().get(organizationUser.getOrganization().getId().toString()).getOrgRole()
+-        .equals(OrganizationRole.MANAGER);
++    var orgDetails = user.getOrganizationDetails()
++        .get(organizationUser.getOrganization().getId().toString());
++    return orgDetails != null && OrganizationRole.MANAGER.equals(orgDetails.getOrgRole());
+   }
+ }
+diff --git a/src/test/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImplTest.java b/src/test/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImplTest.java
+index df4890cde..b15ea2b0a 100644
+--- a/src/test/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImplTest.java
++++ b/src/test/java/com/epam/reportportal/base/core/auth/impl/TokenBlacklistServiceImplTest.java
+@@ -22,11 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
+ import static org.junit.jupiter.api.Assertions.assertNull;
+ import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
++import static org.mockito.Mockito.times;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ import com.epam.reportportal.base.infrastructure.persistence.dao.RevokedTokenRepository;
+ import com.epam.reportportal.base.infrastructure.persistence.entity.RevokedToken;
++import com.epam.reportportal.base.infrastructure.persistence.entity.user.User;
+ import java.time.Instant;
+ import org.junit.jupiter.api.DisplayName;
+ import org.junit.jupiter.api.Test;
+@@ -91,6 +93,42 @@ class TokenBlacklistServiceImplTest {
+     assertThrows(IllegalArgumentException.class, () -> service.revokeSubject(null));
+   }
+ 
++  @Test
++  @DisplayName("Should revoke tokens by user login only when external id is absent")
++  void revokeUserTokensWhenExternalIdAbsentShouldRevokeLoginSubjectOnly() {
++    // Given
++    var user = new User();
++    user.setLogin("[REDACTED email]");
++    var captor = ArgumentCaptor.forClass(RevokedToken.class);
++
++    // When
++    service.revokeUserTokens(user);
++
++    // Then
++    verify(revokedTokenRepository).save(captor.capture());
++    assertEquals("[REDACTED email]", captor.getValue().getSubject());
++    assertNull(captor.getValue().getJti());
++    assertNotNull(captor.getValue().getRevokedAt());
++  }
++
++  @Test
++  @DisplayName("Should revoke tokens by login and external id when external id is present")
++  void revokeUserTokensWhenExternalIdPresentShouldRevokeBothSubjects() {
++    // Given
++    var user = new User();
++    user.setLogin("[REDACTED email]");
++    user.setExternalId("ext-123");
++    var captor = ArgumentCaptor.forClass(RevokedToken.class);
++
++    // When
++    service.revokeUserTokens(user);
++
++    // Then
++    verify(revokedTokenRepository, times(2)).save(captor.capture());
++    assertEquals("[REDACTED email]", captor.getAllValues().get(0).getSubject());
++    assertEquals("ext-123", captor.getAllValues().get(1).getSubject());
++  }
++
+   @Test
+   @DisplayName("Should return true when token is revoked by jti or subject")
+   void isRevokedWhenMatchExistsShouldReturnTrue() {
+diff --git a/src/test/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImplTest.java b/src/test/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImplTest.java
+index 406344eb2..264baf420 100644
+--- a/src/test/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImplTest.java
++++ b/src/test/java/com/epam/reportportal/base/core/user/impl/DeleteUserHandlerImplTest.java
+@@ -127,11 +127,11 @@ class DeleteUserHandlerImplTest {
+ 
+     verify(repository, times(1)).findById(2L);
+     verify(dataStore, times(1)).deleteUserPhoto(any());
+-    verify(tokenBlacklistService).revokeSubject("test");
++    verify(tokenBlacklistService).revokeUserTokens(user);
+   }
+ 
+   @Test
+-  void deleteUserWithExternalIdShouldRevokeSubjectForBothLoginAndExternalId() {
++  void deleteUserWithExternalIdShouldRevokeUserTokens() {
+     User user = new User();
+     user.setId(2L);
+     user.setLogin("test");
+@@ -152,8 +152,7 @@ class DeleteUserHandlerImplTest {
+         2L, getRpUser("admin", UserRole.ADMINISTRATOR, OrganizationRole.MANAGER, ProjectRole.EDITOR,
+             1L));
+ 
+-    verify(tokenBlacklistService).revokeSubject("test");
+-    verify(tokenBlacklistService).revokeSubject("ext-user-id");
++    verify(tokenBlacklistService).revokeUserTokens(user);
+   }
+ 
+   @Test
+diff --git a/src/test/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImplTest.java b/src/test/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImplTest.java
+index 067e22d02..2390624c0 100644
+--- a/src/test/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImplTest.java
++++ b/src/test/java/com/epam/reportportal/base/core/user/impl/UserMutationServiceImplTest.java
+@@ -24,6 +24,7 @@ import static org.mockito.Mockito.never;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
++import com.epam.reportportal.base.core.auth.TokenBlacklistService;
+ import com.epam.reportportal.base.core.events.domain.ChangeUserTypeEvent;
+ import com.epam.reportportal.base.infrastructure.persistence.commons.ReportPortalUser;
+ import com.epam.reportportal.base.infrastructure.persistence.dao.ProjectRepository;
+@@ -58,6 +59,9 @@ class UserMutationServiceImplTest {
+   @Mock
+   private ApplicationEventPublisher eventPublisher;
+ 
++  @Mock
++  private TokenBlacklistService tokenBlacklistService;
++
+   @InjectMocks
+   private UserMutationServiceImpl userMutationService;
+ 
+@@ -249,13 +253,64 @@ class UserMutationServiceImplTest {
+     }
+ 
+     @Test
+-    @DisplayName("Should update role and publish event")
+-    void updateInstanceRoleWhenValidShouldUpdateAndPublishEvent() {
++    @DisplayName("Should update role when role changes")
++    void updateInstanceRoleWhenRoleChangesShouldUpdateRole() {
++      // When
+       userMutationService.updateInstanceRole(user, "ADMINISTRATOR", adminEditor);
+ 
++      // Then
+       assertThat(user.getRole()).isEqualTo(UserRole.ADMINISTRATOR);
++    }
++
++    @Test
++    @DisplayName("Should publish change event when role changes")
++    void updateInstanceRoleWhenRoleChangesShouldPublishChangeUserTypeEvent() {
++      // When
++      userMutationService.updateInstanceRole(user, "ADMINISTRATOR", adminEditor);
++
++      // Then
+       verify(eventPublisher).publishEvent(any(ChangeUserTypeEvent.class));
+     }
++
++    @Test
++    @DisplayName("Should revoke user tokens when role changes")
++    void updateInstanceRoleWhenRoleChangesShouldRevokeUserTokens() {
++      // When
++      userMutationService.updateInstanceRole(user, "ADMINISTRATOR", adminEditor);
++
++      // Then
++      verify(tokenBlacklistService).revokeUserTokens(user);
++    }
++
++    @Test
++    @DisplayName("Should not change role when requested role is the same")
++    void updateInstanceRoleWhenRoleUnchangedShouldKeepRole() {
++      // When
++      userMutationService.updateInstanceRole(user, "USER", adminEditor);
++
++      // Then
++      assertThat(user.getRole()).isEqualTo(UserRole.USER);
++    }
++
++    @Test
++    @DisplayName("Should not publish event when role is unchanged")
++    void updateInstanceRoleWhenRoleUnchangedShouldNotPublishEvent() {
++      // When
++      userMutationService.updateInstanceRole(user, "USER", adminEditor);
++
++      // Then
++      verify(eventPublisher, never()).publishEvent(any());
++    }
++
++    @Test
++    @DisplayName("Should not revoke tokens when role is unchanged")
++    void updateInstanceRoleWhenRoleUnchangedShouldNotRevokeTokens() {
++      // When
++      userMutationService.updateInstanceRole(user, "USER", adminEditor);
++
++      // Then
++      verify(tokenBlacklistService, never()).revokeUserTokens(any());
++    }
+   }
+ 
+   @Nested
+

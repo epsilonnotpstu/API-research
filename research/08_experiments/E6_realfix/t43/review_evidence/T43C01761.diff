@@ -1,0 +1,384 @@
+diff --git a/fineract-accounting/src/main/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializer.java b/fineract-accounting/src/main/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializer.java
+index dd2a8ca6d7..4176a20cbf 100644
+--- a/fineract-accounting/src/main/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializer.java
++++ b/fineract-accounting/src/main/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializer.java
+@@ -60,7 +60,7 @@ public class ProvisioningEntriesDefinitionJsonDeserializer implements Provisioni
+         final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("provisioningcriteria");
+         final JsonElement element = this.fromApiJsonHelper.parse(json);
+         final Locale locale = this.fromApiJsonHelper.extractLocaleParameter(element.getAsJsonObject());
+-        baseDataValidator.reset().parameter(JSON_DATEFORMAT_PARAM).value(locale).notNull();
++        baseDataValidator.reset().parameter(JSON_LOCALE_PARAM).value(locale).notNull();
+         final String dateformat = this.fromApiJsonHelper.extractDateFormatParameter(element.getAsJsonObject());
+         baseDataValidator.reset().parameter(JSON_DATEFORMAT_PARAM).value(dateformat).notBlank();
+         LocalDate localDate = this.fromApiJsonHelper.extractLocalDateNamed(JSON_DATE_PARAM, element);
+diff --git a/fineract-accounting/src/test/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializerTest.java b/fineract-accounting/src/test/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializerTest.java
+new file mode 100644
+index 0000000000..013e4b2e7e
+--- /dev/null
++++ b/fineract-accounting/src/test/java/org/apache/fineract/accounting/provisioning/serialization/ProvisioningEntriesDefinitionJsonDeserializerTest.java
+@@ -0,0 +1,73 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.accounting.provisioning.serialization;
++
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++import java.time.LocalDate;
++import java.util.HashMap;
++import java.util.Map;
++import org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType;
++import org.apache.fineract.infrastructure.core.domain.ActionContext;
++import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
++import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
++import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
++import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
++import org.junit.jupiter.api.AfterEach;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++/**
++ * Regression test: a missing {@code locale} used to be reported under the {@code dateFormat} parameter name instead of
++ * {@code locale}, because the validator reused the wrong constant when building the validation error.
++ */
++class ProvisioningEntriesDefinitionJsonDeserializerTest {
++
++    private final FromJsonHelper fromJsonHelper = new FromJsonHelper();
++    private ProvisioningEntriesDefinitionJsonDeserializer deserializer;
++
++    @BeforeEach
++    void setUp() {
++        deserializer = new ProvisioningEntriesDefinitionJsonDeserializer(fromJsonHelper);
++        ThreadLocalContextUtil.setTenant(new FineractPlatformTenant(1L, "default", "Default", "Asia/Kolkata", null));
++        ThreadLocalContextUtil.setActionContext(ActionContext.DEFAULT);
++        ThreadLocalContextUtil.setBusinessDates(new HashMap<>(Map.of(BusinessDateType.BUSINESS_DATE, LocalDate.of(2024, 1, 1))));
++    }
++
++    @AfterEach
++    void tearDown() {
++        ThreadLocalContextUtil.reset();
++    }
++
++    @Test
++    void validateForCreateWithoutLocaleReportsErrorForLocaleParameter() {
++        String json = """
++                {
++                  "dateFormat": "dd MMMM yyyy"
++                }
++                """;
++
++        PlatformApiDataValidationException ex = assertThrows(PlatformApiDataValidationException.class,
++                () -> deserializer.validateForCreate(json));
++
++        assertTrue(ex.getErrors().stream().anyMatch(e -> "locale".equals(e.getParameterName())),
++                "Expected validation error for parameter 'locale'");
++    }
++}
+diff --git a/fineract-core/src/main/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidator.java b/fineract-core/src/main/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidator.java
+index 668d6196a9..dbb7b8d3e3 100644
+--- a/fineract-core/src/main/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidator.java
++++ b/fineract-core/src/main/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidator.java
+@@ -74,7 +74,7 @@ public class GlobalConfigurationDataValidator {
+ 
+         if (this.fromApiJsonHelper.parameterExists(GlobalConfigurationApiConstant.VALUE, element)) {
+             final Long valueStr = this.fromApiJsonHelper.extractLongNamed(GlobalConfigurationApiConstant.VALUE, element);
+-            baseDataValidator.reset().parameter(GlobalConfigurationApiConstant.ENABLED).value(valueStr).zeroOrPositiveAmount();
++            baseDataValidator.reset().parameter(GlobalConfigurationApiConstant.VALUE).value(valueStr).zeroOrPositiveAmount();
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists(GlobalConfigurationApiConstant.DATE_VALUE, element)) {
+diff --git a/fineract-core/src/test/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidatorTest.java b/fineract-core/src/test/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidatorTest.java
+new file mode 100644
+index 0000000000..57f3a95c5c
+--- /dev/null
++++ b/fineract-core/src/test/java/org/apache/fineract/infrastructure/configuration/data/GlobalConfigurationDataValidatorTest.java
+@@ -0,0 +1,57 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.configuration.data;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++import org.apache.fineract.infrastructure.core.api.JsonCommand;
++import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
++import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++/**
++ * Regression test: a negative {@code value} used to be reported under the {@code enabled} parameter name instead of
++ * {@code value}, because the validator reused the wrong constant when building the validation error.
++ */
++class GlobalConfigurationDataValidatorTest {
++
++    private final FromJsonHelper fromJsonHelper = new FromJsonHelper();
++    private GlobalConfigurationDataValidator validator;
++
++    @BeforeEach
++    void setUp() {
++        validator = new GlobalConfigurationDataValidator(fromJsonHelper);
++    }
++
++    @Test
++    void validateForUpdateWithNegativeValueReportsErrorForValueParameter() {
++        JsonCommand command = new JsonCommand(1L, fromJsonHelper.parse("{\"value\": -5}"), fromJsonHelper);
++
++        PlatformApiDataValidationException ex = assertThrows(PlatformApiDataValidationException.class,
++                () -> validator.validateForUpdate(command));
++
++        assertTrue(ex.getErrors().stream().anyMatch(e -> "value".equals(e.getParameterName())),
++                "Expected validation error for parameter 'value'");
++        assertFalse(ex.getErrors().stream().anyMatch(e -> "enabled".equals(e.getParameterName())),
++                "Did not expect a validation error for parameter 'enabled'");
++    }
++}
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidator.java
+index 39ad102284..d1ac30fcc1 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidator.java
+@@ -89,7 +89,8 @@ public class AccountNumberFormatDataValidator {
+                 final String prefixCharacter = this.fromApiJsonHelper
+                         .extractStringNamed(AccountNumberFormatConstants.prefixCharacterParamName, element);
+ 
+-                baseDataValidator.reset().parameter(AccountNumberFormatConstants.prefixTypeParamName).value(prefixCharacter).notBlank();
++                baseDataValidator.reset().parameter(AccountNumberFormatConstants.prefixCharacterParamName).value(prefixCharacter)
++                        .notBlank();
+             }
+ 
+             /**
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/campaigns/sms/serialization/SmsCampaignValidator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/campaigns/sms/serialization/SmsCampaignValidator.java
+index 9cef1b2a4c..9082b819ad 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/campaigns/sms/serialization/SmsCampaignValidator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/campaigns/sms/serialization/SmsCampaignValidator.java
+@@ -162,7 +162,7 @@ public class SmsCampaignValidator {
+         if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.isNotificationParamName, element)) {
+             final Boolean isNotification = this.fromApiJsonHelper.extractBooleanNamed(SmsCampaignValidator.isNotificationParamName,
+                     element);
+-            baseDataValidator.reset().parameter(SmsCampaignValidator.submittedOnDateParamName).trueOrFalseRequired(isNotification);
++            baseDataValidator.reset().parameter(SmsCampaignValidator.isNotificationParamName).trueOrFalseRequired(isNotification);
+         }
+         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+ 
+@@ -224,7 +224,7 @@ public class SmsCampaignValidator {
+         if (this.fromApiJsonHelper.parameterExists(SmsCampaignValidator.isNotificationParamName, element)) {
+             final Boolean isNotification = this.fromApiJsonHelper.extractBooleanNamed(SmsCampaignValidator.isNotificationParamName,
+                     element);
+-            baseDataValidator.reset().parameter(SmsCampaignValidator.submittedOnDateParamName).trueOrFalseRequired(isNotification);
++            baseDataValidator.reset().parameter(SmsCampaignValidator.isNotificationParamName).trueOrFalseRequired(isNotification);
+         }
+         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+ 
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/entityaccess/data/FineractEntityDataValidator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/entityaccess/data/FineractEntityDataValidator.java
+index f1638a23e3..ec6918017e 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/entityaccess/data/FineractEntityDataValidator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/entityaccess/data/FineractEntityDataValidator.java
+@@ -196,10 +196,10 @@ public class FineractEntityDataValidator {
+             baseDataValidator.reset().parameter(FineractEntityApiResourceConstants.fromEnityType).value(fromEnityType);
+         }
+ 
+-        if (this.fromApiJsonHelper.parameterExists(FineractEntityApiResourceConstants.fromEnityType, element)) {
++        if (this.fromApiJsonHelper.parameterExists(FineractEntityApiResourceConstants.toEntityType, element)) {
+             atLeastOneParameterPassedForUpdate = true;
+             final String toEnityType = this.fromApiJsonHelper.extractStringNamed(FineractEntityApiResourceConstants.toEntityType, element);
+-            baseDataValidator.reset().parameter(FineractEntityApiResourceConstants.fromEnityType).value(toEnityType);
++            baseDataValidator.reset().parameter(FineractEntityApiResourceConstants.toEntityType).value(toEnityType);
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists(FineractEntityApiResourceConstants.toEntityType, element)) {
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidator.java b/fineract-provider/src/main/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidator.java
+index 0f8180b492..5d30899b51 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidator.java
+@@ -155,7 +155,8 @@ public class InterestRateChartSlabDataValidator {
+ 
+         if (amountRangeFrom != null && amountRangeTo != null) {
+             if (amountRangeFrom.compareTo(amountRangeTo) > 0) {
+-                baseDataValidator.parameter(amountRangeFromParamName).value(fromPeriod).failWithCode("from.amount.greater.than.to.amount");
++                baseDataValidator.reset().parameter(amountRangeFromParamName).value(amountRangeFrom)
++                        .failWithCode("from.amount.greater.than.to.amount");
+             }
+         }
+ 
+diff --git a/fineract-provider/src/test/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidatorTest.java b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidatorTest.java
+new file mode 100644
+index 0000000000..9868dfb3c6
+--- /dev/null
++++ b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/accountnumberformat/data/AccountNumberFormatDataValidatorTest.java
+@@ -0,0 +1,65 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.accountnumberformat.data;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++import org.apache.fineract.infrastructure.accountnumberformat.domain.AccountNumberFormatEnumerations.AccountNumberPrefixType;
++import org.apache.fineract.infrastructure.accountnumberformat.domain.EntityAccountType;
++import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
++import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++/**
++ * Regression test: a blank {@code prefixCharacter} used to be reported under the {@code prefixType} parameter name
++ * instead of {@code prefixCharacter}, because the validator reused the wrong constant when building the validation
++ * error.
++ */
++class AccountNumberFormatDataValidatorTest {
++
++    private final FromJsonHelper fromJsonHelper = new FromJsonHelper();
++    private AccountNumberFormatDataValidator validator;
++
++    @BeforeEach
++    void setUp() {
++        validator = new AccountNumberFormatDataValidator(fromJsonHelper);
++    }
++
++    @Test
++    void validateForCreateWithBlankPrefixCharacterReportsErrorForPrefixCharacterParameter() {
++        String json = """
++                {
++                  "accountType": ACCOUNT_TYPE,
++                  "prefixType": PREFIX_TYPE,
++                  "prefixCharacter": ""
++                }
++                """.replace("ACCOUNT_TYPE", String.valueOf(EntityAccountType.CLIENT.getValue())).replace("PREFIX_TYPE",
++                String.valueOf(AccountNumberPrefixType.PREFIX_SHORT_NAME.getValue()));
++
++        PlatformApiDataValidationException ex = assertThrows(PlatformApiDataValidationException.class,
++                () -> validator.validateForCreate(json));
++
++        assertTrue(ex.getErrors().stream().anyMatch(e -> "prefixCharacter".equals(e.getParameterName())),
++                "Expected validation error for parameter 'prefixCharacter'");
++        assertEquals(1, ex.getErrors().size(), "Expected exactly one validation error");
++    }
++}
+diff --git a/fineract-provider/src/test/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidatorTest.java b/fineract-provider/src/test/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidatorTest.java
+new file mode 100644
+index 0000000000..2ebad4fc57
+--- /dev/null
++++ b/fineract-provider/src/test/java/org/apache/fineract/portfolio/interestratechart/data/InterestRateChartSlabDataValidatorTest.java
+@@ -0,0 +1,71 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.portfolio.interestratechart.data;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++import java.math.BigDecimal;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++import org.apache.fineract.infrastructure.core.data.ApiParameterError;
++import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
++import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++/**
++ * Regression test: when {@code amountRangeFrom} is greater than {@code amountRangeTo}, the validator used to report the
++ * (unrelated, absent) {@code fromPeriod} value in the error message arguments instead of the actual
++ * {@code amountRangeFrom} value, because it reused the wrong variable when building the validation error.
++ */
++class InterestRateChartSlabDataValidatorTest {
++
++    private final FromJsonHelper fromJsonHelper = new FromJsonHelper();
++    private InterestRateChartSlabDataValidator validator;
++
++    @BeforeEach
++    void setUp() {
++        validator = new InterestRateChartSlabDataValidator(fromJsonHelper, new InterestIncentiveDataValidator(fromJsonHelper));
++    }
++
++    @Test
++    void validateChartSlabsCreateWithFromAmountGreaterThanToAmountReportsFromAmountInErrorArgs() {
++        String json = """
++                {
++                  "amountRangeFrom": 1000,
++                  "amountRangeTo": 10,
++                  "annualInterestRate": 5
++                }
++                """;
++
++        List<ApiParameterError> errors = new ArrayList<>();
++        DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(errors).resource("chartslab");
++
++        validator.validateChartSlabsCreate(fromJsonHelper.parse(json), baseDataValidator, Locale.US, null);
++
++        ApiParameterError error = errors.stream()
++                .filter(e -> "validation.msg.chartslab.amountRangeFrom.from.amount.greater.than.to.amount"
++                        .equals(e.getUserMessageGlobalisationCode()))
++                .findFirst().orElseThrow(() -> new AssertionError("Expected 'from.amount.greater.than.to.amount' validation error"));
++
++        Object reportedValue = error.getArgs().get(0).getValue();
++        assertEquals(BigDecimal.valueOf(1000), reportedValue, "Expected the reported value to be amountRangeFrom");
++    }
++}
+

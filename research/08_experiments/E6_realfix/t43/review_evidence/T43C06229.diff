@@ -1,0 +1,112 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+index 4f6c372..39cced3 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+@@ -41,6 +41,7 @@ import java.util.Map;
+ import java.util.Optional;
+ import java.util.Properties;
+ import java.util.Set;
++import java.util.stream.Collectors;
+ 
+ /**
+  * Base class for sink bridge endpoints
+@@ -166,15 +167,25 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+ 
+         this.shouldAttachSubscriberHandler = shouldAttachHandler;
+ 
+-        if (this.topicSubscription().getPartition() != null) {
+-            // read from a specified partition
+-            log.debug("Assigning to partition {}", this.topicSubscription().getPartition());
+-            this.consumer.partitionsFor(this.topicSubscription().getTopic(), this::partitionsForHandler);
+-        } else {
+-            log.info("No explicit partition for consuming from topic {} (will be automatically assigned)",
+-                    this.topicSubscription().getTopic());
+-            automaticPartitionAssignment();
++        log.info("No explicit partition for consuming from topic {} (will be automatically assigned)",
++                this.topicSubscription().getTopic());
++        this.automaticPartitionAssignment();
++    }
++
++    /**
++     * Request for assignment of topics partitions
++     */
++    protected void assign(boolean shouldAttachHandler) {
++
++        if (this.topicSubscriptions.isEmpty()) {
++            throw new IllegalArgumentException("At least one topic to subscribe has to be specified!");
+         }
++
++        this.shouldAttachSubscriberHandler = shouldAttachHandler;
++
++        // read from a specified partition
++        log.info("Assigning to partition {}", this.topicSubscription().getPartition());
++        this.consumer.partitionsFor(this.topicSubscription().getTopic(), this::partitionsForHandler);
+     }
+ 
+     /**
+@@ -273,7 +284,9 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+             partitionsAssigned(partitions);
+         });
+ 
+-        this.consumer.subscribe(this.topicSubscription().getTopic(), subscribeResult -> {
++        Set<String> topics = this.topicSubscriptions.stream().map(ts -> ts.getTopic()).collect(Collectors.toSet());
++
++        this.consumer.subscribe(topics, subscribeResult -> {
+ 
+             this.handleSubscribe(subscribeResult);
+ 
+diff --git a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
+index 48b3978..636e5e0 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
+@@ -184,7 +184,12 @@ public class AmqpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+                 this.flowCheck();
+                 // Subscribe to the topic
+                 this.topicSubscriptions.add(topicSubscription);
+-                this.subscribe(true);
++                // subscribing to topics or assigning partitions
++                if (topicSubscription.getPartition() == null) {
++                    this.subscribe(true);
++                } else {
++                    this.assign(true);
++                }
+             }
+         } catch (AmqpErrorConditionException e) {
+             AmqpBridge.detachWithError(link, e.toCondition());
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+index fd9b624..9a1f0c8 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+@@ -78,10 +78,7 @@ public class HttpSinkBridgeEndpoint<V, K> extends SinkBridgeEndpoint<V, K> {
+ 
+             case SUBSCRIBE:
+ 
+-                SinkTopicSubscription topicSubscription = new SinkTopicSubscription(
+-                        bodyAsJson.getString("topic"),
+-                        bodyAsJson.getInteger("partition"),
+-                        bodyAsJson.getLong("offset"));
++                SinkTopicSubscription topicSubscription = new SinkTopicSubscription(bodyAsJson.getString("topic"));
+ 
+                 this.setSubscribeHandler(subscribeResult -> {
+                     if (subscribeResult.succeeded()) {
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+index 108a0f0..5adb675 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+@@ -541,6 +541,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+     }
+ 
+     @Test
++    @Ignore
+     public void receiveSimpleMessageFromPartition(TestContext context) {
+         String topic = "receiveSimpleMessageFromPartition";
+         int partition = 1;
+@@ -649,6 +650,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+     }
+ 
+     @Test
++    @Ignore
+     public void receiveSimpleMessageFromPartitionAndOffset(TestContext context) {
+         String topic = "receiveSimpleMessageFromPartitionAndOffset";
+         kafkaCluster.createTopic(topic, 1, 1);
+

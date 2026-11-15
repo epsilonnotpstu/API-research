@@ -1,0 +1,236 @@
+diff --git a/src/main/java/com/epam/reportportal/auth/integration/validator/duplicate/UniqueNameGlobalIntegrationValidator.java b/src/main/java/com/epam/reportportal/auth/integration/validator/duplicate/UniqueNameGlobalIntegrationValidator.java
+index 6ec9b3bc6..9090c2111 100644
+--- a/src/main/java/com/epam/reportportal/auth/integration/validator/duplicate/UniqueNameGlobalIntegrationValidator.java
++++ b/src/main/java/com/epam/reportportal/auth/integration/validator/duplicate/UniqueNameGlobalIntegrationValidator.java
+@@ -35,8 +35,8 @@ public class UniqueNameGlobalIntegrationValidator implements IntegrationDuplicat
+ 
+   @Override
+   public void validate(Integration integration) {
+-    integrationRepository.findByNameAndTypeIdAndProjectIdIsNull(integration.getName(),
+-            integration.getType().getId())
++    integrationRepository.findByNameAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(
++            integration.getName(), integration.getType().getId())
+         .ifPresent(found -> BusinessRule.expect(found.getId(), id -> id.equals(integration.getId()))
+             .verify(ErrorType.INTEGRATION_ALREADY_EXISTS, integration.getName()));
+   }
+diff --git a/src/main/java/com/epam/reportportal/base/core/integration/impl/CreateIntegrationHandlerImpl.java b/src/main/java/com/epam/reportportal/base/core/integration/impl/CreateIntegrationHandlerImpl.java
+index 5dc164374..fca9b0b19 100644
+--- a/src/main/java/com/epam/reportportal/base/core/integration/impl/CreateIntegrationHandlerImpl.java
++++ b/src/main/java/com/epam/reportportal/base/core/integration/impl/CreateIntegrationHandlerImpl.java
+@@ -238,7 +238,8 @@ public class CreateIntegrationHandlerImpl implements CreateIntegrationHandler {
+     BusinessRule.expect(integrationName, StringUtils::isNotBlank)
+         .verify(ErrorType.INCORRECT_INTEGRATION_NAME, "Integration name should be not empty");
+     boolean integrationExists =
+-        integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNull(integrationName, type.getId());
++        integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(integrationName,
++            type.getId());
+     BusinessRule.expect(integrationExists, BooleanUtils::isFalse).
+         verify(ErrorType.INTEGRATION_ALREADY_EXISTS,
+             Suppliers.formattedSupplier("Global integration of type = '{}' with name = '{}' already exists",
+diff --git a/src/main/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepository.java b/src/main/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepository.java
+index a2c277a51..94f90f35c 100644
+--- a/src/main/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepository.java
++++ b/src/main/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepository.java
+@@ -38,7 +38,14 @@ import org.springframework.data.repository.query.Param;
+ public interface IntegrationRepository extends ReportPortalRepository<Integration, Long>,
+     IntegrationRepositoryCustom {
+ 
+-  boolean existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNull(String name, Long typeId);
++  /**
++   * Check whether a global integration (no project, no organization) with the given name and type already exists.
++   *
++   * @param name   {@link Integration#getName()}
++   * @param typeId {@link IntegrationType#getId()}
++   * @return {@code true} if a matching global integration exists
++   */
++  boolean existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(String name, Long typeId);
+ 
+   boolean existsByNameIgnoreCaseAndTypeIdAndProjectId(String name, Long typeId, Long projectId);
+ 
+@@ -56,14 +63,15 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+    * @param integrationTypeId {@code Integration#getType()}#{@code IntegrationType#getId()}
+    * @return {@link Optional} with {@link Integration}
+    */
+-  Optional<Integration> findByNameAndTypeIdAndProjectIdIsNull(String name, Long integrationTypeId);
++  Optional<Integration> findByNameAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(String name,
++      Long integrationTypeId);
+ 
+   /**
+    * @param id                {@code Integration#getId()}
+    * @param integrationTypeId {@code Integration#getType()}#{@code IntegrationType#getId()}
+    * @return {@link Optional} with {@link Integration}
+    */
+-  Optional<Integration> findByIdAndTypeIdAndProjectIdIsNull(Long id, Long integrationTypeId);
++  Optional<Integration> findByIdAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(Long id, Long integrationTypeId);
+ 
+   /**
+    * Retrieve given project's integrations
+@@ -76,7 +84,7 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+   /**
+    * Retrieve all {@link Integration} by project ID and integration type
+    *
+-   * @param projectId       {@link Project#id}
++   * @param projectId       {@link Project#getId()}
+    * @param integrationType {@link IntegrationType}
+    * @return The {@link List} of the {@link Integration}
+    */
+@@ -84,37 +92,38 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       IntegrationType integrationType);
+ 
+   /**
+-   * Delete all {@link Integration} with {@link Integration#project} == NULL by integration type ID
++   * Delete all global {@link Integration} (no project, no organization) by integration type ID
+    *
+-   * @param typeId {@link IntegrationType#id}
++   * @param typeId {@link IntegrationType#getId()}
+    */
+   @Modifying
+-  @Query(value = "DELETE FROM integration WHERE project_id IS NULL AND type = :typeId", nativeQuery = true)
+-  int deleteAllGlobalByIntegrationTypeId(@Param("typeId") Long typeId);
++  @Query(value = "DELETE FROM integration WHERE project_id IS NULL AND organization_id IS NULL AND type = :typeId",
++      nativeQuery = true)
++  void deleteAllGlobalByIntegrationTypeId(@Param("typeId") Long typeId);
+ 
+   /**
+    * Delete all {@link Integration} by projectID and integration type ID
+    *
+-   * @param typeId {@link IntegrationType#id}
++   * @param typeId {@link IntegrationType#getId()}
+    */
+   @Modifying
+   @Query(value = "DELETE FROM integration WHERE project_id = :projectId AND type = :typeId", nativeQuery = true)
+-  int deleteAllByProjectIdAndIntegrationTypeId(@Param("projectId") Long projectId,
++  void deleteAllByProjectIdAndIntegrationTypeId(@Param("projectId") Long projectId,
+       @Param("typeId") Long typeId);
+ 
+   /**
+-   * Retrieve all {@link Integration} with {@link Integration#project} == null by integration type
++   * Retrieve all {@link Integration} with {@link Integration#getProject()} == null by integration type
+    *
+-   * @param integrationType {@link Integration#type}
++   * @param integrationType {@link Integration#getType()}
+    * @return @return The {@link List} of the {@link Integration}
+    */
+   @Query(value = "SELECT i FROM Integration i WHERE i.project IS NULL AND i.organizationId IS NULL AND i.type = :integrationType order by i.creationDate desc")
+   List<Integration> findAllGlobalByType(@Param("integrationType") IntegrationType integrationType);
+ 
+   /**
+-   * Retrieve all {@link Integration} with {@link Integration#project} by integration group
++   * Retrieve all {@link Integration} with {@link Integration#getProject()} by integration group
+    *
+-   * @param integrationGroup {@link IntegrationType#integrationGroup}
++   * @param integrationGroup {@link IntegrationType#getIntegrationGroup()}
+    * @return @return The {@link List} of the {@link Integration}
+    */
+   @Query(value = "SELECT i FROM Integration i JOIN i.type t WHERE i.project = :project AND t.integrationGroup = :integrationGroup order by i.creationDate desc")
+@@ -122,9 +131,9 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       @Param("integrationGroup") IntegrationGroupEnum integrationGroup);
+ 
+   /**
+-   * Retrieve all {@link Integration} with {@link Integration#project} == null by integration group
++   * Retrieve all {@link Integration} with {@link Integration#getProject()} == null by integration group
+    *
+-   * @param integrationGroup {@link IntegrationType#integrationGroup}
++   * @param integrationGroup {@link IntegrationType#getIntegrationGroup()}
+    * @return @return The {@link List} of the {@link Integration}
+    */
+   @Query(value = "SELECT i FROM Integration i JOIN i.type t WHERE i.project IS NULL AND i.organizationId IS NULL AND t.integrationGroup = :integrationGroup order by i.creationDate desc")
+@@ -132,7 +141,7 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       @Param("integrationGroup") IntegrationGroupEnum integrationGroup);
+ 
+   /**
+-   * Retrieve all {@link Integration} with {@link Integration#project} == null
++   * Retrieve all {@link Integration} with {@link Integration#getProject()} == null
+    *
+    * @return @return The {@link List} of the global {@link Integration}
+    */
+@@ -144,7 +153,7 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+    *
+    * @param url        Bug Tracking System url
+    * @param btsProject Bug Tracking System project name
+-   * @param projectId  {@link Project#id}
++   * @param projectId  {@link Project#getId()}
+    * @return The {@link Integration} wrapped in the {@link Optional}
+    */
+   @Query(value =
+@@ -156,7 +165,7 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       @Param("projectId") Long projectId);
+ 
+   /**
+-   * Find BTS integration by BTS url, BTS project name and {@link Integration#project} == null
++   * Find BTS integration by BTS url, BTS project name and {@link Integration#getProject()} == null
+    *
+    * @param url        Bug Tracking System url
+    * @param btsProject Bug Tracking System project name
+@@ -169,10 +178,10 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       @Param("btsProject") String btsProject);
+ 
+   /**
+-   * Update {@link Integration#enabled} by integration ID
++   * Update {@link Integration#isEnabled()} by integration ID
+    *
+    * @param enabled       Enabled state flag
+-   * @param integrationId {@link Integration#id}
++   * @param integrationId {@link Integration#getId()}
+    */
+   @Modifying
+   @Query(value = "UPDATE integration SET enabled = :enabled WHERE id = :integrationId", nativeQuery = true)
+@@ -180,10 +189,10 @@ public interface IntegrationRepository extends ReportPortalRepository<Integratio
+       @Param("integrationId") Long integrationId);
+ 
+   /**
+-   * Update {@link Integration#enabled} of all integrations by integration type id
++   * Update {@link Integration#isEnabled()} of all integrations by integration type id
+    *
+    * @param enabled           Enabled state flag
+-   * @param integrationTypeId {@link IntegrationType#id}
++   * @param integrationTypeId {@link IntegrationType#getId()}
+    */
+   @Modifying
+   @Query(value = "UPDATE integration SET enabled = :enabled WHERE type = :integrationTypeId", nativeQuery = true)
+diff --git a/src/test/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepositoryTest.java b/src/test/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepositoryTest.java
+index bf3d6ba92..471073692 100644
+--- a/src/test/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepositoryTest.java
++++ b/src/test/java/com/epam/reportportal/base/infrastructure/persistence/dao/IntegrationRepositoryTest.java
+@@ -95,8 +95,9 @@ class IntegrationRepositoryTest extends BaseMvcTest {
+ 
+   @Test
+   void findByIdAndTypeId() {
+-    final Integration jiraIntegration = integrationRepository.findByIdAndTypeIdAndProjectIdIsNull(
+-        JIRA_INTEGRATION_ID, JIRA_INTEGRATION_TYPE_ID).get();
++    final Integration jiraIntegration = integrationRepository
++        .findByIdAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(JIRA_INTEGRATION_ID, JIRA_INTEGRATION_TYPE_ID)
++        .get();
+     assertEquals("jira", jiraIntegration.getName());
+     assertEquals(JIRA_INTEGRATION_ID, jiraIntegration.getId());
+     assertEquals(JIRA_INTEGRATION_TYPE_ID, jiraIntegration.getType().getId());
+@@ -104,8 +105,8 @@ class IntegrationRepositoryTest extends BaseMvcTest {
+ 
+   @Test
+   void findByNameAndTypeId() {
+-    final Integration jiraIntegration = integrationRepository.findByNameAndTypeIdAndProjectIdIsNull(
+-        "jira", JIRA_INTEGRATION_TYPE_ID).get();
++    final Integration jiraIntegration = integrationRepository
++        .findByNameAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull("jira", JIRA_INTEGRATION_TYPE_ID).get();
+     assertEquals("jira", jiraIntegration.getName());
+     assertEquals(JIRA_INTEGRATION_ID, jiraIntegration.getId());
+     assertEquals(JIRA_INTEGRATION_TYPE_ID, jiraIntegration.getType().getId());
+@@ -164,13 +165,15 @@ class IntegrationRepositoryTest extends BaseMvcTest {
+ 
+   @Test
+   void existsByNameTypePositive() {
+-    boolean exists = integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNull("jira", 6L);
++    boolean exists = integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(
++        "jira", 6L);
+     assertTrue(exists);
+   }
+ 
+   @Test
+   void existsByNameTypeNegative() {
+-    boolean exists = integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNull("jira1", 4L);
++    boolean exists = integrationRepository.existsByNameIgnoreCaseAndTypeIdAndProjectIdIsNullAndOrganizationIdIsNull(
++        "jira1", 4L);
+     assertFalse(exists);
+   }
+ 
+

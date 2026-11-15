@@ -1,0 +1,101 @@
+diff --git a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
+index 69010018e..9632ff90f 100644
+--- a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
++++ b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
+@@ -68,8 +68,6 @@ import java.util.Objects;
+ import java.util.Optional;
+ import java.util.concurrent.CompletableFuture;
+ 
+-import static com.hivemq.adapter.sdk.api.state.ProtocolAdapterState.ConnectionStatus.STATELESS;
+-
+ 
+ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+     public static final @NotNull String NODE_SCHEMA_LOCATION = "schemaLocation";
+@@ -124,7 +122,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+             final @NotNull ProtocolAdapterStartInput input,
+             final @NotNull ProtocolAdapterStartOutput output) {
+         try {
+-            protocolAdapterState.setConnectionStatus(STATELESS);
++            protocolAdapterState.setConnectionStatus(ProtocolAdapterState.ConnectionStatus.STATELESS);
+             if (httpClient == null) {
+                 final HttpClient.Builder builder = HttpClient.newBuilder();
+                 builder.version(HttpClient.Version.HTTP_1_1)
+@@ -179,8 +177,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+                             } else {
+                                 final Optional<MtConnectData> optionalFirstFailedData =
+                                         dataList.stream().filter(data -> !data.isSuccessful()).findFirst();
+-                                if (optionalFirstFailedData.isPresent()) {
+-                                    final MtConnectData data = optionalFirstFailedData.get();
++                                optionalFirstFailedData.ifPresentOrElse(data -> {
+                                     protocolAdapterState.setConnectionStatus(ProtocolAdapterState.ConnectionStatus.ERROR);
+                                     if (data.getErrorMessage() == null) {
+                                         data.setErrorMessage("Error while polling tag [" + data.getTagName() + "]");
+@@ -190,14 +187,15 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+                                     } else {
+                                         pollingOutput.fail(data.getCause(), data.getErrorMessage());
+                                     }
+-                                } else {
++                                }, () -> {
+                                     final DataPointFactory dataPointFactory = adapterFactories.dataPointFactory();
+                                     dataList.stream()
+                                             .map(data -> dataPointFactory.createJsonDataPoint(data.getTagName(),
+                                                     Objects.requireNonNull(data.getJsonString())))
+                                             .forEach(pollingOutput::addDataPoint);
++                                    protocolAdapterState.setConnectionStatus(ProtocolAdapterState.ConnectionStatus.STATELESS);
+                                     pollingOutput.finish();
+-                                }
++                                });
+                             }
+                         }
+                     });
+diff --git a/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java b/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
+index 9f3968168..bb5930367 100644
+--- a/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
++++ b/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
+@@ -62,6 +62,7 @@ import static org.mockito.ArgumentMatchers.anyString;
+ import static org.mockito.ArgumentMatchers.isA;
+ import static org.mockito.ArgumentMatchers.isNull;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.times;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+@@ -142,6 +143,8 @@ public class MtConnectProtocolAdapterTest {
+                         true,
+                         5,
+                         List.of(new MtConnectAdapterHttpHeader("name", "value"))))));
++        final ArgumentCaptor<ProtocolAdapterState.ConnectionStatus> argumentCaptorConnectionStatus =
++                ArgumentCaptor.forClass(ProtocolAdapterState.ConnectionStatus.class);
+         final ArgumentCaptor<DataPoint> argumentCaptorDataPoint = ArgumentCaptor.forClass(DataPoint.class);
+         final HttpResponse<String> httpResponse = (HttpResponse<String>) mock(HttpResponse.class);
+         when(httpResponse.statusCode()).thenReturn(200);
+@@ -163,6 +166,9 @@ public class MtConnectProtocolAdapterTest {
+         adapter.start(startInput, startOutput);
+         adapter.poll(pollingInput, pollingOutput);
+         verify(pollingOutput).finish();
++        verify(state, times(2)).setConnectionStatus(argumentCaptorConnectionStatus.capture());
++        assertThat(argumentCaptorConnectionStatus.getAllValues()).isEqualTo(List.of(ProtocolAdapterState.ConnectionStatus.STATELESS,
++                ProtocolAdapterState.ConnectionStatus.STATELESS));
+         verify(pollingOutput).addDataPoint(argumentCaptorDataPoint.capture());
+         final HttpHeaders httpHeaders = argumentCaptorHttpRequest.getValue().headers();
+         assertThat(httpHeaders.firstValue("name").orElse("")).isEqualTo("value");
+@@ -195,6 +201,8 @@ public class MtConnectProtocolAdapterTest {
+                         true,
+                         5,
+                         List.of(new MtConnectAdapterHttpHeader("name", "value"))))));
++        final ArgumentCaptor<ProtocolAdapterState.ConnectionStatus> argumentCaptorConnectionStatus =
++                ArgumentCaptor.forClass(ProtocolAdapterState.ConnectionStatus.class);
+         final ArgumentCaptor<Throwable> argumentCaptorThrowable = ArgumentCaptor.forClass(Throwable.class);
+         final ArgumentCaptor<String> argumentCaptorString = ArgumentCaptor.forClass(String.class);
+         final HttpResponse<String> httpResponse = (HttpResponse<String>) mock(HttpResponse.class);
+@@ -216,6 +224,9 @@ public class MtConnectProtocolAdapterTest {
+         adapter.start(startInput, startOutput);
+         adapter.poll(pollingInput, pollingOutput);
+         verify(pollingOutput).fail(argumentCaptorThrowable.capture(), argumentCaptorString.capture());
++        verify(state, times(2)).setConnectionStatus(argumentCaptorConnectionStatus.capture());
++        assertThat(argumentCaptorConnectionStatus.getAllValues()).isEqualTo(List.of(ProtocolAdapterState.ConnectionStatus.STATELESS,
++                ProtocolAdapterState.ConnectionStatus.ERROR));
+     }
+ 
+     @Test
+

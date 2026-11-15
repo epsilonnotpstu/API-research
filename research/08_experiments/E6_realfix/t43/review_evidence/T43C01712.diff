@@ -1,0 +1,55 @@
+diff --git a/README.md b/README.md
+index 04bbbbf..c3dd13b 100644
+--- a/README.md
++++ b/README.md
+@@ -666,8 +666,8 @@ The supported algorithms are for Issuer data, and MDoc authentication are:
+ 
+ Default value: `true`  
+ 
+-Variable: `VERIFIER_VALIDATION_SDJWTVC_STATUSCHECK_ENABLED`  
+-Description: Enables status check validation for sd-jwt-vc attestations shared.  
++Variable: `VERIFIER_VALIDATION_STATUSCHECK_ENABLED`  
++Description: Enables status check validation for attestations shared.  
+ Default value: `true`  
+ 
+ Variable: `VERIFIER_TRANSACTIONDATA_HASHALGORITHM`  
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+index a20b924..aa4d5fd 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+@@ -206,7 +206,7 @@ internal class AppBeans :
+         registerBean { GetWalletResponseLive(bean(), bean(), bean()) }
+         registerBean { GetPresentationEventsLive(bean(), bean()) }
+ 
+-        if (env.getProperty("verifier.validation.sdJwtVc.statusCheck.enabled", true)) {
++        if (env.getProperty("verifier.validation.statusCheck.enabled", true)) {
+             log.info("Enabling Status List Token validations")
+             registerBean<StatusListTokenValidator> {
+                 val selfSignedProfileActive = env.activeProfiles.contains("self-signed")
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index cc7f6b0..b9e550a 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -32,7 +32,7 @@ verifier.clientMetadata.vpFormats.msoMdoc.enabled=true
+ # Configuration parameters for validations applied by verifier
+ # to wallet presentations or in utilities api
+ #
+-verifier.validation.sdJwtVc.statusCheck.enabled=true
++verifier.validation.statusCheck.enabled=true
+ 
+ # SD-JWT-VC Validation configuration
+ verifier.validation.sdJwtVc.kbJwt.clock.skew=PT5S
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+index 02695bc..07e0d63 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+@@ -351,7 +351,7 @@ internal class WalletResponseDirectPostJwtValidationsEnabledTest {
+         "verifier.clientMetadata.responseEncryption.algorithm=ECDH-ES",
+         "verifier.clientMetadata.responseEncryption.method=A128GCM",
+         "verifier.jwk.embed=ByValue",
+-        "verifier.validation.sdJwtVc.statusCheck.enabled=false",
++        "verifier.validation.statusCheck.enabled=false",
+         "verifier.attestation-classifications.eaa[0].use-case=mDL",
+         "verifier.attestation-classifications.eaa[0].doc-types=org.iso.18013.5.1.mDL",
+         "verifier.wrprc[0].intended-use-id=1",
+

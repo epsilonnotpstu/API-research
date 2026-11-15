@@ -1,0 +1,2090 @@
+diff --git a/docs/getting-started.md b/docs/getting-started.md
+index 7068d4f0..8a258e61 100644
+--- a/docs/getting-started.md
++++ b/docs/getting-started.md
+@@ -314,6 +314,26 @@ npm run test:e2e:local-smoke
+ 
+ ---
+ 
++### Full-stack synchronization regression
++
++With Docker Desktop, Node dependencies installed in the frontend checkout, and
++Chrome available, run from this backend repository:
++
++```bash
++mvn -Dtest=SyncBrowserIntegrationTest -Dsync.browser=true test
++```
++
++The test finds a sibling `Iced-Latte-Frontend` checkout by default. For another
++location set `ICED_LATTE_FRONTEND_SOURCE` to its absolute path (or pass
++`-Dsync.frontend=/path/to/checkout`). It launches real Next.js and Spring against
++disposable PostgreSQL/Redis containers, with external mail/storage mocked.
++The browser covers cart, favourites, profile conflicts and guest merge on desktop
++and mobile sizes, including response loss after a real database commit.
++Results, screenshots and private logs are under `target/sync-browser/`. No live
++accounts, production data or paid provider calls are used. Normal test runs skip
++this suite unless `sync.browser=true`. The test stops only its own child processes
++and restores Next's generated type-import change.
++
+ ## 🗄️ Database
+ 
+ Local PostgreSQL defaults:
+diff --git a/src/main/java/com/zufar/icedlatte/cart/endpoint/CartEndpoint.java b/src/main/java/com/zufar/icedlatte/cart/endpoint/CartEndpoint.java
+index 5e3bc5d0..f82db632 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/endpoint/CartEndpoint.java
++++ b/src/main/java/com/zufar/icedlatte/cart/endpoint/CartEndpoint.java
+@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
+ 
+ import jakarta.validation.Valid;
+ 
++import org.jspecify.annotations.Nullable;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.validation.annotation.Validated;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -16,11 +17,13 @@ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PatchMapping;
+ import org.springframework.web.bind.annotation.PostMapping;
+ import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestHeader;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+ import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
+ import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
++import com.zufar.icedlatte.cart.service.CartMergeService;
+ import com.zufar.icedlatte.cart.service.ShoppingCartService;
+ import com.zufar.icedlatte.common.http.ApiPaths;
+ import com.zufar.icedlatte.openapi.dto.AddNewItemsToShoppingCartRequest;
+@@ -44,14 +47,18 @@ public class CartEndpoint implements com.zufar.icedlatte.openapi.cart.api.Shoppi
+ 
+     private final CurrentUserProvider currentUserProvider;
+     private final ShoppingCartService shoppingCartService;
++    private final CartMergeService cartMergeService;
+ 
+     @Override
+     @PostMapping("/items")
+     public ResponseEntity<ShoppingCartDto> addNewItemToShoppingCart(
+-            @Valid @RequestBody final AddNewItemsToShoppingCartRequest request) {
++            @Valid @RequestBody final AddNewItemsToShoppingCartRequest request,
++            @RequestHeader(value = "Idempotency-Key", required = false) @Nullable UUID idempotencyKey) {
+         var userId = currentUserProvider.getUserId();
+         Set<AddCartItemRequest> cartItemRequests = toAddCartItemRequests(request);
+-        var shoppingCart = shoppingCartService.addItemsToCart(userId, cartItemRequests);
++        var shoppingCart = idempotencyKey == null
++                ? shoppingCartService.addItemsToCart(userId, cartItemRequests)
++                : cartMergeService.merge(userId, idempotencyKey, cartItemRequests);
+         log.debug("cart.items.added: cartId={}", shoppingCart.getId());
+         return ResponseEntity.ok(shoppingCart);
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/cart/repository/ShoppingCartItemRepository.java b/src/main/java/com/zufar/icedlatte/cart/repository/ShoppingCartItemRepository.java
+index 86932635..3e0b3cf4 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/repository/ShoppingCartItemRepository.java
++++ b/src/main/java/com/zufar/icedlatte/cart/repository/ShoppingCartItemRepository.java
+@@ -17,7 +17,7 @@ public interface ShoppingCartItemRepository extends JpaRepository<ShoppingCartIt
+     Optional<ShoppingCartItem> findByIdAndShoppingCartUserId(
+             @Param("itemId") UUID itemId, @Param("userId") UUID userId);
+ 
+-    @Modifying
++    @Modifying(flushAutomatically = true, clearAutomatically = true)
+     @Query("DELETE FROM ShoppingCartItem i " + "WHERE i.id IN :itemIds AND i.shoppingCart.userId = :userId")
+     void deleteByIdInAndUserId(@Param("itemIds") List<UUID> itemIds, @Param("userId") UUID userId);
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/cart/service/CartMergeService.java b/src/main/java/com/zufar/icedlatte/cart/service/CartMergeService.java
+new file mode 100644
+index 00000000..fe827582
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/cart/service/CartMergeService.java
+@@ -0,0 +1,49 @@
++package com.zufar.icedlatte.cart.service;
++
++import java.util.Set;
++import java.util.UUID;
++import java.util.stream.Collectors;
++
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
++import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
++import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
++
++import lombok.RequiredArgsConstructor;
++
++@Service
++@RequiredArgsConstructor
++public class CartMergeService {
++
++    private final JdbcTemplate jdbcTemplate;
++    private final ShoppingCartService shoppingCartService;
++
++    @Transactional
++    public ShoppingCartDto merge(UUID userId, UUID key, Set<AddCartItemRequest> items) {
++        String requestItems = items.stream()
++                .map(item -> item.productId() + ":" + item.productQuantity())
++                .sorted()
++                .collect(Collectors.joining(","));
++
++        // The unique key serializes concurrent retries. Receipt and cart commit together.
++        int inserted = jdbcTemplate.update("""
++                INSERT INTO cart_merge_receipt (user_id, merge_key, request_items)
++                VALUES (?, ?, ?) ON CONFLICT (user_id, merge_key) DO NOTHING
++                """, userId, key, requestItems);
++        if (inserted == 1) {
++            return shoppingCartService.addItemsToCart(userId, items);
++        }
++
++        String original = jdbcTemplate.queryForObject("""
++                SELECT request_items FROM cart_merge_receipt WHERE user_id = ? AND merge_key = ?
++                """, String.class, userId, key);
++        if (!requestItems.equals(original)) {
++            throw new InvalidCartItemRequestException("Idempotency-Key cannot be reused with different cart items.");
++        }
++        // Return today's cart, rather than replaying a stale snapshot after later edits.
++        return shoppingCartService.getByUserId(userId);
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/cart/service/CartSyncResource.java b/src/main/java/com/zufar/icedlatte/cart/service/CartSyncResource.java
+new file mode 100644
+index 00000000..16aeec22
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/cart/service/CartSyncResource.java
+@@ -0,0 +1,127 @@
++package com.zufar.icedlatte.cart.service;
++
++import java.util.*;
++import java.util.stream.Collectors;
++
++import org.springframework.stereotype.Component;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
++import com.zufar.icedlatte.common.sync.SyncResource;
++import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
++import com.zufar.icedlatte.product.api.ProductCatalogApi;
++
++import lombok.RequiredArgsConstructor;
++
++@Component
++@RequiredArgsConstructor
++public class CartSyncResource implements SyncResource {
++    private final ShoppingCartService carts;
++    private final ProductCatalogApi products;
++
++    @Override
++    public String name() {
++        return "cart";
++    }
++
++    @Override
++    public Object snapshot(UUID userId) {
++        return carts.getByUserId(userId);
++    }
++
++    @Override
++    public List<Conflict> validate(UUID userId, String type, JsonNode payload) {
++        try {
++            ShoppingCartDto cart = carts.getByUserId(userId);
++            Map<UUID, Integer> quantities = cart.getItems().stream()
++                    .collect(
++                            Collectors.toMap(item -> item.getProductInfo().getId(), item -> item.getProductQuantity()));
++            if (type.equals("add") || type.equals("merge")) {
++                Map<UUID, Integer> additions = additions(payload);
++                Set<UUID> found = products.findExistingProductIds(additions.keySet());
++                List<Conflict> conflicts = new ArrayList<>();
++                additions.forEach((id, quantity) -> {
++                    if (!found.contains(id))
++                        conflicts.add(new Conflict(
++                                id.toString(),
++                                "PRODUCT_UNAVAILABLE",
++                                "This product is no longer available. Remove it from the guest draft."));
++                    else if (quantity < 1 || quantity > 99 || quantities.getOrDefault(id, 0) + quantity > 99)
++                        conflicts.add(new Conflict(
++                                id.toString(),
++                                "QUANTITY_LIMIT",
++                                "Combined quantity must be at most 99. Reduce this guest quantity."));
++                });
++                return conflicts;
++            }
++            if (type.equals("adjust")) {
++                UUID id = uuid(payload.path("productId"));
++                int delta = integer(payload.path("quantity"));
++                if (!quantities.containsKey(id))
++                    return List.of(new Conflict(
++                            id.toString(), "PRODUCT_NOT_IN_CART", "This product is no longer in your cart."));
++                int quantity = quantities.get(id) + delta;
++                if (delta == 0 || delta < -99 || delta > 99 || quantity < 1 || quantity > 99)
++                    return List.of(new Conflict(id.toString(), "QUANTITY_LIMIT", "Quantity must be between 1 and 99."));
++            } else if (type.equals("clear")) ids(payload.path("productIds"));
++            else if (type.equals("remove-slots")) ids(payload.path("slotIds"));
++            else return List.of(new Conflict(null, "INVALID_COMMAND", "Unsupported cart operation."));
++            return List.of();
++        } catch (IllegalArgumentException | ArithmeticException ex) {
++            return List.of(new Conflict(null, "INVALID_COMMAND", "Invalid cart operation payload."));
++        }
++    }
++
++    @Override
++    public void apply(UUID userId, String type, JsonNode payload) {
++        if (type.equals("add") || type.equals("merge")) {
++            var items = additions(payload).entrySet().stream()
++                    .map(item -> new AddCartItemRequest(item.getKey(), item.getValue()))
++                    .collect(Collectors.toSet());
++            carts.addItemsToCart(userId, items);
++        } else if (type.equals("adjust")) {
++            UUID id = uuid(payload.path("productId"));
++            var item = carts.getByUserId(userId).getItems().stream()
++                    .filter(row -> row.getProductInfo().getId().equals(id))
++                    .findFirst()
++                    .orElseThrow();
++            carts.updateItemQuantity(item.getId(), userId, integer(payload.path("quantity")));
++        } else {
++            List<UUID> slots;
++            if (type.equals("clear")) {
++                Set<UUID> productsToRemove = new HashSet<>(ids(payload.path("productIds")));
++                slots = carts.getByUserId(userId).getItems().stream()
++                        .filter(item ->
++                                productsToRemove.contains(item.getProductInfo().getId()))
++                        .map(item -> item.getId())
++                        .toList();
++            } else slots = ids(payload.path("slotIds"));
++            if (!slots.isEmpty()) carts.deleteItems(slots, userId);
++        }
++    }
++
++    private static Map<UUID, Integer> additions(JsonNode payload) {
++        JsonNode items = payload.path("items");
++        if (!items.isArray() || items.isEmpty() || items.size() > 1000) throw new IllegalArgumentException();
++        Map<UUID, Integer> result = new HashMap<>();
++        items.forEach(item ->
++                result.merge(uuid(item.path("productId")), integer(item.path("productQuantity")), Math::addExact));
++        return result;
++    }
++
++    private static UUID uuid(JsonNode value) {
++        return UUID.fromString(value.asText());
++    }
++
++    private static int integer(JsonNode value) {
++        if (!value.isIntegralNumber() || !value.canConvertToInt()) throw new IllegalArgumentException();
++        return value.intValue();
++    }
++
++    private static List<UUID> ids(JsonNode values) {
++        if (!values.isArray() || values.size() > 1000) throw new IllegalArgumentException();
++        List<UUID> result = new ArrayList<>();
++        values.forEach(value -> result.add(uuid(value)));
++        return result;
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java b/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
+index 33d20491..f7613f5a 100644
+--- a/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
++++ b/src/main/java/com/zufar/icedlatte/cart/service/ShoppingCartService.java
+@@ -33,6 +33,7 @@ import com.zufar.icedlatte.cart.exception.ShoppingCartItemNotFoundException;
+ import com.zufar.icedlatte.cart.exception.ShoppingCartNotFoundException;
+ import com.zufar.icedlatte.cart.repository.ShoppingCartItemRepository;
+ import com.zufar.icedlatte.cart.repository.ShoppingCartRepository;
++import com.zufar.icedlatte.common.sync.SyncRevisionService;
+ import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
+ import com.zufar.icedlatte.product.api.ProductCatalogApi;
+ import com.zufar.icedlatte.product.api.dto.ProductSnapshot;
+@@ -50,10 +51,12 @@ public class ShoppingCartService implements CartCheckoutApi {
+     private final ShoppingCartRepository shoppingCartRepository;
+     private final ShoppingCartItemRepository shoppingCartItemRepository;
+     private final ProductCatalogApi productCatalogApi;
++    private final SyncRevisionService syncRevisions;
+ 
+     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ShoppingCartDto getByUserId(final UUID userId) {
++        syncRevisions.lock(userId, "cart");
+         return toCartDto(getOrCreateCart(userId));
+     }
+ 
+@@ -82,6 +85,7 @@ public class ShoppingCartService implements CartCheckoutApi {
+     }
+ 
+     private ShoppingCart addItemsAndSave(final UUID userId, final Set<AddCartItemRequest> itemsToAdd) {
++        syncRevisions.lock(userId, "cart");
+         validateAddCartItemRequests(itemsToAdd);
+         ShoppingCart shoppingCart = getOrCreateCart(userId);
+         Map<UUID, Integer> productsWithQuantity = itemsToAdd.stream()
+@@ -89,13 +93,16 @@ public class ShoppingCartService implements CartCheckoutApi {
+                         AddCartItemRequest::productId, AddCartItemRequest::productQuantity, Integer::sum));
+         validateProductsExist(productsWithQuantity.keySet());
+         mergeIntoCart(shoppingCart, productsWithQuantity);
+-        return shoppingCartRepository.saveAndFlush(shoppingCart);
++        var saved = shoppingCartRepository.saveAndFlush(shoppingCart);
++        syncRevisions.changed(userId, "cart");
++        return saved;
+     }
+ 
+     @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 100))
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ShoppingCartDto updateItemQuantity(
+             final UUID shoppingCartItemId, final UUID userId, final int productQuantityChange) {
++        syncRevisions.lock(userId, "cart");
+         ShoppingCartItem item = shoppingCartItemRepository
+                 .findByIdAndShoppingCartUserId(shoppingCartItemId, userId)
+                 .orElseThrow(() -> new ShoppingCartItemNotFoundException(shoppingCartItemId));
+@@ -104,14 +111,17 @@ public class ShoppingCartService implements CartCheckoutApi {
+ 
+         item.setProductQuantity(item.getProductQuantity() + productQuantityChange);
+         shoppingCartItemRepository.save(item);
++        syncRevisions.changed(userId, "cart");
+         return getByUserId(userId);
+     }
+ 
+     @Retryable(retryFor = DataIntegrityViolationException.class, backoff = @Backoff(delay = 100))
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ShoppingCartDto deleteItems(final List<UUID> itemIds, final UUID userId) {
++        syncRevisions.lock(userId, "cart");
+         List<UUID> validatedItemIds = validateAndCopyDeleteItemIds(itemIds);
+         shoppingCartItemRepository.deleteByIdInAndUserId(validatedItemIds, userId);
++        syncRevisions.changed(userId, "cart");
+         log.info("cart.items.deleted: count={}, userId={}", validatedItemIds.size(), userId);
+         return getByUserId(userId);
+     }
+@@ -263,6 +273,8 @@ public class ShoppingCartService implements CartCheckoutApi {
+     @Override
+     @Transactional
+     public void deleteCartForUser(final UUID userId) {
++        syncRevisions.lock(userId, "cart");
+         shoppingCartRepository.deleteByUserId(userId);
++        syncRevisions.changed(userId, "cart");
+     }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/common/sync/SyncResource.java b/src/main/java/com/zufar/icedlatte/common/sync/SyncResource.java
+new file mode 100644
+index 00000000..9de863b0
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/common/sync/SyncResource.java
+@@ -0,0 +1,18 @@
++package com.zufar.icedlatte.common.sync;
++
++import java.util.List;
++import java.util.UUID;
++
++import com.fasterxml.jackson.databind.JsonNode;
++
++public interface SyncResource {
++    record Conflict(String productId, String code, String message) {}
++
++    String name();
++
++    Object snapshot(UUID userId);
++
++    List<Conflict> validate(UUID userId, String type, JsonNode payload);
++
++    void apply(UUID userId, String type, JsonNode payload);
++}
+diff --git a/src/main/java/com/zufar/icedlatte/common/sync/SyncRevisionService.java b/src/main/java/com/zufar/icedlatte/common/sync/SyncRevisionService.java
+new file mode 100644
+index 00000000..85375a6c
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/common/sync/SyncRevisionService.java
+@@ -0,0 +1,49 @@
++package com.zufar.icedlatte.common.sync;
++
++import java.util.UUID;
++
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import lombok.RequiredArgsConstructor;
++
++@Service
++@RequiredArgsConstructor
++public class SyncRevisionService {
++    private final JdbcTemplate jdbc;
++
++    @Transactional
++    public long lock(UUID userId, String resource) {
++        jdbc.update(
++                "INSERT INTO sync_resource_state (user_id, resource) VALUES (?, ?) ON CONFLICT DO NOTHING",
++                userId,
++                resource);
++        return jdbc.queryForObject(
++                "SELECT revision FROM sync_resource_state WHERE user_id = ? AND resource = ? FOR UPDATE",
++                Long.class,
++                userId,
++                resource);
++    }
++
++    public long current(UUID userId, String resource) {
++        return jdbc
++                .query(
++                        "SELECT revision FROM sync_resource_state WHERE user_id = ? AND resource = ?",
++                        (rs, row) -> rs.getLong(1),
++                        userId,
++                        resource)
++                .stream()
++                .findFirst()
++                .orElse(0L);
++    }
++
++    @Transactional
++    public void changed(UUID userId, String resource) {
++        lock(userId, resource);
++        jdbc.update(
++                "UPDATE sync_resource_state SET revision = revision + 1 WHERE user_id = ? AND resource = ?",
++                userId,
++                resource);
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/favorite/service/FavoriteService.java b/src/main/java/com/zufar/icedlatte/favorite/service/FavoriteService.java
+index a0b5cb8f..f60b2c8b 100644
+--- a/src/main/java/com/zufar/icedlatte/favorite/service/FavoriteService.java
++++ b/src/main/java/com/zufar/icedlatte/favorite/service/FavoriteService.java
+@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Isolation;
+ import org.springframework.transaction.annotation.Propagation;
+ import org.springframework.transaction.annotation.Transactional;
+ 
++import com.zufar.icedlatte.common.sync.SyncRevisionService;
+ import com.zufar.icedlatte.favorite.converter.FavoriteListDtoConverter;
+ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
+ import com.zufar.icedlatte.favorite.entity.FavoriteListEntity;
+@@ -37,6 +38,7 @@ public class FavoriteService {
+ 
+     private final FavoriteRepository favoriteRepository;
+     private final ProductCatalogApi productCatalogApi;
++    private final SyncRevisionService syncRevisions;
+ 
+     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, isolation = Isolation.READ_COMMITTED)
+     public ListOfFavoriteProductsDto getEnrichedFavoriteList(final UUID userId) {
+@@ -48,6 +50,7 @@ public class FavoriteService {
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ListOfFavoriteProductsDto add(final ListOfFavoriteProducts request, final UUID userId) {
++        syncRevisions.lock(userId, "favourites");
+         List<UUID> requestedProductIds = validateAndCopyProductIds(request);
+         FavoriteListEntity favoriteList = getOrCreateFavoriteList(userId);
+ 
+@@ -59,6 +62,7 @@ public class FavoriteService {
+         validateTotalFavoriteLimit(existingProductIds.size(), newProductIds.size());
+         validateProductsExist(newProductIds);
+         insertFavoriteItems(favoriteList.getId(), newProductIds);
++        syncRevisions.changed(userId, "favourites");
+ 
+         FavoriteListEntity refreshed = favoriteRepository
+                 .findByUserId(userId)
+@@ -68,12 +72,14 @@ public class FavoriteService {
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void delete(final UUID productId, final UUID userId) {
++        syncRevisions.lock(userId, "favourites");
+         favoriteRepository.findByUserId(userId).ifPresent(favoriteList -> {
+             boolean removed = favoriteList
+                     .getFavoriteItems()
+                     .removeIf(item -> item.getProductId().equals(productId));
+             if (removed) {
+                 favoriteRepository.touchFavoriteList(favoriteList.getId());
++                syncRevisions.changed(userId, "favourites");
+             }
+         });
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/favorite/service/FavouriteSyncResource.java b/src/main/java/com/zufar/icedlatte/favorite/service/FavouriteSyncResource.java
+new file mode 100644
+index 00000000..3bc87cdc
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/favorite/service/FavouriteSyncResource.java
+@@ -0,0 +1,79 @@
++package com.zufar.icedlatte.favorite.service;
++
++import java.util.*;
++import java.util.stream.Collectors;
++
++import org.springframework.stereotype.Component;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.zufar.icedlatte.common.sync.SyncResource;
++import com.zufar.icedlatte.openapi.dto.ListOfFavoriteProducts;
++import com.zufar.icedlatte.product.api.ProductCatalogApi;
++
++import lombok.RequiredArgsConstructor;
++
++@Component
++@RequiredArgsConstructor
++public class FavouriteSyncResource implements SyncResource {
++    private final FavoriteService favourites;
++    private final ProductCatalogApi products;
++
++    @Override
++    public String name() {
++        return "favourites";
++    }
++
++    @Override
++    public Object snapshot(UUID userId) {
++        return favourites.getEnrichedFavoriteList(userId);
++    }
++
++    @Override
++    public List<Conflict> validate(UUID userId, String type, JsonNode payload) {
++        try {
++            List<UUID> ids = ids(type, payload);
++            Set<UUID> existing = favourites.getEnrichedFavoriteList(userId).getProducts().stream()
++                    .map(product -> product.getId())
++                    .collect(Collectors.toSet());
++            if (type.equals("save") && !payload.path("saved").isBoolean()) throw new IllegalArgumentException();
++            if (type.equals("save") && !payload.path("saved").booleanValue()) return List.of();
++            Set<UUID> additions = new HashSet<>(ids);
++            additions.removeAll(existing);
++            List<Conflict> conflicts = new ArrayList<>();
++            Set<UUID> found = products.findExistingProductIds(additions);
++            for (UUID id : additions)
++                if (!found.contains(id))
++                    conflicts.add(new Conflict(
++                            id.toString(),
++                            "PRODUCT_UNAVAILABLE",
++                            "This product is no longer available. Remove it from the guest draft."));
++            if (existing.size() + additions.size() > 100)
++                conflicts.add(
++                        new Conflict(
++                                null,
++                                "FAVOURITES_LIMIT",
++                                "Your account can hold 100 favourites. Choose fewer guest favourites or remove account favourites."));
++            return conflicts;
++        } catch (IllegalArgumentException ex) {
++            return List.of(new Conflict(null, "INVALID_COMMAND", "Invalid favourites operation payload."));
++        }
++    }
++
++    @Override
++    public void apply(UUID userId, String type, JsonNode payload) {
++        List<UUID> ids = ids(type, payload);
++        if (type.equals("save") && !payload.path("saved").booleanValue()) favourites.delete(ids.getFirst(), userId);
++        else if (!ids.isEmpty()) favourites.add(new ListOfFavoriteProducts().productIds(ids), userId);
++    }
++
++    private static List<UUID> ids(String type, JsonNode payload) {
++        if (type.equals("save"))
++            return List.of(UUID.fromString(payload.path("productId").asText()));
++        JsonNode ids = payload.path("productIds");
++        if (!type.equals("merge") || !ids.isArray() || ids.isEmpty() || ids.size() > 100)
++            throw new IllegalArgumentException();
++        List<UUID> result = new ArrayList<>();
++        ids.forEach(id -> result.add(UUID.fromString(id.asText())));
++        return result;
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/sync/SyncEndpoint.java b/src/main/java/com/zufar/icedlatte/sync/SyncEndpoint.java
+new file mode 100644
+index 00000000..df555706
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/sync/SyncEndpoint.java
+@@ -0,0 +1,34 @@
++package com.zufar.icedlatte.sync;
++
++import java.util.UUID;
++
++import jakarta.validation.Valid;
++
++import org.springframework.web.bind.annotation.*;
++
++import com.zufar.icedlatte.security.api.CurrentUserProvider;
++
++import lombok.RequiredArgsConstructor;
++
++@RestController
++@RequiredArgsConstructor
++@RequestMapping("/api/v1/sync")
++public class SyncEndpoint {
++    private final SyncService sync;
++    private final CurrentUserProvider users;
++
++    @GetMapping("/{resource}")
++    public SyncService.Snapshot read(@PathVariable String resource) {
++        return sync.read(users.getUserId(), resource);
++    }
++
++    @PostMapping("/{resource}/operations")
++    public SyncService.Result execute(@PathVariable String resource, @Valid @RequestBody SyncService.Command command) {
++        return sync.execute(users.getUserId(), resource, command);
++    }
++
++    @GetMapping("/{resource}/operations/{operationId}")
++    public SyncService.Result operation(@PathVariable String resource, @PathVariable UUID operationId) {
++        return sync.operation(users.getUserId(), resource, operationId);
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/sync/SyncService.java b/src/main/java/com/zufar/icedlatte/sync/SyncService.java
+new file mode 100644
+index 00000000..83056e79
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/sync/SyncService.java
+@@ -0,0 +1,211 @@
++package com.zufar.icedlatte.sync;
++
++import java.nio.charset.StandardCharsets;
++import java.security.MessageDigest;
++import java.util.HexFormat;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
++
++import jakarta.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotNull;
++import jakarta.validation.constraints.PositiveOrZero;
++
++import org.springframework.http.HttpStatus;
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++import org.springframework.web.server.ResponseStatusException;
++
++import com.fasterxml.jackson.core.type.TypeReference;
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.node.ObjectNode;
++import com.zufar.icedlatte.common.sync.SyncResource;
++import com.zufar.icedlatte.common.sync.SyncRevisionService;
++
++import lombok.RequiredArgsConstructor;
++
++@Service
++@RequiredArgsConstructor
++public class SyncService {
++    public record Command(
++            @NotNull UUID operationId,
++            @NotNull UUID expectedUserId,
++            @NotNull @PositiveOrZero Long expectedRevision,
++            @NotBlank String type,
++            @NotNull Map<String, Object> payload) {}
++
++    public record Snapshot(UUID userId, long revision, Object data) {}
++
++    public record Result(
++            UUID operationId,
++            String outcome,
++            String code,
++            String message,
++            List<SyncResource.Conflict> conflicts,
++            long appliedRevision,
++            Snapshot snapshot) {}
++
++    private record Receipt(String hash, String outcome, String code, String message, String conflicts, long revision) {}
++
++    private final List<SyncResource> resources;
++    private final SyncRevisionService revisions;
++    private final JdbcTemplate jdbc;
++    private final ObjectMapper mapper;
++
++    @Transactional
++    public Snapshot read(UUID userId, String resource) {
++        SyncResource handler = handler(resource);
++        revisions.lock(userId, resource);
++        return snapshot(userId, handler);
++    }
++
++    @Transactional
++    public Result operation(UUID userId, String resource, UUID operationId) {
++        SyncResource handler = handler(resource);
++        revisions.lock(userId, resource);
++        Receipt receipt = receipts(userId, resource, operationId).stream()
++                .findFirst()
++                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Operation not found"));
++        return new Result(
++                operationId,
++                receipt.outcome(),
++                receipt.code(),
++                receipt.message(),
++                decodeConflicts(receipt.conflicts()),
++                receipt.revision(),
++                snapshot(userId, handler));
++    }
++
++    @Transactional
++    public Result execute(UUID userId, String resource, Command command) {
++        if (!userId.equals(command.expectedUserId())) {
++            throw new ResponseStatusException(
++                    HttpStatus.CONFLICT, "Account changed. Refresh your session before saving.");
++        }
++        SyncResource handler = handler(resource);
++        long revision = revisions.lock(userId, resource);
++        JsonNode payload = mapper.valueToTree(command.payload());
++        String hash = hash(command.type() + ":" + command.expectedRevision(), payload);
++        var receipts = receipts(userId, resource, command.operationId());
++        if (!receipts.isEmpty()) {
++            Receipt receipt = receipts.getFirst();
++            if (!receipt.hash().equals(hash))
++                throw new ResponseStatusException(
++                        HttpStatus.CONFLICT, "Operation ID cannot be reused with another payload.");
++            return new Result(
++                    command.operationId(),
++                    receipt.outcome(),
++                    receipt.code(),
++                    receipt.message(),
++                    decodeConflicts(receipt.conflicts()),
++                    receipt.revision(),
++                    snapshot(userId, handler));
++        }
++
++        List<SyncResource.Conflict> conflicts = command.expectedRevision() == revision
++                ? handler.validate(userId, command.type(), payload)
++                : List.of(new SyncResource.Conflict(
++                        null, "REVISION_CONFLICT", "The collection changed. Review the latest data and try again."));
++        boolean applied = conflicts.isEmpty();
++        if (applied) handler.apply(userId, command.type(), payload);
++        String code = applied ? "APPLIED" : conflicts.getFirst().code();
++        String message = applied ? "Saved" : conflicts.getFirst().message();
++        long finalRevision = revisions.current(userId, resource);
++        jdbc.update(
++                """
++                INSERT INTO sync_operation (user_id, resource, operation_id, payload_hash, outcome, code, message, conflicts, applied_revision)
++                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
++                """,
++                userId,
++                resource,
++                command.operationId(),
++                hash,
++                applied ? "APPLIED" : "REJECTED",
++                code,
++                message,
++                encode(conflicts),
++                finalRevision);
++        return new Result(
++                command.operationId(),
++                applied ? "APPLIED" : "REJECTED",
++                code,
++                message,
++                conflicts,
++                finalRevision,
++                snapshot(userId, handler));
++    }
++
++    private List<Receipt> receipts(UUID userId, String resource, UUID operationId) {
++        return jdbc.query(
++                """
++                SELECT payload_hash, outcome, code, message, conflicts, applied_revision
++                FROM sync_operation WHERE user_id = ? AND resource = ? AND operation_id = ?
++                """,
++                (rs, row) -> new Receipt(
++                        rs.getString(1),
++                        rs.getString(2),
++                        rs.getString(3),
++                        rs.getString(4),
++                        rs.getString(5),
++                        rs.getLong(6)),
++                userId,
++                resource,
++                operationId);
++    }
++
++    private SyncResource handler(String name) {
++        return resources.stream()
++                .filter(resource -> resource.name().equals(name))
++                .findFirst()
++                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown collection"));
++    }
++
++    private Snapshot snapshot(UUID userId, SyncResource handler) {
++        Object data = handler.snapshot(userId);
++        return new Snapshot(userId, revisions.current(userId, handler.name()), data);
++    }
++
++    private String hash(String type, JsonNode payload) {
++        try {
++            return HexFormat.of()
++                    .formatHex(MessageDigest.getInstance("SHA-256")
++                            .digest((type + ":" + canonical(payload)).getBytes(StandardCharsets.UTF_8)));
++        } catch (java.security.NoSuchAlgorithmException ex) {
++            throw new IllegalStateException(ex);
++        }
++    }
++
++    private JsonNode canonical(JsonNode node) {
++        if (node.isObject()) {
++            ObjectNode sorted = mapper.createObjectNode();
++            var names = new java.util.ArrayList<String>();
++            node.fieldNames().forEachRemaining(names::add);
++            names.stream().sorted().forEach(name -> sorted.set(name, canonical(node.get(name))));
++            return sorted;
++        }
++        if (node.isArray()) {
++            var sorted = mapper.createArrayNode();
++            node.forEach(item -> sorted.add(canonical(item)));
++            return sorted;
++        }
++        return node;
++    }
++
++    private String encode(Object value) {
++        try {
++            return mapper.writeValueAsString(value);
++        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
++            throw new IllegalStateException(ex);
++        }
++    }
++
++    private List<SyncResource.Conflict> decodeConflicts(String json) {
++        try {
++            return mapper.readValue(json, new TypeReference<>() {});
++        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
++            throw new IllegalStateException(ex);
++        }
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java b/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
+index f7552966..7c6f275b 100644
+--- a/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
++++ b/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
+@@ -24,6 +24,7 @@ public interface UserDtoConverter {
+ 
+     @Mapping(target = "address", source = "address", qualifiedByName = "toAddressDto")
+     @Mapping(target = "avatarLink", ignore = true)
++    @Mapping(target = "profileRevision", ignore = true)
+     @Mapping(target = "oauthUser", source = "oauthUser")
+     UserDto toDto(final UserEntity entity);
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/user/service/ProfileSyncResource.java b/src/main/java/com/zufar/icedlatte/user/service/ProfileSyncResource.java
+new file mode 100644
+index 00000000..e5d4f6b2
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/user/service/ProfileSyncResource.java
+@@ -0,0 +1,53 @@
++package com.zufar.icedlatte.user.service;
++
++import java.util.List;
++import java.util.UUID;
++
++import org.springframework.stereotype.Component;
++
++import com.fasterxml.jackson.databind.JsonNode;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.zufar.icedlatte.common.exception.BadRequestException;
++import com.zufar.icedlatte.common.sync.SyncResource;
++import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
++
++import lombok.RequiredArgsConstructor;
++
++@Component
++@RequiredArgsConstructor
++public class ProfileSyncResource implements SyncResource {
++    private final UserProfileService profiles;
++    private final ObjectMapper mapper;
++
++    @Override
++    public String name() {
++        return "profile";
++    }
++
++    @Override
++    public Object snapshot(UUID userId) {
++        return profiles.getProfile(userId);
++    }
++
++    @Override
++    public List<Conflict> validate(UUID userId, String type, JsonNode payload) {
++        try {
++            if (!type.equals("update")) throw new IllegalArgumentException();
++            var request = mapper.convertValue(payload, UpdateUserAccountRequest.class);
++            PutUsersRequestValidator.validate(
++                    request.getFirstName(),
++                    request.getLastName(),
++                    request.getPhoneNumber(),
++                    request.getBirthDate(),
++                    request.getAddress());
++            return List.of();
++        } catch (IllegalArgumentException | BadRequestException ex) {
++            return List.of(new Conflict(null, "INVALID_PROFILE", "Review your profile fields before saving."));
++        }
++    }
++
++    @Override
++    public void apply(UUID userId, String type, JsonNode payload) {
++        profiles.updateProfile(userId, mapper.convertValue(payload, UpdateUserAccountRequest.class));
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java b/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
+index 5f16e03f..42f1e888 100644
+--- a/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
++++ b/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
+@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
+ 
+ import com.zufar.icedlatte.common.exception.UnauthorizedException;
+ import com.zufar.icedlatte.common.monitoring.SentryHandledExceptionReporter;
++import com.zufar.icedlatte.common.sync.SyncRevisionService;
+ import com.zufar.icedlatte.common.util.EmailNormalizer;
+ import com.zufar.icedlatte.filestorage.api.FileStorageWriterApi;
+ import com.zufar.icedlatte.filestorage.api.FileUrlResolverApi;
+@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
+ @RequiredArgsConstructor
+ public class UserProfileService implements UserAccessControlApi {
+ 
++    private final SyncRevisionService syncRevisions;
+     private final SingleUserProvider singleUserProvider;
+     private final UserRepository userRepository;
+     private final UserDtoConverter userDtoConverter;
+@@ -48,12 +50,15 @@ public class UserProfileService implements UserAccessControlApi {
+     private final ApplicationEventPublisher eventPublisher;
+     private final SentryHandledExceptionReporter sentryHandledExceptionReporter;
+ 
++    @Transactional
+     public UserDto getProfile(UUID userId) {
++        syncRevisions.lock(userId, "profile");
+         return toProfileDto(singleUserProvider.getUserEntityById(userId));
+     }
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public UserDto updateProfile(UUID userId, UpdateUserAccountRequest request) {
++        syncRevisions.lock(userId, "profile");
+         AddressDto addressDto = request.getAddress();
+         PutUsersRequestValidator.validate(
+                 request.getFirstName(),
+@@ -63,7 +68,9 @@ public class UserProfileService implements UserAccessControlApi {
+                 addressDto);
+         UserEntity userEntity = singleUserProvider.getUserEntityById(userId);
+         userDtoConverter.updateEntity(userEntity, request);
+-        return toProfileDto(userRepository.save(userEntity));
++        var saved = userRepository.save(userEntity);
++        syncRevisions.changed(userId, "profile");
++        return toProfileDto(saved);
+     }
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+@@ -121,6 +128,7 @@ public class UserProfileService implements UserAccessControlApi {
+ 
+     private UserDto toProfileDto(UserEntity userEntity) {
+         UserDto userDto = userDtoConverter.toDto(userEntity);
++        userDto.setProfileRevision(syncRevisions.current(userEntity.getId(), "profile"));
+         userDto.setAvatarLink(findAvatarLink(userEntity.getId()).orElse(null));
+         return userDto;
+     }
+diff --git a/src/main/resources/api-specs/cart-openapi.yaml b/src/main/resources/api-specs/cart-openapi.yaml
+index a0533289..f52b3875 100644
+--- a/src/main/resources/api-specs/cart-openapi.yaml
++++ b/src/main/resources/api-specs/cart-openapi.yaml
+@@ -32,6 +32,14 @@ paths:
+         - "Shopping Cart"
+       summary: "Add items to the shopping cart"
+       operationId: "addNewItemToShoppingCart"
++      parameters:
++        - name: "Idempotency-Key"
++          in: header
++          required: false
++          description: "Stable UUID for retrying a guest-cart merge without adding its quantities twice. Reuse with a different payload is rejected; a retry returns the current cart."
++          schema:
++            type: string
++            format: uuid
+       requestBody:
+         description: "Payload containing a list of items to be added to the shopping cart."
+         required: true
+diff --git a/src/main/resources/api-specs/sync-openapi.yaml b/src/main/resources/api-specs/sync-openapi.yaml
+new file mode 100644
+index 00000000..10b1a269
+--- /dev/null
++++ b/src/main/resources/api-specs/sync-openapi.yaml
+@@ -0,0 +1,140 @@
++openapi: 3.0.3
++info:
++  title: Iced Latte synchronization API
++  version: 1.0.0
++security:
++  - bearerAuth: []
++paths:
++  /api/v1/sync/{resource}/operations/{operationId}:
++    get:
++      operationId: getSyncOperation
++      parameters:
++        - $ref: '#/components/parameters/Resource'
++        - name: operationId
++          in: path
++          required: true
++          schema:
++            type: string
++            format: uuid
++      responses:
++        '200':
++          description: Stored operation outcome and current resource snapshot.
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SyncResult'
++        '404':
++          description: No committed receipt for this operation in the authenticated account.
++  /api/v1/sync/{resource}:
++    get:
++      operationId: readSyncResource
++      parameters:
++        - $ref: '#/components/parameters/Resource'
++      responses:
++        '200':
++          description: Current confirmed state and its revision.
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SyncSnapshot'
++  /api/v1/sync/{resource}/operations:
++    post:
++      operationId: executeSyncOperation
++      parameters:
++        - $ref: '#/components/parameters/Resource'
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/SyncCommand'
++      responses:
++        '200':
++          description: Definitive applied or rejected outcome. A repeated operation ID returns the same outcome and the current snapshot.
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SyncResult'
++        '409':
++          description: Account mismatch or operation ID reused with another payload. No new operation is performed.
++components:
++  securitySchemes:
++    bearerAuth:
++      type: http
++      scheme: bearer
++      bearerFormat: JWT
++  parameters:
++    Resource:
++      name: resource
++      in: path
++      required: true
++      schema:
++        type: string
++        enum: [cart, favourites, profile]
++  schemas:
++    SyncCommand:
++      type: object
++      required: [operationId, expectedUserId, expectedRevision, type, payload]
++      properties:
++        operationId:
++          type: string
++          format: uuid
++        expectedUserId:
++          type: string
++          format: uuid
++        expectedRevision:
++          type: integer
++          format: int64
++          minimum: 0
++        type:
++          type: string
++        payload:
++          type: object
++          additionalProperties: true
++    SyncSnapshot:
++      type: object
++      required: [userId, revision, data]
++      properties:
++        userId:
++          type: string
++          format: uuid
++        revision:
++          type: integer
++          format: int64
++        data:
++          type: object
++          additionalProperties: true
++    SyncConflict:
++      type: object
++      required: [code, message]
++      properties:
++        productId:
++          type: string
++          nullable: true
++        code:
++          type: string
++        message:
++          type: string
++    SyncResult:
++      type: object
++      required: [operationId, outcome, code, message, conflicts, appliedRevision, snapshot]
++      properties:
++        operationId:
++          type: string
++          format: uuid
++        outcome:
++          type: string
++          enum: [APPLIED, REJECTED]
++        code:
++          type: string
++        message:
++          type: string
++        conflicts:
++          type: array
++          items:
++            $ref: '#/components/schemas/SyncConflict'
++        appliedRevision:
++          type: integer
++          format: int64
++        snapshot:
++          $ref: '#/components/schemas/SyncSnapshot'
+diff --git a/src/main/resources/api-specs/user-openapi.yaml b/src/main/resources/api-specs/user-openapi.yaml
+index 0b38172e..368f1890 100644
+--- a/src/main/resources/api-specs/user-openapi.yaml
++++ b/src/main/resources/api-specs/user-openapi.yaml
+@@ -706,6 +706,11 @@ components:
+         - lastName
+         - email
+       properties:
++        profileRevision:
++          type: integer
++          format: int64
++          minimum: 0
++          description: Revision of the editable profile fields.
+         id:
+           type: "string"
+           format: "uuid"
+diff --git a/src/main/resources/db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql b/src/main/resources/db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql
+new file mode 100644
+index 00000000..5b52f3a0
+--- /dev/null
++++ b/src/main/resources/db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql
+@@ -0,0 +1,6 @@
++CREATE TABLE public.cart_merge_receipt (
++    user_id UUID NOT NULL REFERENCES public.user_details(id) ON DELETE CASCADE,
++    merge_key UUID NOT NULL,
++    request_items TEXT NOT NULL,
++    PRIMARY KEY (user_id, merge_key)
++);
+diff --git a/src/main/resources/db/changelog/version-2.0/07.11.2026.part2.sync-operations.sql b/src/main/resources/db/changelog/version-2.0/07.11.2026.part2.sync-operations.sql
+new file mode 100644
+index 00000000..d53e2782
+--- /dev/null
++++ b/src/main/resources/db/changelog/version-2.0/07.11.2026.part2.sync-operations.sql
+@@ -0,0 +1,20 @@
++CREATE TABLE public.sync_resource_state (
++    user_id UUID NOT NULL REFERENCES public.user_details(id) ON DELETE CASCADE,
++    resource VARCHAR(32) NOT NULL,
++    revision BIGINT NOT NULL DEFAULT 0,
++    PRIMARY KEY (user_id, resource)
++);
++
++CREATE TABLE public.sync_operation (
++    user_id UUID NOT NULL REFERENCES public.user_details(id) ON DELETE CASCADE,
++    resource VARCHAR(32) NOT NULL,
++    operation_id UUID NOT NULL,
++    payload_hash VARCHAR(64) NOT NULL,
++    outcome VARCHAR(16) NOT NULL CHECK (outcome IN ('APPLIED', 'REJECTED')),
++    code VARCHAR(64) NOT NULL,
++    message TEXT NOT NULL,
++    conflicts TEXT NOT NULL,
++    applied_revision BIGINT NOT NULL,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    PRIMARY KEY (user_id, resource, operation_id)
++);
+diff --git a/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml b/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
+index ee362596..8b6836c6 100644
+--- a/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
++++ b/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
+@@ -102,3 +102,9 @@ databaseChangeLog:
+   - include:
+       file: db/changelog/version-2.0/04.11.2026.part1.add-operation-quotas.sql
+       errorIfMissing: true
++  - include:
++      file: db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql
++      errorIfMissing: true
++  - include:
++      file: db/changelog/version-2.0/07.11.2026.part2.sync-operations.sql
++      errorIfMissing: true
+diff --git a/src/test/java/com/zufar/icedlatte/cart/endpoint/ShoppingCartLifecycleIntegrationTest.java b/src/test/java/com/zufar/icedlatte/cart/endpoint/ShoppingCartLifecycleIntegrationTest.java
+index 52f0fdaa..92e863cc 100644
+--- a/src/test/java/com/zufar/icedlatte/cart/endpoint/ShoppingCartLifecycleIntegrationTest.java
++++ b/src/test/java/com/zufar/icedlatte/cart/endpoint/ShoppingCartLifecycleIntegrationTest.java
+@@ -19,6 +19,86 @@ class ShoppingCartLifecycleIntegrationTest extends AuthenticatedUserIntegrationS
+     private static final String PRODUCT_ID = "418499f3-d951-40bf-9414-5cb90ab21ecb";
+     private static final String SECOND_PRODUCT_ID = "ad0ef2b7-816b-4a11-b361-dfcbe705fc96";
+ 
++    @Test
++    void guestMergeRetryAddsOnceAndReturnsLaterEdits() {
++        AuthenticatedUser user = registerAndAuthenticateUser();
++        String key = java.util.UUID.randomUUID().toString();
++        String body = """
++                {"items":[{"productId":"%s","productQuantity":2}]}
++                """.formatted(PRODUCT_ID);
++        for (int attempt = 0; attempt < 2; attempt++) {
++            given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                    .header("Idempotency-Key", key)
++                    .body(body)
++                    .post("/items")
++                    .then()
++                    .statusCode(200)
++                    .body("productsQuantity", equalTo(2));
++        }
++        addItem(user, PRODUCT_ID, 1).then().statusCode(200).body("productsQuantity", equalTo(3));
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", key)
++                .body(body)
++                .post("/items")
++                .then()
++                .statusCode(200)
++                .body("productsQuantity", equalTo(3));
++    }
++
++    @Test
++    void guestMergeKeyRejectsChangedPayloadAndMalformedKeys() {
++        AuthenticatedUser user = registerAndAuthenticateUser();
++        String key = java.util.UUID.randomUUID().toString();
++        String body = """
++                {"items":[{"productId":"%s","productQuantity":%d}]}
++                """;
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", key)
++                .body(body.formatted(PRODUCT_ID, 2))
++                .post("/items")
++                .then()
++                .statusCode(200);
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", key)
++                .body(body.formatted(PRODUCT_ID, 3))
++                .post("/items")
++                .then()
++                .statusCode(400);
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", "invalid")
++                .body(body.formatted(PRODUCT_ID, 2))
++                .post("/items")
++                .then()
++                .statusCode(400);
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .get()
++                .then()
++                .statusCode(200)
++                .body("productsQuantity", equalTo(2));
++    }
++
++    @Test
++    void failedGuestMergeDoesNotConsumeTheKey() {
++        AuthenticatedUser user = registerAndAuthenticateUser();
++        String key = java.util.UUID.randomUUID().toString();
++        String body = """
++                {"items":[{"productId":"%s","productQuantity":2}]}
++                """;
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", key)
++                .body(body.formatted(java.util.UUID.randomUUID()))
++                .post("/items")
++                .then()
++                .statusCode(404);
++        given(authenticatedJsonSpec(CartEndpoint.CART_URL, user.accessToken()))
++                .header("Idempotency-Key", key)
++                .body(body.formatted(PRODUCT_ID))
++                .post("/items")
++                .then()
++                .statusCode(200)
++                .body("productsQuantity", equalTo(2));
++    }
++
+     @Test
+     @DisplayName("Should create an empty cart for a fresh user")
+     void shouldCreateEmptyCartForFreshUser() {
+diff --git a/src/test/java/com/zufar/icedlatte/cart/service/CartMergeServiceTest.java b/src/test/java/com/zufar/icedlatte/cart/service/CartMergeServiceTest.java
+new file mode 100644
+index 00000000..5847770c
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/cart/service/CartMergeServiceTest.java
+@@ -0,0 +1,203 @@
++package com.zufar.icedlatte.cart.service;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.doAnswer;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.reset;
++import static org.mockito.Mockito.times;
++import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
++
++import java.nio.charset.StandardCharsets;
++import java.util.Set;
++import java.util.UUID;
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.Executors;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.atomic.AtomicBoolean;
++
++import javax.sql.DataSource;
++
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.context.annotation.AnnotationConfigApplicationContext;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.core.io.ClassPathResource;
++import org.springframework.jdbc.core.JdbcTemplate;
++import org.springframework.jdbc.datasource.DataSourceTransactionManager;
++import org.springframework.jdbc.datasource.DriverManagerDataSource;
++import org.springframework.transaction.PlatformTransactionManager;
++import org.springframework.transaction.annotation.EnableTransactionManagement;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++import org.testcontainers.postgresql.PostgreSQLContainer;
++
++import com.zufar.icedlatte.cart.api.dto.AddCartItemRequest;
++import com.zufar.icedlatte.cart.exception.InvalidCartItemRequestException;
++import com.zufar.icedlatte.openapi.dto.ShoppingCartDto;
++
++@Testcontainers
++class CartMergeServiceTest {
++    @Container
++    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:13.11-bullseye");
++
++    private final UUID userId = UUID.randomUUID();
++    private final UUID productId = UUID.randomUUID();
++    private final UUID key = UUID.randomUUID();
++    private JdbcTemplate jdbc;
++    private ShoppingCartService carts;
++    private CartMergeService merges;
++    private AnnotationConfigApplicationContext context;
++
++    @BeforeEach
++    void setUp() throws Exception {
++        context = new AnnotationConfigApplicationContext(Config.class);
++        jdbc = context.getBean(JdbcTemplate.class);
++        carts = org.springframework.test.util.AopTestUtils.getUltimateTargetObject(
++                context.getBean(ShoppingCartService.class));
++        merges = context.getBean(CartMergeService.class);
++        reset(carts);
++        jdbc.execute("DROP TABLE IF EXISTS cart_merge_receipt");
++        jdbc.execute("CREATE TABLE IF NOT EXISTS user_details (id UUID PRIMARY KEY)");
++        jdbc.execute("CREATE TABLE IF NOT EXISTS test_cart (user_id UUID PRIMARY KEY, quantity INT NOT NULL)");
++        jdbc.execute(new ClassPathResource("db/changelog/version-2.0/07.11.2026.part1.create-cart-merge-receipt.sql")
++                .getContentAsString(StandardCharsets.UTF_8));
++        addUser(userId);
++        when(carts.addItemsToCart(any(), any())).thenAnswer(invocation -> {
++            UUID user = invocation.getArgument(0);
++            Set<AddCartItemRequest> items = invocation.getArgument(1);
++            int amount =
++                    items.stream().mapToInt(AddCartItemRequest::productQuantity).sum();
++            jdbc.update("UPDATE test_cart SET quantity = quantity + ? WHERE user_id = ?", amount, user);
++            return currentCart(user);
++        });
++        when(carts.getByUserId(any())).thenAnswer(invocation -> currentCart(invocation.getArgument(0)));
++    }
++
++    @org.junit.jupiter.api.AfterEach
++    void close() {
++        context.close();
++    }
++
++    @Test
++    void lostReplyCanBeRetriedWithoutAddingAgainAndReturnsCurrentCart() {
++        merges.merge(userId, key, items(2));
++        // The first response was lost; another edit then changed the cart.
++        jdbc.update("UPDATE test_cart SET quantity = 5 WHERE user_id = ?", userId);
++        assertThat(merges.merge(userId, key, items(2)).getProductsQuantity()).isEqualTo(5);
++        verify(carts, times(1)).addItemsToCart(userId, items(2));
++    }
++
++    @Test
++    void changedPayloadIsRejectedWithoutAddingAgain() {
++        merges.merge(userId, key, items(2));
++        assertThatThrownBy(() -> merges.merge(userId, key, items(3)))
++                .isInstanceOf(InvalidCartItemRequestException.class);
++        assertThat(currentCart(userId).getProductsQuantity()).isEqualTo(2);
++    }
++
++    @Test
++    void sameKeyIsScopedToItsAccount() {
++        UUID other = UUID.randomUUID();
++        addUser(other);
++        merges.merge(userId, key, items(2));
++        assertThat(merges.merge(other, key, items(3)).getProductsQuantity()).isEqualTo(3);
++    }
++
++    @Test
++    void failedCartSaveRollsBackReceiptAndCanBeRetried() {
++        AtomicBoolean fail = new AtomicBoolean(true);
++        doAnswer(invocation -> {
++                    jdbc.update("UPDATE test_cart SET quantity = quantity + 2 WHERE user_id = ?", userId);
++                    if (fail.getAndSet(false)) throw new IllegalStateException("save failed");
++                    return currentCart(userId);
++                })
++                .when(carts)
++                .addItemsToCart(userId, items(2));
++
++        assertThatThrownBy(() -> merges.merge(userId, key, items(2))).isInstanceOf(IllegalStateException.class);
++        assertThat(jdbc.queryForObject("SELECT count(*) FROM cart_merge_receipt", Long.class))
++                .isZero();
++        assertThat(currentCart(userId).getProductsQuantity()).isZero();
++        assertThat(merges.merge(userId, key, items(2)).getProductsQuantity()).isEqualTo(2);
++    }
++
++    @Test
++    void concurrentRetriesApplyOnlyOnce() throws Exception {
++        CountDownLatch saving = new CountDownLatch(1);
++        CountDownLatch release = new CountDownLatch(1);
++        doAnswer(invocation -> {
++                    saving.countDown();
++                    assertThat(release.await(10, TimeUnit.SECONDS)).isTrue();
++                    jdbc.update("UPDATE test_cart SET quantity = quantity + 2 WHERE user_id = ?", userId);
++                    return currentCart(userId);
++                })
++                .when(carts)
++                .addItemsToCart(userId, items(2));
++
++        try (var executor = Executors.newFixedThreadPool(2)) {
++            var first = executor.submit(() -> merges.merge(userId, key, items(2)));
++            assertThat(saving.await(10, TimeUnit.SECONDS)).isTrue();
++            CountDownLatch retryStarted = new CountDownLatch(1);
++            var retry = executor.submit(() -> {
++                retryStarted.countDown();
++                return merges.merge(userId, key, items(2));
++            });
++            assertThat(retryStarted.await(10, TimeUnit.SECONDS)).isTrue();
++            release.countDown();
++            assertThat(first.get(10, TimeUnit.SECONDS).getProductsQuantity()).isEqualTo(2);
++            assertThat(retry.get(10, TimeUnit.SECONDS).getProductsQuantity()).isEqualTo(2);
++        } finally {
++            release.countDown();
++        }
++        verify(carts, times(1)).addItemsToCart(userId, items(2));
++    }
++
++    private void addUser(UUID user) {
++        jdbc.update("INSERT INTO user_details (id) VALUES (?)", user);
++        jdbc.update("INSERT INTO test_cart VALUES (?, 0)", user);
++    }
++
++    private ShoppingCartDto currentCart(UUID user) {
++        return new ShoppingCartDto()
++                .userId(user)
++                .productsQuantity(
++                        jdbc.queryForObject("SELECT quantity FROM test_cart WHERE user_id = ?", Integer.class, user));
++    }
++
++    private Set<AddCartItemRequest> items(int quantity) {
++        return Set.of(new AddCartItemRequest(productId, quantity));
++    }
++
++    @Configuration
++    @EnableTransactionManagement(proxyTargetClass = true)
++    static class Config {
++        @Bean
++        DataSource dataSource() {
++            return new DriverManagerDataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
++        }
++
++        @Bean
++        JdbcTemplate jdbcTemplate(DataSource dataSource) {
++            return new JdbcTemplate(dataSource);
++        }
++
++        @Bean
++        PlatformTransactionManager transactionManager(DataSource dataSource) {
++            return new DataSourceTransactionManager(dataSource);
++        }
++
++        @Bean
++        ShoppingCartService shoppingCartService() {
++            return mock(ShoppingCartService.class);
++        }
++
++        @Bean
++        CartMergeService cartMergeService(JdbcTemplate jdbc, ShoppingCartService carts) {
++            return new CartMergeService(jdbc, carts);
++        }
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java b/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
+index f1e862d2..27dfac82 100644
+--- a/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/cart/service/ShoppingCartServiceTest.java
+@@ -58,8 +58,11 @@ class ShoppingCartServiceTest {
+ 
+     @BeforeEach
+     void setUp() {
+-        shoppingCartService =
+-                new ShoppingCartService(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        shoppingCartService = new ShoppingCartService(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -250,7 +253,11 @@ class ShoppingCartServiceTest {
+         assertThatThrownBy(() -> shoppingCartService.addItems(userId, Set.of()))
+                 .isInstanceOf(InvalidCartItemRequestException.class);
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -262,7 +269,11 @@ class ShoppingCartServiceTest {
+                         shoppingCartService.addItems(userId, Set.of(new AddCartItemRequest(UUID.randomUUID(), 100))))
+                 .isInstanceOf(InvalidItemProductQuantityException.class);
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -275,7 +286,11 @@ class ShoppingCartServiceTest {
+                 .isInstanceOf(InvalidCartItemRequestException.class)
+                 .hasMessageContaining("must not be null");
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -289,7 +304,11 @@ class ShoppingCartServiceTest {
+                 .isInstanceOf(InvalidCartItemRequestException.class)
+                 .hasMessageContaining("must not contain null items");
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -303,7 +322,11 @@ class ShoppingCartServiceTest {
+         assertThatThrownBy(() -> shoppingCartService.addItemsToCart(userId, Set.of(itemToAdd)))
+                 .isInstanceOf(InvalidItemProductQuantityException.class);
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -430,7 +453,11 @@ class ShoppingCartServiceTest {
+         assertThatThrownBy(() -> shoppingCartService.deleteItems(List.of(), userId))
+                 .isInstanceOf(InvalidCartItemRequestException.class);
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -443,7 +470,11 @@ class ShoppingCartServiceTest {
+                         () -> shoppingCartService.deleteItems(new ArrayList<>(Collections.singletonList(null)), userId))
+                 .isInstanceOf(InvalidCartItemRequestException.class);
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     @Test
+@@ -456,7 +487,11 @@ class ShoppingCartServiceTest {
+                 .isInstanceOf(InvalidCartItemRequestException.class)
+                 .hasMessageContaining("must not be null");
+ 
+-        verifyNoInteractions(shoppingCartRepository, shoppingCartItemRepository, productCatalogApi);
++        verifyNoInteractions(
++                shoppingCartRepository,
++                shoppingCartItemRepository,
++                productCatalogApi,
++                org.mockito.Mockito.mock(com.zufar.icedlatte.common.sync.SyncRevisionService.class));
+     }
+ 
+     private static ProductSnapshot productDto(UUID id, BigDecimal price) {
+diff --git a/src/test/java/com/zufar/icedlatte/favorite/service/FavoriteServiceTest.java b/src/test/java/com/zufar/icedlatte/favorite/service/FavoriteServiceTest.java
+index f8cf181e..9222d7a7 100644
+--- a/src/test/java/com/zufar/icedlatte/favorite/service/FavoriteServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/favorite/service/FavoriteServiceTest.java
+@@ -45,6 +45,9 @@ class FavoriteServiceTest {
+     @InjectMocks
+     private FavoriteService favoriteService;
+ 
++    @Mock
++    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
++
+     @Mock
+     private FavoriteRepository favoriteRepository;
+ 
+diff --git a/src/test/java/com/zufar/icedlatte/sync/SyncBrowserIntegrationTest.java b/src/test/java/com/zufar/icedlatte/sync/SyncBrowserIntegrationTest.java
+new file mode 100644
+index 00000000..4d967833
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/sync/SyncBrowserIntegrationTest.java
+@@ -0,0 +1,145 @@
++package com.zufar.icedlatte.sync;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.net.ServerSocket;
++import java.net.URI;
++import java.net.http.HttpClient;
++import java.net.http.HttpRequest;
++import java.net.http.HttpResponse;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.time.Duration;
++import java.util.ArrayList;
++import java.util.Map;
++import java.util.concurrent.TimeUnit;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
++import org.springframework.beans.factory.annotation.Autowired;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
++
++/** Actual browser -> Next proxy -> Spring -> disposable PostgreSQL. External mail/storage stay mocked. */
++@EnabledIfSystemProperty(named = "sync.browser", matches = "true")
++class SyncBrowserIntegrationTest extends AuthenticatedUserIntegrationSupport {
++    @Autowired
++    ObjectMapper mapper;
++
++    @Test
++    void realFrontendAndBackendRecoverLostResponsesAndConflicts() throws Exception {
++        Path frontend = Path.of(System.getProperty(
++                        "sync.frontend",
++                        System.getenv().getOrDefault("ICED_LATTE_FRONTEND_SOURCE", "../Iced-Latte-Frontend")))
++                .toAbsolutePath()
++                .normalize();
++        assertThat(frontend.resolve("node_modules/next/dist/bin/next")).isRegularFile();
++        Path generatedTypes = frontend.resolve("next-env.d.ts");
++        byte[] originalTypes = Files.readAllBytes(generatedTypes);
++        Path output = Path.of("target/sync-browser").toAbsolutePath();
++        Files.createDirectories(output);
++        int frontendPort;
++        try (var socket = new ServerSocket(0)) {
++            frontendPort = socket.getLocalPort();
++        }
++        String url = "http://127.0.0.1:" + frontendPort;
++        String node = System.getProperty("sync.node", "node");
++        var builder = new ProcessBuilder(
++                node,
++                "node_modules/next/dist/bin/next",
++                "dev",
++                "--hostname",
++                "127.0.0.1",
++                "--port",
++                Integer.toString(frontendPort));
++        builder.directory(frontend.toFile())
++                .redirectErrorStream(true)
++                .redirectOutput(output.resolve("next.log").toFile());
++        builder.environment()
++                .putAll(Map.of(
++                        "INTERNAL_API_URL",
++                        "http://127.0.0.1:" + port + "/api/v1",
++                        "NEXT_PUBLIC_API_URL",
++                        "http://127.0.0.1:" + port + "/api/v1",
++                        "NEXT_PUBLIC_FRONTEND_URL",
++                        url,
++                        "NEXT_PUBLIC_SENTRY_DSN",
++                        "",
++                        "SENTRY_DSN",
++                        "",
++                        "NEXT_PUBLIC_STRIPE_ENABLED",
++                        "false",
++                        "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED",
++                        "false"));
++        Process server = builder.start();
++        Process browser = null;
++        try {
++            try (var http =
++                    HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()) {
++                long deadline = System.nanoTime() + Duration.ofSeconds(90).toNanos();
++                boolean ready = false;
++                while (System.nanoTime() < deadline && server.isAlive()) {
++                    try {
++                        if (http.send(
++                                                HttpRequest.newBuilder(URI.create(url + "/signin"))
++                                                        .timeout(Duration.ofSeconds(5))
++                                                        .build(),
++                                                HttpResponse.BodyHandlers.discarding())
++                                        .statusCode()
++                                == 200) {
++                            ready = true;
++                            break;
++                        }
++                    } catch (Exception ignored) {
++                        Thread.sleep(250);
++                    }
++                }
++                assertThat(ready)
++                        .as("Next local server ready; see target/sync-browser/next.log")
++                        .isTrue();
++            }
++            var accounts = new ArrayList<Map<String, String>>();
++            for (int i = 0; i < 8; i++) {
++                var user = registerAndAuthenticateUser();
+[REDACTED credential-related line]
++            }
++            browser = new ProcessBuilder(node, "e2e/sync-lifecycle.real.mjs")
++                    .directory(frontend.toFile())
++                    .redirectErrorStream(true)
++                    .redirectOutput(output.resolve("browser.log").toFile())
++                    .start();
++            // Disposable test credentials travel over stdin; never print them or put them in argv.
++            try (var stdin = browser.outputWriter(StandardCharsets.UTF_8)) {
++                stdin.write(mapper.writeValueAsString(
++                        Map.of("url", url, "output", output.toString(), "accounts", accounts)));
++            }
++            assertThat(browser.waitFor(180, TimeUnit.SECONDS))
++                    .as("browser completed; see target/sync-browser/browser.log")
++                    .isTrue();
++            assertThat(browser.exitValue())
++                    .as("real browser checks; see target/sync-browser/browser.log")
++                    .isZero();
++        } finally {
++            if (browser != null) stop(browser);
++            stop(server);
++            String before = new String(originalTypes, StandardCharsets.UTF_8);
++            String after = Files.readString(generatedTypes);
++            // Next dev changes only its generated types import. Restore that
++            // exact known change, never concurrent edits to any source file.
++            if (!before.equals(after)) {
++                assertThat(after.replace(".next/dev/types/", ".next/types/").replace("\r\n", "\n"))
++                        .as("Only Next's generated type import changed")
++                        .isEqualTo(before.replace(".next/dev/types/", ".next/types/")
++                                .replace("\r\n", "\n"));
++                Files.write(generatedTypes, originalTypes);
++            }
++        }
++    }
++
++    private static void stop(Process process) {
++        process.descendants().forEach(handle -> handle.destroyForcibly());
++        process.destroyForcibly();
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/sync/SyncIntegrationTest.java b/src/test/java/com/zufar/icedlatte/sync/SyncIntegrationTest.java
+new file mode 100644
+index 00000000..5573ecc2
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/sync/SyncIntegrationTest.java
+@@ -0,0 +1,294 @@
++package com.zufar.icedlatte.sync;
++
++import static io.restassured.RestAssured.given;
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.hamcrest.Matchers.equalTo;
++
++import java.util.*;
++import java.util.concurrent.*;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.jdbc.core.JdbcTemplate;
++
++import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
++
++import io.restassured.response.Response;
++
++class SyncIntegrationTest extends AuthenticatedUserIntegrationSupport {
++    private static final String A = "418499f3-d951-40bf-9414-5cb90ab21ecb";
++    private static final String B = "ad0ef2b7-816b-4a11-b361-dfcbe705fc96";
++
++    @Autowired
++    JdbcTemplate jdbc;
++
++    private String owner(AuthenticatedUser user) {
+[REDACTED credential-related line]
++                .get()
++                .then()
++                .statusCode(200)
++                .extract()
++                .path("id");
++    }
++
++    private long revision(AuthenticatedUser user, String resource) {
+[REDACTED credential-related line]
++                .get("/" + resource)
++                .then()
++                .statusCode(200)
++                .extract()
++                .jsonPath()
++                .getLong("revision");
++    }
++
++    private Map<String, Object> command(String owner, long revision, String type, Map<String, Object> payload) {
++        return new HashMap<>(Map.of(
++                "operationId",
++                UUID.randomUUID().toString(),
++                "expectedUserId",
++                owner,
++                "expectedRevision",
++                revision,
++                "type",
++                type,
++                "payload",
++                payload));
++    }
++
++    private Response send(AuthenticatedUser user, String resource, Map<String, Object> command) {
+[REDACTED credential-related line]
++                .body(command)
++                .post("/" + resource + "/operations");
++    }
++
++    private Map<String, Object> items(String id, int quantity) {
++        return Map.of("items", List.of(Map.of("productId", id, "productQuantity", quantity)));
++    }
++
++    @Test
++    void lostAdditionResponseCanBeRetriedAndClearUsesProductsRatherThanUnknownSlotIds() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        var add = command(owner, revision(user, "cart"), "add", items(A, 2));
++        send(user, "cart", add).then().statusCode(200).body("outcome", equalTo("APPLIED"));
++        // Pretend the response above was lost after the real transaction committed.
++        var replay = send(user, "cart", add)
++                .then()
++                .statusCode(200)
++                .body("snapshot.data.productsQuantity", equalTo(2))
++                .extract()
++                .jsonPath();
++        var clear = command(owner, replay.getLong("snapshot.revision"), "clear", Map.of("productIds", List.of(A)));
++        send(user, "cart", clear).then().statusCode(200).body("snapshot.data.productsQuantity", equalTo(0));
++        send(user, "cart", add)
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("APPLIED"))
++                .body("snapshot.data.productsQuantity", equalTo(0));
+[REDACTED credential-related line]
++                .get("/cart/operations/" + add.get("operationId"))
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("APPLIED"))
++                .body("snapshot.data.productsQuantity", equalTo(0));
++        var another = registerAndAuthenticateUser();
+[REDACTED credential-related line]
++                .get("/cart/operations/" + add.get("operationId"))
++                .then()
++                .statusCode(404);
++    }
++
++    @Test
++    void concurrentRetriesApplyOnceAndIndependentStaleCommandsAreRejected() throws Exception {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        long initial = revision(user, "cart");
++        var add = command(owner, initial, "add", items(A, 1));
++        try (var pool = Executors.newFixedThreadPool(2)) {
++            var first = pool.submit(() -> send(user, "cart", add));
++            var retry = pool.submit(() -> send(user, "cart", add));
++            first.get(15, TimeUnit.SECONDS).then().statusCode(200).body("outcome", equalTo("APPLIED"));
++            retry.get(15, TimeUnit.SECONDS).then().statusCode(200).body("snapshot.data.productsQuantity", equalTo(1));
++        }
++        send(user, "cart", command(owner, initial, "add", items(B, 1)))
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("REJECTED"))
++                .body("code", equalTo("REVISION_CONFLICT"));
++    }
++
++    @Test
++    void rejectsWrongOwnerAndChangedPayloadOrBaseRevision() {
++        var user = registerAndAuthenticateUser();
++        var add = command(owner(user), revision(user, "cart"), "add", items(A, 1));
++        var wrongOwner = new HashMap<>(add);
++        wrongOwner.put("expectedUserId", UUID.randomUUID().toString());
++        send(user, "cart", wrongOwner).then().statusCode(409);
++        send(user, "cart", add).then().statusCode(200);
++        var changed = new HashMap<>(add);
++        changed.put("payload", items(A, 2));
++        send(user, "cart", changed).then().statusCode(409);
++        changed.put("payload", add.get("payload"));
++        changed.put("expectedRevision", 1);
++        send(user, "cart", changed).then().statusCode(409);
++    }
++
++    @Test
++    void rejectedGuestMergeHasAStoredOutcomeAndCorrectedDraftUsesANewOperation() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        var unavailable = command(
++                owner, revision(user, "cart"), "merge", items(UUID.randomUUID().toString(), 1));
++        send(user, "cart", unavailable)
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("REJECTED"))
++                .body("code", equalTo("PRODUCT_UNAVAILABLE"));
++        assertThat(jdbc.queryForObject(
++                        "SELECT count(*) FROM sync_operation WHERE user_id = ? AND outcome = 'REJECTED'",
++                        Long.class,
++                        UUID.fromString(owner)))
++                .isEqualTo(1L);
++        send(user, "cart", unavailable).then().statusCode(200).body("outcome", equalTo("REJECTED"));
++        send(user, "cart", command(owner, revision(user, "cart"), "merge", items(A, 1)))
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("APPLIED"));
++    }
++
++    @Test
++    void legacyCartWritersAdvanceTheSameRevision() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        long before = revision(user, "cart");
+[REDACTED credential-related line]
++                .body(items(A, 1))
++                .post("/items")
++                .then()
++                .statusCode(200);
++        assertThat(revision(user, "cart")).isGreaterThan(before);
++        send(user, "cart", command(owner, before, "add", items(B, 1)))
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("REJECTED"));
++    }
++
++    @Test
++    void favouriteSetAndRemovalAreReplaySafe() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        var save = command(owner, revision(user, "favourites"), "save", Map.of("productId", A, "saved", true));
++        send(user, "favourites", save).then().statusCode(200).body("outcome", equalTo("APPLIED"));
++        var remove = command(owner, revision(user, "favourites"), "save", Map.of("productId", A, "saved", false));
++        send(user, "favourites", remove).then().statusCode(200).body("snapshot.data.products.size()", equalTo(0));
++        send(user, "favourites", save).then().statusCode(200).body("snapshot.data.products.size()", equalTo(0));
++    }
++
++    @Test
++    void profileUpdatesUseRevisionsAndRejectAnOlderEditor() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        long before = revision(user, "profile");
++        var update = command(
++                owner,
++                before,
++                "update",
++                Map.of(
++                        "firstName",
++                        "Updated",
++                        "lastName",
++                        "Person",
++                        "birthDate",
++                        "1990-01-15",
++                        "phoneNumber",
++                        "+442071234567",
++                        "address",
++                        Map.of("country", "UK", "city", "London", "line", "1 Test Street", "postcode", "SW1A 1AA")));
++        send(user, "profile", update)
++                .then()
++                .statusCode(200)
++                .body("outcome", equalTo("APPLIED"))
++                .body("snapshot.data.firstName", equalTo("Updated"))
++                .body("snapshot.data.birthDate", equalTo("1990-01-15"))
++                .body("snapshot.data.address.city", equalTo("London"));
++        send(user, "profile", command(owner, before, "update", Map.of("firstName", "Stale", "lastName", "Person")))
++                .then()
++                .statusCode(200)
++                .body("code", equalTo("REVISION_CONFLICT"));
+[REDACTED credential-related line]
++                .get()
++                .then()
++                .statusCode(200)
++                .body("firstName", equalTo("Updated"))
++                .body("profileRevision", equalTo(1));
++    }
++
++    @Test
++    void receiptFailureRollsBackTheBusinessWriteAndRetryCanApplyOnce() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        var add = command(owner, revision(user, "cart"), "add", items(A, 3));
++        jdbc.execute("""
++                CREATE FUNCTION sync_test_receipt_failure() RETURNS trigger LANGUAGE plpgsql AS $$
++                BEGIN RAISE EXCEPTION 'simulated receipt write failure'; END $$
++                """);
++        jdbc.execute("""
++                CREATE TRIGGER sync_test_receipt_failure BEFORE INSERT ON sync_operation
++                FOR EACH ROW EXECUTE FUNCTION sync_test_receipt_failure()
++                """);
++        try {
++            send(user, "cart", add).then().statusCode(500);
++            assertThat(revision(user, "cart")).isZero();
++            assertThat(jdbc.queryForObject(
++                            "SELECT count(*) FROM sync_operation WHERE user_id = ?",
++                            Long.class,
++                            UUID.fromString(owner)))
++                    .isZero();
+[REDACTED credential-related line]
++                    .get("/cart")
++                    .then()
++                    .statusCode(200)
++                    .body("data.productsQuantity", equalTo(0));
++        } finally {
++            jdbc.execute("DROP TRIGGER sync_test_receipt_failure ON sync_operation");
++            jdbc.execute("DROP FUNCTION sync_test_receipt_failure()");
++        }
++        send(user, "cart", add).then().statusCode(200).body("snapshot.data.productsQuantity", equalTo(3));
++        send(user, "cart", add).then().statusCode(200).body("snapshot.data.productsQuantity", equalTo(3));
++    }
++
++    @Test
++    void quantityRejectionLeavesTheAccountCartEditableForGuestRecovery() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        send(user, "cart", command(owner, revision(user, "cart"), "add", items(A, 99)))
++                .then()
++                .statusCode(200);
++        var merge = command(owner, revision(user, "cart"), "merge", items(A, 2));
++        send(user, "cart", merge).then().statusCode(200).body("code", equalTo("QUANTITY_LIMIT"));
++        send(user, "cart", command(owner, revision(user, "cart"), "adjust", Map.of("productId", A, "quantity", -2)))
++                .then()
++                .statusCode(200)
++                .body("snapshot.data.productsQuantity", equalTo(97));
++        send(user, "cart", merge).then().statusCode(200).body("outcome", equalTo("REJECTED"));
++        send(user, "cart", command(owner, revision(user, "cart"), "merge", items(A, 2)))
++                .then()
++                .statusCode(200)
++                .body("snapshot.data.productsQuantity", equalTo(99));
++    }
++
++    @Test
++    void invalidProfileIsAStoredRejectionAndSnapshotIsBoundToItsAuthenticatedOwner() {
++        var user = registerAndAuthenticateUser();
++        String owner = owner(user);
++        var invalid =
++                command(owner, revision(user, "profile"), "update", Map.of("firstName", "", "lastName", "Person"));
++        send(user, "profile", invalid)
++                .then()
++                .statusCode(200)
++                .body("code", equalTo("INVALID_PROFILE"))
++                .body("snapshot.userId", equalTo(owner));
++        send(user, "profile", invalid).then().statusCode(200).body("outcome", equalTo("REJECTED"));
++        jsonSpec("/api/v1/sync").get("/cart").then().statusCode(401);
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java b/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
+index e15485e2..1f9c6dc3 100644
+--- a/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
+@@ -38,6 +38,9 @@ import com.zufar.icedlatte.user.repository.UserRepository;
+ @DisplayName("UserProfileService unit tests")
+ class UserProfileServiceTest {
+ 
++    @Mock
++    private com.zufar.icedlatte.common.sync.SyncRevisionService syncRevisions;
++
+     @Mock
+     private SingleUserProvider singleUserProvider;
+ 
+

@@ -1,0 +1,118 @@
+diff --git a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectDeleter.java b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectDeleter.java
+index fb0b7fc5..4c968548 100644
+--- a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectDeleter.java
++++ b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectDeleter.java
+@@ -5,9 +5,6 @@ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+ import org.springframework.stereotype.Service;
+-import org.springframework.transaction.annotation.Isolation;
+-import org.springframework.transaction.annotation.Propagation;
+-import org.springframework.transaction.annotation.Transactional;
+ import software.amazon.awssdk.core.exception.SdkClientException;
+ import software.amazon.awssdk.services.s3.S3Client;
+ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+@@ -21,7 +18,6 @@ public class AwsObjectDeleter {
+ 
+     private final S3Client s3Client;
+ 
+-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void deleteFile(FileMetadataDto fileMetadataDto) {
+         final String bucketName = fileMetadataDto.bucketName();
+         final String fileName = fileMetadataDto.fileName();
+diff --git a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectUploader.java b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectUploader.java
+index e28c7588..07d8b901 100644
+--- a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectUploader.java
++++ b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsObjectUploader.java
+@@ -6,9 +6,6 @@ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+ import org.springframework.stereotype.Service;
+-import org.springframework.transaction.annotation.Isolation;
+-import org.springframework.transaction.annotation.Propagation;
+-import org.springframework.transaction.annotation.Transactional;
+ import org.springframework.web.multipart.MultipartFile;
+ import software.amazon.awssdk.core.exception.SdkClientException;
+ import software.amazon.awssdk.core.sync.RequestBody;
+@@ -30,7 +27,6 @@ public class AwsObjectUploader {
+ 
+     private final S3Client s3Client;
+ 
+-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void uploadFile(MultipartFile file, String bucketName, String fileName) {
+         try (InputStream inputStream = file.getInputStream()) {
+             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+@@ -54,7 +50,6 @@ public class AwsObjectUploader {
+         }
+     }
+ 
+-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void uploadFileDirectory(String bucketName, String directoryPath) throws IOException {
+         Path normalizedPath = Paths.get(directoryPath).normalize();
+         if (!normalizedPath.toFile().getCanonicalPath().startsWith(new java.io.File(directoryPath).getCanonicalPath())) {
+diff --git a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsProvider.java b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsProvider.java
+index 03d4c395..dce99b05 100644
+--- a/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsProvider.java
++++ b/src/main/java/com/zufar/icedlatte/filestorage/aws/AwsProvider.java
+@@ -5,9 +5,6 @@ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+ import org.springframework.stereotype.Service;
+-import org.springframework.transaction.annotation.Isolation;
+-import org.springframework.transaction.annotation.Propagation;
+-import org.springframework.transaction.annotation.Transactional;
+ import software.amazon.awssdk.core.exception.SdkClientException;
+ import software.amazon.awssdk.services.s3.S3Client;
+ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+@@ -26,7 +23,6 @@ public class AwsProvider {
+ 
+     private final S3Client s3Client;
+ 
+-    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public List<FileMetadataDto> getProductImagesFromAWS(String bucketName) {
+         try {
+             ListObjectsV2Request request = ListObjectsV2Request.builder()
+@@ -53,13 +49,15 @@ public class AwsProvider {
+             String fileName = s3Object.key();
+             String[] parts = fileName.split("/");
+             String[] packageName = parts[0].split("_");
+-            String relatedObjectId = packageName[1];
+-            FileMetadataDto fileMetadataDto = new FileMetadataDto(
+-                    UUID.fromString(relatedObjectId),
+-                    bucketName,
+-                    fileName
+-            );
+-            fileMetadataDtos.add(fileMetadataDto);
++            if (packageName.length < 2) {
++                log.warn("aws.s3.key.skipped: key={}", fileName);
++                return;
++            }
++            try {
++                fileMetadataDtos.add(new FileMetadataDto(UUID.fromString(packageName[1]), bucketName, fileName));
++            } catch (IllegalArgumentException e) {
++                log.warn("aws.s3.key.invalid_uuid: key={}", fileName);
++            }
+         });
+ 
+         return fileMetadataDtos;
+diff --git a/src/main/java/com/zufar/icedlatte/filestorage/file/FileProvider.java b/src/main/java/com/zufar/icedlatte/filestorage/file/FileProvider.java
+index 1bc8cb51..9d4370d4 100644
+--- a/src/main/java/com/zufar/icedlatte/filestorage/file/FileProvider.java
++++ b/src/main/java/com/zufar/icedlatte/filestorage/file/FileProvider.java
+@@ -48,10 +48,11 @@ public class FileProvider {
+         Map<UUID, String> urls = fileMetadataProvider.getFileMetadataDtos(relatedObjectIds)
+                 .entrySet()
+                 .stream()
+-                .collect(Collectors.toMap(
+-                        Map.Entry::getKey,
+-                        entry -> awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue())
+-                ));
++                .flatMap(entry -> Optional.ofNullable(
++                        awsTemporaryLinkReceiver.generatePresignedUrlAsString(entry.getValue()))
++                        .map(url -> Map.entry(entry.getKey(), url))
++                        .stream())
++                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+         log.debug("file.urls.generated: count={}", urls.size());
+         return urls;
+     }
+

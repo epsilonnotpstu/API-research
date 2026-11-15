@@ -1,0 +1,77 @@
+diff --git a/src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueEmail.java b/src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmail.java
+similarity index 80%
+rename from src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueEmail.java
+rename to src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmail.java
+index 4be147c4..cf911360 100644
+--- a/src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueEmail.java
++++ b/src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmail.java
+@@ -1,6 +1,6 @@
+-package com.zufar.onlinestore.common.validation.annotation;
++package com.zufar.onlinestore.common.validation.email;
+ 
+-import com.zufar.onlinestore.common.validation.validator.UniqueEmailValidator;
++import com.zufar.onlinestore.common.validation.email.UniqueEmailValidator;
+ import jakarta.validation.Constraint;
+ import jakarta.validation.Payload;
+ 
+diff --git a/src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueEmailValidator.java b/src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmailValidator.java
+similarity index 83%
+rename from src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueEmailValidator.java
+rename to src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmailValidator.java
+index 99c23009..94917e05 100644
+--- a/src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueEmailValidator.java
++++ b/src/main/java/com/zufar/onlinestore/common/validation/email/UniqueEmailValidator.java
+@@ -1,7 +1,6 @@
+-package com.zufar.onlinestore.common.validation.validator;
++package com.zufar.onlinestore.common.validation.email;
+ 
+ import com.zufar.onlinestore.user.repository.UserRepository;
+-import com.zufar.onlinestore.common.validation.annotation.UniqueEmail;
+ import jakarta.validation.ConstraintValidator;
+ import jakarta.validation.ConstraintValidatorContext;
+ import lombok.RequiredArgsConstructor;
+diff --git a/src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueUsername.java b/src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsername.java
+similarity index 80%
+rename from src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueUsername.java
+rename to src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsername.java
+index 08d8faa7..a51abdab 100644
+--- a/src/main/java/com/zufar/onlinestore/common/validation/annotation/UniqueUsername.java
++++ b/src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsername.java
+@@ -1,6 +1,5 @@
+-package com.zufar.onlinestore.common.validation.annotation;
++package com.zufar.onlinestore.common.validation.username;
+ 
+-import com.zufar.onlinestore.common.validation.validator.UniqueUsernameValidator;
+ import jakarta.validation.Constraint;
+ import jakarta.validation.Payload;
+ 
+diff --git a/src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueUsernameValidator.java b/src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsernameValidator.java
+similarity index 82%
+rename from src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueUsernameValidator.java
+rename to src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsernameValidator.java
+index 3bad93f7..e5fe330a 100644
+--- a/src/main/java/com/zufar/onlinestore/common/validation/validator/UniqueUsernameValidator.java
++++ b/src/main/java/com/zufar/onlinestore/common/validation/username/UniqueUsernameValidator.java
+@@ -1,6 +1,5 @@
+-package com.zufar.onlinestore.common.validation.validator;
++package com.zufar.onlinestore.common.validation.username;
+ 
+-import com.zufar.onlinestore.common.validation.annotation.UniqueUsername;
+ import com.zufar.onlinestore.user.repository.UserRepository;
+ import jakarta.validation.ConstraintValidator;
+ import jakarta.validation.ConstraintValidatorContext;
+diff --git a/src/main/java/com/zufar/onlinestore/security/dto/registration/UserRegistrationRequest.java b/src/main/java/com/zufar/onlinestore/security/dto/registration/UserRegistrationRequest.java
+index aed6f6df..d874a0bc 100644
+--- a/src/main/java/com/zufar/onlinestore/security/dto/registration/UserRegistrationRequest.java
++++ b/src/main/java/com/zufar/onlinestore/security/dto/registration/UserRegistrationRequest.java
+@@ -1,7 +1,7 @@
+ package com.zufar.onlinestore.security.dto.registration;
+ 
+-import com.zufar.onlinestore.common.validation.annotation.UniqueEmail;
+-import com.zufar.onlinestore.common.validation.annotation.UniqueUsername;
++import com.zufar.onlinestore.common.validation.email.UniqueEmail;
++import com.zufar.onlinestore.common.validation.username.UniqueUsername;
+ import jakarta.validation.constraints.Email;
+ import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.Size;
+

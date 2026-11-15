@@ -1,0 +1,93 @@
+diff --git a/src/main/java/com/epam/ta/reportportal/auth/config/SecurityConfiguration.java b/src/main/java/com/epam/ta/reportportal/auth/config/SecurityConfiguration.java
+index 66ba15ebb..5cbfc9993 100644
+--- a/src/main/java/com/epam/ta/reportportal/auth/config/SecurityConfiguration.java
++++ b/src/main/java/com/epam/ta/reportportal/auth/config/SecurityConfiguration.java
+@@ -362,7 +362,7 @@ public class SecurityConfiguration {
+ 				Collection<GrantedAuthority> authorities = user.getAuthorities();
+ 
+ 				Long userId = map.containsKey("userId") ? parseId(map.get("userId")) : null;
+-				UserRole userRole = map.containsKey("userRole") ? (UserRole) map.get("userRole") : null;
++				UserRole userRole = map.containsKey("userRole") ? UserRole.valueOf(map.get("userRole").toString()) : null;
+ 				Map<String, Map> projects = map.containsKey("projects") ? (Map) map.get("projects") : Collections.emptyMap();
+ 
+ 				Map<String, ReportPortalUser.ProjectDetails> collect = projects.entrySet()
+diff --git a/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
+index d5115519a..2fce5525b 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
+@@ -100,6 +100,7 @@ class StartTestItemHandlerImpl implements StartTestItemHandler {
+ 				.orElseThrow(() -> new ReportPortalException(TEST_ITEM_NOT_FOUND, parentId.toString()));
+ 		Launch launch = launchRepository.findById(rq.getLaunchId())
+ 				.orElseThrow(() -> new ReportPortalException(LAUNCH_NOT_FOUND, rq.getLaunchId()));
++		validateProject(user, projectName);
+ 		validate(rq, parentItem);
+ 
+ 		TestItem item = new TestItemBuilder().addStartItemRequest(rq).addLaunch(launch).addParent(parentItem.getTestItemStructure()).get();
+@@ -142,4 +143,8 @@ class StartTestItemHandlerImpl implements StartTestItemHandler {
+ 				formattedSupplier("Parent Item '{}' already has log items", parent.getItemId())
+ 		);
+ 	}
++
++	private void validateProject(ReportPortalUser user, String projectName) {
++		EntityUtils.takeProjectDetails(user, projectName);
++	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/launch/impl/StartLaunchHandler.java b/src/main/java/com/epam/ta/reportportal/core/launch/impl/StartLaunchHandler.java
+index fbfe40f95..066a6e195 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/launch/impl/StartLaunchHandler.java
++++ b/src/main/java/com/epam/ta/reportportal/core/launch/impl/StartLaunchHandler.java
+@@ -68,7 +68,6 @@ class StartLaunchHandler implements IStartLaunchHandler {
+ 				.addTags(startLaunchRQ.getTags())
+ 				.get();
+ 		launchRepository.save(launch);
+-		launchRepository.refresh(launch);
+ 		//eventPublisher.publishEvent(new LaunchStartedEvent(launch));
+ 		return new StartLaunchRS(launch.getId(), launch.getNumber());
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/store/commons/Preconditions.java b/src/main/java/com/epam/ta/reportportal/store/commons/Preconditions.java
+index dd386fee7..51835e430 100644
+--- a/src/main/java/com/epam/ta/reportportal/store/commons/Preconditions.java
++++ b/src/main/java/com/epam/ta/reportportal/store/commons/Preconditions.java
+@@ -21,8 +21,8 @@
+ 
+ package com.epam.ta.reportportal.store.commons;
+ 
+-import com.epam.ta.reportportal.store.database.entity.enums.ProjectRoleEnum;
+ import com.epam.ta.reportportal.store.database.entity.enums.StatusEnum;
++import com.epam.ta.reportportal.store.database.entity.project.ProjectRole;
+ import com.epam.ta.reportportal.ws.model.ErrorType;
+ import org.apache.commons.lang.ArrayUtils;
+ 
+@@ -91,7 +91,7 @@ public class Preconditions {
+ 	 * @param principalRole
+ 	 * @return
+ 	 */
+-	public static Predicate<ProjectRoleEnum> isLevelEnough(final ProjectRoleEnum principalRole) {
++	public static Predicate<ProjectRole> isLevelEnough(final ProjectRole principalRole) {
+ 		return principalRole::sameOrHigherThan;
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/store/database/entity/launch/Launch.java b/src/main/java/com/epam/ta/reportportal/store/database/entity/launch/Launch.java
+index e6ac87edd..4727aaf4b 100644
+--- a/src/main/java/com/epam/ta/reportportal/store/database/entity/launch/Launch.java
++++ b/src/main/java/com/epam/ta/reportportal/store/database/entity/launch/Launch.java
+@@ -86,7 +86,7 @@ public class Launch implements Serializable {
+ 	@Type(type = "pqsql_enum")
+ 	private StatusEnum status;
+ 
+-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
++	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+ 	@JoinColumn(name = "launch_id")
+ 	private Set<LaunchTag> tags = Sets.newHashSet();
+ 
+@@ -196,8 +196,7 @@ public class Launch implements Serializable {
+ 		}
+ 		Launch launch = (Launch) o;
+ 		return Objects.equals(id, launch.id) && Objects.equals(projectId, launch.projectId) && Objects.equals(userId, launch.userId)
+-				&& Objects.equals(name, launch.name) && Objects.equals(description, launch.description) && Objects.equals(
+-				startTime,
++				&& Objects.equals(name, launch.name) && Objects.equals(description, launch.description) && Objects.equals(startTime,
+ 				launch.startTime
+ 		) && Objects.equals(number, launch.number) && Objects.equals(lastModified, launch.lastModified) && mode == launch.mode
+ 				&& status == launch.status && Objects.equals(tags, launch.tags);
+

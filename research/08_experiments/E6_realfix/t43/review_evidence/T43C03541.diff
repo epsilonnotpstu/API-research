@@ -1,0 +1,219 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/ProtocolAdapterEntity.java b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/ProtocolAdapterEntity.java
+index 2288c48b3..be975640c 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/ProtocolAdapterEntity.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/ProtocolAdapterEntity.java
+@@ -121,26 +121,36 @@ public class ProtocolAdapterEntity {
+         if (protocolId == null || protocolId.isEmpty()) {
+             validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR, "protocolId is missing", null));
+         }
+-        final Set<String> tagNameSet = tags.stream().map(TagEntity::getName).collect(Collectors.toSet());
+-        if (northboundMappingEntities != null) {
+-            northboundMappingEntities.forEach(from -> from.validate(validationEvents));
+-            northboundMappingEntities.stream().map(NorthboundMappingEntity::getTagName).forEach(tagName -> {
+-                if (!tagNameSet.contains(tagName)) {
+-                    validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR,
+-                            "Tag name [" + tagName + "] in northbound mapping is not found",
+-                            null));
+-                }
+-            });
++        if ((northboundMappingEntities == null || northboundMappingEntities.isEmpty()) &&
++                (southboundMappingEntities == null || southboundMappingEntities.isEmpty())) {
++            validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR,
++                    "northbound or southbound mappings are missing",
++                    null));
+         }
+-        if (southboundMappingEntities != null) {
+-            southboundMappingEntities.forEach(to -> to.validate(validationEvents));
+-            southboundMappingEntities.stream().map(SouthboundMappingEntity::getTagName).forEach(tagName -> {
+-                if (!tagNameSet.contains(tagName)) {
+-                    validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR,
+-                            "Tag name [" + tagName + "] in southbound mapping is not found",
+-                            null));
+-                }
+-            });
++        if (tags == null || tags.isEmpty()) {
++            validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR, "tags are missing", null));
++        } else {
++            final Set<String> tagNameSet = tags.stream().map(TagEntity::getName).collect(Collectors.toSet());
++            if (northboundMappingEntities != null && !northboundMappingEntities.isEmpty()) {
++                northboundMappingEntities.forEach(from -> from.validate(validationEvents));
++                northboundMappingEntities.stream().map(NorthboundMappingEntity::getTagName).forEach(tagName -> {
++                    if (!tagNameSet.contains(tagName)) {
++                        validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR,
++                                "Tag name [" + tagName + "] in northbound mapping is not found",
++                                null));
++                    }
++                });
++            }
++            if (southboundMappingEntities != null && !southboundMappingEntities.isEmpty()) {
++                southboundMappingEntities.forEach(to -> to.validate(validationEvents));
++                southboundMappingEntities.stream().map(SouthboundMappingEntity::getTagName).forEach(tagName -> {
++                    if (!tagNameSet.contains(tagName)) {
++                        validationEvents.add(new ValidationEventImpl(ValidationEvent.FATAL_ERROR,
++                                "Tag name [" + tagName + "] in southbound mapping is not found",
++                                null));
++                    }
++                });
++            }
+         }
+     }
+ 
+diff --git a/hivemq-edge/src/test/java/com/hivemq/configuration/reader/ProtocolAdapterExtractorTest.java b/hivemq-edge/src/test/java/com/hivemq/configuration/reader/ProtocolAdapterExtractorTest.java
+index f00bf5322..6ea29b400 100644
+--- a/hivemq-edge/src/test/java/com/hivemq/configuration/reader/ProtocolAdapterExtractorTest.java
++++ b/hivemq-edge/src/test/java/com/hivemq/configuration/reader/ProtocolAdapterExtractorTest.java
+@@ -55,15 +55,150 @@ public class ProtocolAdapterExtractorTest {
+     }
+ 
+     @Test
+-    public void whenAdapterIdAndProtocolIdAreValidAndOthersAreEmpty_setConfigurationShouldReturnTrue()
+-            throws IOException {
++    public void whenNoMappings_thenApplyConfigShouldFail() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter("""
++                <hivemq>
++                  <protocol-adapters>
++                    <protocol-adapter>
++                      <adapterId>simInvalid</adapterId>
++                      <protocolId>simulation</protocolId>
++                      <configVersion>1</configVersion>
++                      <config>
++                        <pollingIntervalMillis>notAnInteger</pollingIntervalMillis>
++                        <timeout>10000</timeout>
++                        <minDelay>0</minDelay>
++                        <maxDelay>0</maxDelay>
++                      </config>
++                      <tags>
++                        <tag>
++                          <name>tag1</name>
++                          <description>description1</description>
++                        </tag>
++                      </tags>
++                    </protocol-adapter>
++                  </protocol-adapters>
++                </hivemq>
++                """);
++        assertThatThrownBy(configFileReader::applyConfig).isInstanceOf(UnrecoverableException.class);
++    }
++
++    @Test
++    public void whenNoMappingsNoTags_thenApplyConfigShouldFail() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter("""
++                <hivemq>
++                  <protocol-adapters>
++                    <protocol-adapter>
++                      <adapterId>simInvalid</adapterId>
++                      <protocolId>simulation</protocolId>
++                      <configVersion>1</configVersion>
++                      <config>
++                        <pollingIntervalMillis>notAnInteger</pollingIntervalMillis>
++                        <timeout>10000</timeout>
++                        <minDelay>0</minDelay>
++                        <maxDelay>0</maxDelay>
++                      </config>
++                    </protocol-adapter>
++                  </protocol-adapters>
++                </hivemq>
++                """);
++        assertThatThrownBy(configFileReader::applyConfig).isInstanceOf(UnrecoverableException.class);
++    }
++
++    @Test
++    public void whenNoTags_thenApplyConfigShouldFail() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter("""
++                <hivemq>
++                  <protocol-adapters>
++                    <protocol-adapter>
++                      <adapterId>simInvalid</adapterId>
++                      <protocolId>simulation</protocolId>
++                      <configVersion>1</configVersion>
++                      <config>
++                        <pollingIntervalMillis>notAnInteger</pollingIntervalMillis>
++                        <timeout>10000</timeout>
++                        <minDelay>0</minDelay>
++                        <maxDelay>0</maxDelay>
++                      </config>
++                      <northboundMappings>
++                        <northboundMapping>
++                          <topic>MTConnect/my-steams</topic>
++                          <tagName>tag1</tagName>
++                        </northboundMapping>
++                      </northboundMappings>
++                    </protocol-adapter>
++                  </protocol-adapters>
++                </hivemq>
++                """);
++        assertThatThrownBy(configFileReader::applyConfig).isInstanceOf(UnrecoverableException.class);
++    }
++
++    @Test
++    public void whenUnexpectedXmlElementIsUnderHivemq_thenApplyConfigShouldFail() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter("""
++                <hivemq>
++                  <adapterId>simInvalid</adapterId>
++                  <protocolId>simulation</protocolId>
++                  <configVersion>1</configVersion>
++                  <config>
++                    <pollingIntervalMillis>notAnInteger</pollingIntervalMillis>
++                    <timeout>10000</timeout>
++                    <minDelay>0</minDelay>
++                    <maxDelay>0</maxDelay>
++                  </config>
++                </hivemq>
++                """);
++        assertThatThrownBy(configFileReader::applyConfig).isInstanceOf(UnrecoverableException.class);
++    }
++
++    @Test
++    public void whenNoMappingsNoTags_setConfigurationShouldReturnFalse() throws IOException {
+         final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter();
+         final HiveMQConfigEntity entity = configFileReader.applyConfig();
+         assertThat(entity).isNotNull();
+         final ProtocolAdapterEntity protocolAdapterEntity =
+                 new ProtocolAdapterEntity("adapterId", "protocolId", 1, Map.of(), List.of(), List.of(), List.of());
+         entity.getProtocolAdapterConfig().add(protocolAdapterEntity);
+-        assertThat(configFileReader.setConfiguration(entity)).isTrue();
++        assertThat(configFileReader.setConfiguration(entity)).isFalse();
++    }
++
++    @Test
++    public void whenNoMappings_setConfigurationShouldReturnFalse() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter();
++        final HiveMQConfigEntity entity = configFileReader.applyConfig();
++        assertThat(entity).isNotNull();
++        final ProtocolAdapterEntity protocolAdapterEntity = new ProtocolAdapterEntity("adapterId",
++                "protocolId",
++                1,
++                Map.of(),
++                List.of(),
++                List.of(),
++                List.of(new TagEntity("abc", "def", Map.of())));
++        entity.getProtocolAdapterConfig().add(protocolAdapterEntity);
++        assertThat(configFileReader.setConfiguration(entity)).isFalse();
++    }
++
++    @Test
++    public void whenNoTags_setConfigurationShouldReturnFalse() throws IOException {
++        final ConfigFileReaderWriter configFileReader = getConfigFileReaderWriter();
++        final HiveMQConfigEntity entity = configFileReader.applyConfig();
++        assertThat(entity).isNotNull();
++        final NorthboundMappingEntity northboundMappingEntity = new NorthboundMappingEntity("tagName",
++                "topic",
++                1,
++                MessageHandlingOptions.MQTTMessagePerTag,
++                false,
++                true,
++                List.of(),
++                100);
++        final ProtocolAdapterEntity protocolAdapterEntity = new ProtocolAdapterEntity("adapterId",
++                "protocolId",
++                1,
++                Map.of(),
++                List.of(northboundMappingEntity),
++                List.of(),
++                List.of());
++        entity.getProtocolAdapterConfig().add(protocolAdapterEntity);
++        assertThat(configFileReader.setConfiguration(entity)).isFalse();
+     }
+ 
+     @Test
+

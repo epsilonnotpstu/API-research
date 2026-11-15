@@ -1,0 +1,72 @@
+[parent contract] 8b3c43d3cbae42f2c49696c23cb9286c4bea684b:cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:104
+102:     @OpenApi(
+103:             queryParams = {
+104:                     @OpenApiParam(name = OFFICE, description = "Office id for the reservoir project location " +
+105:                             "associated with the outlets.  Defaults to the user session id."),
+106:                     @OpenApiParam(name = PROJECT_ID, required = true, description = "Specifies the project-id of the " +
+107:                             "Outlets whose data is to be included in the response."),
+108:             },
+109:             responses = {
+110:                     @OpenApiResponse(status = STATUS_200, content = {
+111:                             @OpenApiContent(from = Outlet.class, isArray = true, type = Formats.JSONV1),
+
+[fix contract] 22f91078b08e7c2d7eef173c9faa38b9e4e2a88b:cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:104
+102:     @OpenApi(
+103:             queryParams = {
+104:                     @OpenApiParam(name = OFFICE, required = true, description = "Office id for the reservoir project location " +
+105:                             "associated with the outlets."),
+106:                     @OpenApiParam(name = PROJECT_ID, required = true, description = "Specifies the project-id of the " +
+107:                             "Outlets whose data is to be included in the response."),
+108:             },
+109:             responses = {
+110:                     @OpenApiResponse(status = STATUS_200, content = {
+111:                             @OpenApiContent(from = Outlet.class, isArray = true, type = Formats.JSONV1),
+
+[parent implementation] 8b3c43d3cbae42f2c49696c23cb9286c4bea684b:cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:119
+119:     public void getAll(@NotNull Context ctx) {
+120:         String office = requiredParam(ctx, OFFICE);
+121:         String projectId = requiredParam(ctx, PROJECT_ID);
+122:         try (Timer.Context ignored = markAndTime(GET_ALL)) {
+123:             DSLContext dsl = getDslContext(ctx);
+124:             OutletDao dao = new OutletDao(dsl);
+125:             List<Outlet> outlets = dao.retrieveOutletsForProject(office, projectId);
+126:             String formatHeader = ctx.header(Header.ACCEPT) != null ? ctx.header(Header.ACCEPT) :
+127:                     Formats.JSONV1;
+128:             ContentType contentType = Formats.parseHeader(formatHeader, Outlet.class);
+129:             ctx.contentType(contentType.toString());
+130:             String serialized = Formats.format(contentType, outlets, Outlet.class);
+131:             ctx.result(serialized);
+
+[fix implementation] 22f91078b08e7c2d7eef173c9faa38b9e4e2a88b:cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:119
+119:     public void getAll(@NotNull Context ctx) {
+120:         String office = requiredParam(ctx, OFFICE);
+121:         String projectId = requiredParam(ctx, PROJECT_ID);
+122:         try (Timer.Context ignored = markAndTime(GET_ALL)) {
+123:             DSLContext dsl = getDslContext(ctx);
+124:             OutletDao dao = new OutletDao(dsl);
+125:             List<Outlet> outlets = dao.retrieveOutletsForProject(office, projectId);
+126:             String formatHeader = ctx.header(Header.ACCEPT) != null ? ctx.header(Header.ACCEPT) :
+127:                     Formats.JSONV1;
+128:             ContentType contentType = Formats.parseHeader(formatHeader, Outlet.class);
+129:             ctx.contentType(contentType.toString());
+130:             String serialized = Formats.format(contentType, outlets, Outlet.class);
+131:             ctx.result(serialized);
+
+[parent implementation] 8b3c43d3cbae42f2c49696c23cb9286c4bea684b:cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:339
+339:     public static String requiredParam(io.javalin.http.Context ctx, String name) {
+340:         String param = ctx.queryParam(name);
+341:         if (param == null || param.isEmpty()) {
+342:             throw new RequiredQueryParameterException(name);
+343:         }
+344:         return param;
+345:     }
+346: 
+
+[parent route] 8b3c43d3cbae42f2c49696c23cb9286c4bea684b:cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:514
+514:         String outletPath = format("/projects/outlets/{%s}", NAME);
+515:         String virtualOutletPath = format("/projects/{%s}/{%s}/virtual-outlets/{%s}", Controllers.OFFICE,
+516:                                           Controllers.PROJECT_ID, NAME);
+517:         String virtualOutletCreatePath = "/projects/virtual-outlets";
+518:         cdaCrudCache(outletPath, new OutletController(metrics), requiredRoles, 1, TimeUnit.DAYS);
+519:         cdaCrudCache(virtualOutletPath, new VirtualOutletController(metrics), requiredRoles, 1, TimeUnit.DAYS);
+520:         post(virtualOutletCreatePath, new VirtualOutletCreateController(metrics));

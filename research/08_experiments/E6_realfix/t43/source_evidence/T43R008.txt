@@ -1,0 +1,110 @@
+[parent contract] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml:4548
+4548:         persist:
+4549:           type: boolean
+4550:           description: "If this flag is set to true, any outgoing mqtt messages with\
+4551:             \ QoS-1 or QoS-2 will be persisted on disc in case disc persistence is\
+4552:             \ active.If this flag is set to false, the QoS of any outgoing mqtt messages\
+4553:             \ will be set to QoS-0 and no traffic will be persisted on disc."
+4554:           nullable: true
+4555:         port:
+4556:           type: integer
+
+[fix contract] 8ef2b8ecfc7d1f0684072446d53845bec9b7d73e:ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml:4548
+4548:         persist:
+4549:           type: boolean
+4550:           description: "If this flag is set to true, any outgoing mqtt messages with\
+4551:             \ QoS-1 or QoS-2 will be persisted on disc in case disc persistence is\
+4552:             \ active.If this flag is set to false, the QoS of any outgoing mqtt messages\
+4553:             \ will be set to QoS-0 and no traffic will be persisted on disc."
+4554:           nullable: true
+4555:         port:
+4556:           type: integer
+
+[parent route] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml:2681
+2680:       description: Add bridge configured in the system.
+2681:       operationId: addBridge
+2682:       requestBody:
+2683:         content:
+2684:           application/json:
+2685:             schema:
+2686:               $ref: '#/components/schemas/Bridge'
+2687:         description: The new bridge.
+2688:         required: true
+2689:       responses:
+2690:         "200":
+2691:           description: Success
+2692:         "400":
+2693:           content:
+2694:             application/json:
+2695:               schema:
+2696:                 $ref: '#/components/schemas/ProblemDetails'
+2697:           description: Bridge is invalid
+2698:       summary: Add a new Bridge
+2699:       tags:
+
+[parent route] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:hivemq-edge/build.gradle.kts:276
+274: val buildDirectory = layout.buildDirectory.get()
+275: tasks.register<GenerateTask>("genJaxRs") {
+276:     inputSpec.set("${projectDir}/../ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml")
+277:     outputDir.set("${buildDirectory}/generated/openapi")
+278:     generatorName.set("jaxrs-spec")
+279:     apiPackage.set("com.hivemq.edge.api")
+280:     modelPackage.set("com.hivemq.edge.api.model")
+281:     invokerPackage.set("com.hivemq.edge.api")
+282:     generateApiTests.set(false)
+283:     configOptions.set(
+
+[parent implementation] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:394
+384:                                 .collect(Collectors.toList()) :
+385:                         List.of())
+386:                 .withRemoteSubscriptions(bridge.getRemoteSubscriptions() != null ?
+387:                         bridge.getRemoteSubscriptions()
+388:                                 .stream()
+389:                                 .map(BridgeResourceImpl::unconvertRemote)
+390:                                 .collect(Collectors.toList()) :
+391:                         List.of())
+392:                 .withBridgeTls(convertTls(bridge.getTlsConfiguration()))
+393:                 .withWebsocketConfiguration(convertWebsocketConfig(bridge.getWebsocketConfiguration()))
+394:                 .persist(bridge.getPersist());
+395:         return builder.build();
+396:     }
+397: 
+
+[parent route] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:95
+95:     public @NotNull Response addBridge(final @NotNull com.hivemq.edge.api.model.Bridge bridge) {
+96: 
+97:         final ApiErrorMessages errorMessages = ApiErrorUtils.createErrorContainer();
+98:         if (checkBridgeExists(bridge.getId())) {
+99:             return ErrorResponseUtil.errorResponse(new BridgeFailedSchemaValidationError(List.of(new Error(
+100:                     "Bridge already existed",
+101:                     "id"))));
+102:         }
+103:         validateBridge(errorMessages, bridge);
+104:         if (ApiErrorUtils.hasRequestErrors(errorMessages)) {
+105:             return ErrorResponseUtil.errorResponse(new BridgeFailedSchemaValidationError(errorMessages.toErrorList()));
+106:         } else {
+107:             try {
+108:                 final MqttBridge mqttBridge = unconvert(bridge);
+109:                 configurationService.bridgeConfiguration().addBridge(mqttBridge);
+110:                 return Response.ok().build();
+111:             } finally {
+112:                 executorService.submit(bridgeService::updateBridges);
+113:             }
+
+[parent implementation] 9d4d22f873ebcc0f1bcdcbe47c0bb4c8db317c74:hivemq-edge/src/main/java/com/hivemq/bridge/config/MqttBridge.java:235
+235:         public @NotNull Builder persist(final boolean persist) {
+236:             this.persist = persist;
+237:             return this;
+238:         }
+239: 
+
+[fix implementation] 8ef2b8ecfc7d1f0684072446d53845bec9b7d73e:hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:394
+389:                                 .map(BridgeResourceImpl::unconvertRemote)
+390:                                 .collect(Collectors.toList()) :
+391:                         List.of())
+392:                 .withBridgeTls(convertTls(bridge.getTlsConfiguration()))
+393:                 .withWebsocketConfiguration(convertWebsocketConfig(bridge.getWebsocketConfiguration()))
+394:                 .persist(bridge.getPersist() == null || bridge.getPersist());
+395:         return builder.build();
+396:     }
+397: 

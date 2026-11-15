@@ -1,0 +1,24 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+index b42462e..22878f9 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+@@ -61,12 +61,17 @@ public class HttpSourceBridgeEndpoint<K, V> extends HttpBridgeEndpoint {
+         this.kafkaBridgeProducer.create();
+     }
+ 
++    @Override
++    public void close() {
++        this.kafkaBridgeProducer.close();
++        super.close();
++    }
++
+     /**
+      * Close the source endpoint
+      */
+     public void maybeClose() {
+         if (this.closing) {
+-            this.kafkaBridgeProducer.close();
+             this.close();
+         }
+     }
+

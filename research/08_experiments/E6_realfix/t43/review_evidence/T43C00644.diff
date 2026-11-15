@@ -1,0 +1,291 @@
+diff --git a/.github/release-drafter.yml b/.github/release-drafter.yml
+deleted file mode 100644
+index 4f8fe68..0000000
+--- a/.github/release-drafter.yml
++++ /dev/null
+@@ -1,17 +0,0 @@
+-categories:
+-  - title: '🚀 Features'
+-    labels:
+-      - 'feature'
+-      - 'enhancement'
+-  - title: '🐛 Bug Fixes'
+-    labels:
+-      - 'fix'
+-      - 'bugfix'
+-      - 'bug'
+-  - title: '🧰 Maintenance'
+-    label: 'chore'
+-change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+-template: |
+-  ## Changes
+-
+-  $CHANGES
+\ No newline at end of file
+diff --git a/.github/workflows/check.yml b/.github/workflows/check.yml
+index 39986f9..42370d9 100644
+--- a/.github/workflows/check.yml
++++ b/.github/workflows/check.yml
+@@ -1,14 +1,7 @@
+ name: Build / Test / Check
+ 
+-on:
+-  push:
+-    branches:
+-      - master
+-    tags-ignore:
+-      - v*
+-  pull_request:
+-    branches:
+-      - master
++on: [push, pull_request]
++
+ jobs:
+   build:
+     runs-on: ubuntu-latest
+@@ -23,15 +16,6 @@ jobs:
+           architecture: x64
+       - name: Build with Gradle
+         uses: eskatos/gradle-command-action@v1
+-        env:
+-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+-          release.customUsername: kochetkov-ma
+[REDACTED credential-related line]
+         with:
+           gradle-version: current
+-          arguments: '--stacktrace
+-        -PossrhUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        -Psigning.key="${{ secrets.GPG_SIGNING_KEY }}"
+[REDACTED credential-related line]
+-        check coveralls build'
+\ No newline at end of file
++          arguments: '--stacktrace check'
+\ No newline at end of file
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 98196e5..8e69de8 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -1,63 +1,50 @@
+-name: Make Release / Publish to OSS
++name: Upload Release Asset
+ 
+ on:
+-  pull_request:
+-    types: [closed]
++  push:
++    branches:
++      - master
++    tags:
++      - 'v*'
+ 
+ jobs:
+   build:
++    name: Upload Release Asset
+     runs-on: ubuntu-latest
+     steps:
+-      - name: Print information
+-        run: echo Current build = ${{ github.head_ref }}
+-      - name: Deep checkout
++      - name: Fast checkout
+         uses: actions/checkout@v2
+-        with:
+-          fetch-depth: 0
+-      - name: Fetch tags
+-        run: git fetch --tags --force
+       - name: Set up JDK
+         uses: actions/setup-java@v1
+         with:
+           java-version: '11'
+           java-package: jdk
+           architecture: x64
+-      - name: Increment MINOR version
+-        if: contains(github.head_ref, 'feature/')
+-        uses: eskatos/gradle-command-action@v1
+-        with:
+-          gradle-version: current
+-          arguments: '--info --stacktrace -PossrhUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        -Prelease.customUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        -Prelease.disableChecks
+-        -Prelease.pushTagsOnly
+-        -Prelease.versionIncrementer=incrementMinor
+-        release'
+-      - name: Increment PATCH version
+-        if: ${{ !contains(github.head_ref, 'feature/') }}
++      - name: Build with Gradle
+         uses: eskatos/gradle-command-action@v1
+         with:
+           gradle-version: current
+-          arguments: '--info --stacktrace -PossrhUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        -Prelease.customUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        -Prelease.disableChecks
+-        -Prelease.pushTagsOnly
+-        -Prelease.versionIncrementer=incrementPatch
+-        release'
+-      - name: Upload to OSS sonatype
+-        uses: eskatos/gradle-command-action@v1
++          arguments: ' -Pversion=${{ github.ref }} --stacktrace bootJar'
++      - name: Create Release
++        id: create_release
++        uses: actions/create-release@latest
++        env:
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         with:
+-          gradle-version: current
+-          arguments: '--info --stacktrace -Psigning.key="${{ secrets.GPG_SIGNING_KEY }}"
+[REDACTED credential-related line]
+-        -PossrhUsername=kochetkov-ma
+[REDACTED credential-related line]
+-        uploadArchives'
+-      - name: Create GitHub release description
+-        uses: release-drafter/release-drafter@v5
++          tag_name: ${{ github.ref }}
++          release_name: Release ${{ github.ref }}
++          body: |
++            Changes in this Release
++            - First Change
++          draft: false
++          prerelease: false
++      - name: Upload Release Asset
++        id: upload-release-asset
++        uses: actions/upload-release-asset@v1
+         env:
+-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+\ No newline at end of file
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++        with:
++          upload_url: ${{ steps.create_release.outputs.upload_url }}
++          asset_path: ./build/allure-server-${{ github.ref }}.jar
++          asset_name: allure-server.jar
++          asset_content_type: application/jar
+\ No newline at end of file
+diff --git a/src/main/java/ru/iopump/qa/allure/Application.java b/src/main/java/ru/iopump/qa/allure/Application.java
+index b819999..445b546 100644
+--- a/src/main/java/ru/iopump/qa/allure/Application.java
++++ b/src/main/java/ru/iopump/qa/allure/Application.java
+@@ -1,13 +1,15 @@
+ package ru.iopump.qa.allure;
+ 
++import lombok.experimental.UtilityClass;
+ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.cache.annotation.EnableCaching;
+ 
++@UtilityClass
+ @SpringBootApplication
+ @EnableCaching
+ public class Application {
+-    public static void main(String[] args) {
++    public void main(String[] args) { //NOPMD
+         SpringApplication.run(Application.class, args);
+     }
+ }
+\ No newline at end of file
+diff --git a/src/main/java/ru/iopump/qa/allure/controller/AllureResultController.java b/src/main/java/ru/iopump/qa/allure/controller/AllureResultController.java
+index 8f15a36..734f25a 100644
+--- a/src/main/java/ru/iopump/qa/allure/controller/AllureResultController.java
++++ b/src/main/java/ru/iopump/qa/allure/controller/AllureResultController.java
+@@ -1,4 +1,4 @@
+-package ru.iopump.qa.allure.controller;
++package ru.iopump.qa.allure.controller; //NOPMD
+ 
+ import com.google.common.base.Preconditions;
+ import io.swagger.v3.oas.annotations.Operation;
+diff --git a/src/main/java/ru/iopump/qa/allure/model/ReportSpec.java b/src/main/java/ru/iopump/qa/allure/model/ReportSpec.java
+index 45f992e..8b28951 100644
+--- a/src/main/java/ru/iopump/qa/allure/model/ReportSpec.java
++++ b/src/main/java/ru/iopump/qa/allure/model/ReportSpec.java
+@@ -16,7 +16,7 @@ public class ReportSpec {
+     String[] path;
+     ExecutorInfo executorInfo;
+ 
+-    public static Path toPath(String[] paths) {
++    public static Path toPath(String... paths) {
+         return Paths.get(paths[0], ArrayUtils.subarray(paths, 1, paths.length));
+     }
+ 
+diff --git a/src/main/java/ru/iopump/qa/allure/service/ExecutorCiPlugin.java b/src/main/java/ru/iopump/qa/allure/service/ExecutorCiPlugin.java
+index bcd6149..5db51c5 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/ExecutorCiPlugin.java
++++ b/src/main/java/ru/iopump/qa/allure/service/ExecutorCiPlugin.java
+@@ -22,7 +22,7 @@ public class ExecutorCiPlugin extends ExecutorPlugin {
+                 final ExecutorInfo info = context.getValue().readValue(is, ExecutorInfo.class);
+                 visitor.visitExtra(EXECUTORS_BLOCK_NAME, info);
+             } catch (IOException e) {
+-                visitor.error("Could not read executor file " + executorFile, e);
++                visitor.error("Could not read executor file " + executorFile, e); //NOPMD
+             }
+         }
+     }
+diff --git a/src/main/java/ru/iopump/qa/allure/service/MoveFileVisitor.java b/src/main/java/ru/iopump/qa/allure/service/MoveFileVisitor.java
+index d5a9bc2..9df49e7 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/MoveFileVisitor.java
++++ b/src/main/java/ru/iopump/qa/allure/service/MoveFileVisitor.java
+@@ -9,7 +9,7 @@ import java.nio.file.attribute.BasicFileAttributes;
+ 
+ public class MoveFileVisitor extends SimpleFileVisitor<Path> {
+     private final Path targetPath;
+-    private Path sourcePath = null;
++    private Path sourcePath;
+ 
+     public MoveFileVisitor(Path targetPath) {
+         this.targetPath = targetPath;
+diff --git a/src/main/java/ru/iopump/qa/allure/service/ReportService.java b/src/main/java/ru/iopump/qa/allure/service/ReportService.java
+index ea178d3..a56ef18 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/ReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/ReportService.java
+@@ -1,4 +1,4 @@
+-package ru.iopump.qa.allure.service;
++package ru.iopump.qa.allure.service; //NOPMD
+ 
+ import static ru.iopump.qa.allure.service.ExecutorCiPlugin.JSON_FILE_NAME;
+ 
+@@ -184,10 +184,8 @@ public class ReportService {
+         }
+     }
+ 
+-    private void addExecutionInfo(Path resultPathWithInfo, @Nullable ExecutorInfo executorInfo) throws IOException {
+-        if (executorInfo == null) {
+-            executorInfo = new ExecutorInfo();
+-        }
++    private void addExecutionInfo(Path resultPathWithInfo, @Nullable ExecutorInfo executor) throws IOException {
++        var executorInfo = Optional.ofNullable(executor).orElse(new ExecutorInfo());
+         if (StringUtils.isBlank(executorInfo.getName())) {
+             executorInfo.setName("Remote executor");
+         }
+diff --git a/src/main/java/ru/iopump/qa/allure/service/ResultService.java b/src/main/java/ru/iopump/qa/allure/service/ResultService.java
+index 0942ee4..dde38a9 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/ResultService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/ResultService.java
+@@ -82,12 +82,12 @@ public class ResultService {
+         }
+         while (zipEntry != null) {
+             final Path newFile = fromZip(unzipTo, zipEntry);
+-            final OutputStream fos = Files.newOutputStream(newFile);
+-            int len;
+-            while ((len = zis.read(buffer)) > 0) {
+-                fos.write(buffer, 0, len);
++            try (final OutputStream fos = Files.newOutputStream(newFile)) {
++                int len;
++                while ((len = zis.read(buffer)) > 0) { //NOPMD
++                    fos.write(buffer, 0, len);
++                }
+             }
+-            fos.close();
+             log.info("Unzip new entry '{}'", newFile);
+             zipEntry = zis.getNextEntry();
+         }
+@@ -107,7 +107,7 @@ public class ResultService {
+                     try {
+                         Files.walkFileTree(nestedResultDir, new MoveFileVisitor(to));
+                     } catch (IOException e) {
+-                        throw new RuntimeException(e);
++                        throw new RuntimeException("Walk error " + nestedResultDir, e); //NOPMD
+                     }
+                 }
+             );
+

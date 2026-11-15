@@ -1,0 +1,31 @@
+diff --git a/circle_ci_test_data.zip.enc b/circle_ci_test_data.zip.enc
+index 44570bf93..a0dcbe33b 100644
+Binary files a/circle_ci_test_data.zip.enc and b/circle_ci_test_data.zip.enc differ
+diff --git a/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java b/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java
+index 6e21dc7e8..e47d6ecb4 100644
+--- a/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java
++++ b/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java
+@@ -920,8 +920,6 @@ public class ToolsApiServiceImpl extends ToolsApiService implements Authenticate
+                     }
+                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), workflowVersion.getWorkingDirectory());
+                     return Response.ok().entity(toolFiles).build();
+-                } else {
+-                    return Response.noContent().build();
+                 }
+             } else if (entry instanceof Tool tool) {
+                 Set<Tag> versions = tool.getWorkflowVersions();
+@@ -937,12 +935,9 @@ public class ToolsApiServiceImpl extends ToolsApiService implements Authenticate
+                     }
+                     List<ToolFile> toolFiles = getToolFiles(sourceFiles, primaryDescriptorPaths, type.toString(), tag.getWorkingDirectory());
+                     return Response.ok().entity(toolFiles).build();
+-                } else {
+-                    return Response.noContent().build();
+                 }
+-            } else {
+-                return Response.status(Status.NOT_FOUND).build();
+             }
++            return Response.status(Status.NOT_FOUND).build();
+         } finally {
+             versionDAO.disableNameFilter();
+         }
+

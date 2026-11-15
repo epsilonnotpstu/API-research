@@ -1,0 +1,87 @@
+diff --git a/modules/hivemq-edge-module-opcua/src/main/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapter.java b/modules/hivemq-edge-module-opcua/src/main/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapter.java
+index 5ca0238bc..ecfc4c889 100644
+--- a/modules/hivemq-edge-module-opcua/src/main/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapter.java
++++ b/modules/hivemq-edge-module-opcua/src/main/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapter.java
+@@ -87,6 +87,7 @@ public class OpcUaProtocolAdapter extends AbstractProtocolAdapter<OpcUaAdapterCo
+ 
+             opcUaClient.connect().thenAccept(uaClient -> {
+ 
++                setConnectionStatus(ConnectionStatus.CONNECTED);
+                 opcUaClient.getSubscriptionManager().addSubscriptionListener(createSubscriptionListener(input));
+ 
+                 createAllSubscriptions(input.moduleServices()
+@@ -211,7 +212,6 @@ public class OpcUaProtocolAdapter extends AbstractProtocolAdapter<OpcUaAdapterCo
+         }
+ 
+         CompletableFuture.allOf(subscribeFutures.build().toArray(new CompletableFuture[]{})).thenApply(unused -> {
+-            setConnectionStatus(ConnectionStatus.CONNECTED);
+             resultFuture.complete(null);
+             return null;
+         }).exceptionally(throwable -> {
+diff --git a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapterAuthTest.java b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapterAuthTest.java
+index c0ed6ba37..059b68ba8 100644
+--- a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapterAuthTest.java
++++ b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/OpcUaProtocolAdapterAuthTest.java
+@@ -46,7 +46,7 @@ class OpcUaProtocolAdapterAuthTest {
+         final ProtocolAdapterStartOutput out = mock(ProtocolAdapterStartOutput.class);
+         protocolAdapter.start(in, out).get();
+ 
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+     }
+ 
+     @Test
+@@ -61,7 +61,7 @@ class OpcUaProtocolAdapterAuthTest {
+         final ProtocolAdapterStartOutput out = mock(ProtocolAdapterStartOutput.class);
+         protocolAdapter.start(in, out).get();
+ 
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+     }
+ 
+     @Test
+@@ -78,7 +78,7 @@ class OpcUaProtocolAdapterAuthTest {
+         final ProtocolAdapterStartOutput out = mock(ProtocolAdapterStartOutput.class);
+         protocolAdapter.start(in, out).get();
+ 
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+     }
+ 
+     @Test
+@@ -94,7 +94,7 @@ class OpcUaProtocolAdapterAuthTest {
+         final ProtocolAdapterStartOutput out = mock(ProtocolAdapterStartOutput.class);
+         protocolAdapter.start(in, out).get();
+ 
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+     }
+ 
+ 
+diff --git a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaJsonPayloadConverterTest.java b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaJsonPayloadConverterTest.java
+index 96ec45c35..9384f0627 100644
+--- a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaJsonPayloadConverterTest.java
++++ b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaJsonPayloadConverterTest.java
+@@ -97,7 +97,7 @@ class OpcUaJsonPayloadConverterTest extends AbstractOpcUaPayloadConverterTest {
+                 opcUaServerExtension.getTestNamespace().addNode("Test" + name + "Node", typeId, () -> value, 999);
+ 
+         final OpcUaProtocolAdapter protocolAdapter = createAndStartAdapter(nodeId, PayloadMode.JSON);
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+ 
+         final PUBLISH publish = expectAdapterPublish();
+         protocolAdapter.stop();
+diff --git a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaStringPayloadConverterTest.java b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaStringPayloadConverterTest.java
+index 547b0f1a4..231d3bca7 100644
+--- a/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaStringPayloadConverterTest.java
++++ b/modules/hivemq-edge-module-opcua/src/test/java/com/hivemq/edge/adapters/opcua/payload/OpcUaStringPayloadConverterTest.java
+@@ -91,7 +91,7 @@ class OpcUaStringPayloadConverterTest extends AbstractOpcUaPayloadConverterTest
+                 opcUaServerExtension.getTestNamespace().addNode("Test" + name + "Node", typeId, () -> serverValue, 999);
+ 
+         final OpcUaProtocolAdapter protocolAdapter = createAndStartAdapter(nodeId, PayloadMode.STRING);
+-        assertEquals(ProtocolAdapter.Status.CONNECTED, protocolAdapter.getConnectionStatus());
++        assertEquals(ProtocolAdapter.ConnectionStatus.CONNECTED, protocolAdapter.getConnectionStatus());
+ 
+         final PUBLISH publish = expectAdapterPublish();
+         protocolAdapter.stop();
+

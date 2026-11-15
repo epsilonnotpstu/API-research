@@ -1,0 +1,72 @@
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+index b3459f30c..7d1fee37b 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/lifecycle/SparkSQLExecutionContext.java
+@@ -109,7 +109,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
+                 .jobFacetsBuilder(getJobFacetsBuilder(olContext.getQueryExecution().get()))
+                 .build());
+ 
+-    log.debug("Posting event for start {}: {}", executionId, event);
++    if (log.isDebugEnabled()) {
++      log.debug(
++          "Posting event for start {}: {}", executionId, OpenLineageClientUtils.toJson(event));
++    }
++
+     eventEmitter.emit(event);
+   }
+ 
+@@ -193,7 +197,12 @@ class SparkSQLExecutionContext implements ExecutionContext {
+                 .jobFacetsBuilder(getJobFacetsBuilder(olContext.getQueryExecution().get()))
+                 .build());
+ 
+-    log.debug("Posting event for stage submitted {}: {}", executionId, event);
++    if (log.isDebugEnabled()) {
++      log.debug(
++          "Posting event for stage submitted {}: {}",
++          executionId,
++          OpenLineageClientUtils.toJson(event));
++    }
+     eventEmitter.emit(event);
+   }
+ 
+@@ -223,7 +232,12 @@ class SparkSQLExecutionContext implements ExecutionContext {
+                 .jobFacetsBuilder(getJobFacetsBuilder(olContext.getQueryExecution().get()))
+                 .build());
+ 
+-    log.debug("Posting event for stage completed {}: {}", executionId, event);
++    if (log.isDebugEnabled()) {
++      log.debug(
++          "Posting event for stage completed {}: {}",
++          executionId,
++          OpenLineageClientUtils.toJson(event));
++    }
+     eventEmitter.emit(event);
+   }
+ 
+@@ -278,7 +292,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
+                 .jobFacetsBuilder(getJobFacetsBuilder(olContext.getQueryExecution().get()))
+                 .build());
+ 
+-    log.debug("Posting event for start {}: {}", executionId, event);
++    if (log.isDebugEnabled()) {
++      log.debug(
++          "Posting event for start {}: {}", executionId, OpenLineageClientUtils.toJson(event));
++    }
++
+     eventEmitter.emit(event);
+   }
+ 
+@@ -331,7 +349,11 @@ class SparkSQLExecutionContext implements ExecutionContext {
+       // clean up metrics on complete only
+       JobMetricsHolder.getInstance().cleanUp(jobEnd.jobId());
+     }
+-    log.debug("Posting event for end {}: {}", executionId, event);
++
++    if (log.isDebugEnabled()) {
++      log.debug("Posting event for end {}: {}", executionId, OpenLineageClientUtils.toJson(event));
++    }
++
+     eventEmitter.emit(event);
+   }
+ 
+

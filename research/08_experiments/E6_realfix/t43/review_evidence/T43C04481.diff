@@ -1,0 +1,1168 @@
+diff --git a/CONTRIBUTING.md b/CONTRIBUTING.md
+index 8e4601a38..b0f706fc1 100644
+--- a/CONTRIBUTING.md
++++ b/CONTRIBUTING.md
+@@ -257,18 +257,6 @@ quarkus.hibernate-orm.log.sql=${LOGGING_SHOW_SQL_QUERIES:false}
+ 
+ Where "LOGGING_SHOW_SQL_QUERIES" is the common property that we use for all our services (Spring Boot and Quarkus services).
+ 
+-### **rest-client**: disable the provider auto-discovery
+-
+-Since having multiple clients in the classpath will cause that the exception mappers for all of these clients will be configured for all.
+-
+-```
+-# Disable the auto-discovery of providers (for ex: exception mappers).
+-# All the clients must use either the "quarkus.rest-client.*.providers" property or the `@RegisterProvider` instead.
+-quarkus.rest-client.provider-autodiscovery=false
+-```
+-
+-The generated client from openapi already uses the `@RegisterProdiver` annotation, so nothing else should be needed.
+-
+ ### **rest-client**: default timeout is set to 30 seconds
+ 
+ In Spring Boot, we're using the Apache HTTP client for the REST client implementations with no request timeouts, where, in Quarkus, the default timeout is 30 seconds.
+diff --git a/buildSrc/src/main/groovy/swatch.quarkus-rest-client-conventions.gradle b/buildSrc/src/main/groovy/swatch.quarkus-rest-client-conventions.gradle
+index e1b6c24fe..a0903ff33 100644
+--- a/buildSrc/src/main/groovy/swatch.quarkus-rest-client-conventions.gradle
++++ b/buildSrc/src/main/groovy/swatch.quarkus-rest-client-conventions.gradle
+@@ -43,7 +43,7 @@ openApiGenerate {
+ 
+ dependencies {
+     implementation enforcedPlatform(libraries["quarkus-bom"])
+-    api 'io.quarkus:quarkus-rest-client-jackson'
++    api 'io.quarkus:quarkus-resteasy-client-jackson'
+     api 'io.quarkus:quarkus-micrometer'
+     api libraries["jackson-databind-nullable"]
+     testImplementation 'io.rest-assured:rest-assured'
+diff --git a/swatch-billable-usage/build.gradle b/swatch-billable-usage/build.gradle
+index 8da55bc39..0ef60b5f0 100644
+--- a/swatch-billable-usage/build.gradle
++++ b/swatch-billable-usage/build.gradle
+@@ -7,7 +7,7 @@ plugins {
+ dependencies {
+     compileOnly libraries["lombok"]
+     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+-    implementation 'io.quarkus:quarkus-rest-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-jackson'
+     implementation 'io.quarkus:quarkus-opentelemetry'
+     implementation 'io.quarkus:quarkus-oidc-client'
+     implementation 'io.quarkus:quarkus-kafka-streams'
+@@ -17,6 +17,7 @@ dependencies {
+     implementation("io.quarkus:quarkus-jdbc-postgresql")
+     implementation project(":clients:quarkus:contracts-client")
+     implementation project(':swatch-common-config-workaround')
++    implementation project(':swatch-common-resteasy')
+     implementation project(':swatch-common-resteasy-client')
+     implementation project(':swatch-common-clock')
+     implementation project(':swatch-common-panache')
+diff --git a/swatch-billable-usage/src/main/resources/application.properties b/swatch-billable-usage/src/main/resources/application.properties
+index c28e6c1db..801009361 100644
+--- a/swatch-billable-usage/src/main/resources/application.properties
++++ b/swatch-billable-usage/src/main/resources/application.properties
+@@ -193,6 +193,7 @@ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultAp
+[REDACTED credential-related line]
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".trust-store-type=${clowder.endpoints.swatch-contracts-service.trust-store-type}
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".providers=com.redhat.swatch.resteasy.client.SwatchPskHeaderFilter
++quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".scope=jakarta.enterprise.context.ApplicationScoped
+ 
+ # remittance retention policy configuration:
+ # 70 days worth
+diff --git a/swatch-contracts/build.gradle b/swatch-contracts/build.gradle
+index 9047a6d5a..7618c7306 100644
+--- a/swatch-contracts/build.gradle
++++ b/swatch-contracts/build.gradle
+@@ -14,7 +14,7 @@ dependencies {
+     implementation 'io.quarkus:quarkus-hibernate-validator'
+     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+     implementation 'io.quarkus:quarkus-opentelemetry'
+-    implementation 'io.quarkus:quarkus-rest-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-jackson'
+     implementation 'io.quarkus:quarkus-security'
+     implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+     implementation 'io.quarkus:quarkus-smallrye-openapi'
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/config/DebugClientLogger.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/config/DebugClientLogger.java
+index 826d57a26..840baee3f 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/config/DebugClientLogger.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/config/DebugClientLogger.java
+@@ -24,6 +24,7 @@ import jakarta.ws.rs.client.ClientRequestContext;
+ import jakarta.ws.rs.client.ClientRequestFilter;
+ import jakarta.ws.rs.client.ClientResponseContext;
+ import jakarta.ws.rs.client.ClientResponseFilter;
++import jakarta.ws.rs.core.MultivaluedMap;
+ import jakarta.ws.rs.ext.Provider;
+ import java.io.ByteArrayInputStream;
+ import java.io.ByteArrayOutputStream;
+@@ -32,6 +33,7 @@ import java.io.InputStream;
+ import java.nio.charset.StandardCharsets;
+ import java.util.Optional;
+ import java.util.regex.Pattern;
++import java.util.stream.Collectors;
+ import lombok.extern.slf4j.Slf4j;
+ import org.eclipse.microprofile.config.inject.ConfigProperty;
+ 
+@@ -42,6 +44,8 @@ public class DebugClientLogger implements ClientRequestFilter, ClientResponseFil
+ 
+   protected static final String URI_FILTER_PROPERTY = "rest-client-debug-logging.uri-filter";
+   protected static final String LOG_RESPONSES_PROPERTY = "rest-client-debug-logging.log-responses";
++  protected static final String LOG_HEADERS_PROPERTY = "rest-client-debug-logging.log-headers";
++
+   private static final String EMPTY_BODY = "(empty)";
+   private static final String OMIT_BODY = "(omit)";
+ 
+@@ -51,13 +55,17 @@ public class DebugClientLogger implements ClientRequestFilter, ClientResponseFil
+   @ConfigProperty(name = LOG_RESPONSES_PROPERTY, defaultValue = "false")
+   boolean logResponse;
+ 
++  @ConfigProperty(name = LOG_HEADERS_PROPERTY, defaultValue = "false")
++  boolean logHeaders;
++
+   @Override
+   public void filter(ClientRequestContext requestContext) throws IOException {
+     if (appliesTo(requestContext)) {
+       log.debug(
+-          "Request method={} URI={}: \n{}",
++          "Request method={} URI={} headers={}: \n{}",
+           requestContext.getMethod(),
+           requestContext.getUri().toString(),
++          mapToString(requestContext.getStringHeaders()),
+           bodyToString(requestContext.getEntity()));
+     }
+   }
+@@ -79,9 +87,10 @@ public class DebugClientLogger implements ClientRequestFilter, ClientResponseFil
+       }
+ 
+       log.debug(
+-          "Response method={} URI={}: \n{}",
++          "Response method={} URI={} headers={}: \n{}",
+           requestContext.getMethod(),
+           requestContext.getUri().toString(),
++          mapToString(responseContext.getHeaders()),
+           bodyToString(responseBody));
+     }
+   }
+@@ -94,4 +103,16 @@ public class DebugClientLogger implements ClientRequestFilter, ClientResponseFil
+   private String bodyToString(Object body) {
+     return Optional.ofNullable(body).map(Object::toString).orElse(EMPTY_BODY);
+   }
++
++  public String mapToString(MultivaluedMap<String, String> map) {
++    if (!logHeaders) {
++      return OMIT_BODY;
++    }
++
++    return "{"
++        + map.entrySet().stream()
++            .map(entry -> entry.getKey() + "=" + entry.getValue())
++            .collect(Collectors.joining(", "))
++        + "}";
++  }
+ }
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java
+index 4e6221bde..12c8806a8 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java
+@@ -31,8 +31,6 @@ import jakarta.ws.rs.core.UriInfo;
+ import jakarta.ws.rs.ext.ExceptionMapper;
+ import jakarta.ws.rs.ext.Provider;
+ import lombok.extern.slf4j.Slf4j;
+-import org.jboss.resteasy.reactive.RestResponse;
+-import org.jboss.resteasy.reactive.common.NotImplementedYet;
+ 
+ @Slf4j
+ @Provider
+@@ -44,9 +42,7 @@ public class DefaultExceptionMapper implements ExceptionMapper<Exception> {
+   public Response toResponse(Exception exception) {
+     log.error(
+         "Request '{}' failed with error '{}'", info.getPath(), exception.getMessage(), exception);
+-    if (exception instanceof NotImplementedYet) {
+-      return Response.status(RestResponse.Status.NOT_IMPLEMENTED).build();
+-    } else if (exception instanceof ServiceException e) {
++    if (exception instanceof ServiceException e) {
+       return Response.status(e.getStatus()).entity(e.error()).build();
+     } else if (exception instanceof ClientErrorException clientErrorException) {
+       return Response.status(clientErrorException.getResponse().getStatus()).build();
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionResourceV1.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionResourceV1.java
+index c6aa5467a..637cdaa51 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionResourceV1.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionResourceV1.java
+@@ -31,16 +31,17 @@ import com.redhat.swatch.contract.openapi.model.UsageType;
+ import com.redhat.swatch.contract.openapi.resource.SubscriptionsV1Api;
+ import jakarta.annotation.security.RolesAllowed;
+ import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.inject.Inject;
+ import jakarta.validation.constraints.Min;
++import jakarta.ws.rs.core.Context;
++import jakarta.ws.rs.core.SecurityContext;
+ import java.time.OffsetDateTime;
+-import lombok.AllArgsConstructor;
+ 
+ /** Subscriptions Table API implementation. */
+ @ApplicationScoped
+-@AllArgsConstructor
+ public class SubscriptionResourceV1 implements SubscriptionsV1Api {
+-
+-  private SubscriptionTableControllerV1 subscriptionTableController;
++  @Context SecurityContext securityContext;
++  @Inject SubscriptionTableControllerV1 subscriptionTableController;
+ 
+   @RolesAllowed({"customer"})
+   @Override
+@@ -59,6 +60,7 @@ public class SubscriptionResourceV1 implements SubscriptionsV1Api {
+       SkuCapacityReportSortV1 sort,
+       SortDirection dir) {
+     return subscriptionTableController.capacityReportBySkuV1(
++        securityContext.getUserPrincipal().getName(),
+         productId,
+         offset,
+         limit,
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1.java
+index b2489c188..5ce248c28 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1.java
+@@ -55,8 +55,6 @@ import jakarta.enterprise.context.ApplicationScoped;
+ import jakarta.inject.Inject;
+ import jakarta.transaction.Transactional;
+ import jakarta.validation.constraints.Min;
+-import jakarta.ws.rs.core.Context;
+-import jakarta.ws.rs.core.SecurityContext;
+ import java.time.OffsetDateTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -81,8 +79,6 @@ public class SubscriptionTableControllerV1 {
+   public static final String HYPERVISOR =
+       HardwareMeasurementType.HYPERVISOR.toString().toUpperCase();
+ 
+-  @Context SecurityContext securityContext;
+-
+   @Inject
+   SubscriptionTableControllerV1(
+       ApiModelMapperV1 mapper,
+@@ -97,6 +93,7 @@ public class SubscriptionTableControllerV1 {
+   @SuppressWarnings("java:S107")
+   @Transactional
+   public SkuCapacityReportV1 capacityReportBySkuV1(
++      String orgId,
+       ProductId productId,
+       @Min(0) Integer offset,
+       @Min(1) Integer limit,
+@@ -129,7 +126,6 @@ public class SubscriptionTableControllerV1 {
+     HypervisorReportCategory hypervisorReportCategory =
+         HypervisorReportCategory.mapCategory(mapper.map(category));
+ 
+-    var orgId = getOrgId();
+     log.info(
+         "Finding all subscription capacities for "
+             + "orgId={}, "
+@@ -221,6 +217,7 @@ public class SubscriptionTableControllerV1 {
+     if (productId.isOnDemand() && reportItems.isEmpty()) {
+       reportItems.addAll(
+           getOnDemandSkuCapacities(
++              orgId,
+               productId,
+               sanitizedServiceLevel,
+               sanitizedUsage,
+@@ -251,6 +248,7 @@ public class SubscriptionTableControllerV1 {
+ 
+   @SuppressWarnings("java:S107")
+   private Collection<SkuCapacityV1> getOnDemandSkuCapacities(
++      String orgId,
+       ProductId productId,
+       ServiceLevel serviceLevel,
+       Usage usage,
+@@ -264,7 +262,7 @@ public class SubscriptionTableControllerV1 {
+     var subscriptions =
+         subscriptionRepository.findByCriteria(
+             DbReportCriteria.builder()
+-                .orgId(getOrgId())
++                .orgId(orgId)
+                 .productTag(productId.getValue())
+                 .serviceLevel(serviceLevel)
+                 .usage(usage)
+@@ -433,13 +431,4 @@ public class SubscriptionTableControllerV1 {
+     }
+     return left.getTotalCapacity().compareTo(right.getTotalCapacity());
+   }
+-
+-  private String getOrgId() {
+-    return securityContext.getUserPrincipal().getName();
+-  }
+-
+-  // for unit testing since we have no REST request
+-  protected void setTestSecurityContext(SecurityContext securityContext) {
+-    this.securityContext = securityContext;
+-  }
+ }
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionResourceV2.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionResourceV2.java
+index 66597e7d9..92079ab44 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionResourceV2.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionResourceV2.java
+@@ -31,16 +31,17 @@ import com.redhat.swatch.contract.openapi.model.UsageType;
+ import com.redhat.swatch.contract.openapi.resource.SubscriptionsV2Api;
+ import jakarta.annotation.security.RolesAllowed;
+ import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.inject.Inject;
+ import jakarta.validation.constraints.Min;
++import jakarta.ws.rs.core.Context;
++import jakarta.ws.rs.core.SecurityContext;
+ import java.time.OffsetDateTime;
+-import lombok.AllArgsConstructor;
+ 
+ /** Subscriptions Table API implementation. */
+ @ApplicationScoped
+-@AllArgsConstructor
+ public class SubscriptionResourceV2 implements SubscriptionsV2Api {
+-
+-  private SubscriptionTableControllerV2 subscriptionTableController;
++  @Context SecurityContext securityContext;
++  @Inject SubscriptionTableControllerV2 subscriptionTableController;
+ 
+   @RolesAllowed({"customer"})
+   @Override
+@@ -58,8 +59,8 @@ public class SubscriptionResourceV2 implements SubscriptionsV2Api {
+       String metricId,
+       SkuCapacityReportSortV2 sort,
+       SortDirection dir) {
+-
+     return subscriptionTableController.capacityReportBySkuV2(
++        securityContext.getUserPrincipal().getName(),
+         productId,
+         offset,
+         limit,
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2.java
+index f29012fe2..4d14cf004 100644
+--- a/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2.java
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2.java
+@@ -48,8 +48,6 @@ import jakarta.enterprise.context.ApplicationScoped;
+ import jakarta.inject.Inject;
+ import jakarta.transaction.Transactional;
+ import jakarta.validation.constraints.Min;
+-import jakarta.ws.rs.core.Context;
+-import jakarta.ws.rs.core.SecurityContext;
+ import java.time.OffsetDateTime;
+ import java.util.ArrayList;
+ import java.util.Collections;
+@@ -73,8 +71,6 @@ public class SubscriptionTableControllerV2 {
+   private final SubscriptionCapacityViewRepository repository;
+   private final ApplicationClock clock;
+ 
+-  @Context SecurityContext securityContext;
+-
+   @Inject
+   SubscriptionTableControllerV2(
+       ApiModelMapperV2 mapper,
+@@ -88,6 +84,7 @@ public class SubscriptionTableControllerV2 {
+   @SuppressWarnings("java:S107")
+   @Transactional
+   public SkuCapacityReportV2 capacityReportBySkuV2(
++      String orgId,
+       ProductId productId,
+       @Min(0) Integer offset,
+       @Min(1) Integer limit,
+@@ -113,7 +110,7 @@ public class SubscriptionTableControllerV2 {
+         metricId);
+     var subscriptionSpec =
+         SubscriptionCapacityViewRepository.buildSearchSpecification(
+-            getOrgId(),
++            orgId,
+             productId,
+             mapper.map(category),
+             mapper.map(serviceLevel),
+@@ -348,13 +345,4 @@ public class SubscriptionTableControllerV2 {
+       return positionOfMetrics.get(metricId);
+     }
+   }
+-
+-  private String getOrgId() {
+-    return securityContext.getUserPrincipal().getName();
+-  }
+-
+-  // for unit testing since we have no REST request
+-  protected void setSecurityContext(SecurityContext securityContext) {
+-    this.securityContext = securityContext;
+-  }
+ }
+diff --git a/swatch-contracts/src/main/java/com/redhat/swatch/contract/service/export/ExportPskHeaderProvider.java b/swatch-contracts/src/main/java/com/redhat/swatch/contract/service/export/ExportPskHeaderProvider.java
+new file mode 100644
+index 000000000..d7859acd0
+--- /dev/null
++++ b/swatch-contracts/src/main/java/com/redhat/swatch/contract/service/export/ExportPskHeaderProvider.java
+@@ -0,0 +1,52 @@
++/*
+[REDACTED attribution]
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ * Red Hat trademarks are not licensed under GPLv3. No permission is
++ * granted to use or replicate Red Hat trademarks that are incorporated
++ * in this software or its documentation.
++ */
++package com.redhat.swatch.contract.service.export;
++
++import io.quarkus.arc.Unremovable;
++import jakarta.enterprise.context.ApplicationScoped;
++import jakarta.ws.rs.client.ClientRequestContext;
++import jakarta.ws.rs.client.ClientRequestFilter;
++import lombok.extern.slf4j.Slf4j;
++import org.eclipse.microprofile.config.inject.ConfigProperty;
++
++/**
++ * Resteasy client filter that adds x-rh-exports-psk to requests based on the value of the
++ * SWATCH_EXPORT_PSK property/environment variable.
++ *
++ * <p>Use by configuring as a provider on a rest client instance, e.g. <code>
++ * quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".providers=com.redhat.swatch.contract.service.export.ExportPskHeaderProvider
++ * </code>
++ */
++@Slf4j
++// NOTE: without @Unremovable quarkus attempts to optimize this bean out because it's only
++// referenced in application.properties
++@Unremovable
++@ApplicationScoped
++public class ExportPskHeaderProvider implements ClientRequestFilter {
++
++  @ConfigProperty(name = "SWATCH_EXPORT_PSK", defaultValue = "placeholder")
++  String psk;
++
++  @Override
++  public void filter(ClientRequestContext requestContext) {
++    requestContext.getHeaders().add("x-rh-exports-psk", psk);
++  }
++}
+diff --git a/swatch-contracts/src/main/resources/application.properties b/swatch-contracts/src/main/resources/application.properties
+index 2431925d9..f522930dd 100644
+--- a/swatch-contracts/src/main/resources/application.properties
++++ b/swatch-contracts/src/main/resources/application.properties
+@@ -158,9 +158,6 @@ quarkus.log.category."io.quarkus.http.access-log".handlers=ACCESS_LOG
+ quarkus.log.category."io.quarkus.http.access-log".use-parent-handlers=false
+ quarkus.log.category."org.jboss.resteasy.reactive.common.core.AbstractResteasyReactiveContext".level=DEBUG
+ 
+-# Disable the auto-discovery of providers (for ex: exception mappers).
+-# All the clients must use either the "quarkus.rest-client.*.providers" property or the `@RegisterProvider` instead.
+-quarkus.rest-client.provider-autodiscovery=false
+ # The time in ms for which a connection remains unused in the connection pool before being evicted and closed.
+ # 300000 = 5 min to keep it consistent with the one used in the monolith
+ quarkus.rest-client.connection-ttl=300000
+@@ -176,7 +173,7 @@ quarkus.rest-client."com.redhat.swatch.clients.rh.partner.gateway.api.resources.
+ 
+ # rest-client debug logging
+ # NOTE: all of uri-filter-regex, log category level, and logging.scope need to be set for a request/response to be logged.
+-rest-client-debug-logging.uri-filter=.*(partnerSubscriptions|search|products).*
++rest-client-debug-logging.uri-filter=.*(partnerSubscriptions|search|products|export).*
+ quarkus.log.category."com.redhat.swatch.contract.config.DebugClientLogger".level=DEBUG
+ %test.quarkus.rest-client.logging.scope=request-response
+ %dev.quarkus.rest-client.logging.scope=request-response
+@@ -222,7 +219,7 @@ quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".u
+ quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".trust-store=${clowder.private-endpoints.export-service-service.trust-store-path}
+[REDACTED credential-related line]
+ quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".trust-store-type=${clowder.private-endpoints.export-service-service.trust-store-type}
+-quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".headers."x-rh-exports-psk"=${SWATCH_EXPORT_PSK:placeholder}
++quarkus.rest-client."com.redhat.swatch.clients.export.api.resources.ExportApi".providers=com.redhat.swatch.contract.service.export.ExportPskHeaderProvider
+ 
+ # avoid duplicate/wrong enum names and other problems by preventing generated interfaces from being
+ # added back into the API spec
+diff --git a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1Test.java b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1Test.java
+index ea5056547..26ac3e74b 100644
+--- a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1Test.java
++++ b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v1/SubscriptionTableControllerV1Test.java
+@@ -59,8 +59,6 @@ import io.quarkus.test.InjectMock;
+ import io.quarkus.test.junit.QuarkusTest;
+ import jakarta.inject.Inject;
+ import jakarta.ws.rs.core.Response;
+-import jakarta.ws.rs.core.SecurityContext;
+-import java.security.Principal;
+ import java.time.OffsetDateTime;
+ import java.util.Arrays;
+ import java.util.HashMap;
+@@ -69,7 +67,6 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.stream.Stream;
+ import org.candlepin.clock.ApplicationClock;
+-import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.mockito.Mockito;
+ 
+@@ -78,6 +75,7 @@ class SubscriptionTableControllerV1Test {
+ 
+   private static final ProductId RHEL_FOR_X86 = ProductId.fromString("RHEL for x86");
+   private static final String OFFERING_DESCRIPTION_SUFFIX = " test description";
++  private static final String ORG_ID = "123456";
+ 
+   @InjectMock SubscriptionRepository subscriptionRepository;
+   @Inject ApplicationClock clock;
+@@ -178,15 +176,6 @@ class SubscriptionTableControllerV1Test {
+     return flattened;
+   }
+ 
+-  @BeforeEach
+-  public void updateSecurityContext() {
+-    SecurityContext mockSecurityContext = Mockito.mock(SecurityContext.class);
+-    Principal mockPrincipal = Mockito.mock(Principal.class);
+-    subscriptionTableControllerV1.setTestSecurityContext(mockSecurityContext);
+-    when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
+-    when(mockPrincipal.getName()).thenReturn("123456");
+-  }
+-
+   @Test
+   void testGetSkuCapacityReportSingleSub() {
+     // Given an org with one active sub with a quantity of 4 and has an eng product with a socket
+@@ -202,7 +191,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the sub and appropriate
+     // quantity and capacities.
+@@ -239,7 +229,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the subs and appropriate
+     // quantity and capacities.
+@@ -287,6 +278,7 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product, sorted by SKU
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -350,7 +342,20 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for an eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            RHEL_FOR_X86, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID,
++            RHEL_FOR_X86,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null);
+ 
+     // Then the report contains no inventory items.
+     assertEquals(0, actual.getData().size(), "An empty inventory list should be returned.");
+@@ -371,6 +376,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 report =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             RHEL_FOR_X86,
+             null,
+             null,
+@@ -392,6 +398,7 @@ class SubscriptionTableControllerV1Test {
+     // By default, our mock will return empty collections for findAll and findUnlimited which is
+     // what we want in this case.
+     subscriptionTableControllerV1.capacityReportBySkuV1(
++        ORG_ID,
+         RHEL_FOR_X86,
+         null,
+         null,
+@@ -453,6 +460,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 reportForUnmatchedSLA =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -471,6 +479,7 @@ class SubscriptionTableControllerV1Test {
+     givenSubscriptionsInRepository(expectedNewerSub);
+     SkuCapacityReportV1 reportForMatchingSLA =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -502,6 +511,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 reportForUnmatchedUsage =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -520,6 +530,7 @@ class SubscriptionTableControllerV1Test {
+     givenSubscriptionsInRepository(expectedNewerSub);
+     SkuCapacityReportV1 reportForMatchingUsage =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -591,6 +602,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 reportWithOffsetAndLimit =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             0,
+             2,
+@@ -630,6 +642,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 reportForMatchingCores =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -647,6 +660,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 reportForMatchingSockets =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -670,6 +684,7 @@ class SubscriptionTableControllerV1Test {
+             SubscriptionsException.class,
+             () ->
+                 subscriptionTableControllerV1.capacityReportBySkuV1(
++                    ORG_ID,
+                     RHEL_FOR_X86,
+                     11,
+                     10,
+@@ -693,6 +708,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 report =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             RHEL_FOR_X86,
+             null,
+             null,
+@@ -717,6 +733,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 report =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             ProductId.fromString("OpenShift-metrics"),
+             null,
+             null,
+@@ -741,6 +758,7 @@ class SubscriptionTableControllerV1Test {
+ 
+     SkuCapacityReportV1 report =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             ProductId.fromString("ansible-aap-managed"),
+             null,
+             null,
+@@ -776,7 +794,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the sub and HasInfiniteQuantity
+     // should be true.
+@@ -806,6 +825,7 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product, sorted by quantity
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -856,6 +876,7 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product, sorted by quantity
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -901,7 +922,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the sub and appropriate
+     // quantity and capacities.
+@@ -927,7 +949,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the sub and appropriate
+     // quantity and capacities.
+@@ -953,7 +976,8 @@ class SubscriptionTableControllerV1Test {
+     // When requesting a SKU capacity report for the eng product,
+     SkuCapacityReportV1 actual =
+         subscriptionTableControllerV1.capacityReportBySkuV1(
+-            productId, null, null, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null, null,
++            null);
+ 
+     // Then the report contains a single inventory item containing the sub and appropriate
+     // quantity and capacities.
+diff --git a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2Test.java b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2Test.java
+index 53bef69f1..d4f02b721 100644
+--- a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2Test.java
++++ b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resource/api/v2/SubscriptionTableControllerV2Test.java
+@@ -50,8 +50,6 @@ import io.quarkus.test.InjectMock;
+ import io.quarkus.test.junit.QuarkusTest;
+ import jakarta.inject.Inject;
+ import jakarta.ws.rs.core.Response;
+-import jakarta.ws.rs.core.SecurityContext;
+-import java.security.Principal;
+ import java.time.OffsetDateTime;
+ import java.util.Arrays;
+ import java.util.HashMap;
+@@ -59,7 +57,6 @@ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.stream.Stream;
+-import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.mockito.Mockito;
+ 
+@@ -69,6 +66,7 @@ class SubscriptionTableControllerV2Test {
+   private static final ProductId RHEL_FOR_X86 = ProductId.fromString("RHEL for x86");
+   private static final String OFFERING_DESCRIPTION_SUFFIX = " test description";
+   private static final String BILLING_ACCOUNT_ID = "billing_account_id_123";
++  private static final String ORG_ID = "123456";
+ 
+   @InjectMock SubscriptionCapacityViewRepository repository;
+   @Inject SubscriptionTableControllerV2 subscriptionTableControllerV2;
+@@ -128,15 +126,6 @@ class SubscriptionTableControllerV2Test {
+             });
+   }
+ 
+-  @BeforeEach
+-  public void updateSecurityContext() {
+-    SecurityContext mockSecurityContext = Mockito.mock(SecurityContext.class);
+-    Principal mockPrincipal = Mockito.mock(Principal.class);
+-    subscriptionTableControllerV2.setSecurityContext(mockSecurityContext);
+-    when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
+-    when(mockPrincipal.getName()).thenReturn("123456");
+-  }
+-
+   @Test
+   void testGetSkuCapacityReportSingleSub() {
+     // Given an org with one active sub with a quantity of 4 and has an eng product with a socket
+@@ -151,7 +140,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product,
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            productId, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null);
+ 
+     // Then the report contains a single inventory item containing the sub and appropriate
+     // quantity and capacities.
+@@ -193,7 +182,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product,
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            productId, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null);
+ 
+     // Then the report contains a single inventory item containing the subs and appropriate
+     // quantity and capacities.
+@@ -242,6 +231,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product, sorted by SKU
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -305,7 +295,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for an eng product,
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            RHEL_FOR_X86, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, RHEL_FOR_X86, null, null, null, null, null, null, null, null, null, null);
+ 
+     // Then the report contains no inventory items.
+     assertEquals(0, actual.getData().size(), "An empty inventory list should be returned.");
+@@ -326,6 +316,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var report =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             RHEL_FOR_X86,
+             null,
+             null,
+@@ -355,6 +346,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var reportForUnmatchedSLA =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -371,6 +363,7 @@ class SubscriptionTableControllerV2Test {
+     givenSubscriptionsInRepository(expectedNewerSub);
+     var reportForMatchingSLA =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -400,6 +393,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var reportForUnmatchedUsage =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -416,6 +410,7 @@ class SubscriptionTableControllerV2Test {
+     givenSubscriptionsInRepository(expectedNewerSub);
+     var reportForMatchingUsage =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -461,7 +456,18 @@ class SubscriptionTableControllerV2Test {
+ 
+     var reportWithOffsetAndLimit =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            productId, 0, 2, null, null, null, null, null, null, SkuCapacityReportSortV2.SKU, null);
++            ORG_ID,
++            productId,
++            0,
++            2,
++            null,
++            null,
++            null,
++            null,
++            null,
++            null,
++            SkuCapacityReportSortV2.SKU,
++            null);
+     assertEquals(2, reportWithOffsetAndLimit.getData().size());
+     assertEquals(5, reportWithOffsetAndLimit.getMeta().getCount());
+   }
+@@ -488,6 +494,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var reportForMatchingCores =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -503,6 +510,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var reportForMatchingSockets =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -524,6 +532,7 @@ class SubscriptionTableControllerV2Test {
+             SubscriptionsException.class,
+             () ->
+                 subscriptionTableControllerV2.capacityReportBySkuV2(
++                    ORG_ID,
+                     RHEL_FOR_X86,
+                     11,
+                     10,
+@@ -545,6 +554,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var report =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             RHEL_FOR_X86,
+             null,
+             null,
+@@ -567,6 +577,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var report =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             ProductId.fromString("OpenShift-metrics"),
+             null,
+             null,
+@@ -589,6 +600,7 @@ class SubscriptionTableControllerV2Test {
+ 
+     var report =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             ProductId.fromString("ansible-aap-managed"),
+             null,
+             null,
+@@ -621,7 +633,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product,
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            productId, null, null, null, null, null, null, null, null, null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, null, null, null);
+ 
+     // Then the report contains a single inventory item containing the sub and HasInfiniteQuantity
+     // should be true.
+@@ -648,7 +660,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product and metric
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
+-            productId, null, null, null, null, null, null, null, "Sockets", null, null);
++            ORG_ID, productId, null, null, null, null, null, null, null, "Sockets", null, null);
+ 
+     // Then the report contains an inventory item containing the sub with HasInfiniteQuantity true
+     // and a sub with HasInfiniteQuantity false.
+@@ -677,6 +689,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product, sorted by quantity
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -722,6 +735,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product, sorted by quantity
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+@@ -765,6 +779,7 @@ class SubscriptionTableControllerV2Test {
+     // When requesting a SKU capacity report for the eng product,
+     var actual =
+         subscriptionTableControllerV2.capacityReportBySkuV2(
++            ORG_ID,
+             productId,
+             null,
+             null,
+diff --git a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resteasy/PageLinkCreatorTest.java b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resteasy/PageLinkCreatorTest.java
+index a4803f68a..0d0165a9f 100644
+--- a/swatch-contracts/src/test/java/com/redhat/swatch/contract/resteasy/PageLinkCreatorTest.java
++++ b/swatch-contracts/src/test/java/com/redhat/swatch/contract/resteasy/PageLinkCreatorTest.java
+@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
+ import jakarta.ws.rs.core.UriInfo;
+ import java.util.Arrays;
+ import java.util.Collections;
+-import org.jboss.resteasy.reactive.common.jaxrs.UriBuilderImpl;
++import org.jboss.resteasy.specimpl.ResteasyUriBuilderImpl;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+@@ -40,7 +40,7 @@ class PageLinkCreatorTest {
+ 
+   @BeforeEach
+   void setupUriInfo() {
+-    Mockito.when(uriInfo.getRequestUriBuilder()).thenReturn(new UriBuilderImpl());
++    Mockito.when(uriInfo.getRequestUriBuilder()).thenReturn(new ResteasyUriBuilderImpl());
+   }
+ 
+   @Test
+diff --git a/swatch-contracts/src/test/java/com/redhat/swatch/contract/test/resources/ExportServiceWireMockResource.java b/swatch-contracts/src/test/java/com/redhat/swatch/contract/test/resources/ExportServiceWireMockResource.java
+index 615864c8d..ea6884eb4 100644
+--- a/swatch-contracts/src/test/java/com/redhat/swatch/contract/test/resources/ExportServiceWireMockResource.java
++++ b/swatch-contracts/src/test/java/com/redhat/swatch/contract/test/resources/ExportServiceWireMockResource.java
+@@ -122,6 +122,7 @@ public class ExportServiceWireMockResource implements QuarkusTestResourceLifecyc
+                                     "/app/export/v1/%s/subscriptions/%s/upload",
+                                     request.getData().getResourceRequest().getExportRequestUUID(),
+                                     request.getData().getResourceRequest().getUUID())))
++                        .withHeader("x-rh-exports-psk", equalTo("placeholder"))
+                         .withRequestBody(equalTo(expected))));
+   }
+ 
+diff --git a/swatch-metrics/build.gradle b/swatch-metrics/build.gradle
+index 17acbf5ec..39f4781ac 100644
+--- a/swatch-metrics/build.gradle
++++ b/swatch-metrics/build.gradle
+@@ -8,8 +8,8 @@ dependencies {
+     implementation 'io.quarkus:quarkus-config-yaml'
+     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+     implementation 'io.quarkus:quarkus-opentelemetry'
+-    implementation 'io.quarkus:quarkus-rest-jackson'
+-    implementation 'io.quarkus:quarkus-rest-client-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-client-jackson'
+     implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+     implementation 'io.quarkus:quarkus-smallrye-openapi'
+     implementation 'io.quarkus:quarkus-hibernate-validator'
+diff --git a/swatch-metrics/src/main/java/com/redhat/swatch/metrics/admin/api/InternalMeteringResource.java b/swatch-metrics/src/main/java/com/redhat/swatch/metrics/admin/api/InternalMeteringResource.java
+index 5eaf57ca5..425d9cdd8 100644
+--- a/swatch-metrics/src/main/java/com/redhat/swatch/metrics/admin/api/InternalMeteringResource.java
++++ b/swatch-metrics/src/main/java/com/redhat/swatch/metrics/admin/api/InternalMeteringResource.java
+@@ -160,7 +160,7 @@ public class InternalMeteringResource implements DefaultApi {
+     if (optionalDate.isPresent()) {
+       OffsetDateTime date = optionalDate.get();
+       if (!date.isEqual(clock.startOfHour(date))) {
+-        throw new IllegalArgumentException(
++        throw new BadRequestException(
+             String.format("Date must start at top of the hour: %s", date));
+       }
+       return date;
+@@ -171,16 +171,16 @@ public class InternalMeteringResource implements DefaultApi {
+ 
+   private OffsetDateTime getStartDate(OffsetDateTime endDate, Integer rangeInMinutes) {
+     if (rangeInMinutes == null) {
+-      throw new IllegalArgumentException("Required argument: rangeInMinutes");
++      throw new BadRequestException("Required argument: rangeInMinutes");
+     }
+ 
+     if (rangeInMinutes < 0) {
+-      throw new IllegalArgumentException("Invalid value specified (Must be >= 0): rangeInMinutes");
++      throw new BadRequestException("Invalid value specified (Must be >= 0): rangeInMinutes");
+     }
+ 
+     OffsetDateTime result = endDate.minusMinutes(rangeInMinutes);
+     if (!result.isEqual(clock.startOfHour(result))) {
+-      throw new IllegalArgumentException(
++      throw new BadRequestException(
+           String.format(
+               "endDate %s - range %s produces time not at top of the hour: %s",
+               endDate, rangeInMinutes, result));
+diff --git a/swatch-metrics/src/test/java/com/redhat/swatch/metrics/admin/api/MetricsTest.java b/swatch-metrics/src/test/java/com/redhat/swatch/metrics/admin/api/MetricsTest.java
+index f35a89013..388566e26 100644
+--- a/swatch-metrics/src/test/java/com/redhat/swatch/metrics/admin/api/MetricsTest.java
++++ b/swatch-metrics/src/test/java/com/redhat/swatch/metrics/admin/api/MetricsTest.java
+@@ -90,7 +90,7 @@ class MetricsTest {
+ 
+     // synchronous
+     meterProductForOrgIdAndRange(VALID_PRODUCT, "org1", end, 120, true)
+-        .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
++        .statusCode(HttpStatus.SC_BAD_REQUEST);
+ 
+     // Avoid additional exception by enabling synchronous operations.
+     when(applicationConfiguration.isEnableSynchronousOperations()).thenReturn(true);
+@@ -149,14 +149,14 @@ class MetricsTest {
+   void testEndDateMustBeAtStartOfHour() {
+     OffsetDateTime endDate = clock.now();
+     meterProductForOrgIdAndRange(VALID_PRODUCT, "org1", endDate, 120, false)
+-        .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
++        .statusCode(HttpStatus.SC_BAD_REQUEST);
+   }
+ 
+   @Test
+   void testBadRangeThrowsException() {
+     OffsetDateTime endDate = clock.startOfCurrentHour();
+     meterProductForOrgIdAndRange(VALID_PRODUCT, "org1", endDate, 13, false)
+-        .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
++        .statusCode(HttpStatus.SC_BAD_REQUEST);
+   }
+ 
+   @Test
+diff --git a/swatch-producer-aws/build.gradle b/swatch-producer-aws/build.gradle
+index 01acb244b..95a363744 100644
+--- a/swatch-producer-aws/build.gradle
++++ b/swatch-producer-aws/build.gradle
+@@ -10,7 +10,7 @@ dependencies {
+     implementation 'io.quarkus:quarkus-jackson'
+     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+     implementation 'io.quarkus:quarkus-opentelemetry'
+-    implementation 'io.quarkus:quarkus-rest-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-jackson'
+     implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+     implementation 'io.quarkus:quarkus-smallrye-openapi'
+     implementation 'io.quarkus:quarkus-messaging-kafka'
+diff --git a/swatch-producer-aws/src/main/resources/application.properties b/swatch-producer-aws/src/main/resources/application.properties
+index 359ee00f7..a73121057 100644
+--- a/swatch-producer-aws/src/main/resources/application.properties
++++ b/swatch-producer-aws/src/main/resources/application.properties
+@@ -130,15 +130,12 @@ mp.messaging.outgoing.billable-usage-status-out.connector=smallrye-kafka
+ mp.messaging.outgoing.billable-usage-status-out.topic=platform.rhsm-subscriptions.billable-usage.status
+ mp.messaging.outgoing.billable-usage-status-out.value.serializer=org.candlepin.subscriptions.billable.usage.BillableUsageAggregateSerializer
+ 
+-# Disable the auto-discovery of providers (for ex: exception mappers).
+-# All the clients must use either the "quarkus.rest-client.*.providers" property or the `@RegisterProvider` instead.
+-quarkus.rest-client.provider-autodiscovery=false
+-
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".url=${SWATCH_CONTRACTS_ENDPOINT}
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".trust-store=${clowder.endpoints.swatch-contracts-service.trust-store-path}
+[REDACTED credential-related line]
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".trust-store-type=${clowder.endpoints.swatch-contracts-service.trust-store-type}
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".providers=com.redhat.swatch.resteasy.client.SwatchPskHeaderFilter, com.redhat.swatch.aws.resource.DefaultApiExceptionMapper, com.redhat.swatch.common.resteasy.OffsetDateTimeParamConverterProvider
++quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".scope=jakarta.enterprise.context.ApplicationScoped
+ # Setting up the timeout to 2 minutes instead of 30 seconds (default)
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".read-timeout=120000
+ 
+diff --git a/swatch-producer-azure/build.gradle b/swatch-producer-azure/build.gradle
+index c735ba6cb..b6e3a4908 100644
+--- a/swatch-producer-azure/build.gradle
++++ b/swatch-producer-azure/build.gradle
+@@ -8,7 +8,7 @@ dependencies {
+     implementation 'io.quarkus:quarkus-hibernate-validator'
+     implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+     implementation 'io.quarkus:quarkus-opentelemetry'
+-    implementation 'io.quarkus:quarkus-rest-jackson'
++    implementation 'io.quarkus:quarkus-resteasy-jackson'
+     implementation 'io.quarkus:quarkus-security'
+     implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+     implementation 'io.quarkus:quarkus-smallrye-openapi'
+diff --git a/swatch-producer-azure/src/main/java/com/redhat/swatch/azure/service/AzureMarketplaceClientFactory.java b/swatch-producer-azure/src/main/java/com/redhat/swatch/azure/service/AzureMarketplaceClientFactory.java
+index 0e0ee4691..d2fd579c7 100644
+--- a/swatch-producer-azure/src/main/java/com/redhat/swatch/azure/service/AzureMarketplaceClientFactory.java
++++ b/swatch-producer-azure/src/main/java/com/redhat/swatch/azure/service/AzureMarketplaceClientFactory.java
+@@ -26,7 +26,6 @@ import com.redhat.swatch.azure.http.AzureMarketplaceHeaderProvider;
+ import com.redhat.swatch.azure.service.model.AzureClient;
+ import com.redhat.swatch.clients.azure.marketplace.api.resources.AzureMarketplaceApi;
+ import io.quarkus.oidc.client.OidcClients;
+-import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
+ import jakarta.enterprise.context.ApplicationScoped;
+ import jakarta.inject.Inject;
+ import java.net.URI;
+@@ -34,6 +33,7 @@ import java.net.URISyntaxException;
+ import java.util.List;
+ import java.util.Objects;
+ import lombok.extern.slf4j.Slf4j;
++import org.eclipse.microprofile.rest.client.RestClientBuilder;
+ 
+ @Slf4j
+ @ApplicationScoped
+@@ -59,7 +59,7 @@ public class AzureMarketplaceClientFactory {
+             client -> {
+               try {
+                 var apiBuilder =
+-                    QuarkusRestClientBuilder.newBuilder()
++                    RestClientBuilder.newBuilder()
+                         .baseUri(new URI(azureMarketplaceProperties.getMarketplaceBaseUrl()));
+                 if (!azureMarketplaceProperties.isDisableAzureOidc()) {
+                   apiBuilder.register(
+diff --git a/swatch-producer-azure/src/main/resources/application.properties b/swatch-producer-azure/src/main/resources/application.properties
+index 07adcc490..5535a4d62 100644
+--- a/swatch-producer-azure/src/main/resources/application.properties
++++ b/swatch-producer-azure/src/main/resources/application.properties
+@@ -131,15 +131,12 @@ mp.messaging.outgoing.billable-usage-status-out.connector=smallrye-kafka
+ mp.messaging.outgoing.billable-usage-status-out.topic=platform.rhsm-subscriptions.billable-usage.status
+ mp.messaging.outgoing.billable-usage-status-out.value.serializer=org.candlepin.subscriptions.billable.usage.BillableUsageAggregateSerializer
+ 
+-# Disable the auto-discovery of providers (for ex: exception mappers).
+-# All the clients must use either the "quarkus.rest-client.*.providers" property or the `@RegisterProvider` instead.
+-quarkus.rest-client.provider-autodiscovery=false
+-
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".url=${SWATCH_CONTRACTS_ENDPOINT}
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".trust-store=${clowder.endpoints.swatch-contracts-service.trust-store-path}
+[REDACTED credential-related line]
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".trust-store-type=${clowder.endpoints.swatch-contracts-service.trust-store-type}
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".providers=com.redhat.swatch.resteasy.client.SwatchPskHeaderFilter,com.redhat.swatch.azure.resource.DefaultApiExceptionMapper
++quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".scope=jakarta.enterprise.context.ApplicationScoped
+ # Setting up the timeout to 2 minutes instead of 30 seconds (default)
+ quarkus.rest-client."com.redhat.swatch.clients.contracts.api.resources.DefaultApi".read-timeout=120000
+ 
+

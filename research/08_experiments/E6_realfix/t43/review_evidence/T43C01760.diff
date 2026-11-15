@@ -1,0 +1,182 @@
+diff --git a/fineract-e2e-tests-core/src/test/java/org/apache/fineract/test/stepdef/loan/WorkingCapitalLoanActionTemplateStepDef.java b/fineract-e2e-tests-core/src/test/java/org/apache/fineract/test/stepdef/loan/WorkingCapitalLoanActionTemplateStepDef.java
+index e17ac59bf4..11bb62c13b 100644
+--- a/fineract-e2e-tests-core/src/test/java/org/apache/fineract/test/stepdef/loan/WorkingCapitalLoanActionTemplateStepDef.java
++++ b/fineract-e2e-tests-core/src/test/java/org/apache/fineract/test/stepdef/loan/WorkingCapitalLoanActionTemplateStepDef.java
+@@ -49,7 +49,7 @@ public class WorkingCapitalLoanActionTemplateStepDef extends AbstractStepDef {
+         final Long loanId = getCreatedLoanId();
+ 
+         final WorkingCapitalLoanCommandTemplateData response = ok(
+-                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTemplate1(loanId, templateType));
++                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanActionTemplate(loanId, templateType));
+         testContext().set(TestContextKey.WC_LOAN_ACTION_TEMPLATE_RESPONSE, response);
+         log.info("Retrieved WC loan action template for loan ID: {} with templateType: {}", loanId, templateType);
+     }
+@@ -69,7 +69,7 @@ public class WorkingCapitalLoanActionTemplateStepDef extends AbstractStepDef {
+         final Long loanId = getCreatedLoanId();
+ 
+         final CallFailedRuntimeException exception = fail(
+-                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTemplate1(loanId, templateType));
++                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanActionTemplate(loanId, templateType));
+ 
+         assertThat(exception.getStatus()).as("HTTP status code").isEqualTo(400);
+         assertThat(exception.getMessage()).as("Error message should reference the invalid command").contains(templateType);
+@@ -81,7 +81,7 @@ public class WorkingCapitalLoanActionTemplateStepDef extends AbstractStepDef {
+         final Long loanId = getCreatedLoanId();
+ 
+         final CallFailedRuntimeException exception = fail(
+-                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTemplate1(loanId, (String) null));
++                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanActionTemplate(loanId, (String) null));
+ 
+         assertThat(exception.getStatus()).as("HTTP status code").isEqualTo(400);
+         assertThat(exception.getMessage()).as("Error message should reference unrecognized command").contains("command");
+@@ -91,7 +91,7 @@ public class WorkingCapitalLoanActionTemplateStepDef extends AbstractStepDef {
+     @Then("Retrieving WC loan action template for non-existent loan id {long} results in a 404 error")
+     public void retrieveTemplateForNonExistentLoan(final Long loanId) {
+         final CallFailedRuntimeException exception = fail(
+-                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanTemplate1(loanId, "approve"));
++                () -> fineractClient.workingCapitalLoanTransactions().retrieveWorkingCapitalLoanActionTemplate(loanId, "approve"));
+ 
+         assertThat(exception.getStatus()).as("HTTP status code").isEqualTo(404);
+         assertThat(exception.getMessage()).as("Error message should indicate loan not found").contains("does not exist");
+diff --git a/fineract-provider/build.gradle b/fineract-provider/build.gradle
+index 6fab876d01..576b921210 100644
+--- a/fineract-provider/build.gradle
++++ b/fineract-provider/build.gradle
+@@ -88,8 +88,9 @@ resolve {
+     buildClasspath = classpath
+     outputDir = file("${buildDir}/resources/main/static")
+     openApiFile = file("${buildDir}/tmp/swagger/fineract-input.yaml")
++    readerClass = 'org.apache.fineract.infrastructure.openapi.FineractOperationIdReader'
+     sortOutput = true
+-    dependsOn(prepareInputYaml)
++    dependsOn(prepareInputYaml, classes)
+ }
+ 
+ configurations {
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/openapi/FineractOperationIdReader.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/openapi/FineractOperationIdReader.java
+new file mode 100644
+index 0000000000..4721d10fd2
+--- /dev/null
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/openapi/FineractOperationIdReader.java
+@@ -0,0 +1,94 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.openapi;
++
++import io.swagger.v3.jaxrs2.Reader;
++import io.swagger.v3.oas.annotations.Operation;
++import io.swagger.v3.oas.models.OpenAPI;
++import jakarta.ws.rs.HttpMethod;
++import jakarta.ws.rs.Path;
++import java.lang.annotation.Annotation;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++
++public final class FineractOperationIdReader extends Reader {
++
++    // Check explicit @Operation ids first, then let Swagger build the spec.
++    @Override
++    public OpenAPI read(Set<Class<?>> classes, Map<String, Object> resources) {
++        ExplicitOperationValidator.validate(classes);
++        return super.read(classes, resources);
++    }
++
++    static final class ExplicitOperationValidator {
++
++        static void validate(Set<Class<?>> classes) {
++            Map<String, List<String>> operationIds = new LinkedHashMap<>();
++            for (Class<?> resourceClass : classes) {
++                // No @Path means this class is not a JAX-RS resource.
++                if (resourceClass.getAnnotation(Path.class) == null) {
++                    continue;
++                }
++
++                for (Method method : resourceClass.getMethods()) {
++                    Operation operation = method.getAnnotation(Operation.class);
++                    String operationId = trimToNull(operation == null ? null : operation.operationId());
++
++                    // We only care about actual endpoints that set an id explicitly.
++                    if (operationId == null || !hasHttpMethod(method)) {
++                        continue;
++                    }
++
++                    operationIds.computeIfAbsent(operationId, ignored -> new ArrayList<>())
++                            .add(resourceClass.getSimpleName() + "#" + method.getName());
++
++                }
++            }
++
++            List<String> duplicates = operationIds.entrySet().stream().filter(e -> e.getValue().size() > 1)
++                    .map(e -> e.getKey() + " -> " + String.join(", ", e.getValue())).sorted().toList();
++            if (!duplicates.isEmpty()) {
++                throw new IllegalStateException(
++                        "Duplicate explicit OpenAPI operationIds detected:\n - " + String.join("\n - ", duplicates));
++            }
++        }
++    }
++
++    // GET, POST, etc. are meta-annotated with @HttpMethod.
++    private static boolean hasHttpMethod(Method method) {
++        for (Annotation annotation : method.getAnnotations()) {
++            if (annotation.annotationType().getAnnotation(HttpMethod.class) != null) {
++                return true;
++            }
++        }
++        return false;
++    }
++
++    private static String trimToNull(String value) {
++        if (value == null) {
++            return null;
++        }
++        String trimmed = value.trim();
++        return trimmed.isEmpty() ? null : trimmed;
++    }
++}
+diff --git a/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanApiResource.java b/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanApiResource.java
+index 47f2362eb2..4bb58af006 100644
+--- a/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanApiResource.java
++++ b/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanApiResource.java
+@@ -209,7 +209,7 @@ public class WorkingCapitalLoanApiResource {
+     @Path("external-id/{externalId}/delinquencyrangetags")
+     @Consumes({ MediaType.TEXT_HTML, MediaType.APPLICATION_JSON })
+     @Produces(MediaType.APPLICATION_JSON)
+-    @Operation(summary = "Retrieve the Loan Delinquency Tag history using the Loan Id", description = "", operationId = "getDelinquencyRangeScheduleTagHistoryById")
++    @Operation(summary = "Retrieve the Loan Delinquency Tag history using the Loan External Id", description = "", operationId = "getDelinquencyRangeScheduleTagHistoryByExternalId")
+     @ApiResponses({
+             @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = WorkingCapitalLoanApiResourceSwagger.GetWorkingCapitalLoanDelinquencyRangeScheduleTagHistoryResponse.class)))) })
+     public List<WorkingCapitalLoanDelinquencyTagHistoryData> getDelinquencyRangeScheduleTagHistoryById(
+diff --git a/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanTransactionsApiResource.java b/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanTransactionsApiResource.java
+index a74d4baec9..fce823af20 100644
+--- a/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanTransactionsApiResource.java
++++ b/fineract-working-capital-loan/src/main/java/org/apache/fineract/portfolio/workingcapitalloan/api/WorkingCapitalLoanTransactionsApiResource.java
+@@ -142,7 +142,7 @@ public class WorkingCapitalLoanTransactionsApiResource {
+     @GET
+     @Path("{loanId}/template")
+     @Produces({ MediaType.APPLICATION_JSON })
+-    @Operation(operationId = "retrieveWorkingCapitalLoanTemplate", summary = "Retrieve Working Capital Loan action template", description = "Returns loan data for applying the proper loan action")
++    @Operation(operationId = "retrieveWorkingCapitalLoanActionTemplate", summary = "Retrieve Working Capital Loan action template", description = "Returns loan data for applying the proper loan action")
+     public WorkingCapitalLoanCommandTemplateData retrieveWorkingCapitalLoanTemplate(
+             @PathParam("loanId") @Parameter(description = "loanId", required = true) final Long loanId,
+             @QueryParam("templateType") @Parameter(description = "templateType") final String templateType,
+

@@ -1,0 +1,155 @@
+diff --git a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageController.java b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageController.java
+index 4269d077a..b861a47d6 100644
+--- a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageController.java
++++ b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageController.java
+@@ -93,24 +93,25 @@ public class InternalBillableUsageController {
+   }
+ 
+   public long processRetries(OffsetDateTime asOf) {
+-    int pageIndex = 0;
+-    int total = 0;
+-
+-    List<BillableUsageRemittanceEntity> remittances = findByRetryAfterLessThan(asOf, pageIndex);
+-    while (!remittances.isEmpty()) {
+-      remittances.forEach(this::processRetryForUsage);
+-      total += remittances.size();
+-      pageIndex++;
+-      remittances = findByRetryAfterLessThan(asOf, pageIndex);
++    long total = remittanceRepository.countRemittancesByRetryAfterLessThan(asOf);
++    if (total > 0) {
++      long current = 0;
++      List<BillableUsageRemittanceEntity> remittances =
++          findNextRemittancesByRetryAfterLessThan(asOf);
++      while (current < total && !remittances.isEmpty()) {
++        remittances.forEach(this::processRetryForUsage);
++        current += remittances.size();
++        remittances = findNextRemittancesByRetryAfterLessThan(asOf);
++      }
+     }
+ 
+     return total;
+   }
+ 
+   @Transactional
+-  List<BillableUsageRemittanceEntity> findByRetryAfterLessThan(OffsetDateTime asOf, int pageIndex) {
+-    return remittanceRepository.findByRetryAfterLessThan(
+-        asOf, pageIndex, applicationConfiguration.getRetryRemittancesBatchSize());
++  List<BillableUsageRemittanceEntity> findNextRemittancesByRetryAfterLessThan(OffsetDateTime asOf) {
++    return remittanceRepository.findNextRemittancesByRetryAfterLessThan(
++        asOf, applicationConfiguration.getRetryRemittancesBatchSize());
+   }
+ 
+   @Transactional
+@@ -140,6 +141,7 @@ public class InternalBillableUsageController {
+       log.warn("Remittance {} failed to be sent over kafka. Restoring.", remittance);
+       // restoring previous state of the remittance because it fails to be sent
+       updateRemittance(remittance, previousStatus, previousRetryAfter, previousErrorCode);
++      throw ex;
+     }
+   }
+ 
+diff --git a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/data/BillableUsageRemittanceRepository.java b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/data/BillableUsageRemittanceRepository.java
+index 31ef59e73..c47ebee2d 100644
+--- a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/data/BillableUsageRemittanceRepository.java
++++ b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/data/BillableUsageRemittanceRepository.java
+@@ -86,9 +86,14 @@ public class BillableUsageRemittanceRepository
+     return entityManager.createQuery(query).getResultList();
+   }
+ 
+-  public List<BillableUsageRemittanceEntity> findByRetryAfterLessThan(
+-      OffsetDateTime asOf, int pageIndex, int pageSize) {
+-    return find("retryAfter < ?1", asOf).page(pageIndex, pageSize).list();
++  @Transactional
++  public long countRemittancesByRetryAfterLessThan(OffsetDateTime asOf) {
++    return count("retryAfter < ?1", asOf);
++  }
++
++  public List<BillableUsageRemittanceEntity> findNextRemittancesByRetryAfterLessThan(
++      OffsetDateTime asOf, int pageSize) {
++    return find("retryAfter < ?1", asOf).page(0, pageSize).list();
+   }
+ 
+   public void deleteAllByOrgIdAndRemittancePendingDateBefore(
+diff --git a/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageControllerTest.java b/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageControllerTest.java
+index 630af9719..85ba11858 100644
+--- a/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageControllerTest.java
++++ b/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/admin/api/InternalBillableUsageControllerTest.java
+@@ -24,12 +24,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertNotNull;
+ import static org.junit.jupiter.api.Assertions.assertNull;
++import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.ArgumentMatchers.argThat;
+ import static org.mockito.Mockito.doThrow;
++import static org.mockito.Mockito.times;
+ import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.when;
+ 
++import com.redhat.swatch.billable.usage.configuration.ApplicationConfiguration;
+ import com.redhat.swatch.billable.usage.data.BillableUsageRemittanceEntity;
+ import com.redhat.swatch.billable.usage.data.BillableUsageRemittanceFilter;
+ import com.redhat.swatch.billable.usage.data.BillableUsageRemittanceRepository;
+@@ -54,15 +58,18 @@ import org.junit.jupiter.api.Test;
+ class InternalBillableUsageControllerTest {
+ 
+   private static final String PRODUCT_ID = "rosa";
++  private static final int REMITTANCES_BATCH_SIZE = 2;
+ 
+   @Inject BillableUsageRemittanceRepository remittanceRepo;
+   @Inject ApplicationClock clock;
+   @InjectMock BillingProducer billingProducer;
+   @Inject InternalBillableUsageController controller;
++  @InjectMock ApplicationConfiguration configuration;
+ 
+   @Transactional
+   @BeforeEach
+   void setup() {
++    remittanceRepo.deleteAll();
+     BillableUsageRemittanceEntity remittance1 =
+         remittance(
+             "111",
+@@ -130,6 +137,7 @@ class InternalBillableUsageControllerTest {
+             remittance6,
+             remittance7));
+     remittanceRepo.flush();
++    when(configuration.getRetryRemittancesBatchSize()).thenReturn(REMITTANCES_BATCH_SIZE);
+   }
+ 
+   @Transactional
+@@ -296,13 +304,32 @@ class InternalBillableUsageControllerTest {
+     assertNull(found.get().getRetryAfter());
+   }
+ 
++  @Test
++  void testProcessRetriesInPages() {
++    String orgId = "testProcessRetriesInPages";
++    for (var i = 0; i < REMITTANCES_BATCH_SIZE * 2; i++) {
++      givenRemittanceWithOldRetryAfter(orgId + i);
++    }
++
++    controller.processRetries(OffsetDateTime.now());
++
++    // verify remittance has been sent
++    verify(billingProducer, times(REMITTANCES_BATCH_SIZE * 2)).produce(any());
++    // verify retry after is reset
++    var remittances =
++        remittanceRepo.listAll().stream().filter(b -> b.getOrgId().startsWith(orgId)).toList();
++    assertFalse(remittances.isEmpty());
++    assertTrue(remittances.stream().allMatch(u -> u.getRetryAfter() == null));
++  }
++
+   @Test
+   void testProcessRetriesShouldRestoreStateIfSendFails() {
+     String orgId = "testProcessRetriesOrg123";
+     givenRemittanceWithOldRetryAfter(orgId);
+     doThrow(RuntimeException.class).when(billingProducer).produce(any(BillableUsage.class));
++    OffsetDateTime retryAfter = OffsetDateTime.now();
+ 
+-    controller.processRetries(OffsetDateTime.now());
++    assertThrows(RuntimeException.class, () -> controller.processRetries(retryAfter));
+ 
+     // verify retry after is set
+     var found =
+

@@ -1,0 +1,216 @@
+diff --git a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/SignerGeneratingProcessor.java b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/SignerGeneratingProcessor.java
+index 8aae509ad..3b069bdd8 100644
+--- a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/SignerGeneratingProcessor.java
++++ b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/SignerGeneratingProcessor.java
+@@ -2,7 +2,9 @@ package de.adorsys.opba.api.security.generator;
+ 
+ import com.google.auto.service.AutoService;
+ import de.adorsys.opba.api.security.generator.api.GeneratedSigner;
++import de.adorsys.opba.api.security.generator.signer.DataToSignGenerator;
+ import de.adorsys.opba.api.security.generator.signer.RequestSigningGenerator;
++import de.adorsys.opba.api.security.generator.signer.SignerGenerator;
+ 
+ import javax.annotation.processing.AbstractProcessor;
+ import javax.annotation.processing.Processor;
+@@ -25,7 +27,7 @@ public class SignerGeneratingProcessor extends AbstractProcessor {
+ 
+     @Override
+     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+-        RequestSigningGenerator signerGenerator = new RequestSigningGenerator();
++        RequestSigningGenerator signerGenerator = new RequestSigningGenerator(new SignerGenerator(new DataToSignGenerator()));
+         for (TypeElement annotation : annotations) {
+             // limit to elements annotated with {@link RuntimeDelegate}
+             Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(annotation);
+diff --git a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/AisAccountDataToSignGenerator.java b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/AisAccountDataToSignGenerator.java
+deleted file mode 100644
+index d0475e696..000000000
+--- a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/AisAccountDataToSignGenerator.java
++++ /dev/null
+@@ -1,40 +0,0 @@
+-package de.adorsys.opba.api.security.generator.impl;
+-
+-/*
+-public class AisAccountDataToSignGenerator implements RequestDataToSignGenerator {
+-
+-    @Override
+-    public String canonicalStringToSign(RequestToSign toSign) {
+-        StringBuilder result = new StringBuilder();
+-        // path
+-        result.append(toSign.getPath()).append("&");
+-
+-        // headers
+-        if (null == toSign.getHeaders().get("X-Request-ID")) {
+-            throw new IllegalStateException("Missing required header 'X-Request-ID'");
+-        }
+-        result.append("X-Request-ID=").append(toSign.getHeaders().get("X-Request-ID")).append("&");
+-
+-        if (null != toSign.getHeaders().get("X-Authorization-Required")) {
+-            result.append("X-Authorization-Required=").append(toSign.getHeaders().get("X-Authorization-Required")).append("&");
+-        }
+-
+-        // query params
+-        if (null == toSign.getQueryParams().get("search")) {
+-            throw new IllegalStateException("Missing required query parameter 'search'");
+-        }
+-        result.append("search=").append(toSign.getQueryParams().get("search")).append("&");
+-
+-        if (null != toSign.getQueryParams().get("redirectCode")) {
+-            result.append("redirectCode=").append(toSign.getQueryParams().get("redirectCode")).append("&");
+-        }
+-
+-        // body
+-        if (null != toSign.getBody()) {
+-            result.append("body=").append(toSign.getBody()).append("&");
+-        }
+-
+-        return result.toString();
+-    }
+-}
+-*/
+\ No newline at end of file
+diff --git a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/SignerImpl.java b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/SignerImpl.java
+deleted file mode 100644
+index a6df6b35b..000000000
+--- a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/impl/SignerImpl.java
++++ /dev/null
+@@ -1,49 +0,0 @@
+-package de.adorsys.opba.api.security.generator.impl;
+-
+-/*
+-@RequiredArgsConstructor
+-public class SignerImpl implements Signer {
+-
+-    private final String basePath;
+-    private final Map<String, Map<HttpMethod, RequestDataToSignGenerator>> paths;
+-
+-    @Override
+-    public Signer withBasePath(String basePath) {
+-        return new SignerImpl(basePath, paths);
+-    }
+-
+-    @Override
+-    public RequestDataToSignGenerator signerFor(RequestToSign toSign) {
+-        String computedPath = toSign.getPath().substring(basePath.length());
+-        if (HttpMethod.GET == toSign.getMethod() && matches("/v1/banking/ais/accounts", computedPath)) {
+-            return new AisAccountDataToSignGenerator();
+-        }
+-
+-        throw new IllegalStateException(
+-                String.format("Cant create signer for %s %s (full path: %s)", toSign.getMethod(), computedPath, toSign.getPath())
+-        );
+-    }
+-
+-    private boolean matches(String definedPath, String path) {
+-        String[] definedSegments = definedPath.split("/", -1);
+-        String[] pathSegments = path.split("/", -1);
+-
+-        if (definedPath.length() != pathSegments.length) {
+-            return false;
+-        }
+-
+-        for (int segment = 0; segment < definedSegments.length; ++segment) {
+-            if (definedSegments[segment].startsWith("{")) {
+-                // Any match here
+-                continue;
+-            }
+-
+-            if (!definedSegments[segment].equals(pathSegments[segment])) {
+-                return false;
+-            }
+-        }
+-
+-        return true;
+-    }
+-}
+-*/
+\ No newline at end of file
+diff --git a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/DataToSignGenerator.java b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/DataToSignGenerator.java
+index 9878e5488..d3fa86931 100644
+--- a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/DataToSignGenerator.java
++++ b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/DataToSignGenerator.java
+@@ -93,7 +93,7 @@ public class DataToSignGenerator {
+                 .filter(it -> it instanceof HeaderParameter)
+                 .sorted(Comparator.comparing(Parameter::getName))
+                 .forEach(header -> {
+-                    if (header.getRequired()) {
++                    if (Boolean.TRUE.equals(header.getRequired())) {
+                         addMandatoryHeader(block, toSign, header);
+                     } else {
+                         addOptionalHeader(block, toSign, header);
+@@ -108,7 +108,7 @@ public class DataToSignGenerator {
+                 .filter(it -> it instanceof QueryParameter)
+                 .sorted(Comparator.comparing(Parameter::getName))
+                 .forEach(queryParam -> {
+-                    if (queryParam.getRequired()) {
++                    if (Boolean.TRUE.equals(queryParam.getRequired())) {
+                         addMandatoryParameter(block, toSign, queryParam);
+                     } else {
+                         addOptionalParameter(block, toSign, queryParam);
+@@ -123,7 +123,7 @@ public class DataToSignGenerator {
+         }
+ 
+         block.addStatement("// Add body");
+-        if (operation.getRequestBody().getRequired()) {
++        if (Boolean.TRUE.equals(operation.getRequestBody().getRequired())) {
+             block.addStatement("// Mandatory body");
+             block.addStatement("String body = $N.getBody()", toSign);
+             block.beginControlFlow("if (null == body || \"\".equals(body))");
+diff --git a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/RequestSigningGenerator.java b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/RequestSigningGenerator.java
+index 72698cb20..1cf443612 100644
+--- a/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/RequestSigningGenerator.java
++++ b/opba-api-security-filter-signer-generator/src/main/java/de/adorsys/opba/api/security/generator/signer/RequestSigningGenerator.java
+@@ -9,6 +9,7 @@ import io.swagger.v3.parser.OpenAPIV3Parser;
+ 
+ import javax.annotation.processing.Filer;
+ import javax.lang.model.element.TypeElement;
++import java.util.Arrays;
+ import java.util.EnumMap;
+ import java.util.HashMap;
+ import java.util.Map;
+@@ -16,11 +17,22 @@ import java.util.function.Supplier;
+ 
+ public class RequestSigningGenerator {
+ 
+-    public void generate(TypeElement forClass, String[] yamlSpec, Filer filer) {
+-        OpenAPI api = new OpenAPIV3Parser().read(yamlSpec[0]);
++    private final SignerGenerator signerGenerator;
++
++    public RequestSigningGenerator(SignerGenerator signerGenerator) {
++        this.signerGenerator = signerGenerator;
++    }
+ 
++    public void generate(TypeElement forClass, String[] yamlSpec, Filer filer) {
+         Map<String, Map<Signer.HttpMethod, Operation>> requestSpecConfig = new HashMap<>();
+ 
++        Arrays.stream(yamlSpec).forEach(it -> readAllRequestsDefinitions(it, requestSpecConfig));
++
++        signerGenerator.generate(ClassName.get(forClass).packageName(), filer, requestSpecConfig);
++    }
++
++    private void readAllRequestsDefinitions(String location, Map<String, Map<Signer.HttpMethod, Operation>> requestSpecConfig) {
++        OpenAPI api = new OpenAPIV3Parser().read(location);
+         for (Map.Entry<String, PathItem> pathEntry : api.getPaths().entrySet()) {
+             String path = pathEntry.getKey();
+ 
+@@ -30,8 +42,6 @@ public class RequestSigningGenerator {
+             registerMethod(path, () -> pathEntry.getValue().getPatch(), Signer.HttpMethod.PATCH, requestSpecConfig);
+             registerMethod(path, () -> pathEntry.getValue().getDelete(), Signer.HttpMethod.DELETE, requestSpecConfig);
+         }
+-
+-        new SignerGenerator(new DataToSignGenerator()).generate(ClassName.get(forClass).packageName(), filer, requestSpecConfig);
+     }
+ 
+     private void registerMethod(
+diff --git a/opba-api-security-filter-signer-generator/src/test/resources/SignerConfigurer.java b/opba-api-security-filter-signer-generator/src/test/resources/SignerConfigurer.java
+index c80a62675..f6fdf29c4 100644
+--- a/opba-api-security-filter-signer-generator/src/test/resources/SignerConfigurer.java
++++ b/opba-api-security-filter-signer-generator/src/test/resources/SignerConfigurer.java
+@@ -2,6 +2,6 @@ package de.adorsys.signer.test;
+ 
+ import de.adorsys.opba.api.security.generator.api.GeneratedSigner;
+ 
+-@GeneratedSigner(openApiYamlPath = "api/tpp_banking_api_ais.yml")
++@GeneratedSigner(openApiYamlPath = {"api/tpp_banking_api_ais.yml", "api/tpp_banking_api_pis.yml"})
+ public class SignerConfigurer {
+ }
+

@@ -1,0 +1,206 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/resource/api/v1/CapacityResource.java b/src/main/java/org/candlepin/subscriptions/resource/api/v1/CapacityResource.java
+index e079e12dc..6503367d5 100644
+--- a/src/main/java/org/candlepin/subscriptions/resource/api/v1/CapacityResource.java
++++ b/src/main/java/org/candlepin/subscriptions/resource/api/v1/CapacityResource.java
+@@ -49,6 +49,7 @@ import org.candlepin.subscriptions.resource.ResourceUtils;
+ import org.candlepin.subscriptions.resteasy.PageLinkCreator;
+ import org.candlepin.subscriptions.security.auth.ReportingAccessRequired;
+ import org.candlepin.subscriptions.util.ApiModelMapperV1;
++import org.candlepin.subscriptions.util.InMemoryPager;
+ import org.candlepin.subscriptions.util.SnapshotTimeAdjuster;
+ import org.candlepin.subscriptions.utilization.api.v1.model.CapacityReportByMetricId;
+ import org.candlepin.subscriptions.utilization.api.v1.model.CapacityReportByMetricIdMeta;
+@@ -60,7 +61,6 @@ import org.candlepin.subscriptions.utilization.api.v1.model.ServiceLevelType;
+ import org.candlepin.subscriptions.utilization.api.v1.model.UsageType;
+ import org.candlepin.subscriptions.utilization.api.v1.resources.CapacityApi;
+ import org.springframework.data.domain.Page;
+-import org.springframework.data.domain.PageImpl;
+ import org.springframework.data.domain.Pageable;
+ import org.springframework.data.domain.Sort;
+ import org.springframework.stereotype.Component;
+@@ -143,28 +143,26 @@ public class CapacityResource implements CapacityApi {
+             beginning,
+             ending);
+ 
+-    List<CapacitySnapshotByMetricId> data;
++    Page<CapacitySnapshotByMetricId> snapshotPage;
+     PageLinks links;
+     if (offset != null || limit != null) {
+       Pageable pageable = ResourceUtils.getPageable(offset, limit);
+-      data = paginate(capacities, pageable);
+-      Page<CapacitySnapshotByMetricId> snapshotPage =
+-          new PageImpl<>(data, pageable, capacities.size());
++      snapshotPage = InMemoryPager.paginate(capacities, pageable);
+       links = mapper.map(pageLinkCreator.getPaginationLinks(uriInfo, snapshotPage));
+     } else {
+-      data = capacities;
++      snapshotPage = InMemoryPager.paginate(capacities, Pageable.unpaged());
+       links = null;
+     }
+ 
+     CapacityReportByMetricId report = new CapacityReportByMetricId();
+-    report.setData(data);
++    report.setData(snapshotPage.getContent());
+     report.setMeta(new CapacityReportByMetricIdMeta());
+     var meta = report.getMeta();
+     meta.setGranularity(granularityType);
+     meta.setProduct(productId.toString());
+     meta.setMetricId(metricId.toString());
+     meta.setCategory(reportCategory);
+-    meta.setCount(report.getData().size());
++    meta.setCount(capacities.size());
+ 
+     if (sanitizedServiceLevel != null) {
+       meta.setServiceLevel(mapper.map(sanitizedServiceLevel));
+@@ -244,15 +242,6 @@ public class CapacityResource implements CapacityApi {
+     return result;
+   }
+ 
+-  private <T> List<T> paginate(List<T> capacities, Pageable pageable) {
+-    if (pageable == null) {
+-      return capacities;
+-    }
+-    int offset = pageable.getPageNumber() * pageable.getPageSize();
+-    int lastIndex = Math.min(capacities.size(), offset + pageable.getPageSize());
+-    return capacities.subList(offset, lastIndex);
+-  }
+-
+   @SuppressWarnings("java:S3776")
+   protected CapacitySnapshotByMetricId createCapacitySnapshotWithMetricId(
+       OffsetDateTime date,
+diff --git a/src/main/java/org/candlepin/subscriptions/resource/api/v1/SubscriptionTableController.java b/src/main/java/org/candlepin/subscriptions/resource/api/v1/SubscriptionTableController.java
+index 273db34c9..b518132c1 100644
+--- a/src/main/java/org/candlepin/subscriptions/resource/api/v1/SubscriptionTableController.java
++++ b/src/main/java/org/candlepin/subscriptions/resource/api/v1/SubscriptionTableController.java
+@@ -50,6 +50,7 @@ import org.candlepin.subscriptions.db.model.SubscriptionMeasurementKey;
+ import org.candlepin.subscriptions.db.model.Usage;
+ import org.candlepin.subscriptions.resource.ResourceUtils;
+ import org.candlepin.subscriptions.util.ApiModelMapperV1;
++import org.candlepin.subscriptions.util.InMemoryPager;
+ import org.candlepin.subscriptions.utilization.api.v1.model.*;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.data.domain.Pageable;
+@@ -223,12 +224,12 @@ public class SubscriptionTableController {
+     // The pagination and sorting of capacities is done in memory and can cause performance
+     // issues
+     // As an improvement this should be pushed lower into the Repository layer
+-    Pageable pageable = ResourceUtils.getPageable(offset, limit);
+-    reportItems = paginate(reportItems, pageable);
+     sortCapacities(reportItems, sort, dir);
++    Pageable pageable = ResourceUtils.getPageable(offset, limit);
++    var page = InMemoryPager.paginate(reportItems, pageable);
+ 
+     return new SkuCapacityReport()
+-        .data(reportItems)
++        .data(page.getContent())
+         .meta(
+             new SkuCapacityReportMeta()
+                 .subscriptionType(subscriptionType)
+@@ -252,15 +253,6 @@ public class SubscriptionTableController {
+     return effectiveMetricId;
+   }
+ 
+-  private List<SkuCapacity> paginate(List<SkuCapacity> capacities, Pageable pageable) {
+-    if (pageable == null) {
+-      return capacities;
+-    }
+-    int offset = pageable.getPageNumber() * pageable.getPageSize();
+-    int lastIndex = Math.min(capacities.size(), offset + pageable.getPageSize());
+-    return capacities.subList(offset, lastIndex);
+-  }
+-
+   @SuppressWarnings("java:S107")
+   private Collection<SkuCapacity> getOnDemandSkuCapacities(
+       ProductId productId,
+diff --git a/src/main/java/org/candlepin/subscriptions/resource/api/v2/SubscriptionTableController.java b/src/main/java/org/candlepin/subscriptions/resource/api/v2/SubscriptionTableController.java
+index 00d6eff4c..f87bb16f6 100644
+--- a/src/main/java/org/candlepin/subscriptions/resource/api/v2/SubscriptionTableController.java
++++ b/src/main/java/org/candlepin/subscriptions/resource/api/v2/SubscriptionTableController.java
+@@ -52,6 +52,7 @@ import org.candlepin.subscriptions.db.model.SubscriptionCapacityViewMetric;
+ import org.candlepin.subscriptions.db.model.Usage;
+ import org.candlepin.subscriptions.resource.ResourceUtils;
+ import org.candlepin.subscriptions.util.ApiModelMapperV2;
++import org.candlepin.subscriptions.util.InMemoryPager;
+ import org.candlepin.subscriptions.utilization.api.v2.model.BillingProviderType;
+ import org.candlepin.subscriptions.utilization.api.v2.model.ReportCategory;
+ import org.candlepin.subscriptions.utilization.api.v2.model.ServiceLevelType;
+@@ -139,12 +140,12 @@ public class SubscriptionTableController {
+     // The pagination and sorting of capacities is done in memory and can cause performance
+     // issues
+     // As an improvement this should be pushed lower into the Repository layer
+-    Pageable pageable = ResourceUtils.getPageable(offset, limit);
+-    reportItems = paginate(reportItems, pageable);
+     sortCapacities(reportItems, sort, dir);
++    Pageable pageable = ResourceUtils.getPageable(offset, limit);
++    var page = InMemoryPager.paginate(reportItems, pageable);
+ 
+     return new SkuCapacityReport()
+-        .data(reportItems)
++        .data(page.getContent())
+         .meta(
+             new SkuCapacityReportMeta()
+                 .subscriptionType(
+@@ -243,15 +244,6 @@ public class SubscriptionTableController {
+     };
+   }
+ 
+-  private static <T> List<T> paginate(List<T> capacities, Pageable pageable) {
+-    if (pageable == null) {
+-      return capacities;
+-    }
+-    int offset = pageable.getPageNumber() * pageable.getPageSize();
+-    int lastIndex = Math.min(capacities.size(), offset + pageable.getPageSize());
+-    return capacities.subList(offset, lastIndex);
+-  }
+-
+   private SkuCapacity initializeSkuCapacity(
+       @Nonnull SubscriptionCapacityView sub,
+       @Nonnull MetricsMeta metrics,
+diff --git a/src/main/java/org/candlepin/subscriptions/util/InMemoryPager.java b/src/main/java/org/candlepin/subscriptions/util/InMemoryPager.java
+new file mode 100644
+index 000000000..d425229fa
+--- /dev/null
++++ b/src/main/java/org/candlepin/subscriptions/util/InMemoryPager.java
+@@ -0,0 +1,41 @@
++/*
+[REDACTED attribution]
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
++ *
++ * Red Hat trademarks are not licensed under GPLv3. No permission is
++ * granted to use or replicate Red Hat trademarks that are incorporated
++ * in this software or its documentation.
++ */
++package org.candlepin.subscriptions.util;
++
++import java.util.List;
++import org.springframework.data.domain.Page;
++import org.springframework.data.domain.PageImpl;
++import org.springframework.data.domain.Pageable;
++
++public class InMemoryPager {
++  public static <T> Page<T> paginate(List<T> items, Pageable pageable) {
++    if (pageable == null) {
++      return new PageImpl<>(items);
++    }
++    if (pageable.getOffset() > items.size()) {
++      return new PageImpl<>(List.of(), pageable, items.size());
++    }
++    int offset = pageable.getPageNumber() * pageable.getPageSize();
++    int lastIndex = Math.min(items.size(), offset + pageable.getPageSize());
++    var pageItems = items.subList(offset, lastIndex);
++    return new PageImpl<>(pageItems, pageable, items.size());
++  }
++}
+

@@ -1,0 +1,16 @@
+diff --git a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+index d151273b0..b1a3708a3 100644
+--- a/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
++++ b/integration/spark/app/src/main/java/io/openlineage/spark/agent/OpenLineageSparkListener.java
+@@ -194,7 +194,9 @@ public class OpenLineageSparkListener extends org.apache.spark.scheduler.SparkLi
+     ExecutionContext context = rddExecutionRegistry.remove(jobEnd.jobId());
+     circuitBreaker.run(
+         () -> {
+-          context.end(jobEnd);
++          if (context != null) {
++            context.end(jobEnd);
++          }
+           return null;
+         });
+     if (sparkVersion.startsWith("3")) {
+

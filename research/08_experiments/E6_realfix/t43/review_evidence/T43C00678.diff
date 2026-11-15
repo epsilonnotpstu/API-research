@@ -1,0 +1,1108 @@
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/LevelsController.java b/cwms_radar_api/src/main/java/cwms/radar/api/LevelsController.java
+index 98c7ae4f..129a5629 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/LevelsController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/LevelsController.java
+@@ -1,6 +1,7 @@
+ package cwms.radar.api;
+ 
+ import java.sql.SQLException;
++import java.text.Format;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ 
+@@ -13,6 +14,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -41,17 +43,17 @@ public class LevelsController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void create(Context ctx) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+ 
+     @OpenApi(ignore = true)
+     @Override
+     public void delete(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+     @OpenApi(
+-        queryParams = {            
++        queryParams = {
+             @OpenApiParam(name="name", required=false, description="Specifies the name(s) of the location level(s) whose data is to be included in the response. Uses * for all."),
+             @OpenApiParam(name="office", required=false, description="Specifies the owning office of the location level(s) whose data is to be included in the response. If this field is not specified, matching location level information from all offices shall be returned."),
+             @OpenApiParam(name="unit", required=false, description="Specifies the unit or unit system of the response. Valid values for the unit field are:\r\n 1. EN.   Specifies English unit system.  Location level values will be in the default English units for their parameters.\r\n2. SI.   Specifies the SI unit system.  Location level values will be in the default SI units for their parameters.\r\n3. Other. Any unit returned in the response to the units URI request that is appropriate for the requested parameters."),
+@@ -59,13 +61,13 @@ public class LevelsController implements CrudHandler {
+             @OpenApiParam(name="begin", required=false, description="Specifies the start of the time window for data to be included in the response. If this field is not specified, any required time window begins 24 hours prior to the specified or default end time."),
+             @OpenApiParam(name="end", required=false, description="Specifies the end of the time window for data to be included in the response. If this field is not specified, any required time window ends at the current time"),
+             @OpenApiParam(name="timezone", required=false, description="Specifies the time zone of the values of the begin and end fields (unless otherwise specified), as well as the time zone of any times in the response. If this field is not specified, the default time zone of UTC shall be used."),
+-            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")            
++            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")
+         },
+         responses = {
+             @OpenApiResponse(status="200" ),
+             @OpenApiResponse(status="404", description = "The provided combination of parameters did not find a level."),
+             @OpenApiResponse(status="501", description = "Requested format is not implemented")
+-            
++
+         },
+         tags = {"Levels"}
+     )
+@@ -76,7 +78,7 @@ public class LevelsController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+             CwmsDataManager cdm = new CwmsDataManager(ctx);
+         ) {
+-            String format = ctx.queryParam("format","json");                       
++            String format = ctx.queryParam("format","json");
+             String names = ctx.queryParam("name");
+             String office = ctx.queryParam("office");
+             String unit = ctx.queryParam("unit");
+@@ -84,19 +86,19 @@ public class LevelsController implements CrudHandler {
+             String begin = ctx.queryParam("begin");
+             String end = ctx.queryParam("end");
+             String timezone = ctx.queryParam("timezone");
+-            
++
+ 
+             switch(format){
+-                case "json": {ctx.contentType("application/json"); break;}
+-                case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                case "csv": {ctx.contentType("text/csv"); break;}
+-                case "xml": {ctx.contentType("application/xml");break;}
+-                case "wml2": {ctx.contentType("application/xml");break;}
++                case "json": {ctx.contentType(Formats.JSON); break;}
++                case "tab": {ctx.contentType(Formats.TAB); break;}
++                case "csv": {ctx.contentType(Formats.CSV); break;}
++                case "xml": {ctx.contentType(Formats.XML); break;}
++                case "wml2": {ctx.contentType(Formats.WML2); break;}
+                 case "png":
+                 case "jpg":{
+                     ctx.contentType("text/plain");
+                     ctx.status(HttpServletResponse.SC_NOT_IMPLEMENTED);
+-                    ctx.result("At this time we are not implemeting graphics in this version.");
++                    ctx.result("At this time we are not implementing graphics in this version.");
+                     break;
+                 }
+                 default: {
+@@ -104,15 +106,15 @@ public class LevelsController implements CrudHandler {
+                 }
+             }
+ 
+-            String results = cdm.getLocationLevels(format,names,office,unit,datum,begin,end,timezone);               
++            String results = cdm.getLocationLevels(format,names,office,unit,datum,begin,end,timezone);
+             ctx.status(HttpServletResponse.SC_OK);
+-            ctx.result(results);                
++            ctx.result(results);
+             requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+             ctx.result("Failed to process request");
+-        }        
++        }
+     }
+ 
+     @OpenApi(ignore = true)
+@@ -129,8 +131,8 @@ public class LevelsController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void update(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java b/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java
+index d3524e7e..f52f5a8d 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java
+@@ -18,11 +18,12 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ 
+ 
+ /**
+  *
+- * 
++ *
+  */
+ public class LocationController implements CrudHandler {
+     private final MetricRegistry metrics;// = new MetricRegistry();
+@@ -41,14 +42,14 @@ public class LocationController implements CrudHandler {
+         getOneRequestTime = this.metrics.timer(name(className,"getOne","time"));
+         requestResultSize = this.metrics.histogram((name(className,"results","size")));
+     }
+-    
++
+     @OpenApi(
+         queryParams = {
+             @OpenApiParam( name="names",required = false, description = "Specifies the name(s) of the location(s) whose data is to be included in the response"),
+             @OpenApiParam(name="office", required=false, description="Specifies the owning office of the location level(s) whose data is to be included in the response. If this field is not specified, matching location level information from all offices shall be returned."),
+             @OpenApiParam(name="unit", required=false, description="Specifies the unit or unit system of the response. Valid values for the unit field are:\r\n 1. EN.   Specifies English unit system.  Location level values will be in the default English units for their parameters.\r\n2. SI.   Specifies the SI unit system.  Location level values will be in the default SI units for their parameters.\r\n3. Other. Any unit returned in the response to the units URI request that is appropriate for the requested parameters."),
+             @OpenApiParam(name="datum", required=false, description="Specifies the elevation datum of the response. This field affects only elevation location levels. Valid values for this field are:\r\n1. NAVD88.  The elevation values will in the specified or default units above the NAVD-88 datum.\r\n2. NGVD29.  The elevation values will be in the specified or default units above the NGVD-29 datum."),
+-            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")            
++            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")
+         },
+         responses = {
+             @OpenApiResponse( status="200"),
+@@ -65,27 +66,26 @@ public class LocationController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+                 CwmsDataManager cdm = new CwmsDataManager(ctx);
+             ) {
+-                String format = ctx.queryParam("format","json");           
++                String format = ctx.queryParam("format","json");
+                 String names = ctx.queryParam("names");
+                 String units = ctx.queryParam("units");
+                 String datum = ctx.queryParam("datum");
+                 String office = ctx.queryParam("office");
+-                
++
+ 
+                 switch(format){
+-                    case "json": {ctx.contentType("application/json"); break;}
+-                    case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                    case "csv": {ctx.contentType("text/csv"); break;}
+-                    case "xml": {ctx.contentType("application/xml");break;}
+-                    case "wml2": {ctx.contentType("application/xml");break;}
+-                    default:
+-                    throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
++                    case "json": {ctx.contentType(Formats.JSON); break;}
++                    case "tab": {ctx.contentType(Formats.TAB); break;}
++                    case "csv": {ctx.contentType(Formats.CSV); break;}
++                    case "xml": {ctx.contentType(Formats.XML); break;}
++                    case "wml2": {ctx.contentType(Formats.WML2); break;}
++                    default: throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
+                 }
+ 
+-                String results = cdm.getLocations(names,format,units,datum,office);                
++                String results = cdm.getLocations(names,format,units,datum,office);
+                 ctx.status(HttpServletResponse.SC_OK);
+                 ctx.result(results);
+-                requestResultSize.update(results.length());             
++                requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             Logger.getLogger(LocationController.class.getName()).log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/ParametersController.java b/cwms_radar_api/src/main/java/cwms/radar/api/ParametersController.java
+index 508ff9ff..258677fc 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/ParametersController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/ParametersController.java
+@@ -13,6 +13,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -41,19 +42,19 @@ public class ParametersController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void create(Context ctx) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+ 
+     @OpenApi(ignore = true)
+     @Override
+     public void delete(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+ 
+     @OpenApi(
+         queryParams = {
+-            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")        
++            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")
+         },
+         responses = {
+             @OpenApiResponse( status = "200"),
+@@ -68,27 +69,27 @@ public class ParametersController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+             CwmsDataManager cdm = new CwmsDataManager(ctx);
+         ) {
+-            String format = ctx.queryParam("format","json");                       
++            String format = ctx.queryParam("format","json");
+ 
+ 
+             switch(format){
+-                case "json": {ctx.contentType("application/json"); break;}
+-                case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                case "csv": {ctx.contentType("text/csv"); break;}
+-                case "xml": {ctx.contentType("application/xml");break;}
+-                case "wml2": {ctx.contentType("application/xml");break;}
++                case "json": {ctx.contentType(Formats.JSON); break;}
++                case "tab": {ctx.contentType(Formats.TAB); break;}
++                case "csv": {ctx.contentType(Formats.CSV); break;}
++                case "xml": {ctx.contentType(Formats.XML); break;}
++                case "wml2": {ctx.contentType(Formats.WML2); break;}
+                 default: throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
+             }
+ 
+-            String results = cdm.getParameters(format);                
++            String results = cdm.getParameters(format);
+             ctx.status(HttpServletResponse.SC_OK);
+-            ctx.result(results);         
+-            requestResultSize.update(results.length());       
++            ctx.result(results);
++            requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+             ctx.result("Failed to process request");
+-        }        
++        }
+     }
+ 
+     @OpenApi(ignore = true)
+@@ -105,8 +106,8 @@ public class ParametersController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void update(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/RatingController.java b/cwms_radar_api/src/main/java/cwms/radar/api/RatingController.java
+index 7fa3c1d0..bb4d449c 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/RatingController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/RatingController.java
+@@ -13,6 +13,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -52,7 +53,7 @@ public class RatingController implements CrudHandler {
+     }
+ 
+     @OpenApi(
+-        queryParams = {            
++        queryParams = {
+             @OpenApiParam(name="name", required=false, description="Specifies the name(s) of the time series whose data is to be included in the response. A case insensitive comparison is used to match names."),
+             @OpenApiParam(name="office", required=false, description="Specifies the owning office of the location level(s) whose data is to be included in the response. If this field is not specified, matching location level information from all offices shall be returned."),
+             @OpenApiParam(name="unit", required=false, description="Specifies the unit or unit system of the response. Valid values for the unit field are:\r\n 1. EN.   Specifies English unit system.  Location level values will be in the default English units for their parameters.\r\n2. SI.   Specifies the SI unit system.  Location level values will be in the default SI units for their parameters.\r\n3. Other. Any unit returned in the response to the units URI request that is appropriate for the requested parameters."),
+@@ -60,13 +61,13 @@ public class RatingController implements CrudHandler {
+             @OpenApiParam(name="at", required=false, description="Specifies the start of the time window for data to be included in the response. If this field is not specified, any required time window begins 24 hours prior to the specified or default end time."),
+             @OpenApiParam(name="end", required=false, description="Specifies the end of the time window for data to be included in the response. If this field is not specified, any required time window ends at the current time"),
+             @OpenApiParam(name="timezone", required=false, description="Specifies the time zone of the values of the begin and end fields (unless otherwise specified), as well as the time zone of any times in the response. If this field is not specified, the default time zone of UTC shall be used."),
+-            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.    json (default)")            
++            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.    json (default)")
+         },
+         responses = {
+             @OpenApiResponse(status="200" ),
+             @OpenApiResponse(status="404", description = "The provided combination of parameters did not find a rating table."),
+             @OpenApiResponse(status="501", description = "Requested format is not implemented")
+-            
++
+         },
+         tags = {"Ratings"}
+     )
+@@ -77,7 +78,7 @@ public class RatingController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+                 CwmsDataManager cdm = new CwmsDataManager(ctx);
+             ) {
+-                String format = ctx.queryParam("format","json");           
++                String format = ctx.queryParam("format","json");
+                 String names = ctx.queryParam("names");
+                 String unit = ctx.queryParam("unit");
+                 String datum = ctx.queryParam("datum");
+@@ -85,30 +86,30 @@ public class RatingController implements CrudHandler {
+                 String start = ctx.queryParam("at");
+                 String end = ctx.queryParam("end");
+                 String timezone = ctx.queryParam("timezone","UTC");
+-                String size = ctx.queryParam("size");                
++                String size = ctx.queryParam("size");
+ 
+                 switch(format){
+-                    case "json": {ctx.contentType("application/json"); break;}
+-                    case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                    case "csv": {ctx.contentType("text/csv"); break;}
+-                    case "xml": {ctx.contentType("application/xml");break;}
+-                    case "wml2": {ctx.contentType("application/xml");break;}
++                    case "json": {ctx.contentType(Formats.JSON); break;}
++                    case "tab": {ctx.contentType(Formats.TAB); break;}
++                    case "csv": {ctx.contentType(Formats.CSV); break;}
++                    case "xml": {ctx.contentType(Formats.XML); break;}
++                    case "wml2": {ctx.contentType(Formats.WML2); break;}
+                     case "jpg": // same handler
+                     case "png": {
+                         ctx.status(HttpServletResponse.SC_NOT_FOUND);
+                         ctx.contentType("text/plain");
+                         ctx.result("Server Side image creation is not supported in this version. Note: we may be retiring it in favor or encouraging the use of client based rendering.");
+-                        return;                        
++                        return;
+                      }
+                      default: {
+                         throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
+                      }
+                 }
+ 
+-                String results = cdm.getRatings(names,format,unit,datum,office,start,end,timezone,size);                
++                String results = cdm.getRatings(names,format,unit,datum,office,start,end,timezone,size);
+                 ctx.status(HttpServletResponse.SC_OK);
+-                ctx.result(results);    
+-                requestResultSize.update(results.length());             
++                ctx.result(results);
++                requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+@@ -133,5 +134,5 @@ public class RatingController implements CrudHandler {
+     public void update(Context ctx, String rating) {
+         ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
+index fa025854..cc13a1f3 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
+@@ -13,6 +13,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -43,18 +44,18 @@ public class TimeSeriesController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void create(Context ctx) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+ 
+     @OpenApi(ignore = true)
+     @Override
+     public void delete(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+ 
+     @OpenApi(
+-        queryParams = {            
++        queryParams = {
+             @OpenApiParam(name="name", required=false, description="Specifies the name(s) of the time series whose data is to be included in the response. A case insensitive comparison is used to match names."),
+             @OpenApiParam(name="office", required=false, description="Specifies the owning office of the location level(s) whose data is to be included in the response. If this field is not specified, matching location level information from all offices shall be returned."),
+             @OpenApiParam(name="unit", required=false, description="Specifies the unit or unit system of the response. Valid values for the unit field are:\r\n 1. EN.   Specifies English unit system.  Location level values will be in the default English units for their parameters.\r\n2. SI.   Specifies the SI unit system.  Location level values will be in the default SI units for their parameters.\r\n3. Other. Any unit returned in the response to the units URI request that is appropriate for the requested parameters."),
+@@ -62,13 +63,13 @@ public class TimeSeriesController implements CrudHandler {
+             @OpenApiParam(name="begin", required=false, description="Specifies the start of the time window for data to be included in the response. If this field is not specified, any required time window begins 24 hours prior to the specified or default end time."),
+             @OpenApiParam(name="end", required=false, description="Specifies the end of the time window for data to be included in the response. If this field is not specified, any required time window ends at the current time"),
+             @OpenApiParam(name="timezone", required=false, description="Specifies the time zone of the values of the begin and end fields (unless otherwise specified), as well as the time zone of any times in the response. If this field is not specified, the default time zone of UTC shall be used."),
+-            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")            
++            @OpenApiParam(name="format", required=false, description="Specifies the encoding format of the response. Valid values for the format field for this URI are:\r\n1.    tab\r\n2.    csv\r\n3.    xml\r\n4.  wml2 (only if name field is specified)\r\n5.    json (default)")
+         },
+         responses = {
+             @OpenApiResponse(status="200" ),
+             @OpenApiResponse(status="404", description = "The provided combination of parameters did not find a timeseries."),
+             @OpenApiResponse(status="501", description = "Requested format is not implemented")
+-            
++
+         },
+         tags = {"TimeSeries"}
+     )
+@@ -79,27 +80,27 @@ public class TimeSeriesController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+             CwmsDataManager cdm = new CwmsDataManager(ctx);
+         ) {
+-            String format = ctx.queryParam("format","json");                       
++            String format = ctx.queryParam("format","json");
+             String names = ctx.queryParam("name");
+             String office = ctx.queryParam("office");
+             String unit = ctx.queryParam("unit");
+             String datum = ctx.queryParam("datum");
+             String begin = ctx.queryParam("begin");
+             String end = ctx.queryParam("end");
+-            String timezone = ctx.queryParam("timezone");            
+-            
+-            
++            String timezone = ctx.queryParam("timezone");
++
++
+             switch(format){
+-                case "json": {ctx.contentType("application/json"); break;}
+-                case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                case "csv": {ctx.contentType("text/csv"); break;}
+-                case "xml": {ctx.contentType("application/xml");break;}
+-                case "wml2": {ctx.contentType("application/xml");break;}
++                case "json": {ctx.contentType(Formats.JSON); break;}
++                case "tab": {ctx.contentType(Formats.TAB); break;}
++                case "csv": {ctx.contentType(Formats.CSV); break;}
++                case "xml": {ctx.contentType(Formats.XML); break;}
++                case "wml2": {ctx.contentType(Formats.WML2); break;}
+                 case "png":
+                 case "jpg":{
+                     ctx.contentType("text/plain");
+                     ctx.status(HttpServletResponse.SC_NOT_IMPLEMENTED);
+-                    ctx.result("At this time we are not implemeting graphics in this version.");
++                    ctx.result("At this time we are not implementing graphics in this version.");
+                     break;
+                 }
+                 default: {
+@@ -107,15 +108,15 @@ public class TimeSeriesController implements CrudHandler {
+                 }
+             }
+ 
+-            String results = cdm.getTimeseries(format,names,office,unit,datum,begin,end,timezone);                
++            String results = cdm.getTimeseries(format,names,office,unit,datum,begin,end,timezone);
+             ctx.status(HttpServletResponse.SC_OK);
+-            ctx.result(results);               
+-            requestResultSize.update(results.length()); 
++            ctx.result(results);
++            requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+             ctx.result("Failed to process request");
+-        }        
++        }
+     }
+ 
+     @OpenApi(ignore = true)
+@@ -123,8 +124,8 @@ public class TimeSeriesController implements CrudHandler {
+     public void getOne(Context ctx, String id) {
+         getOneRequest.mark();
+         try( final Timer.Context time_context = getOneRequestTime.time(); ){
+-            
+-            ctx.status(HttpServletResponse.SC_NOT_IMPLEMENTED);        
++
++            ctx.status(HttpServletResponse.SC_NOT_IMPLEMENTED);
+         }
+ 
+     }
+@@ -132,8 +133,8 @@ public class TimeSeriesController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void update(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java b/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java
+index 0a5eb878..153436be 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java
+@@ -13,6 +13,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -41,19 +42,19 @@ public class TimeZoneController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void create(Context ctx) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+ 
+     @OpenApi(ignore = true)
+     @Override
+     public void delete(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+ 
+     @OpenApi(
+         queryParams = {
+-            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")        
++            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")
+         },
+         responses = {
+             @OpenApiResponse( status = "200"),
+@@ -68,28 +69,28 @@ public class TimeZoneController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+             CwmsDataManager cdm = new CwmsDataManager(ctx);
+         ) {
+-            String format = ctx.queryParam("format","json");                       
++            String format = ctx.queryParam("format","json");
+ 
+ 
+             switch(format){
+-                case "json": {ctx.contentType("application/json"); break;}
+-                case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                case "csv": {ctx.contentType("text/csv"); break;}
+-                case "xml": {ctx.contentType("application/xml");break;}
+-                case "wml2": {ctx.contentType("application/xml");break;}
++                case "json": {ctx.contentType(Formats.JSON); break;}
++                case "tab": {ctx.contentType(Formats.TAB); break;}
++                case "csv": {ctx.contentType(Formats.CSV); break;}
++                case "xml": {ctx.contentType(Formats.XML); break;}
++                case "wml2": {ctx.contentType(Formats.WML2); break;}
+                 default: throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
+             }
+ 
+-            String results = cdm.getTimeZones(format);                
++            String results = cdm.getTimeZones(format);
+             requestResultSize.update(results.length());
+             ctx.status(HttpServletResponse.SC_OK);
+-            ctx.result(results);                
++            ctx.result(results);
+             requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+             ctx.result("Failed to process request");
+-        }        
++        }
+     }
+ 
+     @OpenApi(ignore = true)
+@@ -106,8 +107,8 @@ public class TimeZoneController implements CrudHandler {
+     @OpenApi(ignore = true)
+     @Override
+     public void update(Context ctx, String id) {
+-        ctx.status(HttpServletResponse.SC_NOT_FOUND);        
++        ctx.status(HttpServletResponse.SC_NOT_FOUND);
+ 
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java b/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java
+index 59493466..dded7dd2 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java
+@@ -13,6 +13,7 @@ import static com.codahale.metrics.MetricRegistry.*;
+ import com.codahale.metrics.Timer;
+ 
+ import cwms.radar.data.CwmsDataManager;
++import cwms.radar.formatters.Formats;
+ import io.javalin.apibuilder.CrudHandler;
+ import io.javalin.http.Context;
+ import io.javalin.plugin.openapi.annotations.OpenApi;
+@@ -52,7 +53,7 @@ public class UnitsController implements CrudHandler {
+ 
+     @OpenApi(
+         queryParams = {
+-            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")        
++            @OpenApiParam(name="format",required = false, description = "Specifies the encoding format of the response. Valid value for the format field for this URI are:\r\n1. tab\r\n2. csv\r\n 3. xml\r\n4. json (default)")
+         },
+         responses = {
+             @OpenApiResponse( status = "200"),
+@@ -67,22 +68,22 @@ public class UnitsController implements CrudHandler {
+             final Timer.Context time_context = getAllRequestsTime.time();
+             CwmsDataManager cdm = new CwmsDataManager(ctx);
+         ) {
+-            String format = ctx.queryParam("format","json");                       
++            String format = ctx.queryParam("format","json");
+ 
+ 
+             switch(format){
+-                case "json": {ctx.contentType("application/json"); break;}
+-                case "tab": {ctx.contentType("text/tab-sperated-values");break;}
+-                case "csv": {ctx.contentType("text/csv"); break;}
+-                case "xml": {ctx.contentType("application/xml");break;}
+-                case "wml2": {ctx.contentType("application/xml");break;}
++                case "json": {ctx.contentType(Formats.JSON); break;}
++                case "tab": {ctx.contentType(Formats.TAB); break;}
++                case "csv": {ctx.contentType(Formats.CSV); break;}
++                case "xml": {ctx.contentType(Formats.XML); break;}
++                case "wml2": {ctx.contentType(Formats.WML2); break;}
+                 default: throw new UnsupportedOperationException("Format " +  format + " is not implemented for this end point");
+             }
+ 
+-            String results = cdm.getUnits(format);                       
++            String results = cdm.getUnits(format);
+             ctx.status(HttpServletResponse.SC_OK);
+-            ctx.result(results);                
+-            requestResultSize.update(results.length()); 
++            ctx.result(results);
++            requestResultSize.update(results.length());
+         } catch (SQLException ex) {
+             logger.log(Level.SEVERE, null, ex);
+             ctx.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+@@ -107,5 +108,5 @@ public class UnitsController implements CrudHandler {
+     public void update(Context ctx, String unit) {
+         ctx.status(HttpServletResponse.SC_NOT_FOUND);
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/ContentType.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/ContentType.java
+index edef5f9b..03896d53 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/ContentType.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/ContentType.java
+@@ -14,14 +14,14 @@ public class ContentType implements Comparable<ContentType> {
+         if( parts.length > 1){
+             for( int i = 1; i < parts.length; i++){
+                 String key_val[] = parts[i].split("=");
+-                parameters.put(key_val[0],key_val[1]);            
++                parameters.put(key_val[0],key_val[1]);
+             }
+         }
+-        
+-    }    
++
++    }
+ 
+     public String getType(){ return contentType; }
+-    public Map<String,String> getParamters() { 
++    public Map<String,String> getParameters() {
+         return new HashMap<>(parameters);
+     }
+ 
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
+index 7d9b7ffc..edeab324 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
+@@ -22,8 +22,8 @@ import cwms.radar.data.dto.CwmsDTO;
+ public class Formats {
+     public static final Logger logger = Logger.getLogger(Formats.class.getName());
+     public static final String JSON = "application/json";
+-    public static final String XML="application/xml";
+-    public static final String WML2="application/vnd.opengis.waterml+xml";
++    public static final String XML = "application/xml";
++    public static final String WML2 = "application/vnd.opengis.waterml+xml";
+     public static final String JSONV2 = "application/json;version=2";
+     public static final String TAB = "text/tab-separated-values";
+     public static final String CSV = "text/csv";
+@@ -35,18 +35,18 @@ public class Formats {
+             .stream().map( ct -> new ContentType(ct)).collect(Collectors.toList()));
+     }
+     private static HashMap<String,String> type_map =new HashMap<>();
+-    static{        
++    static{
+         type_map.put("json",Formats.JSON);
+         type_map.put("xml",Formats.XML);
+         type_map.put("wml2",Formats.WML2);
+         type_map.put("tab",Formats.TAB);
+         type_map.put("csv",Formats.CSV);
+-    }; 
++    };
+ 
+ 
+     private Map<ContentType, Map<Class<CwmsDTO>,OutputFormatter> > formatters = null;
+ 
+-    private static Formats formats = null;    
++    private static Formats formats = null;
+ 
+     private Formats() throws IOException{
+         formatters = new HashMap<>();
+@@ -56,13 +56,13 @@ public class Formats {
+             String line = br.readLine();
+             logger.info(line);
+             String type_formatter_classes[] = line.split(":");
+-            
++
+             ContentType type = new ContentType(type_formatter_classes[0]);
+             try {
+                 @SuppressWarnings("unchecked")
+                 Class<OutputFormatter> formatter = (Class<OutputFormatter>) Class.forName(type_formatter_classes[1]);
+                 OutputFormatter formatterInstance;
+-			
++
+ 				formatterInstance = formatter.getDeclaredConstructor().newInstance();
+                 Map<Class<CwmsDTO>,OutputFormatter> tmp = new HashMap<>();
+ 
+@@ -75,15 +75,15 @@ public class Formats {
+                 formatters.put(type,tmp);
+ 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+ 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+-				throw new IOException("Failed to load format list, formatter for " + type_formatter_classes[0] + " point to a class with an invalid constructor",e);                
+-			} catch (ClassNotFoundException e) {				
++				throw new IOException("Failed to load format list, formatter for " + type_formatter_classes[0] + " point to a class with an invalid constructor",e);
++			} catch (ClassNotFoundException e) {
+ 				throw new IOException("Failed to find class referenced for formatter " + type_formatter_classes[0],e );
+ 			}
+         }
+ 
+     }
+ 
+-    
++
+     private String getFormatted(ContentType type, CwmsDTO toFormat) throws FormattingException{
+         Objects.requireNonNull(toFormat,"Object to be formatted should not be null");
+         for(ContentType key: formatters.keySet()){
+@@ -95,20 +95,20 @@ public class Formats {
+         } else {
+             throw new FormattingException("No Format for this content-type and data-type : (" + type.toString() + ", " + toFormat.getClass().getName() + ")");
+         }
+-        
++
+     }
+ 
+     private String getFormatted(ContentType type, List<? extends CwmsDTO> toFormat) throws FormattingException{
+         for(ContentType key: formatters.keySet()){
+             logger.info(key.toString());
+-        }                
++        }
+         Map<Class<CwmsDTO>, OutputFormatter> contentFormatters = (Map<Class<CwmsDTO>, OutputFormatter>) formatters.get(type);
+         if( contentFormatters != null ){
+             return contentFormatters.get(toFormat.get(0).getClass()).format(toFormat);
+         } else {
+             throw new FormattingException("No Format for this content-type and data type : (" + type.toString() + ", " + toFormat.getClass().getName() + ")");
+         }
+-        
++
+     }
+ 
+     private static void init(){
+@@ -118,7 +118,7 @@ public class Formats {
+                 formats = new Formats();
+             } catch( IOException err){
+                 throw new FormattingException("Failed to load format map", err);
+-            }            
++            }
+         }
+     }
+ 
+@@ -148,13 +148,13 @@ public class Formats {
+                 return new ContentType(val);
+             } else {
+                 throw new FormattingException("content-type " + queryParam + "is not implemented");
+-            }            
++            }
+         } else if( header == null ){
+             throw new FormattingException("no content type or format specified");
+         } else {
+             String all[] = header.split(",");
+-            ArrayList<ContentType> contentTypes = new ArrayList<>();            
+-            logger.info("Finding handlers " + all.length);        
++            ArrayList<ContentType> contentTypes = new ArrayList<>();
++            logger.info("Finding handlers " + all.length);
+             for( String ct: all){
+                 logger.info(ct);
+                 contentTypes.add(new ContentType(ct));
+@@ -172,8 +172,8 @@ public class Formats {
+                     return new ContentType(Formats.JSON);
+                 }
+             }
+-        }        
++        }
+         throw new FormattingException("Content-Type " + header + " is not available");
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/JsonV1.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/JsonV1.java
+index 7d715ca9..6d83b0d6 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/JsonV1.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/JsonV1.java
+@@ -11,12 +11,12 @@ import io.javalin.http.BadRequestResponse;
+ import io.javalin.plugin.json.JavalinJson;
+ import service.annotations.FormatService;
+ 
+-@FormatService(contentType = "application/json", dataTypes = {Office.class,Location.class})
++@FormatService(contentType = Formats.JSON, dataTypes = {Office.class,Location.class})
+ public class JsonV1 implements OutputFormatter{
+ 
+ 	@Override
+ 	public String getContentType() {
+-		return "application/json";
++		return Formats.JSON;
+ 	}
+ 
+ 	@Override
+@@ -27,14 +27,14 @@ public class JsonV1 implements OutputFormatter{
+ 
+ 	@Override
+ 	public String format(List<? extends CwmsDTO> daoList) {
+-        if( daoList.get(0) instanceof Office ){            
++        if( daoList.get(0) instanceof Office ){
+             OfficeFormatV1 fmtv1 = new OfficeFormatV1(
+                 daoList.stream().map( office -> (Office)office ).collect(Collectors.toList())
+             );
+             return JavalinJson.toJson(fmtv1);
+         } else {
+ 			throw new BadRequestResponse(String.format("Format {} not implemented for this data type"));
+-		}				
++		}
+ 	}
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1.java
+index 884db817..772b6142 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1.java
+@@ -8,12 +8,12 @@ import cwms.radar.formatters.Formats;
+ import cwms.radar.formatters.OutputFormatter;
+ import service.annotations.FormatService;
+ 
+-@FormatService(contentType = "text/csv", dataTypes = {Office.class})
++@FormatService(contentType = Formats.CSV, dataTypes = {Office.class})
+ public class CsvV1 implements OutputFormatter {
+ 
+     @Override
+-    public String getContentType() {        
+-        return Formats.TAB;
++    public String getContentType() {
++        return Formats.CSV;
+     }
+ 
+     @Override
+@@ -22,7 +22,7 @@ public class CsvV1 implements OutputFormatter {
+             return new CsvV1Office().format(dto);
+         } else {
+             return null;
+-        }        
++        }
+     }
+ 
+     @Override
+@@ -31,9 +31,9 @@ public class CsvV1 implements OutputFormatter {
+             return new CsvV1Office().format(dtoList);
+         } else {
+             return null;
+-        }        
++        }
+     }
+ 
+-    
+-    
++
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1Office.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1Office.java
+index 4b52dfe5..66a72f42 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1Office.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/csv/CsvV1Office.java
+@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ @Schema(
+     name = "Office CSV",
+-    description = "Single Office or List of Offices in comma seperated format",
+-    example = 
++    description = "Single Office or List of Offices in comma separated format",
++    example =
+     "#Office Name,Long Name,Office Type,Reports To Office\r\n"+
+     "CERL,Construction Engineering Research Laboratory,Field Operating Activity	ERD\r\n"+
+     "CHL,Coastal and Hydraulics Laboratory,Field Operating Activity	ERD\r\n" +
+@@ -19,15 +19,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
+     "NAD,North Atlantic Division,Division Headquarters,HQ"
+ )
+ public class CsvV1Office implements OutputFormatter{
+-    
+-    public String Office;    
+-    public String longName;    
+-    public String officeType;    
++
++    public String Office;
++    public String longName;
++    public String officeType;
+     public String reportsToOffice;
+ 
+     @Schema(hidden = true)
+     @Override
+-    public String getContentType() {        
++    public String getContentType() {
+         return Formats.CSV;
+     }
+ 
+@@ -37,7 +37,7 @@ public class CsvV1Office implements OutputFormatter{
+         StringBuilder builder = new StringBuilder();
+         builder.append(getOfficeTabHeader()).append("\r\n");
+         builder.append(officeRow(office));
+-        
++
+         return builder.toString();
+     }
+ 
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1.java
+index 78809a8f..c3e1ff9a 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1.java
+@@ -8,11 +8,11 @@ import cwms.radar.formatters.Formats;
+ import cwms.radar.formatters.OutputFormatter;
+ import service.annotations.FormatService;
+ 
+-@FormatService(contentType = "text/tab-seperated-values", dataTypes = {Office.class})
++@FormatService(contentType = Formats.TAB, dataTypes = {Office.class})
+ public class TabV1 implements OutputFormatter {
+ 
+     @Override
+-    public String getContentType() {        
++    public String getContentType() {
+         return Formats.TAB;
+     }
+ 
+@@ -22,7 +22,7 @@ public class TabV1 implements OutputFormatter {
+             return new TabV1Office().format(dto);
+         } else {
+             return null;
+-        }        
++        }
+     }
+ 
+     @Override
+@@ -31,9 +31,9 @@ public class TabV1 implements OutputFormatter {
+             return new TabV1Office().format(dtoList);
+         } else {
+             return null;
+-        }        
++        }
+     }
+ 
+-    
+-    
++
++
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1Office.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1Office.java
+index 5d0c184c..9127b4e2 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1Office.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/tab/TabV1Office.java
+@@ -18,15 +18,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
+     "NAD	North Atlantic Division	Division Headquarters	HQ"
+ )
+ public class TabV1Office implements OutputFormatter{
+-    
+-    public String Office;    
+-    public String longName;    
+-    public String officeType;    
++
++    public String Office;
++    public String longName;
++    public String officeType;
+     public String reportsToOffice;
+ 
+     @Schema(hidden = true)
+     @Override
+-    public String getContentType() {        
++    public String getContentType() {
+         return Formats.TAB;
+     }
+ 
+@@ -36,7 +36,7 @@ public class TabV1Office implements OutputFormatter{
+         StringBuilder builder = new StringBuilder();
+         builder.append(getOfficeTabHeader()).append("\r\n");
+         builder.append(officeRow(office));
+-        
++
+         return builder.toString();
+     }
+ 
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/xml/XMLv1.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/xml/XMLv1.java
+index f3c49f08..07410c42 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/xml/XMLv1.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/xml/XMLv1.java
+@@ -20,7 +20,7 @@ import cwms.radar.formatters.OutputFormatter;
+ import io.javalin.http.InternalServerErrorResponse;
+ import service.annotations.FormatService;
+ 
+-@FormatService(contentType="application/xml", dataTypes = {Office.class,Catalog.class})
++@FormatService(contentType = Formats.XML, dataTypes = {Office.class,Catalog.class})
+ public class XMLv1 implements OutputFormatter {
+     private static Logger logger = Logger.getLogger(XMLv1.class.getName());
+     private JAXBContext context = null;
+@@ -35,7 +35,7 @@ public class XMLv1 implements OutputFormatter {
+             logger.log(Level.SEVERE, "Unable to build XML Marshaller", jaxb);
+             throw new InternalServerErrorResponse("Internal error");
+         }
+-        
++
+     }
+ 
+     @Override
+@@ -45,7 +45,7 @@ public class XMLv1 implements OutputFormatter {
+ 
+     @Override
+     public String format(CwmsDTO dto) {
+-        try{              
++        try{
+             StringWriter sw = new StringWriter();
+             PrintWriter pw = new PrintWriter(sw);
+             if( dto instanceof Office ){
+@@ -54,7 +54,7 @@ public class XMLv1 implements OutputFormatter {
+             } else {
+                 mar.marshal(dto,pw);
+                 return sw.toString();
+-            } 
++            }
+         } catch( JAXBException jaxb ){
+             String msg = dto != null ?
+                     "Error rendering '" + dto.toString() + "' to XM"
+@@ -62,25 +62,25 @@ public class XMLv1 implements OutputFormatter {
+                     "Null element passed to formatter";
+             logger.log(Level.WARNING, msg, jaxb);
+             throw new InternalServerErrorResponse("Invalid Parameters");
+-        } 
++        }
+     }
+ 
+     @Override
+     @SuppressWarnings("unchecked") // we're ALWAYS checking before conversion in this function
+     public String format(List<? extends CwmsDTO> dtoList) {
+-        try{              
++        try{
+             StringWriter sw = new StringWriter();
+             PrintWriter pw = new PrintWriter(sw);
+ 
+             if( !dtoList.isEmpty() && dtoList.get(0) instanceof Office ){
+                 mar.marshal(new XMLv1Office((List<Office>)dtoList), pw);
+-                return sw.toString();  
+-            }    
++                return sw.toString();
++            }
+         } catch( Exception err ){
+             logger.log(Level.WARNING, "Error doing XML format of office list", err);
+             throw new InternalServerErrorResponse("Invalid Parameters");
+         }
+         throw new UnsupportedOperationException("Unable to process your request");
+     }
+-    
++
+ }
+diff --git a/cwms_radar_api/src/main/resources/formatfactory/office_formats.properties b/cwms_radar_api/src/main/resources/formatfactory/office_formats.properties
+index e3c446ac..72fb50c6 100644
+--- a/cwms_radar_api/src/main/resources/formatfactory/office_formats.properties
++++ b/cwms_radar_api/src/main/resources/formatfactory/office_formats.properties
+@@ -1 +1 @@
+-appliciation/json=cwms.radar.api.formatters.OfficeFormatter;
+\ No newline at end of file
++application/json=cwms.radar.api.formatters.OfficeFormatter;
+diff --git a/cwms_radar_standalone/src/main/java/mil/army/usace/hec/RadarAPI.java b/cwms_radar_standalone/src/main/java/mil/army/usace/hec/RadarAPI.java
+index 7bf4a4f8..731be179 100644
+--- a/cwms_radar_standalone/src/main/java/mil/army/usace/hec/RadarAPI.java
++++ b/cwms_radar_standalone/src/main/java/mil/army/usace/hec/RadarAPI.java
+@@ -94,7 +94,7 @@ public class RadarAPI {
+             logger.log(Level.WARNING,"error on request: " + ctx.req.getRequestURI(),e);                   
+         })
+         .routes( () -> {               
+-            get("/", ctx -> { ctx.result("welcome to the CWMS REST APi").contentType("text/plain");});                          
++            get("/", ctx -> { ctx.result("welcome to the CWMS REST API").contentType("text/plain");});                          
+             crud("/locations/:location_code", new LocationController(metrics));
+             crud("/offices/:office", new OfficeController(metrics));
+             crud("/units/:unit_name", new UnitsController(metrics));
+diff --git a/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java b/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java
+index e5069ff3..815f7a29 100644
+--- a/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java
++++ b/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java
+@@ -89,7 +89,7 @@ public class ApiServlet extends HttpServlet {
+                     e.printStackTrace(System.err);                   
+                 })
+                 .routes( () -> {      
+-                    get("/", ctx -> { ctx.result("welcome to the CWMS REST APi").contentType("text/plain");});              
++                    get("/", ctx -> { ctx.result("welcome to the CWMS REST API").contentType("text/plain");});              
+                     crud("/locations/:location_code", new LocationController(metrics));
+                     crud("/offices/:office", new OfficeController(metrics));
+                     crud("/units/:unit_name", new UnitsController(metrics));
+

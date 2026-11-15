@@ -1,0 +1,14 @@
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java b/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
+index 2b74f7a9..f5c52532 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
+@@ -95,7 +95,7 @@ public class OfficeController implements CrudHandler {
+                 OutputFormatter formatter = FormatFactory.formatFor(contentType);
+                 String result = formatter.format(offices);
+                 if ( result != null ){
+-                    ctx.result(result);
++                    ctx.result(result).contentType(formatter.getContentType());
+                     requestResultSize.update(result.length());
+                 } else {
+                     throw new NotImplementedError("Format " +  contentType + " is not implemented for this end point");
+

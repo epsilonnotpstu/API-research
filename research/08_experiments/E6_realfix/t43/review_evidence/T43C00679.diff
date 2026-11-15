@@ -1,0 +1,102 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/TimeSeries.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/TimeSeries.java
+index 7c4c0a32..0bd65862 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/TimeSeries.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/TimeSeries.java
+@@ -21,7 +21,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+ import com.fasterxml.jackson.annotation.*;
+ import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+ import com.fasterxml.jackson.databind.annotation.JsonNaming;
+ 
+ import cwms.cda.api.enums.VersionType;
+@@ -67,7 +66,7 @@ public class TimeSeries extends CwmsDTOPaginated {
+     VersionType dateVersionType;
+ 
+     @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+-    @JsonFormat(shape = Shape.STRING, pattern = ZONED_DATE_TIME_FORMAT)
++    @JsonFormat(shape = Shape.STRING)
+     @Schema(description = "The version date of the time series trace")
+     ZonedDateTime versionDate;
+ 
+@@ -81,7 +80,7 @@ public class TimeSeries extends CwmsDTOPaginated {
+     Duration interval;
+ 
+     @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+-    @JsonFormat(shape = Shape.STRING, pattern = ZONED_DATE_TIME_FORMAT)
++    @JsonFormat(shape = Shape.STRING)
+     @Schema(
+             accessMode = AccessMode.READ_ONLY,
+             description = "The requested start time of the data, in ISO-8601 format with offset and timezone ('" + ZONED_DATE_TIME_FORMAT + "')"
+@@ -89,7 +88,7 @@ public class TimeSeries extends CwmsDTOPaginated {
+     ZonedDateTime begin;
+ 
+     @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+-    @JsonFormat(shape = Shape.STRING, pattern = ZONED_DATE_TIME_FORMAT)
++    @JsonFormat(shape = Shape.STRING)
+     @Schema(
+             accessMode = AccessMode.READ_ONLY,
+             description = "The requested end time of the data, in ISO-8601 format with offset and timezone ('" + ZONED_DATE_TIME_FORMAT + "')"
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/binarytimeseries/BinaryTimeSeries.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/binarytimeseries/BinaryTimeSeries.java
+index e7e0e6ac..31690925 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/binarytimeseries/BinaryTimeSeries.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/binarytimeseries/BinaryTimeSeries.java
+@@ -1,6 +1,5 @@
+ package cwms.cda.data.dto.binarytimeseries;
+ 
+-import static cwms.cda.data.dto.TimeSeries.ZONED_DATE_TIME_FORMAT;
+ 
+ import com.fasterxml.jackson.annotation.JsonFormat;
+ import com.fasterxml.jackson.annotation.JsonInclude;
+@@ -44,7 +43,7 @@ public class BinaryTimeSeries extends CwmsDTO {
+     VersionType dateVersionType;
+ 
+     @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = ZONED_DATE_TIME_FORMAT)
++    @JsonFormat(shape = JsonFormat.Shape.STRING)
+     @Schema(description = "The version date of the time series trace")
+     ZonedDateTime versionDate;
+ 
+diff --git a/cwms-data-api/src/test/java/cwms/cda/data/dto/TimeSeriesTest.java b/cwms-data-api/src/test/java/cwms/cda/data/dto/TimeSeriesTest.java
+index 68f6dfa5..227e3d60 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/data/dto/TimeSeriesTest.java
++++ b/cwms-data-api/src/test/java/cwms/cda/data/dto/TimeSeriesTest.java
+@@ -1,6 +1,9 @@
+ package cwms.cda.data.dto;
+ 
++import cwms.cda.formatters.json.JsonV2;
+ import java.time.Duration;
++import java.time.Instant;
++import java.time.ZoneId;
+ import java.time.ZonedDateTime;
+ import java.time.format.DateTimeFormatter;
+ 
+@@ -43,6 +46,7 @@ public class TimeSeriesTest
+ 		assertTrue(ts.getEnd().isEqual(ts2.getEnd()));
+ 		assertEquals(ts.getUnits(), ts2.getUnits());
+ 		assertEquals(ts.getValues(), ts2.getValues());
++		assertEquals(ts.getVersionDate().toInstant(), ts2.getVersionDate().toInstant());
+ 		assertNull(ts.getVerticalDatumInfo());
+ 	}
+ 
+@@ -85,8 +89,8 @@ public class TimeSeriesTest
+ 
+ 		ZonedDateTime start = ZonedDateTime.parse("2021-06-21T14:00:00-07:00[PST8PDT]");
+ 		ZonedDateTime end = ZonedDateTime.parse("2021-06-22T14:00:00-07:00[PST8PDT]");
+-
+-		return new TimeSeries(null, -1, 0, tsId, "LRL", start, end, null, Duration.ZERO, vdi, null, null);
++		ZonedDateTime versionDate = Instant.now().atZone(ZoneId.of("UTC"));
++		return new TimeSeries(null, -1, 0, tsId, "LRL", start, end, null, Duration.ZERO, vdi, versionDate, null);
+ 	}
+ 
+ 	VerticalDatumInfo buildVerticalDatumInfo()
+@@ -112,7 +116,7 @@ public class TimeSeriesTest
+ 	@NotNull
+ 	public static ObjectMapper buildObjectMapper()
+ 	{
+-		return buildObjectMapper(new ObjectMapper());
++		return JsonV2.buildObjectMapper();
+ 	}
+ 
+ 	@NotNull
+

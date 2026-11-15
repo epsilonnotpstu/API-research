@@ -1,0 +1,71 @@
+diff --git a/src/main/java/com/epam/ta/reportportal/core/analyzer/impl/AnalyzerServiceImpl.java b/src/main/java/com/epam/ta/reportportal/core/analyzer/impl/AnalyzerServiceImpl.java
+index ce83966e6..0e1fcfca1 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/analyzer/impl/AnalyzerServiceImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/analyzer/impl/AnalyzerServiceImpl.java
+@@ -184,16 +184,18 @@ public class AnalyzerServiceImpl implements AnalyzerService {
+ 			toUpdate.ifPresent(testItem -> {
+ 				LOGGER.info("Analysis has found a match: {}", analyzed);
+ 
+-				TestItemActivityResource before = TO_ACTIVITY_RESOURCE.apply(testItem, projectId);
+-				RelevantItemInfo relevantItemInfo = updateTestItemIssue(projectId, analyzed, testItem);
+-				TestItemActivityResource after = TO_ACTIVITY_RESOURCE.apply(testItem, projectId);
+-
+-				testItemRepository.save(testItem);
+-				messageBus.publishActivity(new ItemIssueTypeDefinedEvent(before, after, analyzerInstance, relevantItemInfo));
+-				ofNullable(after.getTickets()).ifPresent(it -> messageBus.publishActivity(new LinkTicketEvent(before,
+-						after,
+-						analyzerInstance
+-				)));
++				if (!testItem.getItemResults().getIssue().getIssueType().getLocator().equals(analyzed.getLocator())) {
++					TestItemActivityResource before = TO_ACTIVITY_RESOURCE.apply(testItem, projectId);
++					RelevantItemInfo relevantItemInfo = updateTestItemIssue(projectId, analyzed, testItem);
++					TestItemActivityResource after = TO_ACTIVITY_RESOURCE.apply(testItem, projectId);
++
++					testItemRepository.save(testItem);
++					messageBus.publishActivity(new ItemIssueTypeDefinedEvent(before, after, analyzerInstance, relevantItemInfo));
++					ofNullable(after.getTickets()).ifPresent(it -> messageBus.publishActivity(new LinkTicketEvent(before,
++							after,
++							analyzerInstance
++					)));
++				}
+ 			});
+ 			return toUpdate;
+ 		}).filter(Optional::isPresent).map(Optional::get).collect(toList());
+diff --git a/src/main/java/com/epam/ta/reportportal/core/analyzer/strategy/AutoAnalyzedCollector.java b/src/main/java/com/epam/ta/reportportal/core/analyzer/strategy/AutoAnalyzedCollector.java
+index 820450de2..1b8d019c5 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/analyzer/strategy/AutoAnalyzedCollector.java
++++ b/src/main/java/com/epam/ta/reportportal/core/analyzer/strategy/AutoAnalyzedCollector.java
+@@ -51,7 +51,7 @@ public class AutoAnalyzedCollector implements AnalyzeItemsCollector {
+ 
+ 	@Override
+ 	public List<Long> collectItems(Long projectId, Long launchId, String login) {
+-		List<Long> itemIds = testItemRepository.selectIdsByAnalyzedWithLevelGte(false, launchId, LogLevel.ERROR.toInt());
++		List<Long> itemIds = testItemRepository.selectIdsByAnalyzedWithLevelGte(true, launchId, LogLevel.ERROR.toInt());
+ 		logIndexer.cleanIndex(projectId, logRepository.findIdsByTestItemIds(itemIds));
+ 		updateTestItemHandler.resetItemsIssue(itemIds, projectId);
+ 		return itemIds;
+diff --git a/src/main/java/com/epam/ta/reportportal/core/events/activity/PatternMatchedEvent.java b/src/main/java/com/epam/ta/reportportal/core/events/activity/PatternMatchedEvent.java
+index f8fc4f265..299fac19d 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/events/activity/PatternMatchedEvent.java
++++ b/src/main/java/com/epam/ta/reportportal/core/events/activity/PatternMatchedEvent.java
+@@ -1,3 +1,19 @@
++/*
+[REDACTED attribution]
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
+ package com.epam.ta.reportportal.core.events.activity;
+ 
+ import com.epam.ta.reportportal.core.events.ActivityEvent;
+

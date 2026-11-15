@@ -1,0 +1,97 @@
+diff --git a/doc/HTTP_Producer_API.md b/doc/HTTP_Producer_API.md
+index 981004a..4944a19 100644
+--- a/doc/HTTP_Producer_API.md
++++ b/doc/HTTP_Producer_API.md
+@@ -4,7 +4,7 @@
+ 
+ Producer API allows you to send message to a topic, optionally specifying key or partition.
+ 
+-* Endpoint : `http://hostip:port/topic/{topic_name}`
++* Endpoint : `http://hostip:port/topics/{topic_name}`
+ * Request method : `POST`
+ * Path params : `topic_name`
+ * Request body params : `partition [optional]` , `key [optional]` , `value`
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+index 29fe0cf..8fda2fb 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+@@ -179,7 +179,7 @@ public class HttpBridge extends AbstractVerticle {
+                 if (sinkEndpoint != null) {
+                     sinkEndpoint.handle(new HttpEndpoint(httpServerRequest));
+                 } else {
+-                    throw new RuntimeException("no conusmer instance found with this id");
++                    throw new RuntimeException("no consumer instance found with this id");
+                 }
+                 break;
+ 
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+index b6c77b3..4bca7cc 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+@@ -44,7 +44,7 @@ public class HttpSourceBridgeEndpoint extends SourceBridgeEndpoint {
+         //split path to extract params
+         String[] params = httpServerRequest.path().split("/");
+ 
+-        //path is like this : /topic/{topic_name}, topic will be at the last position of param[]
++        //path is like this : /topics/{topic_name}, topic will be at the last position of param[]
+         String topic = params[params.length - 1];
+ 
+         httpServerRequest.bodyHandler(buffer -> {
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/RequestIdentifier.java b/src/main/java/io/strimzi/kafka/bridge/http/RequestIdentifier.java
+index 2563f97..67d07d7 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/RequestIdentifier.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/RequestIdentifier.java
+@@ -35,10 +35,10 @@ public class RequestIdentifier {
+ 
+         switch (params[0]){
+ 
+-            case "topic":
++            case "topics":
+                 //produce records
+                 //request type = POST
+-                //path = topic/{topic-name}
++                //path = topics/{topic-name}
+                 //spliting this path will return an array of length 2
+                 //param[0] = "topic", param[1] = {topic-name}
+                 if (method == HttpMethod.POST && params.length == 2){
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+index 02b20bb..f5f13f0 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+@@ -95,7 +95,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+ 
+         WebClient client = WebClient.create(vertx);
+ 
+-        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topic/" + kafkaTopic)
++        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topics/" + kafkaTopic)
+                 .putHeader("Content-length", String.valueOf(json.toBuffer().length()))
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(json, ar -> {
+@@ -158,7 +158,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+ 
+         WebClient client = WebClient.create(vertx);
+ 
+-        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topic/" + kafkaTopic)
++        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topics/" + kafkaTopic)
+                 .putHeader("Content-length", String.valueOf(json.toBuffer().length()))
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(json, ar -> {
+@@ -223,7 +223,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+ 
+         WebClient client = WebClient.create(vertx);
+ 
+-        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topic/" + kafkaTopic)
++        client.post(BRIDGE_PORT, BRIDGE_HOST, "/topics/" + kafkaTopic)
+                 .putHeader("Content-length", String.valueOf(json.toBuffer().length()))
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(json, ar -> {
+@@ -290,7 +290,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+                 json.put("value", "Periodic message [" + this.count + "]");
+                 json.put("key", "key-" + this.count);
+ 
+-                client.post(BRIDGE_PORT, BRIDGE_HOST, "/topic/" + topic)
++                client.post(BRIDGE_PORT, BRIDGE_HOST, "/topics/" + topic)
+                         .putHeader("Content-length", String.valueOf(json.toBuffer().length()))
+                         .sendJsonObject(json, ar -> { });
+ 
+

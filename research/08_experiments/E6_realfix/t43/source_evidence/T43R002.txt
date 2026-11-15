@@ -1,0 +1,95 @@
+[parent contract] a4ac00adf0b4af2f407b01e58031215482affa7e:src/main/resources/openapi.json:643
+642:                 "description": "Sends one or more records to a given topic, optionally specifying a partition, key, or both.",
+643:                 "operationId": "send",
+644:                 "requestBody": {
+645:                     "content": {
+646:                         "application/vnd.kafka.json.v2+json": {
+647:                             "schema": {
+648:                                 "$ref": "#/components/schemas/ProducerRecordList"
+649:                             }
+650:                         },
+651:                         "application/vnd.kafka.binary.v2+json": {
+652:                             "schema": {
+653:                                 "$ref": "#/components/schemas/ProducerRecordList"
+654:                             }
+655:                         }
+656:                     },
+657:                     "required": true
+658:                 },
+659:                 "parameters": [
+
+[fix contract] afbf0a3692f9af8ea0bae404a182eaaf0d61dd16:src/main/resources/openapi.json:643
+642:                 "description": "Sends one or more records to a given topic, optionally specifying a partition, key, or both.",
+643:                 "operationId": "send",
+644:                 "requestBody": {
+645:                     "content": {
+646:                         "application/vnd.kafka.json.v2+json": {
+647:                             "schema": {
+648:                                 "$ref": "#/components/schemas/ProducerRecordList"
+649:                             }
+650:                         },
+651:                         "application/vnd.kafka.binary.v2+json": {
+652:                             "schema": {
+653:                                 "$ref": "#/components/schemas/ProducerRecordList"
+654:                             }
+655:                         }
+656:                     },
+657:                     "required": true
+658:                 },
+659:                 "parameters": [
+
+[parent route] a4ac00adf0b4af2f407b01e58031215482affa7e:src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:471
+467:         HttpServerRequest httpServerRequest = routingContext.request();
+468:         String contentType = httpServerRequest.getHeader("Content-Type") != null ?
+469:                 httpServerRequest.getHeader("Content-Type") : BridgeContentType.KAFKA_JSON_BINARY;
+470: 
+471:         HttpSourceBridgeEndpoint<byte[], byte[]> source = this.httpBridgeContext.getHttpSourceEndpoints().get(httpServerRequest.connection());
+472: 
+473:         try {
+474:             if (source == null) {
+475:                 source = new HttpSourceBridgeEndpoint<>(this.bridgeConfig, contentTypeToFormat(contentType),
+476:                                                         new ByteArraySerializer(), new ByteArraySerializer());
+477: 
+478:                 source.closeHandler(s -> this.httpBridgeContext.getHttpSourceEndpoints().remove(httpServerRequest.connection()));
+479:                 source.open();
+480:                 this.httpBridgeContext.getHttpSourceEndpoints().put(httpServerRequest.connection(), source);
+481:             }
+482:             source.handle(routingContext);
+483: 
+
+[parent implementation] a4ac00adf0b4af2f407b01e58031215482affa7e:src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java:62
+58:     @Override
+59:     public void open() {
+60:         this.name = this.bridgeConfig.getBridgeID() == null ? "kafka-bridge-producer-" + UUID.randomUUID() : this.bridgeConfig.getBridgeID() + "-" + UUID.randomUUID();
+61:         this.closing = false;
+62:         this.messageConverter = this.buildMessageConverter();
+63:         this.kafkaBridgeProducer.create();
+64:     }
+65: 
+
+[parent implementation] a4ac00adf0b4af2f407b01e58031215482affa7e:src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java:218
+216:     @SuppressWarnings("unchecked")
+217:     private MessageConverter<K, V, byte[], byte[]> buildMessageConverter() {
+218:         switch (this.format) {
+219:             case JSON:
+220:                 return (MessageConverter<K, V, byte[], byte[]>) new HttpJsonMessageConverter();
+221:             case BINARY:
+222:                 return (MessageConverter<K, V, byte[], byte[]>) new HttpBinaryMessageConverter();
+223:         }
+224:         return null;
+225:     }
+226: }
+
+[fix implementation] afbf0a3692f9af8ea0bae404a182eaaf0d61dd16:src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java:109
+108:         try {
+109:             String requestContentType = routingContext.request().getHeader("Content-Type") != null ?
+110:                     routingContext.request().getHeader("Content-Type") : BridgeContentType.KAFKA_JSON_BINARY;
+111:             // create a new message converter only if it's needed because the Content-Type is different from the previous request
+112:             if (!requestContentType.equals(contentType)) {
+113:                 contentType = requestContentType;
+114:                 messageConverter = this.buildMessageConverter(contentType);
+115:             }
+116: 
+117:             if (messageConverter == null) {
+118:                 span.finish(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+119:                 HttpBridgeError error = new HttpBridgeError(

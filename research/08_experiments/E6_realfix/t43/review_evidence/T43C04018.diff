@@ -1,0 +1,154 @@
+diff --git a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml
+index 5e256658a..7c93c3e65 100644
+--- a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml
++++ b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml
+@@ -45,7 +45,7 @@ components:
+     Redirect-Code:
+       required: true
+       description: |
+-        Unique ID.
++        Unique ID acts as a password protecting FinTech requested consent specification
+       example: "99391c7e-ad88-49ec-a2ad-99ddcb1f7721"
+       schema:
+         type: string
+diff --git a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+index 71c5577ec..d19941f81 100644
+--- a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
++++ b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+@@ -2,6 +2,7 @@ package de.adorsys.opba.tppbankingapi.controller;
+ 
+ import de.adorsys.opba.protocol.api.dto.context.UserAgentContext;
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableRequest;
++import de.adorsys.opba.protocol.api.dto.result.body.PaymentProductDetails;
+ import de.adorsys.opba.protocol.facade.dto.result.torest.FacadeResult;
+ import de.adorsys.opba.protocol.facade.services.pis.GetPaymentInformationService;
+ import de.adorsys.opba.protocol.facade.services.pis.GetPaymentStatusService;
+@@ -56,6 +57,7 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+                                 .serviceSessionId(serviceSessionID)
+                                 .build()
+                         )
++                        .paymentProduct(PaymentProductDetails.fromValue(paymentProduct))
+                         .build()
+         ).thenApply((FacadeResult<PaymentInfoBody> result) -> mapper.translate(result, paymentInfoResponseMapper));
+     }
+@@ -82,6 +84,7 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+                                 .serviceSessionId(serviceSessionID)
+                                 .build()
+                         )
++                        .paymentProduct(PaymentProductDetails.fromValue(paymentProduct))
+                         .build()
+         ).thenApply((FacadeResult<PaymentStatusBody> result) -> mapper.translate(result, paymentStatusResponseMapper));
+     }
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java
+index d91661dd5..cb15a633a 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java
+@@ -2,6 +2,7 @@ package de.adorsys.opba.protocol.api.dto.request.payments;
+ 
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableGetter;
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableRequest;
++import de.adorsys.opba.protocol.api.dto.result.body.PaymentProductDetails;
+ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+ import lombok.Getter;
+@@ -23,4 +24,8 @@ public class PaymentInfoRequest implements FacadeServiceableGetter {
+      */
+     private FacadeServiceableRequest facadeServiceable;
+ 
++    /**
++     * type of requested payment
++     */
++    private PaymentProductDetails paymentProduct;
+ }
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java
+index 78e3e8eff..78f5c14ee 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java
+@@ -2,6 +2,7 @@ package de.adorsys.opba.protocol.api.dto.request.payments;
+ 
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableGetter;
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableRequest;
++import de.adorsys.opba.protocol.api.dto.result.body.PaymentProductDetails;
+ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+ import lombok.Getter;
+@@ -22,4 +23,9 @@ public class PaymentStatusRequest implements FacadeServiceableGetter {
+      * The request representation that is being serviced by facade.
+      */
+     private FacadeServiceableRequest facadeServiceable;
++
++    /**
++     * type of requested payment
++     */
++    private PaymentProductDetails paymentProduct;
+ }
+diff --git a/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/AccountInformationResult.java b/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/AccountInformationResult.java
+index 443265da3..2e2f0416d 100644
+--- a/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/AccountInformationResult.java
++++ b/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/AccountInformationResult.java
+@@ -191,7 +191,7 @@ public class AccountInformationResult extends Stage<AccountInformationResult>  {
+                 .extracting(it -> new BigDecimal((String) it))
+                 .usingElementComparator(BIG_DECIMAL_COMPARATOR)
+                 // Looks like returned order by Sandbox is not stable
+-                .containsOnly(
++                .contains(
+                         new BigDecimal("-150.00"),
+                         new BigDecimal("-100.00"),
+                         new BigDecimal("-2300.00"),
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
+index c06db53e7..b5a9cdd47 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
+@@ -48,9 +48,4 @@ public class GlobalConst {
+      * Commonly used keyword for DTO mappers.
+      */
+     public static final String SPRING_KEYWORD = "spring";
+-
+-    /**
+-     * Default payment product for getting payment info or payment status
+-     */
+-    public static final String PAYMENT_PRODUCT_SEPA = "sepa-credit-transfers";
+ }
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+index ec12e2b87..1179fba34 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.util.concurrent.CompletableFuture;
+ 
+-import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.PAYMENT_PRODUCT_SEPA;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+@@ -51,7 +50,7 @@ public class Xs2aGetPaymentInfoEntrypoint implements GetPaymentInfoState {
+         ValidatedPathHeaders<PaymentInfoParameters, PaymentInfoHeaders> params = extractor.forExecution(prepareContext(context));
+ 
+         Response<SinglePaymentInitiationInformationWithStatusResponse> paymentInformation = pis.getSinglePaymentInformation(
+-                PAYMENT_PRODUCT_SEPA,
++                context.getRequest().getPaymentProduct().toString(),
+                 consent.getConsentId(),
+                 params.getHeaders().toHeaders(),
+                 params.getPath().toParameters()
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
+index c2afa9308..a240141d1 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
+@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.util.concurrent.CompletableFuture;
+ 
+-import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.PAYMENT_PRODUCT_SEPA;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+@@ -51,7 +50,7 @@ public class Xs2aGetPaymentStatusEntrypoint implements GetPaymentStatusState {
+         ValidatedPathHeaders<PaymentStateParameters, PaymentStateHeaders> params = extractor.forExecution(prepareContext(context));
+ 
+         Response<PaymentInitiationStatus> paymentStatus = pis.getSinglePaymentInitiationStatus(
+-                PAYMENT_PRODUCT_SEPA,
++                context.getRequest().getPaymentProduct().toString(),
+                 consent.getConsentId(),
+                 params.getHeaders().toHeaders(),
+                 params.getPath().toParameters()
+

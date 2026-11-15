@@ -1,0 +1,86 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/TagEntity.java b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/TagEntity.java
+index 802f91c88..c21b0a545 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/TagEntity.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/TagEntity.java
+@@ -21,6 +21,7 @@ import com.hivemq.adapter.sdk.api.tag.Tag;
+ import com.hivemq.configuration.entity.EntityValidatable;
+ import com.hivemq.configuration.reader.ArbitraryValuesMapAdapter;
+ import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
+ 
+ import javax.xml.bind.ValidationEvent;
+ import javax.xml.bind.annotation.XmlElement;
+@@ -36,8 +37,8 @@ public class TagEntity implements EntityValidatable {
+     @XmlElement(name = "name", required = true)
+     private final @NotNull String name;
+ 
+-    @XmlElement(name = "description", required = true)
+-    private final @NotNull String description;
++    @XmlElement(name = "description")
++    private final @Nullable String description;
+ 
+     @XmlElement(name = "definition")
+     @XmlJavaTypeAdapter(ArbitraryValuesMapAdapter.class)
+@@ -52,7 +53,7 @@ public class TagEntity implements EntityValidatable {
+ 
+     public TagEntity(
+             final @NotNull String name,
+-            final @NotNull String description,
++            final @Nullable String description,
+             final @NotNull Map<String, Object> definition) {
+         this.name = name;
+         this.description = description;
+@@ -63,7 +64,7 @@ public class TagEntity implements EntityValidatable {
+         return definition;
+     }
+ 
+-    public @NotNull String getDescription() {
++    public @Nullable String getDescription() {
+         return description;
+     }
+ 
+@@ -106,6 +107,5 @@ public class TagEntity implements EntityValidatable {
+     @Override
+     public void validate(final @NotNull List<ValidationEvent> validationEvents) {
+         EntityValidatable.notEmpty(validationEvents, name, "tag name");
+-        EntityValidatable.notEmpty(validationEvents, description, "tag description");
+     }
+ }
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/migration/ConfigurationMigrator.java b/hivemq-edge/src/main/java/com/hivemq/configuration/migration/ConfigurationMigrator.java
+index 7640c9d93..58c6c0711 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/migration/ConfigurationMigrator.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/migration/ConfigurationMigrator.java
+@@ -197,7 +197,7 @@ public class ConfigurationMigrator {
+                     .filter(tagName -> !tagNameSet.contains(tagName))
+                     .forEach(tagName -> {
+                         tagNameSet.add(tagName);
+-                        tagEntities.add(new TagEntity(tagName, tagName, Map.of()));
++                        tagEntities.add(new TagEntity(tagName, "", Map.of()));
+                     });
+ 
+             return List.of(new ProtocolAdapterEntity(configTagsTuple.getAdapterId(),
+diff --git a/hivemq-edge/src/test/java/com/hivemq/edge/modules/adapters/simulation/config/legacy/LegacySimulationProtocolAdapterConfigTest.java b/hivemq-edge/src/test/java/com/hivemq/edge/modules/adapters/simulation/config/legacy/LegacySimulationProtocolAdapterConfigTest.java
+index b6ffe7a6a..46bf7bc10 100644
+--- a/hivemq-edge/src/test/java/com/hivemq/edge/modules/adapters/simulation/config/legacy/LegacySimulationProtocolAdapterConfigTest.java
++++ b/hivemq-edge/src/test/java/com/hivemq/edge/modules/adapters/simulation/config/legacy/LegacySimulationProtocolAdapterConfigTest.java
+@@ -46,7 +46,8 @@ class LegacySimulationProtocolAdapterConfigTest {
+             assertThat(cfg.getProtocolAdapterConfig()).hasSize(1).allSatisfy(entity -> {
+                 assertThat(entity.getProtocolId()).isEqualTo("simulation");
+                 assertThat(entity.getAdapterId()).isEqualTo("my-simulation-protocol-adapter");
+-                assertThat(entity.getTags()).hasSize(0);
++                assertThat(entity.getTags()).hasSize(1);
++                assertThat(entity.getTags().get(0).getName()).isEqualTo("ignored");
+                 assertThat(entity.getNorthboundMappingEntities()).hasSize(2).anySatisfy(mapping -> {
+                     assertThat(mapping.getMaxQoS()).isEqualTo(1);
+                     assertThat(mapping.getTagName()).isEqualTo("ignored");
+@@ -78,7 +79,8 @@ class LegacySimulationProtocolAdapterConfigTest {
+             assertThat(cfg.getProtocolAdapterConfig()).hasSize(1).satisfiesExactly(entity -> {
+                 assertThat(entity.getProtocolId()).isEqualTo("simulation");
+                 assertThat(entity.getAdapterId()).isEqualTo("my-simulation-protocol-adapter");
+-                assertThat(entity.getTags()).hasSize(0);
++                assertThat(entity.getTags()).hasSize(1);
++                assertThat(entity.getTags().get(0).getName()).isEqualTo("ignored");
+                 assertThat(entity.getNorthboundMappingEntities()).hasSize(1).anySatisfy(mapping -> {
+                     assertThat(mapping.getMaxQoS()).isEqualTo(0);
+                     assertThat(mapping.getTagName()).isEqualTo("ignored");
+

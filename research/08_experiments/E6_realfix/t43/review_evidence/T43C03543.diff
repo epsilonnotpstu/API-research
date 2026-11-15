@@ -1,0 +1,19 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/reader/ConfigFileReaderWriter.java b/hivemq-edge/src/main/java/com/hivemq/configuration/reader/ConfigFileReaderWriter.java
+index 3e16f9592..ed4454f4f 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/reader/ConfigFileReaderWriter.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/reader/ConfigFileReaderWriter.java
+@@ -141,8 +141,11 @@ public class ConfigFileReaderWriter {
+                     .build()
+                     .toArray(new Class<?>[0]));
+         } catch (final Throwable e) {
+-            log.error("Cannot create the jaxb context:", e);
+-            log.error("argh {}", ((IllegalAnnotationsException) e).getErrors());
++            if (e instanceof IllegalAnnotationsException iae) {
++                log.error("Cannot create the jaxb context: {}", iae.getErrors(), e);
++            } else {
++                log.error("Cannot create the jaxb context", e);
++            }
+             throw new UnrecoverableException(false);
+         }
+     }
+

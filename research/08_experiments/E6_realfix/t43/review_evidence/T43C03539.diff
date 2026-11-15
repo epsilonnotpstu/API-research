@@ -1,0 +1,14 @@
+diff --git a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/NorthboundMappingEntity.java b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/NorthboundMappingEntity.java
+index 2ef660e87..f01e8b480 100644
+--- a/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/NorthboundMappingEntity.java
++++ b/hivemq-edge/src/main/java/com/hivemq/configuration/entity/adapter/NorthboundMappingEntity.java
+@@ -168,7 +168,7 @@ public class NorthboundMappingEntity {
+                 northboundMapping.getIncludeTagNames(),
+                 northboundMapping.getIncludeTimestamp(),
+                 mqttUserPropertyEntities,
+-                northboundMapping.getMessageExpiryInterval());
++                northboundMapping.getMessageExpiryInterval() != null ? northboundMapping.getMessageExpiryInterval() : Long.MAX_VALUE);
+     }
+ 
+     public @NotNull NorthboundMapping toPersistence() {
+

@@ -1,0 +1,174 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/BridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/BridgeEndpoint.java
+index 3fde1c7..3406922 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/BridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/BridgeEndpoint.java
+@@ -13,6 +13,11 @@ import io.vertx.core.Handler;
+  */
+ public interface BridgeEndpoint {
+ 
++    /**
++     * Name of the bridge endpoint
++     */
++    String name();
++
+     /**
+      * Open the bridge endpoint
+      */
+diff --git a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+index 95c36ea..6208f9f 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+@@ -45,6 +45,7 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+ 
+     protected final Logger log = LoggerFactory.getLogger(getClass());
+ 
++    protected String name;
+     protected final EmbeddedFormat format;
+     protected final Deserializer<K> keyDeserializer;
+     protected final Deserializer<V> valueDeserializer;
+@@ -113,6 +114,11 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+         this.valueDeserializer = valueDeserializer;
+     }
+ 
++    @Override
++    public String name() {
++        return this.name;
++    }
++
+     @Override
+     public BridgeEndpoint closeHandler(Handler<BridgeEndpoint> endpointCloseHandler) {
+         this.closeHandler = endpointCloseHandler;
+diff --git a/src/main/java/io/strimzi/kafka/bridge/SourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/SourceBridgeEndpoint.java
+index a6fae4d..6a750c6 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/SourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/SourceBridgeEndpoint.java
+@@ -27,6 +27,7 @@ public abstract class SourceBridgeEndpoint<K, V> implements BridgeEndpoint {
+ 
+     protected final Logger log = LoggerFactory.getLogger(getClass());
+ 
++    protected String name;
+     protected final EmbeddedFormat format;
+     protected final Serializer<K> keySerializer;
+     protected final Serializer<V> valueSerializer;
+@@ -57,6 +58,11 @@ public abstract class SourceBridgeEndpoint<K, V> implements BridgeEndpoint {
+         this.valueSerializer = valueSerializer;
+     }
+ 
++    @Override
++    public String name() {
++        return this.name;
++    }
++
+     @Override
+     public BridgeEndpoint closeHandler(Handler<BridgeEndpoint> endpointCloseHandler) {
+         this.closeHandler = endpointCloseHandler;
+diff --git a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
+index 1d353b3..1e18177 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSinkBridgeEndpoint.java
+@@ -92,6 +92,7 @@ public class AmqpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+             }
+ 
+             this.sender = (ProtonSender) link;
++            this.name = this.sender.getName();
+ 
+             // address is like this : [topic]/group.id/[group.id]
+             String address = this.sender.getRemoteSource().getAddress();
+diff --git a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSourceBridgeEndpoint.java
+index 3b5666d..2f8bc13 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/amqp/AmqpSourceBridgeEndpoint.java
+@@ -79,6 +79,7 @@ public class AmqpSourceBridgeEndpoint<K, V> extends SourceBridgeEndpoint<K, V> {
+         }
+ 
+         ProtonReceiver receiver = (ProtonReceiver) link;
++        this.name = receiver.getName();
+ 
+         // the delivery state is related to the acknowledgement from Apache Kafka
+         receiver.setTarget(receiver.getRemoteTarget())
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+index 58682c2..2414576 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+@@ -183,7 +183,7 @@ public class HttpBridge extends AbstractVerticle {
+         final SinkBridgeEndpoint sink = this.getHttpSinkBridgeEndpoint(format);
+ 
+         sink.closeHandler(s -> {
+-            httpBridgeContext.getHttpSinkEndpoints().remove(sink);
++            httpBridgeContext.getHttpSinkEndpoints().remove(sink.name());
+         });
+ 
+         sink.open();
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+index 7982058..00496a6 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+@@ -304,10 +304,9 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+ 
+                 JsonObject json = bodyAsJson;
+                 // if no name, a random one is assigned
+-                String consumerInstanceId = json.getString("name",
+-                        "kafka-bridge-consumer-" + UUID.randomUUID().toString());
++                this.name = json.getString("name", "kafka-bridge-consumer-" + UUID.randomUUID());
+ 
+-                if (this.httpBridgeContext.getHttpSinkEndpoints().containsKey(consumerInstanceId)) {
++                if (this.httpBridgeContext.getHttpSinkEndpoints().containsKey(this.name)) {
+                     routingContext.response().setStatusMessage("Consumer instance with the specified name already exists.")
+                             .setStatusCode(ErrorCodeEnum.CONSUMER_ALREADY_EXISTS.getValue())
+                             .end();
+@@ -319,7 +318,7 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+                 if (!routingContext.request().path().endsWith("/")) {
+                     requestUri += "/";
+                 }
+-                String consumerBaseUri = requestUri + "instances/" + consumerInstanceId;
++                String consumerBaseUri = requestUri + "instances/" + this.name;
+ 
+                 // get supported consumer configuration parameters
+                 Properties config = new Properties();
+@@ -329,16 +328,16 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+                         json.getString(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, null), config);
+                 addConfigParameter(ConsumerConfig.FETCH_MIN_BYTES_CONFIG,
+                         json.getString(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, null), config);
+-                addConfigParameter(ConsumerConfig.CLIENT_ID_CONFIG, consumerInstanceId, config);
++                addConfigParameter(ConsumerConfig.CLIENT_ID_CONFIG, this.name, config);
+ 
+                 // create the consumer
+                 this.initConsumer(false, config);
+ 
+-                ((Handler<String>) handler).handle(consumerInstanceId);
++                ((Handler<String>) handler).handle(this.name);
+ 
+-                log.info("Created consumer {} in group {}", consumerInstanceId, groupId);
++                log.info("Created consumer {} in group {}", this.name, groupId);
+                 // send consumer instance id(name) and base URI as response
+-                sendConsumerCreationResponse(routingContext.response(), consumerInstanceId, consumerBaseUri);
++                sendConsumerCreationResponse(routingContext.response(), this.name, consumerBaseUri);
+                 break;
+         }
+     }
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+index 036726b..d14c2b2 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java
+@@ -28,6 +28,7 @@ import org.apache.kafka.common.serialization.Serializer;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.UUID;
+ 
+ public class HttpSourceBridgeEndpoint<K, V> extends SourceBridgeEndpoint<K, V> {
+ 
+@@ -41,6 +42,12 @@ public class HttpSourceBridgeEndpoint<K, V> extends SourceBridgeEndpoint<K, V> {
+         this.httpBridgeContext = httpBridgeContext;
+     }
+ 
++    @Override
++    public void open() {
++        this.name = "kafka-bridge-producer-" + UUID.randomUUID();
++        super.open();
++    }
++
+     @Override
+     public void handle(Endpoint<?> endpoint) {
+         RoutingContext routingContext = (RoutingContext) endpoint.get();
+
