@@ -172,7 +172,8 @@
        - তাই phone/address-এর breach এই 500-এর কারণ নয়। কারণটা spec-এর array রূপ আর SUT-এর HAL-এর মধ্যে আগে থেকেই থাকা অমিল, যা baseline-এও array request-এ দেখা যায়। Required edit সেই পথে traffic ঠেলে দিয়েছে।
        - Schemathesis-এর 2xx violation অন্য operation-এ, তাই "একই breach, ভিন্ন status" এমন সরাসরি জোড়া এই corpus-এ নেই।
        - Claude-এর spot-check: s1-এ 392, s3-এ 361টি array-`_links` PUT, সব 500 + HAL message।
-       - ⚠️ Edit-ধরে ablation করা হয়নি।
+       - **Keyword ablation (`STRICT_ABLATION.md`):** required edit সরালে EvoMaster-এর INVALID_ACCEPTED সংকেত 0/3 থেকে 2/3-এ ফেরে; শুধু required রাখলে 0/3।
+       - Schemathesis-এর required-only run-এ 3/3 NEW এসেছে, কিন্তু সব **collateral** 500 (আগে থেকে থাকা HAL defect)। তাই fresh সংকেত kind-নিরপেক্ষভাবে গোনা যায় না।
        - ⚠️ T32-এর আরেকটা পর্যবেক্ষণ: কিছু STRICT edit original pattern-এর সঙ্গে মিলিয়ে অসম্ভব (যেমন phone regex ≥12 char কিন্তু `maxLength=1`)। এর প্রভাব generator-ভেদে আলাদা হতে পারে; causal কারণ যাচাই হয়নি।
      - R1-এর জন্য তাৎপর্য: fresh-only মূল্যায়ন generator-এর পথ এবং SUT-এর আচরণের ওপর নির্ভর করে। Replay mode একই baseline traffic-এ oracle বদলায়, তাই এই নির্ভরতা থেকে মুক্ত।
    - **petstore METHOD_SEM:** EvoMaster 3/3; Schemathesis-এর সংকেত শুধু `REQUEST_UNCHECKABLE`, তাই checkable 0/3।
