@@ -1,0 +1,284 @@
+[
+  {
+    "pointer": "/components/schemas/DeferredResultHandler",
+    "before": {
+      "type": "object"
+    },
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/DeferredResultResponseEntityRegistrationToken",
+    "before": {
+      "type": "object",
+      "properties": {
+        "resultHandler": {
+          "$ref": "#/components/schemas/DeferredResultHandler"
+        },
+        "result": {
+          "type": "object"
+        },
+        "resultInternal": {
+          "type": "boolean",
+          "writeOnly": true
+        },
+        "setOrExpired": {
+          "type": "boolean"
+        },
+        "errorResult": {
+          "type": "boolean",
+          "writeOnly": true
+        }
+      }
+    },
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/DeferredResultResponseEntityTan",
+    "before": {
+      "type": "object",
+      "properties": {
+        "resultHandler": {
+          "$ref": "#/components/schemas/DeferredResultHandler"
+        },
+        "result": {
+          "type": "object"
+        },
+        "resultInternal": {
+          "type": "boolean",
+          "writeOnly": true
+        },
+        "setOrExpired": {
+          "type": "boolean"
+        },
+        "errorResult": {
+          "type": "boolean",
+          "writeOnly": true
+        }
+      }
+    },
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/DeferredResultResponseEntityTestResult",
+    "before": {
+      "type": "object",
+      "properties": {
+        "resultHandler": {
+          "$ref": "#/components/schemas/DeferredResultHandler"
+        },
+        "result": {
+          "type": "object"
+        },
+        "resultInternal": {
+          "type": "boolean",
+          "writeOnly": true
+        },
+        "setOrExpired": {
+          "type": "boolean"
+        },
+        "errorResult": {
+          "type": "boolean",
+          "writeOnly": true
+        }
+      }
+    },
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/RegistrationTokenRequest/properties/keyDob/description",
+    "before": "Only used in conjunction with keyType == GUID. The hashed GUID consists of concat('x', substring(sha256_hex(concat(test-id-uuid, DateOfBirth.format(DDMMYYYY))), 1) - e.g. concat('x', substring(sha256_hex('7bb41672-7de4-44c3-b751-4258e59f3e2508051992')), 1)) --> x3712193bd35d40f03ee497ea7e4ea8278d8fcc8a2287843bb0ab36939d222b4",
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/RegistrationTokenRequest/properties/keyDob/pattern",
+    "before_absent": true,
+    "after": "^[XxA-Fa-f0-9]([A-Fa-f0-9]{63})$"
+  },
+  {
+    "pointer": "/components/schemas/RegistrationTokenRequest/properties/keyDob/required",
+    "before": false,
+    "after_absent": true
+  },
+  {
+    "pointer": "/components/schemas/RegistrationTokenRequest/required",
+    "before_absent": true,
+    "after": [
+      "key",
+      "keyType"
+    ]
+  },
+  {
+    "pointer": "/components/schemas/TestResult",
+    "before_absent": true,
+    "after": {
+      "type": "object",
+      "properties": {
+        "testResult": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sc": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "labId": {
+          "type": "string"
+        },
+        "responsePadding": {
+          "type": "string"
+        }
+      },
+      "description": "The test result model."
+    }
+  },
+  {
+    "pointer": "/info/version",
+    "before": "1.2.0-SNAPSHOT",
+    "after": "1.5.0-SNAPSHOT"
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1registrationToken/post/responses/201/content/application~1json/schema/$ref",
+    "before": "#/components/schemas/DeferredResultResponseEntityRegistrationToken",
+    "after": "#/components/schemas/RegistrationToken"
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1registrationToken/post/responses/405",
+    "before_absent": true,
+    "after": {
+      "description": "Method Not Allowed"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1registrationToken/post/responses/415",
+    "before_absent": true,
+    "after": {
+      "description": "Unsupported Media Type"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan/post/responses/201/content/application~1json/schema/$ref",
+    "before": "#/components/schemas/DeferredResultResponseEntityTan",
+    "after": "#/components/schemas/Tan"
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan/post/responses/405",
+    "before_absent": true,
+    "after": {
+      "description": "Method Not Allowed"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan/post/responses/415",
+    "before_absent": true,
+    "after": {
+      "description": "Unsupported Media Type"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1teletan/post/parameters",
+    "before": [
+      {
+        "name": "Authorization",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/AuthorizationToken"
+        }
+      }
+    ],
+    "after": [
+      {
+        "name": "Authorization",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/AuthorizationToken"
+        }
+      },
+      {
+        "name": "X-CWA-TELETAN-TYPE",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "description": "The TeleTan Type model.",
+          "enum": [
+            "TEST",
+            "EVENT"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1teletan/post/responses/405",
+    "before_absent": true,
+    "after": {
+      "description": "Method Not Allowed"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1teletan/post/responses/415",
+    "before_absent": true,
+    "after": {
+      "description": "Unsupported Media Type"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1verify/post/responses/200/headers",
+    "before_absent": true,
+    "after": {
+      "X-CWA-TELETAN-TYPE": {
+        "description": "Type of the TeleTan (TEST or EVENT)",
+        "style": "simple"
+      }
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1verify/post/responses/405",
+    "before_absent": true,
+    "after": {
+      "description": "Method Not Allowed"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1tan~1verify/post/responses/415",
+    "before_absent": true,
+    "after": {
+      "description": "Unsupported Media Type"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1testresult/post/responses/200/content/application~1json/schema/$ref",
+    "before": "#/components/schemas/DeferredResultResponseEntityTestResult",
+    "after": "#/components/schemas/TestResult"
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1testresult/post/responses/403",
+    "before_absent": true,
+    "after": {
+      "description": "TestResult of dob hash does not equal to TestResult of hash",
+      "content": {
+        "application/json": {
+          "schema": {
+            "$ref": "#/components/schemas/TestResult"
+          }
+        }
+      }
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1testresult/post/responses/405",
+    "before_absent": true,
+    "after": {
+      "description": "Method Not Allowed"
+    }
+  },
+  {
+    "pointer": "/paths/~1version~1v1~1testresult/post/responses/415",
+    "before_absent": true,
+    "after": {
+      "description": "Unsupported Media Type"
+    }
+  }
+]

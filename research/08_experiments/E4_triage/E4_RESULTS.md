@@ -79,3 +79,25 @@ Swapped pairing-এও (F1+D2, F2+D1) একই।
   - Protocol খুঁজতে কয়েকটা অননুমোদিত path-এর অস্তিত্ব পরীক্ষা হয়েছিল, content পড়া হয়নি।
   - F2 আর Z1-এর transcript-এ market-এর upstream demo credential দেখা গেছে। তাই সেই log commit হয়নি, gitignore করা।
   - কেউ নিষিদ্ধ file-এর content পড়েছে বলে জানায়নি।
+
+## সংযোজন: future-version oracle (T41; আসল developer-এর fix-এর দিক)
+**পদ্ধতি:** EMB snapshot-কে upstream commit-এর সঙ্গে মেলানো হয়েছে (anchor, blob-hash দিয়ে):
+- petstore 24/27;
+- cwa 67/71;
+- market 135/139।
+
+তারপর anchor-এর পরের history-তে খোঁজা হয়েছে, mismatch-টা spec বদলে মিটেছে নাকি code বদলে। Scout-এর upstream পাওয়া যায়নি, তাই বাদ। Item 62টি।
+- **ফলন খুব কম:** 3/62-এ fix-এর দিক পাওয়া গেছে, তিনটিই spec_changed_to_match_code।
+  - বাকি 31টি HEAD পর্যন্ত অপরিবর্তিত, 27টি অস্পষ্ট, 1টি অসম্পর্কিত পরিবর্তন।
+  - Code_changed বা both কোনোটাই পাওয়া যায়নি।
+  - অর্থাৎ বেশিরভাগ spec–code অমিল developer কখনো সারায়নি। ⚠️ Survivorship আর right censoring-এর কারণে "অপরিবর্তিত" থেকে কোনো label অনুমান করা যায় না।
+- **Final label-এর সঙ্গে মিল 2/3:** P015 SPEC আর C002 SPEC_PARTIAL মিলেছে। C002-এ evidence partial, regenerated spec।
+  - **অমিল: P014।** Final IMPL, কিন্তু developer commit `9fb97b1` (2025-08-04, "Change status/tag to required param for findbystatus/findbytag endpoints") spec-এ `required:false→true` করেছে। Handler-এর guard অপরিবর্তিত। Confidence 3।
+- **Guard-only প্যাটার্নের তাৎপর্য:**
+  - P014/P015-এর guard (optional parameter অনুপস্থিত হলে 400) developer-এর কাছে **ইচ্ছাকৃত** ছিল, তাই তারা spec সারিয়েছে।
+  - E5-এর injected guard (reject-valid) ছিল **bug**।
+  - সুতরাং guard একা ambiguous, এক প্রেক্ষাপটে intended, অন্য প্রেক্ষাপটে bug। এতে codebook v0.6-এর "guard-only → UNDECIDABLE" নিয়ম সমর্থিত হয়।
+  - কিন্তু developer-এর পরের commit একটা শক্তিশালী স্বাধীন প্রমাণ (E-HISTORY/E-DEV), যা blind package-এ ছিল না।
+  - P019/P021/P043 (একই প্যাটার্ন) upstream-এ অপরিবর্তিত, তাই UNDECIDABLE বহাল।
+- **E6-এর জন্য:** এই oracle একা মূল্যায়নের ভিত্তি হতে পারবে না, কারণ ফলন কম আর শুধু একটা দিকই এসেছে। তবে আসল intent-প্রমাণ হিসেবে পরিপূরক কাজে লাগে।
+- উৎস: `future_oracle/future_oracle.csv`, `anchors.json`, `agreement.csv`; `09_collab/reports/T41_report.md`।

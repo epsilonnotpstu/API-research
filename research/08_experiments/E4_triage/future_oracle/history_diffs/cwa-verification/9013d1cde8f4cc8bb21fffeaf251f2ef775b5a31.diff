@@ -1,0 +1,25 @@
+diff --git a/src/main/resources/db/changelog.yml b/src/main/resources/db/changelog.yml
+index b0c6142..c2784f6 100644
+--- a/src/main/resources/db/changelog.yml
++++ b/src/main/resources/db/changelog.yml
+@@ -14,3 +14,6 @@ databaseChangeLog:
+   - include:
+       file: changelog/v003-add-unique-hashed-guid.yml
+       relativeToChangelogFile: true
++  - include:
++      file: changelog/v004-add-unique-registration-token-teletan.yml
++      relativeToChangelogFile: true
+diff --git a/src/main/resources/db/changelog/v004-add-unique-registration-token-teletan.yml b/src/main/resources/db/changelog/v004-add-unique-registration-token-teletan.yml
+new file mode 100644
+index 0000000..37d2b61
+--- /dev/null
++++ b/src/main/resources/db/changelog/v004-add-unique-registration-token-teletan.yml
+@@ -0,0 +1,8 @@
++databaseChangeLog:
++  - changeSet:
++      id: add-unique-registration-token-teletan
++      author: f11h
++      changes:
++        - addUniqueConstraint:
++            tableName: app_session
++            columnNames: registration_token_hash, tele_tan_hash

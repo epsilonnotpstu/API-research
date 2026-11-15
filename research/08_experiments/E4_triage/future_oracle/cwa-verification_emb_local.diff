@@ -1,0 +1,195 @@
+--- a02110fb8dd960a66f4d359d99c62454b8bc0b79:pom.xml
++++ EMB:pom.xml
+@@ -271,12 +271,17 @@
+       <plugin>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-maven-plugin</artifactId>
++        <version>${spring.boot.version}</version>
+         <executions>
+           <execution>
+             <goals>
+               <goal>repackage</goal>
+               <goal>build-info</goal>
+             </goals>
++            <configuration>
++              <finalName>cwa-verification</finalName>
++              <classifier>sut</classifier>
++            </configuration>
+           </execution>
+         </executions>
+       </plugin>
+--- a02110fb8dd960a66f4d359d99c62454b8bc0b79:src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java
++++ EMB:src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java
+@@ -37,7 +37,8 @@
+ @RestController
+ @RequestMapping("/version/v1")
+ @Validated
+-@Profile("internal")
++//@Profile("internal")
++@Profile("REMOVED_DUE_TO_CONFLICTS")
+ public class InternalTestStateController {
+ 
+   /**
+--- a02110fb8dd960a66f4d359d99c62454b8bc0b79:src/main/resources/db/changelog/v000-create-app-session-table.yml
++++ EMB:src/main/resources/db/changelog/v000-create-app-session-table.yml
+@@ -1,80 +1,80 @@
+-databaseChangeLog:
+-  - changeSet:
+-      id: create-app-session-table
+-      author: jhagestedt
+-      changes:
+-        - createTable:
+-            tableName: app_session
+-            columns:
+-              - column:
+-                  name: id
+-                  type: bigint
+-                  constraints:
+-                    unique: true
+-                    nullable: false
+-                    primaryKey: true
+-              - column:
+-                  name: version
+-                  type: bigint
+-                  constraints:
+-                    nullable: false
+-              - column:
+-                  name: created_at
+-                  type: datetime
+-                  constraints:
+-                    nullable: false
+-              - column:
+-                  name: updated_at
+-                  type: datetime
+-                  constraints:
+-                    nullable: false
+-              - column:
+-                  name: hashed_guid
+-                  type: varchar(64)
+-              - column:
+-                  name: registration_token_hash
+-                  type: varchar(64)
+-              - column:
+-                  name: tele_tan_hash
+-                  type: varchar(64)
+-              - column:
+-                  name: tan_counter
+-                  type: int
+-              - column:
+-                  name: sot
+-                  type: varchar(255)
+-  - changeSet:
+-      id: create-app-session-table-increment
+-      author: jhagestedt
+-      changes:
+-        - addAutoIncrement:
+-            tableName: app_session
+-            columnName: id
+-            columnDataType: bigint
+-            startWith: 1
+-            incrementBy: 1
+-  - changeSet:
+-      id: create-app-session-table-indexes
+-      author: jhagestedt
+-      changes:
+-        - createIndex:
+-            tableName: app_session
+-            indexName: idx_app_session_guid_hash
+-            columns:
+-              - column:
+-                  name: hashed_guid
+-                  type: varchar(64)
+-        - createIndex:
+-            tableName: app_session
+-            indexName: idx_app_session_registration_token_hash
+-            columns:
+-              - column:
+-                  name: registration_token_hash
+-                  type: varchar(64)
+-        - createIndex:
+-            tableName: app_session
+-            indexName: idx_app_session_tele_tan_hash
+-            columns:
+-              - column:
+-                  name: tele_tan_hash
+-                  type: varchar(64)
++databaseChangeLog:
++  - changeSet:
++      id: create-app-session-table
++      author: jhagestedt
++      changes:
++        - createTable:
++            tableName: app_session
++            columns:
++              - column:
++                  name: id
++                  type: bigint
++                  constraints:
++                    unique: true
++                    nullable: false
++                    primaryKey: true
++              - column:
++                  name: version
++                  type: bigint
++                  constraints:
++                    nullable: false
++              - column:
++                  name: created_at
++                  type: datetime
++                  constraints:
++                    nullable: false
++              - column:
++                  name: updated_at
++                  type: datetime
++                  constraints:
++                    nullable: false
++              - column:
++                  name: hashed_guid
++                  type: varchar(64)
++              - column:
++                  name: registration_token_hash
++                  type: varchar(64)
++              - column:
++                  name: tele_tan_hash
++                  type: varchar(64)
++              - column:
++                  name: tan_counter
++                  type: int
++              - column:
++                  name: sot
++                  type: varchar(255)
++  - changeSet:
++      id: create-app-session-table-increment
++      author: jhagestedt
++      changes:
++        - addAutoIncrement:
++            tableName: app_session
++            columnName: id
++            columnDataType: bigint
++            startWith: 1
++            incrementBy: 1
++  - changeSet:
++      id: create-app-session-table-indexes
++      author: jhagestedt
++      changes:
++        - createIndex:
++            tableName: app_session
++            indexName: idx_app_session_guid_hash
++            columns:
++              - column:
++                  name: hashed_guid
++                  type: varchar(64)
++        - createIndex:
++            tableName: app_session
++            indexName: idx_app_session_registration_token_hash
++            columns:
++              - column:
++                  name: registration_token_hash
++                  type: varchar(64)
++        - createIndex:
++            tableName: app_session
++            indexName: idx_app_session_tele_tan_hash
++            columns:
++              - column:
++                  name: tele_tan_hash
++                  type: varchar(64)
