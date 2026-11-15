@@ -1,0 +1,110 @@
+{
+  "item_id": "K02",
+  "proposition": "PUT /api/secrets/{id}: contract says no request body is required by the PUT operation; implementation does require a Secret request body",
+  "target": {
+    "side": "request",
+    "method": "PUT",
+    "path": "/api/secrets/{id}",
+    "scenario": "request body omitted",
+    "field": "Secret request body",
+    "direction": "contract omission versus mandatory binding"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a)-(c): explicit body binding conflicts with absent contract body; tests/docs may establish intent."
+  },
+  "start_time": "2026-11-15T11:27:55.246881+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K02/source/webapp/src/main/java/io/github/microcks/web/SecretController.java:47,84-87",
+      "disposition": "context",
+      "reason": "Class prefix /api resolves route; mandatory Spring body binding."
+    },
+    {
+      "category": "E-CONSIST",
+      "locator": "K02/source/webapp/src/main/webapp/src/app/services/secrets.service.ts:27,49-50",
+      "disposition": "context",
+      "reason": "Independent client always sends Secret, but success use does not establish behavior for absent body.",
+      "checklist": {
+        "a": false,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-TEST/E-DOC",
+      "scope": "K02/source",
+      "queries": [
+        "/secrets",
+        "saveSecret",
+        "SecretController",
+        "UpdateSecret",
+        "secret"
+      ],
+      "disposition": "reject",
+      "reason": "No matching test or normative omitted-body documentation found; HTML admin form is success use only."
+    }
+  ],
+  "decision": {
+    "item_id": "K02",
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K02/source/webapp/src/main/java/io/github/microcks/web/SecretController.java:85;K02/source/api/microcks-openapi-v1.10.yaml:394#/paths/~1secrets~1{id}/put;K02/source/webapp/src/main/webapp/src/app/services/secrets.service.ts:49",
+    "both_candidate": true,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "PUT omits requestBody while binding requires Secret. The client supplies a body but does not establish omitted-body policy; no independent scenario-specific intent evidence resolves which artifact is wrong.",
+    "details": "Tool exit 2: YAML flow values unsupported. Full operation manually read at contract lines 394-405 (no requestBody). Package-wide Java/TypeScript and prose/HTML targeted fallback resolves route and retrieval coverage; no unresolved readable relevant file. Raw stdout empty, raw verdict NA, manual search complete. No inference of intent from evidence absence."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K02/source",
+      "K02/source/api/microcks-openapi-v1.10.yaml",
+      "--method",
+      "PUT",
+      "--path",
+      "/api/secrets/{id}",
+      "--json",
+      "--status",
+      "400",
+      "--field",
+      "Secret"
+    ],
+    "stdout": "search_G1/K02.json",
+    "stderr": "search_G1/K02.stderr",
+    "exit_code_file": "search_G1/K02.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success.",
+    "status_argument_note": "400 was an inferred missing-body binding status rather than an observed exchange; parser failed before any status-based verdict."
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "item_id": "K08",
+  "proposition": "GET /v1/tally/products/{product_id}/{metric_id}: contract says granularity is a listed enum and bad requests receive 400; implementation does throw IllegalArgumentException when enum conversion cannot match the query value.",
+  "target": {
+    "side": "request/response",
+    "method": "GET",
+    "path": "/v1/tally/products/{product_id}/{metric_id}",
+    "scenario": "unrecognized granularity query value",
+    "field": "granularity",
+    "direction": "enum conversion throws versus documented bad-request 400"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(b),(c): first verify exception mapper; conversion exception alone is not proof of a crash or violation."
+  },
+  "start_time": "2026-11-15T11:30:27.335300+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K08/source/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:68-84",
+      "disposition": "context",
+      "reason": "Explicit rejection happens during query conversion; no direct handler 500 demonstrated."
+    },
+    {
+      "category": "HANDLER",
+      "locator": "K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:30-44;K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/WebApplicationExceptionMapper.java:38-50",
+      "disposition": "context",
+      "reason": "Raw unhandled Throwable yields 500; HTTP wrapper retains status. Framework binding code is not in snapshot; do not assume raw exception reaches default mapper."
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K08/source/src/test/java/org/candlepin/subscriptions/db/model/GranularityTest.java:40;K08/source/src/test/java/org/candlepin/subscriptions/resource/api/v1/TallyResourceTest.java:822",
+      "disposition": "reject",
+      "reason": "DB enum throw assertion is a different conversion layer; tally BadRequest tests concern billing-category combinations, not invalid query strings.",
+      "checklist": {
+        "a": true,
+        "b": false,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-DOC/E-CONSIST",
+      "scope": "K08/source",
+      "queries": [
+        "EnumParamConverter",
+        "INVALID_GRANULARITY",
+        "invalid.*granularity",
+        "granularity.*invalid"
+      ],
+      "disposition": "context",
+      "reason": "No independent target-branch intent evidence found in prose/tests. Separate incompatible-product guard is not unmatched-string scenario."
+    }
+  ],
+  "decision": {
+    "item_id": "K08",
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K08/source/api/rhsm-subscriptions-api-v1-spec.yaml:125#/paths/~1v1~1tally~1products~1{product_id}~1{metric_id};K08/source/api/rhsm-subscriptions-api-v1-spec.yaml:467#/components/schemas/GranularityType;K08/source/spec/error-responses.yaml:10#/$defs/BadRequest;K08/source/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:82;K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/WebApplicationExceptionMapper.java:45",
+    "both_candidate": true,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The converter rejects unknown enum values, but throwing IllegalArgumentException does not establish the HTTP result. Local tests/docs do not resolve this query-binding branch or demonstrate a contract violation; intent attribution remains unsupported.",
+    "details": "Tool exit 2 YAML flow parser failure; raw verdict NA. Manually inspected path, required query enum, response reference and error-responses.yaml, conversion, mappers, targeted package tests and prose. Retrieval coverage repaired manually; HTTP outcome remains a static-evidence limitation, not an asserted runtime 5xx."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K08/source",
+      "K08/source/api/rhsm-subscriptions-api-v1-spec.yaml",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/tally/products/{product_id}/{metric_id}",
+      "--json",
+      "--field",
+      "granularity"
+    ],
+    "stdout": "search_G1/K08.json",
+    "stderr": "search_G1/K08.stderr",
+    "exit_code_file": "search_G1/K08.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

@@ -1,0 +1,2705 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/v1/payments"
+  },
+  "observed_status": 201,
+  "field": "payment_id",
+  "spec": {
+    "file": "K09/source/swagger/swagger.json",
+    "path": "/v1/payments",
+    "statuses": [
+      "201",
+      "400",
+      "401",
+      "422",
+      "429",
+      "500"
+    ],
+    "field_policy": [],
+    "field": "payment_id",
+    "locator": "#/paths/~1v1~1payments/post"
+  },
+  "code_field_behavior": [
+    "present"
+  ],
+  "independent_evidence": "conflicting",
+  "evidence_types_found": [
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/uk/gov/pay/api/model/Payment.java:18",
+      "file": "src/main/java/uk/gov/pay/api/model/Payment.java",
+      "line": 18,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; response DTO link and serialization are lexical inferences",
+      "field": "payment_id",
+      "field_behavior": "present",
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:244",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 244,
+      "snippet": "@ApiParam(value = \"requestPayload\", required = true) ValidCreatePaymentRequest validCreatePaymentRequest) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/v1/payments",
+      "methods": [
+        "POST"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/it/CachingAuthenticatorTest.java:86",
+      "file": "src/test/java/uk/gov/pay/api/it/CachingAuthenticatorTest.java",
+      "line": 86,
+      "snippet": ".statusCode(200)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/it/GetDirectDebitEventsTest.java:73",
+      "file": "src/test/java/uk/gov/pay/api/it/GetDirectDebitEventsTest.java",
+      "line": 73,
+      "snippet": ".body(\"results[0].payment_id\", is(\"4\"))",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "payment_id",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/it/PaymentResourceSearchITest.java:599",
+      "file": "src/test/java/uk/gov/pay/api/it/PaymentResourceSearchITest.java",
+      "line": 599,
+      "snippet": ".statusCode(200)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java:82",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 82,
+      "snippet": ".assertThat(\"$.results[0].payment_id\", is(extChargeId))",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "payment_id",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java:92",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 92,
+      "snippet": ".assertThat(\"$.results[1].payment_id\", is(extChargeId))",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "payment_id",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java:135",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 135,
+      "snippet": ".assertThat(\"$.results[0].payment_id\", is(extChargeId))",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "payment_id",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java:145",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 145,
+      "snippet": ".assertThat(\"$.results[1].payment_id\", is(extChargeId))",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "payment_id",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "literal",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:51",
+      "file": "README.md",
+      "line": 51,
+      "snippet": "- [API Reference](https://gds-payments.gelato.io/reference/api/v1)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:60",
+      "file": "README.md",
+      "line": 60,
+      "snippet": "|[`/v1/payments`](docs/api_specification.md#post-v1payments)                      | POST   |  creates a payment                 |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:61",
+      "file": "README.md",
+      "line": 61,
+      "snippet": "|[`/v1/payments/{paymentId}`](docs/api_specification.md#get-v1paymentspaymentid)  | GET    |  returns a payment by ID           |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:62",
+      "file": "README.md",
+      "line": 62,
+      "snippet": "|[`/v1/payments/{paymentId}/cancel`](docs/api_specification.md#post-v1paymentspaymentidcancel)  | POST   |  cancels a payment |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:63",
+      "file": "README.md",
+      "line": 63,
+      "snippet": "|[`/v1/payments/{paymentId}/events`](docs/api_specification.md#get-v1paymentspaymentidevents)  | GET    |  returns all audit events for the payment referred by ",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:64",
+      "file": "README.md",
+      "line": 64,
+      "snippet": "|[`/v1/payments`](docs/api_specification.md#get-v1payments)  | GET    |  search/filter payments           |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:65",
+      "file": "README.md",
+      "line": 65,
+      "snippet": "|[`/v1/payments/{paymentId}/refunds`](docs/api_specification.md#get-v1paymentspaymentidrefunds)| GET   |  returns a list of refunds for the payment|",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:66",
+      "file": "README.md",
+      "line": 66,
+      "snippet": "|[`/v1/payments/{paymentId}/refunds`](docs/api_specification.md#post-v1paymentspaymentidrefunds)| POST |  creates a new refund for the payment     |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:67",
+      "file": "README.md",
+      "line": 67,
+      "snippet": "|[`/v1/payments/{paymentId}/refunds/{refundId}`](docs/api_specification.md#get-v1paymentspaymentidrefundsrefundid)| GET | returns a refund by ID   |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:3",
+      "file": "docs/api_specification.md",
+      "line": 3,
+      "snippet": "## POST /v1/payments",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:10",
+      "file": "docs/api_specification.md",
+      "line": 10,
+      "snippet": "POST /v1/payments",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:37",
+      "file": "docs/api_specification.md",
+      "line": 37,
+      "snippet": "HTTP/1.1 201 Created",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:38",
+      "file": "docs/api_specification.md",
+      "line": 38,
+      "snippet": "Location: https://publicapi.example.com/v1/payments/ab2341da231434",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:44",
+      "file": "docs/api_specification.md",
+      "line": 44,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:60",
+      "file": "docs/api_specification.md",
+      "line": 60,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/events\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:64",
+      "file": "docs/api_specification.md",
+      "line": 64,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/refunds\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:70",
+      "file": "docs/api_specification.md",
+      "line": 70,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/cancel\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:74",
+      "file": "docs/api_specification.md",
+      "line": 74,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:99",
+      "file": "docs/api_specification.md",
+      "line": 99,
+      "snippet": "HTTP/1.1 201 Created",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:100",
+      "file": "docs/api_specification.md",
+      "line": 100,
+      "snippet": "Location: https://publicapi.example.com/v1/payments/ab2341da231434",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:106",
+      "file": "docs/api_specification.md",
+      "line": 106,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:122",
+      "file": "docs/api_specification.md",
+      "line": 122,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:136",
+      "file": "docs/api_specification.md",
+      "line": 136,
+      "snippet": "| `payment_id`           | The ID of the created payment             |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:239",
+      "file": "docs/api_specification.md",
+      "line": 239,
+      "snippet": "## GET /v1/payments/{paymentId}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:246",
+      "file": "docs/api_specification.md",
+      "line": 246,
+      "snippet": "GET /v1/payments/ab2341da231434",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:254",
+      "file": "docs/api_specification.md",
+      "line": 254,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:260",
+      "file": "docs/api_specification.md",
+      "line": 260,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:274",
+      "file": "docs/api_specification.md",
+      "line": 274,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/events\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:278",
+      "file": "docs/api_specification.md",
+      "line": 278,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/refunds\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:284",
+      "file": "docs/api_specification.md",
+      "line": 284,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/cancel\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:288",
+      "file": "docs/api_specification.md",
+      "line": 288,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:327",
+      "file": "docs/api_specification.md",
+      "line": 327,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:333",
+      "file": "docs/api_specification.md",
+      "line": 333,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:347",
+      "file": "docs/api_specification.md",
+      "line": 347,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:400",
+      "file": "docs/api_specification.md",
+      "line": 400,
+      "snippet": "| `P0200`            | Connector response was 404 Not Found             |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:405",
+      "file": "docs/api_specification.md",
+      "line": 405,
+      "snippet": "## GET /v1/payments/{paymentId}/events",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:412",
+      "file": "docs/api_specification.md",
+      "line": 412,
+      "snippet": "GET /v1/payments/ab2341da231434/events",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:419",
+      "file": "docs/api_specification.md",
+      "line": 419,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:424",
+      "file": "docs/api_specification.md",
+      "line": 424,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:430",
+      "file": "docs/api_specification.md",
+      "line": 430,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:435",
+      "file": "docs/api_specification.md",
+      "line": 435,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:441",
+      "file": "docs/api_specification.md",
+      "line": 441,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:446",
+      "file": "docs/api_specification.md",
+      "line": 446,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:452",
+      "file": "docs/api_specification.md",
+      "line": 452,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:459",
+      "file": "docs/api_specification.md",
+      "line": 459,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:463",
+      "file": "docs/api_specification.md",
+      "line": 463,
+      "snippet": "\"payment_id\": \"ab2341da231434\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:508",
+      "file": "docs/api_specification.md",
+      "line": 508,
+      "snippet": "| `P0300`            | Connector response was 404 Not Found             |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:512",
+      "file": "docs/api_specification.md",
+      "line": 512,
+      "snippet": "## GET /v1/payments/{paymentId}/refunds",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:519",
+      "file": "docs/api_specification.md",
+      "line": 519,
+      "snippet": "GET /v1/payments/ab2341da231434/refunds",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:526",
+      "file": "docs/api_specification.md",
+      "line": 526,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:530",
+      "file": "docs/api_specification.md",
+      "line": 530,
+      "snippet": "\"payment_id\": \"ab2341da231434\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:533",
+      "file": "docs/api_specification.md",
+      "line": 533,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434/refunds\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:536",
+      "file": "docs/api_specification.md",
+      "line": 536,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/ab2341da231434\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:544",
+      "file": "docs/api_specification.md",
+      "line": 544,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123/refunds/xyz123\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:547",
+      "file": "docs/api_specification.md",
+      "line": 547,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:558",
+      "file": "docs/api_specification.md",
+      "line": 558,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123/refunds/xyz124\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:561",
+      "file": "docs/api_specification.md",
+      "line": 561,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:577",
+      "file": "docs/api_specification.md",
+      "line": 577,
+      "snippet": "| `payment_id`           | The ID of the created payment             |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:604",
+      "file": "docs/api_specification.md",
+      "line": 604,
+      "snippet": "## GET /v1/payments/{paymentId}/refunds/{refundId}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:611",
+      "file": "docs/api_specification.md",
+      "line": 611,
+      "snippet": "GET /v1/payments/ab2341da231434/refunds/xyz124",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:618",
+      "file": "docs/api_specification.md",
+      "line": 618,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:628",
+      "file": "docs/api_specification.md",
+      "line": 628,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123/refunds/xyz124\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:631",
+      "file": "docs/api_specification.md",
+      "line": 631,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:670",
+      "file": "docs/api_specification.md",
+      "line": 670,
+      "snippet": "## POST /v1/payments/{paymentId}/refunds",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:677",
+      "file": "docs/api_specification.md",
+      "line": 677,
+      "snippet": "POST /v1/payments/ab2341da231434/refunds",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:697",
+      "file": "docs/api_specification.md",
+      "line": 697,
+      "snippet": "HTTP/1.1 200 OK",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:703",
+      "file": "docs/api_specification.md",
+      "line": 703,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123/refunds/xyz123\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:708",
+      "file": "docs/api_specification.md",
+      "line": 708,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/abc123\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:762",
+      "file": "docs/api_specification.md",
+      "line": 762,
+      "snippet": "## POST /v1/payments/{paymentId}/cancel",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:775",
+      "file": "docs/api_specification.md",
+      "line": 775,
+      "snippet": "POST /v1/payments/ab2341da231434/cancel",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:782",
+      "file": "docs/api_specification.md",
+      "line": 782,
+      "snippet": "HTTP/1.1 204 No Content",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        204
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:844",
+      "file": "docs/api_specification.md",
+      "line": 844,
+      "snippet": "| `P0500`            | Connector response was 404 Not Found             |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:845",
+      "file": "docs/api_specification.md",
+      "line": 845,
+      "snippet": "| `P0501`            | Connector response was 400 Bad Request           |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        400
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:849",
+      "file": "docs/api_specification.md",
+      "line": 849,
+      "snippet": "## GET /v1/payments",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:856",
+      "file": "docs/api_specification.md",
+      "line": 856,
+      "snippet": "GET /v1/payments",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:892",
+      "file": "docs/api_specification.md",
+      "line": 892,
+      "snippet": "\"payment_id\": \"4hn0c8bbtfbnp5tmite2274h5c\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:930",
+      "file": "docs/api_specification.md",
+      "line": 930,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/4hn0c8bbtfbnp5tmite2274h5c\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:934",
+      "file": "docs/api_specification.md",
+      "line": 934,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/4hn0c8bbtfbnp5tmite2274h5c/cancel\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:938",
+      "file": "docs/api_specification.md",
+      "line": 938,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/4hn0c8bbtfbnp5tmite2274h5c/events\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:942",
+      "file": "docs/api_specification.md",
+      "line": 942,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/br0ih3laeacuf3845j4q77d11p/refunds\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:948",
+      "file": "docs/api_specification.md",
+      "line": 948,
+      "snippet": "\"payment_id\": \"am6f5d1583563deb7ss5obju2\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:986",
+      "file": "docs/api_specification.md",
+      "line": 986,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/am6f5d1583563deb7ss5obju2\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:990",
+      "file": "docs/api_specification.md",
+      "line": 990,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/am6f5d1583563deb7ss5obju2/cancel\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:994",
+      "file": "docs/api_specification.md",
+      "line": 994,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/am6f5d1583563deb7ss5obju2/events\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:998",
+      "file": "docs/api_specification.md",
+      "line": 998,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/br0ih3laeacuf3845j4q77d11p/refunds\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1006",
+      "file": "docs/api_specification.md",
+      "line": 1006,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?page=3&display_size=2\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1009",
+      "file": "docs/api_specification.md",
+      "line": 1009,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?page=2&display_size=2\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1012",
+      "file": "docs/api_specification.md",
+      "line": 1012,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?page=1&display_size=2\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1015",
+      "file": "docs/api_specification.md",
+      "line": 1015,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?page=3&display_size=2\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1018",
+      "file": "docs/api_specification.md",
+      "line": 1018,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?page=1&display_size=2\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1032",
+      "file": "docs/api_specification.md",
+      "line": 1032,
+      "snippet": "| `results[i].payment_id`              | Yes            | The unique identifier for this payment                            |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1088",
+      "file": "docs/api_specification.md",
+      "line": 1088,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/t9037r9pfla4q0cao1mq1ad3a7\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1096",
+      "file": "docs/api_specification.md",
+      "line": 1096,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?&page_number=3&display_size=100\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1099",
+      "file": "docs/api_specification.md",
+      "line": 1099,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?&page_number=2&display_size=100\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1102",
+      "file": "docs/api_specification.md",
+      "line": 1102,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?&page_number=1&display_size=100\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1105",
+      "file": "docs/api_specification.md",
+      "line": 1105,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?&page_number=3&display_size=100\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1108",
+      "file": "docs/api_specification.md",
+      "line": 1108,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments?&page_number=1&display_size=100\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1306",
+      "file": "docs/api_specification.md",
+      "line": 1306,
+      "snippet": "\"payment_id\": \"upd77pildong98a3cqqa6d8cso\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1311",
+      "file": "docs/api_specification.md",
+      "line": 1311,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/upd77pildong98a3cqqa6d8cso/refunds/quj60d2va9g106s3c6375flnt3\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1315",
+      "file": "docs/api_specification.md",
+      "line": 1315,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/upd77pildong98a3cqqa6d8cso\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1323",
+      "file": "docs/api_specification.md",
+      "line": 1323,
+      "snippet": "\"payment_id\": \"5hd66phb4r3tud6q2i96g7h4mb\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1332",
+      "file": "docs/api_specification.md",
+      "line": 1332,
+      "snippet": "\"href\": \"https://publicapi.example.com/v1/payments/5hd66phb4r3tud6q2i96g7h4mb\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/api_specification.md:1366",
+      "file": "docs/api_specification.md",
+      "line": 1366,
+      "snippet": "| `results[i].payment_id`              | Yes            | The unique identifier for the original payment                            |",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "payment_id",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:236",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 236,
+      "snippet": "@ApiResponses(value = {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:237",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 237,
+      "snippet": "@ApiResponse(code = 201, message = \"Created\", response = CreatePaymentResult.class),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:238",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 238,
+      "snippet": "@ApiResponse(code = 400, message = \"Bad request\", response = PaymentError.class),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        400
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:239",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 239,
+      "snippet": "@ApiResponse(code = 401, message = \"Credentials are required to access this resource\"),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        401
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:240",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 240,
+      "snippet": "@ApiResponse(code = 422, message = \"Invalid attribute value: description. Must be less than or equal to 255 characters length\", response = PaymentError.class),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        255,
+        422
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:241",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 241,
+      "snippet": "@ApiResponse(code = 429, message = \"Too many requests\", response = ApiErrorResponse.class),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        429
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:242",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 242,
+      "snippet": "@ApiResponse(code = 500, message = \"Downstream system error\", response = PaymentError.class)})",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        500
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/Payment.java:18",
+      "file": "src/main/java/uk/gov/pay/api/model/Payment.java",
+      "line": 18,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "Payment",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/PaymentEvent.java:11",
+      "file": "src/main/java/uk/gov/pay/api/model/PaymentEvent.java",
+      "line": 11,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "PaymentEvent",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/PaymentEvents.java:17",
+      "file": "src/main/java/uk/gov/pay/api/model/PaymentEvents.java",
+      "line": 17,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "PaymentEvents",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/RefundsFromConnector.java:29",
+      "file": "src/main/java/uk/gov/pay/api/model/RefundsFromConnector.java",
+      "line": 29,
+      "snippet": "@JsonProperty(value = \"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "RefundsFromConnector",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/links/directdebit/DirectDebitEvent.java:53",
+      "file": "src/main/java/uk/gov/pay/api/model/links/directdebit/DirectDebitEvent.java",
+      "line": 53,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "DirectDebitEvent",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java:58",
+      "file": "src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java",
+      "line": 58,
+      "snippet": "@JsonProperty(\"payment_id\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 6,
+      "site_class": "RefundForSearchRefundsResult",
+      "pattern": [
+        "field",
+        "JsonProperty",
+        "present"
+      ],
+      "statuses": [],
+      "field_behavior": "present",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 241,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

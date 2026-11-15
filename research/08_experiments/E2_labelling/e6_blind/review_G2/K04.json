@@ -1,0 +1,147 @@
+{
+  "item_id": "K04",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "POST",
+    "path_template": "/api/v1/management/bridges",
+    "scenario": "request: Bridge.persist null or omitted; nullable contract versus Boolean auto-unboxing in primitive builder",
+    "observed_status": null,
+    "field": "persist",
+    "supplied_proposition": "POST /api/v1/management/bridges: contract says Bridge.persist is nullable; implementation does pass its Boolean value directly to a primitive boolean builder parameter.",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "3.R1/9.3 nullable-to-primitive exception; generated DTO omission limits confidence, exploratory search retained.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(c): inspect DTO defaults and null validation to determine reachability; unhandled null may invoke R1."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T11:29:11.770242+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K04/source/hivemq-edge/src/main/java/com/hivemq/bridge/config/MqttBridge.java:235-237",
+      "reason": "Primitive builder parameter establishes null-unboxing hazard, not independent policy evidence.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Primitive builder parameter establishes null-unboxing hazard, not independent policy evidence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Primitive builder parameter establishes null-unboxing hazard, not independent policy evidence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Primitive builder parameter establishes null-unboxing hazard, not independent policy evidence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "persist is explicitly nullable and has no contract default. Validation omits persist; independent bridge tests/docs do not establish null policy. Generated DTO source is omitted build output; binding details limit confidence, but the nullable model-to-primitive conversion is supported by its generator input."
+        }
+      }
+    },
+    {
+      "locator": "K04/source/hivemq-edge/src/main/java/com/hivemq/http/error/DefaultExceptionMapper.java:48-54,92-94",
+      "reason": "Global Throwable mapping returns InternalServerError for unhandled null exception; deterministic R1 context.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Global Throwable mapping returns InternalServerError for unhandled null exception; deterministic R1 context."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Global Throwable mapping returns InternalServerError for unhandled null exception; deterministic R1 context."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Global Throwable mapping returns InternalServerError for unhandled null exception; deterministic R1 context."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "persist is explicitly nullable and has no contract default. Validation omits persist; independent bridge tests/docs do not establish null policy. Generated DTO source is omitted build output; binding details limit confidence, but the nullable model-to-primitive conversion is supported by its generator input."
+        }
+      }
+    },
+    {
+      "locator": "K04/source/hivemq-edge/build.gradle.kts:275-300",
+      "reason": "DTO/API generated from this exact contract; openApiNullable=false; generated build output absent, limiting direct binding verification.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "DTO/API generated from this exact contract; openApiNullable=false; generated build output absent, limiting direct binding verification."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "DTO/API generated from this exact contract; openApiNullable=false; generated build output absent, limiting direct binding verification."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "DTO/API generated from this exact contract; openApiNullable=false; generated build output absent, limiting direct binding verification."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "persist is explicitly nullable and has no contract default. Validation omits persist; independent bridge tests/docs do not establish null policy. Generated DTO source is omitted build output; binding details limit confidence, but the nullable model-to-primitive conversion is supported by its generator input."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K04/source/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:95-114,310-344,394;K04/source/hivemq-edge/src/main/java/com/hivemq/bridge/config/MqttBridge.java:235;K04/source/hivemq-edge/src/main/java/com/hivemq/http/error/DefaultExceptionMapper.java:92-94;K04/source/ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml#/paths/~1api~1v1~1management~1bridges/post/requestBody;K04/source/ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml#/components/schemas/Bridge/properties/persist",
+    "both_candidate": false,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Nullable persist reaches a primitive boolean builder without validation or fallback, implying null-unboxing failure. R1 attributes this to implementation; an optional persistence flag can be handled safely. Generated DTO absence limits direct binding verification."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "addBridge validates at 103 then unconvert at 108; validateBridge:310-344 never checks persist; unconvert:394 passes nullable property to MqttBridge.Builder.persist(boolean):235. Global mapper handles non-JSON Throwable as server error. Inference: explicit null can crash rather than use a safe flag default.",
+  "retrieval_completion": "Manual YAML operation and Bridge refs resolved; inspected validation, conversion, primitive builder, mapper, generator settings and directed supplied tests/README. YAML parser gap closed manually. Generated DTO not supplied; no runtime claim is made.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K04/source",
+  "contract_locator_hint": "source/ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K04.json",
+    "stderr": "search_G2/K04.stderr",
+    "exit_code": "search_G2/K04.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

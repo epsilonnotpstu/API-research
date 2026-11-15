@@ -1,0 +1,51 @@
+{
+  "item_id": "K01",
+  "proposition": "POST /consumers/{groupid}: contract says invalid consumer configuration receives 422; implementation does parse an unsupported format before its guarded response path and propagate IllegalArgumentException.",
+  "target": {
+    "side": "request/response",
+    "method": "POST",
+    "path": "/consumers/{groupid}",
+    "scenario": "unsupported consumer format",
+    "field": "format",
+    "direction": "invalid configuration should yield 422; pre-guard conversion may propagate exception"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "Potential non-gateway unhandled exception; verify codebook §9.3 R1 deterministically before deciding search."
+  },
+  "start_time": "2026-11-15T11:27:29.925345+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [],
+  "decision": {
+    "item_id": "K01",
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K01/source/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:209;K01/source/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:218;K01/source/src/main/java/io/strimzi/kafka/bridge/EmbeddedFormat.java:19;K01/source/src/main/resources/openapi.json:77#/paths/~1consumers~1{groupid}/post/responses/422",
+    "both_candidate": false,
+    "intent_search_status": "not_run",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Unsupported format throws before the guarded path; no supplied mapper converts it to documented 422. The unhandled exception is an implementation fault under §9.3 R1.",
+    "details": "Static exception propagation, not an observed exchange. Router only installs 400/404 error handlers at HttpBridge.java:145-146; createConsumer is dispatched at :483-487. No intent search required under §11.4.1 deterministic non-gateway crash rule."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": null
+}

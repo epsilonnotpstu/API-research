@@ -1,0 +1,107 @@
+{
+  "item_id": "K20",
+  "proposition": "POST /version/v1/registrationToken: contract says GUID keys are SHA-256 hashes; implementation does accept 64 hexadecimal characters followed by a line feed as a valid key",
+  "target": {
+    "side": "request",
+    "method": "POST",
+    "path": "/version/v1/registrationToken",
+    "scenario": "GUID key is 64 hex characters followed by LF",
+    "field": "key",
+    "direction": "SHA-256 hash requirement versus alleged trailing LF acceptance"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(b),(c): verify regex operation and independent syntax-validation intent; proposition is a target, not established fact."
+  },
+  "start_time": "2026-11-15T14:45:04.801614+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-DOC",
+      "locator": "K20/source/docs/architecture-overview.md:292-307,355-369",
+      "disposition": "accept",
+      "reason": "GUIDHash is String[64], hashing explicitly SHA-256, and all REST input parameters should be strictly validated. Linked to GUID registration use case :179-198.",
+      "checklist": {
+        "a": true,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K20/source/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java:34-46",
+      "disposition": "context",
+      "reason": "Asserts acceptance of hex hashes and rejection of malformed/short inputs; no trailing-line-feed witness test. Supports syntax-validation purpose without directly testing target edge case.",
+      "checklist": {
+        "a": true,
+        "b": false,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "HANDLER",
+      "locator": "K20/source/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java:67-68",
+      "disposition": "context",
+      "reason": "String hash field has no local JPA length annotation; no runtime persistence outcome inferred."
+    }
+  ],
+  "decision": {
+    "item_id": "K20",
+    "L1": "IMPL",
+    "L2": "I-ACCEPT-INVALID",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-DOC;E-AUX",
+    "evidence_locators": "K20/source/src/main/java/app/coronawarn/verification/controller/VerificationController.java:120@Operation.description;K20/source/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:65;K20/source/src/main/java/app/coronawarn/verification/service/HashingService.java:37;K20/source/src/main/java/app/coronawarn/verification/service/HashingService.java:70;K20/source/docs/architecture-overview.md:300;K20/source/docs/architecture-overview.md:367",
+    "both_candidate": false,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The validator uses find with a dollar anchor, allowing a match before a final line feed. Independent documentation requires SHA-256 GUID hashes and a 64-character representation. This accepts a syntactically invalid key at validation.",
+    "details": "Tool Java-contract parse failure exit 2; manual complete fallback of contract, bean validation, hash service, service propagation, tests and normative prose. Static regex inference only: input witness is 64 lowercase hex digits plus LF; ^ matches beginning, $ before final LF, find does not require consuming LF. No Java or package execution; no asserted runtime exchange or guaranteed persistence outcome."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K20/source",
+      "K20/source/src/main/java/app/coronawarn/verification/controller/VerificationController.java",
+      "--method",
+      "POST",
+      "--path",
+      "/version/v1/registrationToken",
+      "--json",
+      "--field",
+      "key"
+    ],
+    "stdout": "search_G1/K20.json",
+    "stderr": "search_G1/K20.stderr",
+    "exit_code_file": "search_G1/K20.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

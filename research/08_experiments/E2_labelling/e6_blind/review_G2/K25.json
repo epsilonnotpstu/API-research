@@ -1,0 +1,208 @@
+{
+  "item_id": "K25",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "response",
+    "method": "POST",
+    "path_template": "/api/v1/payment",
+    "scenario": "response: authorized successful payment session; handler passes null HttpServletRequest to return-URL construction",
+    "observed_status": null,
+    "field": "request",
+    "supplied_proposition": "POST /api/v1/payment: contract says an authorized user can receive a successful session response; implementation does pass null as the request used to derive the session return URL.",
+    "direction": "Assess documented response status/body/type against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "3.R1/9.3 internal null request dereference and explicit global 500 mapper; exploratory search retained.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(c): inspect URL utility null handling and exception mapping to determine actual crash, not merely null argument presence."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T15:04:04.435638+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "E-DOC",
+      "locator": "K25/source/docs/plantuml/payment/checkout-sequence.puml:15",
+      "disposition": "context",
+      "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Authorized-user/cart prerequisites may fail earlier, but the stated successful-session scenario reaches getReturnUrl(null) before Stripe call and its try/catch. Global generic exception handler maps null dereference to 500. Diagram's GET session call differs from target POST and is excluded."
+        }
+      },
+      "support": "neither"
+    },
+    {
+      "index": 1,
+      "category": "E-DOC",
+      "locator": "K25/source/docs/plantuml/payment/checkout-sequence.puml:21",
+      "disposition": "context",
+      "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Sequence diagram uses GET for session creation or a different order-fetch operation; not independent POST/null-request intent evidence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Authorized-user/cart prerequisites may fail earlier, but the stated successful-session scenario reaches getReturnUrl(null) before Stripe call and its try/catch. Global generic exception handler maps null dereference to 500. Diagram's GET session call differs from target POST and is excluded."
+        }
+      },
+      "support": "neither"
+    }
+  ],
+  "manual_additions": [
+    {
+      "locator": "K25/source/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:19-33;K25/source/src/main/java/com/zufar/icedlatte/payment/api/PaymentProcessor.java:28-36;K25/source/src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:33-62",
+      "reason": "Exact route and null propagation resolved across endpoint, processor and URL builder; exception occurs at request.getScheme before Stripe interaction.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Exact route and null propagation resolved across endpoint, processor and URL builder; exception occurs at request.getScheme before Stripe interaction."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Exact route and null propagation resolved across endpoint, processor and URL builder; exception occurs at request.getScheme before Stripe interaction."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Exact route and null propagation resolved across endpoint, processor and URL builder; exception occurs at request.getScheme before Stripe interaction."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Authorized-user/cart prerequisites may fail earlier, but the stated successful-session scenario reaches getReturnUrl(null) before Stripe call and its try/catch. Global generic exception handler maps null dereference to 500. Diagram's GET session call differs from target POST and is excluded."
+        }
+      }
+    },
+    {
+      "locator": "K25/source/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:75-83",
+      "reason": "Generic Exception mapping explicitly yields 500; deterministic R1 evidence.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Generic Exception mapping explicitly yields 500; deterministic R1 evidence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Generic Exception mapping explicitly yields 500; deterministic R1 evidence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Generic Exception mapping explicitly yields 500; deterministic R1 evidence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Authorized-user/cart prerequisites may fail earlier, but the stated successful-session scenario reaches getReturnUrl(null) before Stripe call and its try/catch. Global generic exception handler maps null dereference to 500. Diagram's GET session call differs from target POST and is excluded."
+        }
+      }
+    },
+    {
+      "locator": "K25/source/src/main/resources/api-specs/payment-openapi.yaml:37-42,115-127,139-140;K25/source/src/main/resources/api-specs/common-schemas.yaml:12-42",
+      "disposition": "context",
+      "reason": "Success session schema and local ErrorResponse reference resolved; error documentation does not authorize a success-path null crash.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Questioned contract context, not independent intent."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": true,
+          "reason": "Exact payment response schemas."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Contract and contract reference."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied snapshot."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Global mapper and no corresponding null-success test reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K25/source/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:19-33;K25/source/src/main/java/com/zufar/icedlatte/payment/api/PaymentProcessor.java:28-30;K25/source/src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:43,56-62;K25/source/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:75-83;K25/source/src/main/resources/api-specs/payment-openapi.yaml#/paths/~1api~1v1~1payment/post/responses/200;K25/source/src/main/resources/api-specs/common-schemas.yaml#/components/schemas/ErrorResponse",
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ The endpoint supplies null request context, which reaches request.getScheme during session return-URL construction before Stripe interaction. The global handler maps this null failure to 500. R1 establishes an implementation crash in the otherwise authorized success scenario."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "PaymentEndpoint:31 calls processPayment(null); PaymentProcessor:30 forwards null to createSession; StripeSessionCreator:43 invokes getReturnUrl, which dereferences request at 58-59. This is server-internal omitted request context, not client missing required input. Global handler maps to 500.",
+  "retrieval_completion": "Manual route resolved despite lexical tool miss; complete null dataflow, success/error contract refs, payment/global handlers, tests and sequence diagram inspected. No retrieval gap/history; no network or Stripe call executed.",
+  "intent_search_verdict": "none_found",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K25/source",
+  "contract_locator_hint": "source/src/main/resources/api-specs/common-schemas.yaml | source/src/main/resources/api-specs/payment-openapi.yaml",
+  "intent_search_exit_code": 0,
+  "raw_search_files": {
+    "stdout": "search_G2/K25.json",
+    "stderr": "search_G2/K25.stderr",
+    "exit_code": "search_G2/K25.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

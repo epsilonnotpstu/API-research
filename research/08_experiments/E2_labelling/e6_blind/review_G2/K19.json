@@ -1,0 +1,148 @@
+{
+  "item_id": "K19",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "POST",
+    "path_template": "/v1/payments/{paymentId}/refunds",
+    "scenario": "request: client refund_amount_available property marked readOnly in annotation but consumed by refund validation/service",
+    "observed_status": null,
+    "field": "refund_amount_available",
+    "supplied_proposition": "POST /v1/payments/{paymentId}/refunds: contract says refund_amount_available is readOnly; implementation does consume refund_amount_available from the refund request",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(a,c): annotation conflicts with request deserialization/consumption; seek request fixtures and normative prose.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,c): annotation conflicts with request deserialization/consumption; seek request fixtures and normative prose."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T15:00:29.980808+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:278-299,338-359",
+      "disposition": "accept",
+      "support": "supports_impl_behavior",
+      "reason": "Exact POST request test supplies refund_amount_available and helper asserts 202; paired omission test supports optional client input. Route and payload linkage resolved.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": true,
+          "reason": "Explicit assertion or normative statement for the target behavior."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": true,
+          "reason": "Operation, method, scenario and branch resolved in manual review."
+        },
+        "c_independent_basis": {
+          "satisfied": true,
+          "reason": "Separate test assertion or normative source; not the questioned handler/spec."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "readOnly is schema-only; JsonProperty has no Jackson READ_ONLY. Exact integration tests support including the request property and also omitting it. Connector stub matches URL only, so its 412 test does not independently prove equality/forwarding; that behavior comes from parser/service context."
+        }
+      }
+    },
+    {
+      "locator": "K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:314-326;K19/source/src/test/java/uk/gov/pay/api/utils/mocks/ConnectorMockClient.java:571-573",
+      "reason": "Mismatch test sends field but connector stub ignores request body, so not independent evidence of exact consumption/equality semantics.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Mismatch test sends field but connector stub ignores request body, so not independent evidence of exact consumption/equality semantics."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Mismatch test sends field but connector stub ignores request body, so not independent evidence of exact consumption/equality semantics."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Mismatch test sends field but connector stub ignores request body, so not independent evidence of exact consumption/equality semantics."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "readOnly is schema-only; JsonProperty has no Jackson READ_ONLY. Exact integration tests support including the request property and also omitting it. Connector stub matches URL only, so its 412 test does not independently prove equality/forwarding; that behavior comes from parser/service context."
+        }
+      }
+    },
+    {
+      "locator": "K19/source/src/main/java/uk/gov/pay/api/json/RequestJsonParser.java:77-80;K19/source/src/main/java/uk/gov/pay/api/service/CreateRefundService.java:46-60",
+      "reason": "Reads optional request field and forwards it, falling back only if absent; behavioral context.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Reads optional request field and forwards it, falling back only if absent; behavioral context."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Reads optional request field and forwards it, falling back only if absent; behavioral context."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Reads optional request field and forwards it, falling back only if absent; behavioral context."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "readOnly is schema-only; JsonProperty has no Jackson READ_ONLY. Exact integration tests support including the request property and also omitting it. Connector stub matches URL only, so its 412 test does not independently prove equality/forwarding; that behavior comes from parser/service context."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-REQ-STRICT",
+    "proposed_L2": "",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-TEST",
+    "evidence_locators": "K19/source/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java:19-22 (PaymentRefundRequest/properties/refund_amount_available/accessMode);K19/source/src/main/java/uk/gov/pay/api/json/RequestJsonParser.java:77-80;K19/source/src/main/java/uk/gov/pay/api/service/CreateRefundService.java:46-60;K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:278-299,338-359",
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Exact POST tests support refund_amount_available as optional client input. The parser and service consume it, with a fallback when absent. The schema's readOnly annotation misdescribes the supported request field; connector stubs do not prove forwarding equality."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "CreatePaymentRefundRequest.java:19-22 exposes JsonProperty with schema READ_ONLY; PaymentRefundsResource.submitRefund consumes DTO at 157-164. Custom parser:79 populates field and CreateRefundService:49-54 consumes value.",
+  "retrieval_completion": "Manual annotation interpretation and complete request-to-parser/service linkage resolved; target integration helpers and URL-only stub checked. No independent prose conflicts, no history or unresolved parser gap.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K19/source",
+  "contract_locator_hint": "source/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K19.json",
+    "stderr": "search_G2/K19.stderr",
+    "exit_code": "search_G2/K19.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

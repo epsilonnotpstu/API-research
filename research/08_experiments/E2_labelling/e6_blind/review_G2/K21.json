@@ -1,0 +1,120 @@
+{
+  "item_id": "K21",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/pet/findByStatus",
+    "scenario": "request: omit optional status query parameter; bound status null produces explicit 400",
+    "observed_status": 400,
+    "field": "status",
+    "supplied_proposition": "GET /pet/findByStatus: contract says the status query parameter is optional; implementation does return 400 when its bound status argument is null",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "10.7 documented default=available, applied conditionally to stated bound-null branch; binding reachability caveat retained.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,b,c): explicit null guard versus optional request contract needs independent tests/docs."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T15:02:05.685882+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K21/source/src/main/resources/openapi.yaml:128-139",
+      "reason": "Explicit documented default available invokes deterministic 10.7 promise rule, not intent inference from spec priority alone.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Explicit documented default available invokes deterministic 10.7 promise rule, not intent inference from spec priority alone."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Explicit documented default available invokes deterministic 10.7 promise rule, not intent inference from spec priority alone."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Explicit documented default available invokes deterministic 10.7 promise rule, not intent inference from spec priority alone."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Contract additionally specifies default=available, so optionality is not the only evidence. README identifies spec-driven swagger-inflector binding; dependency runtime may supply this default before handler invocation. No tests exercise absent-query binding; only the proposition's bound-null branch is established statically."
+        }
+      }
+    },
+    {
+      "locator": "K21/source/README.md:8-11;K21/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:1-5",
+      "reason": "Framework-driven binding and empty test class; no independent absent-status HTTP assertion, so runtime reachability confidence is limited.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Framework-driven binding and empty test class; no independent absent-status HTTP assertion, so runtime reachability confidence is limited."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Framework-driven binding and empty test class; no independent absent-status HTTP assertion, so runtime reachability confidence is limited."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Framework-driven binding and empty test class; no independent absent-status HTTP assertion, so runtime reachability confidence is limited."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Contract additionally specifies default=available, so optionality is not the only evidence. README identifies spec-driven swagger-inflector binding; dependency runtime may supply this default before handler invocation. No tests exercise absent-query binding; only the proposition's bound-null branch is established statically."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-REJECT-VALID",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K21/source/src/main/java/io/swagger/petstore/controller/PetController.java:50-55;K21/source/src/main/resources/openapi.yaml#/paths/~1pet~1findByStatus/get/parameters/0/required;K21/source/src/main/resources/openapi.yaml#/paths/~1pet~1findByStatus/get/parameters/0/schema/default;K21/source/README.md:8-11",
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ For the stated bound-null scenario, 400 replaces the documented default available. Section 10.7 attributes default noncompliance to implementation. No supplied test establishes whether swagger-inflector injects the default before omitted-query requests reach this branch."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "PetController.findPetsByStatus:50-55 returns 400 for bound-null status, without available fallback. Contract query status is optional and defaults available (openapi:131-135). Whether framework fills the default before this branch is not shown by a supplied exchange.",
+  "retrieval_completion": "Manual target YAML, full handler branch, README, pom and available test inspected after parser failure. The task's bound-null conditional is established; no claim that every omitted query reaches it. Default rule settles conditional attribution.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K21/source",
+  "contract_locator_hint": "source/src/main/resources/openapi.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K21.json",
+    "stderr": "search_G2/K21.stderr",
+    "exit_code": "search_G2/K21.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

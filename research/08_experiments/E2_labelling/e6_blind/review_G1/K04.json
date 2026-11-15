@@ -1,0 +1,51 @@
+{
+  "item_id": "K04",
+  "proposition": "POST /api/v1/management/bridges: contract says Bridge.persist is nullable; implementation does pass its Boolean value directly to a primitive boolean builder parameter.",
+  "target": {
+    "side": "request",
+    "method": "POST",
+    "path": "/api/v1/management/bridges",
+    "scenario": "persist explicitly null or omitted",
+    "field": "persist",
+    "direction": "nullable Boolean passed to primitive boolean"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "§11.4.1 deterministic unboxing crash, subject to verifying validation/defaults and mapper."
+  },
+  "start_time": "2026-11-15T11:29:00.316613+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [],
+  "decision": {
+    "item_id": "K04",
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K04/source/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:108;K04/source/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/BridgeResourceImpl.java:394;K04/source/hivemq-edge/src/main/java/com/hivemq/bridge/config/MqttBridge.java:235;K04/source/hivemq-edge/src/main/java/com/hivemq/http/error/DefaultExceptionMapper.java:92;K04/source/ext/hivemq-edge-openapi-2025.1-SNAPSHOT.yaml:4548#/components/schemas/Bridge/properties/persist",
+    "both_candidate": false,
+    "intent_search_status": "not_run",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Nullable persist is unboxed into a primitive without validation or fallback. Null therefore reaches an internal-error path; §9.3 R1 attributes this to implementation. Persist is neither a resource key nor a mandatory persistent field.",
+    "details": "Explicit null witness; no reliance on generated DTO missing-field default. validateBridge :310-327 has no persist guard. Builder default true :158 permits handling null without requiring a spec change. §10.6 does not require both_candidate for this optional flag."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": null
+}

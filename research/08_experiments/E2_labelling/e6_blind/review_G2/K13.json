@@ -1,0 +1,127 @@
+{
+  "item_id": "K13",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/offices",
+    "scenario": "response: GET /offices selecting CSV or another nondefault representation; formatter output must carry selected media type, servlet default is application/json",
+    "observed_status": null,
+    "field": "Content-Type",
+    "supplied_proposition": "GET /offices: contract says 200 uses the selected office representation media type; implementation does write the selected formatter output without setting that formatter media type on the response.",
+    "direction": "Assess documented response status/body/type against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(b,c): inspect wrappers and integration media-type assertions; explicit missing header alone cannot establish attribution.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(b,c): inspect wrappers and integration media-type assertions; explicit missing header alone cannot establish attribution."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T14:57:44.062431+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K13/source/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java:70-83;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java:68-85",
+      "disposition": "accept",
+      "support": "supports_spec_behavior",
+      "reason": "Two separate controllers independently implement representation selection by setting matching Content-Type before ctx.result; establishes shared format/header policy.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": true,
+          "reason": "Explicit assertion or normative statement for the target behavior."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": true,
+          "reason": "Operation, method, scenario and branch resolved in manual review."
+        },
+        "c_independent_basis": {
+          "satisfied": true,
+          "reason": "Two distinct controller classes establish format-to-header policy independently from questioned OfficeController."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "No office-specific test or independent prose states header behavior. However distinct UnitsController and LocationController explicitly set matching response types before writing formatted results; servlet filters do not supply office-selected response types. Handler declaration itself is contract context only."
+        }
+      }
+    },
+    {
+      "locator": "K13/source/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java:62-88,101-110",
+      "reason": "Servlet defaults to application/json and registers offices route; no filter sets the selected CSV/nondefault media type.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Route registration and filters inspected for global content-type setting; none chooses office formatter media type."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Route registration and filters inspected for global content-type setting; none chooses office formatter media type."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Route registration and filters inspected for global content-type setting; none chooses office formatter media type."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "No office-specific test or independent prose states header behavior. However distinct UnitsController and LocationController explicitly set matching response types before writing formatted results; servlet filters do not supply office-selected response types. Handler declaration itself is contract context only."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-RESP-CONTRACT",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-CONSIST;E-CROSS",
+    "evidence_locators": "K13/source/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:61-69,92-99 (getAll responses/200/content);K13/source/cwms_radar_api/src/main/java/cwms/radar/api/UnitsController.java:70-83;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java:68-85;K13/source/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java:4-9;K13/source/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java:62-64,80-82",
+    "both_candidate": false,
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ For CSV or another nondefault format, office output retains the servlet JSON default. Separate units and location controllers set matching Content-Type before writing formatted results, independently supporting the contract. The office handler omits that step."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "OfficeController.java:55-69 declares 200 selected office media types. getAll:92-98 selects content type and formatter, writes formatter String without ctx.contentType. FormatFactory returns type and formatter only, no response context side effect.",
+  "retrieval_completion": "Manual annotation, formatter and media constants, route servlet, all supplied tests and README reviewed. Tool parser gap closed manually; cross-controller policy is independent across classes, not same-class ambiguity.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "counterevidence": "ApiServlet.java:62-64 defaults Content-Type to application/json, so default JSON is not a mismatch. UnitsController and LocationController independently set selected response media types. No supplied office-specific header assertion exists.",
+  "package_scope": "K13/source",
+  "contract_locator_hint": "source/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K13.json",
+    "stderr": "search_G2/K13.stderr",
+    "exit_code": "search_G2/K13.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  },
+  "target_refinement": {
+    "initial": "successful office listing with selected representation; formatter output written without selected formatter media type",
+    "refined": "CSV/nondefault representation after discovering servlet default application/json",
+    "reason": "Default JSON branch is not a content-type mismatch."
+  }
+}

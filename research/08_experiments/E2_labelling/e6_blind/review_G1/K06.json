@@ -1,0 +1,51 @@
+{
+  "item_id": "K06",
+  "proposition": "GET /v1/events: contract says from_date and to_date are optional; implementation does unconditionally parse both nullable query parameters with ZonedDateTime.parse",
+  "target": {
+    "side": "request",
+    "method": "GET",
+    "path": "/v1/events",
+    "scenario": "from_date or to_date omitted",
+    "field": "from_date;to_date",
+    "direction": "optional query parameters parsed unconditionally"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "§11.4.1 deterministic null parsing crash, pending mapper check."
+  },
+  "start_time": "2026-11-15T11:29:32.613808+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [],
+  "decision": {
+    "item_id": "K06",
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K06/source/src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java:71;K06/source/src/main/java/uk/gov/pay/api/validation/DirectDebitEventSearchValidator.java:29;K06/source/src/main/java/uk/gov/pay/api/service/ConnectorUriGenerator.java:84;K06/source/swagger/swagger.json#/paths/~1v1~1events/get/parameters",
+    "both_candidate": false,
+    "intent_search_status": "not_run",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Optional dates pass validation as null but are unconditionally parsed, producing an unhandled null failure. The URI generator already supports absent dates. §9.3 R1 attributes the crash to implementation.",
+    "details": "No runtime status asserted. Static null dereference; no supplied null-exception mapper. Optional filters are not resource keys or mandatory persistent fields (§10.6). Search exempt under §11.4.1 deterministic crash rule."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": null
+}

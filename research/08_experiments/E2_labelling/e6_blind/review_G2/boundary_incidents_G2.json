@@ -1,0 +1,30 @@
+{
+  "labeller": "G2",
+  "retrieval_boundary_incidents": [
+    {
+      "stage": "initial discovery before task-specific boundaries had been applied",
+      "action": "rg --files with explicit current directory and an external collaboration-directory path; filters requested PROTOCOL/AGENTS/G2/M2 filenames and excluded COLLAB_BOARD.md/TASK_M1.md",
+      "outside_path": "/home/afridi/Documents/API research/research/09_collab",
+      "extent": "Filename metadata returned for PROTOCOL.md, own G2 log and a TASK_M2 draft. Only the explicitly allowed PROTOCOL.md was subsequently opened; returned log/draft contents were not read.",
+      "evidence": "First functions.exec call in this G2 conversation, second exec_command output.",
+      "effect_on_labels": "No outside metadata used as package evidence or in label decisions.",
+      "correction": "All subsequent source searches named explicit package-local paths; no board/coordinator/other-labeller file contents accessed."
+    }
+  ],
+  "output_redaction_incidents": [
+    {
+      "source_locator": "K02/source/webapp/src/test/java/io/github/microcks/util/ai/AICopilotHelperTest.java:540",
+      "extent": "An embedded fixture contact-attribution name passed the first redaction regex; the value is not repeated here.",
+      "correction": "Redaction expanded to contact lines and pre-redacted email markers before subsequent source printing."
+    },
+    {
+      "source_locator": "K15/source/src/test/java/app/coronawarn/verification/TestUtils.java:37-48;K20/source/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java:35-46",
+      "extent": "Synthetic test TAN/hash literals could look like credentials and some were displayed; credential validity was not evaluated and literal values are not repeated here.",
+      "correction": "Redaction expanded for test-token/TAN lines. Later explanations and artifacts cite locators instead of copying values."
+    }
+  ],
+  "network_used": false,
+  "third_party_source_executed": false,
+  "package_sources_modified": false,
+  "recorded_at": "2026-11-15T15:09:31.149181+00:00"
+}

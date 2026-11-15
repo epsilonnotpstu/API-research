@@ -1,0 +1,696 @@
+{
+  "item_id": "K15",
+  "proposition": "POST /version/v1/tan: contract says the 201 response schema is DeferredResultResponseEntityTan; implementation does complete the response with a Tan body",
+  "target": {
+    "side": "response",
+    "method": "POST",
+    "path": "/version/v1/tan",
+    "scenario": "successful issuance",
+    "status": 201,
+    "field": "Tan response versus DeferredResultResponseEntityTan wrapper",
+    "direction": "contract wrapper structure versus resolved Tan body"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a),(c): response-shape intent and asynchronous framework wrapper need independent tests/docs."
+  },
+  "start_time": "2026-11-15T14:43:32.322775+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 102,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 1,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 123,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 2,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 132,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 3,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 146,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 4,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 151,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 5,
+      "category": "HANDLER",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 154,
+      "disposition": "context",
+      "reason": "Handler branch context only; success completes DeferredResult with Tan, error guards do not establish body intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 6,
+      "category": "E-TEST",
+      "file": "src/test/java/app/coronawarn/verification/TestUtils.java",
+      "line": 53,
+      "disposition": "reject",
+      "reason": "Constant identifies /tan/verify, not an assertion of POST /tan response structure.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 7,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 194,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 8,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 204,
+      "disposition": "context",
+      "reason": "Create-TAN use case describes business TAN return, but does not specify wire JSON structure or framework-wrapper fields. Full section :200-222 reviewed.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 9,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 208,
+      "disposition": "context",
+      "reason": "Create-TAN use case describes business TAN return, but does not specify wire JSON structure or framework-wrapper fields. Full section :200-222 reviewed.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 10,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 211,
+      "disposition": "context",
+      "reason": "Create-TAN use case describes business TAN return, but does not specify wire JSON structure or framework-wrapper fields. Full section :200-222 reviewed.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 11,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 212,
+      "disposition": "context",
+      "reason": "Create-TAN use case describes business TAN return, but does not specify wire JSON structure or framework-wrapper fields. Full section :200-222 reviewed.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 12,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 227,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 13,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 245,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 14,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 246,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 15,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 250,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 16,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 251,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 17,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 252,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 18,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 253,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 19,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 266,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 20,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 274,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 21,
+      "category": "E-DOC",
+      "file": "docs/architecture-overview.md",
+      "line": 333,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 22,
+      "category": "E-DOC",
+      "file": "docs/sw_design_verification.svg",
+      "line": 3,
+      "disposition": "reject",
+      "reason": "Different use case, entity table or architecture SVG; no target response-field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 23,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 81,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 24,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 82,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 25,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 83,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 26,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 84,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 27,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 85,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 28,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 86,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 29,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 87,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 30,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 88,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 31,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 89,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 32,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 90,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 33,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 91,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 34,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 92,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 35,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 93,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 36,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 94,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 37,
+      "category": "E-DOC",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 95,
+      "disposition": "reject",
+      "reason": "Handler Javadoc/operation annotations are not independent; status and conceptual Tan return do not establish exact JSON shape.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 38,
+      "category": "E-CONSIST",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 146,
+      "disposition": "context",
+      "reason": "Questioned return site or separate teleTAN endpoint; 201 consistency is not body-shape evidence.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 39,
+      "category": "E-CONSIST",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 158,
+      "disposition": "context",
+      "reason": "Questioned return site or separate teleTAN endpoint; 201 consistency is not body-shape evidence.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K15/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:131-159;K15/source/src/test/java/app/coronawarn/verification/TestUtils.java:51",
+      "disposition": "context",
+      "reason": "Helper prefix resolves /version/v1/tan and asyncDispatch verifies 201; no response body assertion. Does not decide shape.",
+      "checklist": {
+        "a": false,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "contract-semantics",
+      "locator": "K15/source/api-docs.json#/components/schemas/DeferredResultResponseEntityTan",
+      "disposition": "context",
+      "reason": "Object with optional wrapper properties, no required or additionalProperties:false. Tan object is not automatically excluded. No checker/strict-only oracle supplied."
+    }
+  ],
+  "decision": {
+    "item_id": "K15",
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-DOC;E-AUX",
+    "evidence_locators": "K15/source/api-docs.json#/paths/~1version~1v1~1tan/post/responses/201/content/application~1json/schema;K15/source/api-docs.json#/components/schemas/DeferredResultResponseEntityTan;K15/source/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java:146;K15/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:145;K15/source/docs/architecture-overview.md:222",
+    "both_candidate": true,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "conflicting",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The success body is Tan, while the documented wrapper is open and has no required properties. Tests assert only status; prose says return TAN without specifying JSON structure. Independent evidence does not establish the claimed response-shape obligation.",
+    "details": "Raw conflicting mixes unrelated 400/404 branches, teleTAN and annotations. No accepted independent field-level evidence for either wire JSON shape. Manual fallback found status-only target test missed by lexical helper linkage. No runtime conformance failure is assumed."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K15/source",
+      "K15/source/api-docs.json",
+      "--method",
+      "POST",
+      "--path",
+      "/version/v1/tan",
+      "--json",
+      "--status",
+      "201",
+      "--field",
+      "tan"
+    ],
+    "stdout": "search_G1/K15.json",
+    "stderr": "search_G1/K15.stderr",
+    "exit_code_file": "search_G1/K15.exitcode",
+    "exit_code": 0,
+    "runtime_exchange_supplied": false
+  }
+}

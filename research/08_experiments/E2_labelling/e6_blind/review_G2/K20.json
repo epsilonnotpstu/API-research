@@ -1,0 +1,121 @@
+{
+  "item_id": "K20",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "POST",
+    "path_template": "/version/v1/registrationToken",
+    "scenario": "request: GUID key consisting of 64 hexadecimal characters followed by LF; determine if full validator accepts despite SHA-256 description",
+    "observed_status": null,
+    "field": "key",
+    "supplied_proposition": "POST /version/v1/registrationToken: contract says GUID keys are SHA-256 hashes; implementation does accept 64 hexadecimal characters followed by a line feed as a valid key",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(b,c): verify complete regex matching operation and validation layers, not anchor syntax alone.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(b,c): verify complete regex matching operation and validation layers, not anchor syntax alone."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T15:01:25.327546+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K20/source/docs/architecture-overview.md:292-302,365-369",
+      "disposition": "accept",
+      "support": "supports_spec_behavior",
+      "reason": "Independent architecture defines GUIDHash as String[64] and GUID hashing as SHA-256; a 65-character LF-suffixed value is outside this representation.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": true,
+          "reason": "Explicit assertion or normative statement for the target behavior."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": true,
+          "reason": "Operation, method, scenario and branch resolved in manual review."
+        },
+        "c_independent_basis": {
+          "satisfied": true,
+          "reason": "Separate test assertion or normative source; not the questioned handler/spec."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "HashingServiceTest rejects nonhex, short and 65-hex-character values but has no trailing-LF case. Documentation defines GUIDHash String[64] and SHA-256; no whitespace exception. Validator has no length check/trim and delegates directly to find-based regex."
+        }
+      }
+    },
+    {
+      "locator": "K20/source/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java:34-46",
+      "reason": "Exact linked predicate tests confirm ordinary invalid lengths/characters, but do not assert trailing-newline behavior; corroborating context, not an exact-scenario assertion.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Exact linked predicate tests confirm ordinary invalid lengths/characters, but do not assert trailing-newline behavior; corroborating context, not an exact-scenario assertion."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Exact linked predicate tests confirm ordinary invalid lengths/characters, but do not assert trailing-newline behavior; corroborating context, not an exact-scenario assertion."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Exact linked predicate tests confirm ordinary invalid lengths/characters, but do not assert trailing-newline behavior; corroborating context, not an exact-scenario assertion."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "HashingServiceTest rejects nonhex, short and 65-hex-character values but has no trailing-LF case. Documentation defines GUIDHash String[64] and SHA-256; no whitespace exception. Validator has no length check/trim and delegates directly to find-based regex."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-ACCEPT-INVALID",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-DOC;E-TEST",
+    "evidence_locators": "K20/source/src/main/java/app/coronawarn/verification/controller/VerificationController.java:118-135 (generateRegistrationToken @Operation description, GUID request);K20/source/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:56-65;K20/source/src/main/java/app/coronawarn/verification/service/HashingService.java:37-38,68-70;K20/source/docs/architecture-overview.md:300,367;K20/source/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java:34-46",
+    "both_candidate": false,
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ The GUID validator uses find with a dollar-anchored 64-hex regex, permitting a match before final LF. Architecture requires a 64-character SHA-256 hash. This implies invalid-input validation acceptance; no end-to-end successful exchange is claimed."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "VerificationController.java:120,129-135 documents SHA-256 input and validates DTO. RegistrationTokenRequestValidator:60-65 delegates GUID key to HashingService.isHashValid. HashingService:37-38,68-70 uses ^hex{64}$ with Matcher.find(); Java $ can end before final LF, allowing prefix match. No Java execution performed.",
+  "retrieval_completion": "Manual full validator/predicate/service and architecture/test review closes tool parser gap. LF acceptance is a static regex-semantics inference, not observed registration success; downstream persistence outcome is not claimed.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K20/source",
+  "contract_locator_hint": "source/src/main/java/app/coronawarn/verification/controller/VerificationController.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K20.json",
+    "stderr": "search_G2/K20.stderr",
+    "exit_code": "search_G2/K20.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

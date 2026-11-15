@@ -1,0 +1,113 @@
+{
+  "item_id": "K19",
+  "proposition": "POST /v1/payments/{paymentId}/refunds: contract says refund_amount_available is readOnly; implementation does consume refund_amount_available from the refund request",
+  "target": {
+    "side": "request",
+    "method": "POST",
+    "path": "/v1/payments/{paymentId}/refunds",
+    "scenario": "refund request includes refund_amount_available",
+    "field": "refund_amount_available",
+    "direction": "readOnly contract annotation versus consumed request property"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a),(c): request readOnly attribution requires independent request-field intent."
+  },
+  "start_time": "2026-11-15T14:44:51.624361+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:278-326,338-359",
+      "disposition": "accept",
+      "reason": "Request payload includes target field, helper POST resolves operation, 202 success and 412 mismatch tests establish input role.",
+      "checklist": {
+        "a": true,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K19/source/src/test/java/uk/gov/pay/api/service/CreateRefundServiceTest.java:59",
+      "disposition": "context",
+      "reason": "Disabled-account service test supplies numeric availability but asserts a different failure scenario; not independent proof of successful input consumption.",
+      "checklist": {
+        "a": true,
+        "b": false,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-DOC/E-CONSIST",
+      "scope": "K19/source/docs;K19/source/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java:36-42",
+      "disposition": "context",
+      "reason": "No independent prose override; DTO comment is not independent of questioned annotation/implementation."
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K19/source/src/test/java/uk/gov/pay/api/utils/mocks/ConnectorMockClient.java:571-573",
+      "disposition": "context",
+      "reason": "Connector stub matches path only; 412 test supports public request-field intent, but does not by itself verify exact downstream body. Actual consumption is established by CreateRefundService.java:49-54."
+    }
+  ],
+  "decision": {
+    "item_id": "K19",
+    "L1": "SPEC",
+    "L2": "S-REQ-STRICT",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-AUX",
+    "evidence_locators": "K19/source/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java:21@Schema(refund_amount_available).accessMode;K19/source/src/main/java/uk/gov/pay/api/service/CreateRefundService.java:49;K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:280;K19/source/src/test/java/uk/gov/pay/api/it/PaymentRefundsResourceIT.java:316;K19/source/src/test/java/uk/gov/pay/api/service/CreateRefundServiceTest.java:59",
+    "both_candidate": false,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Refund creation tests deliberately supply refund_amount_available, including its mismatch scenario. The service consumes it as request precondition data. Independent request-field evidence contradicts the response-only annotation; the contract is overly restrictive.",
+    "details": "Tool exit 2 Java-contract parse failure; manually resolved annotation, handler, service, exact request payloads, helper route, fixtures and tests. Complete fallback; raw verdict NA. This is response-only request-property documentation (S-REQ-STRICT), not merely undeclared-property strict-only checking."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K19/source",
+      "K19/source/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java",
+      "--method",
+      "POST",
+      "--path",
+      "/v1/payments/{paymentId}/refunds",
+      "--json",
+      "--field",
+      "refund_amount_available"
+    ],
+    "stdout": "search_G1/K19.json",
+    "stderr": "search_G1/K19.stderr",
+    "exit_code_file": "search_G1/K19.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

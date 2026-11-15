@@ -1,0 +1,462 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/projects"
+  },
+  "observed_status": null,
+  "field": "score",
+  "spec": {
+    "file": "K23/source/catwatch-api/catwatch_rest_api.yaml",
+    "path": "/projects",
+    "statuses": [
+      "200",
+      "default"
+    ],
+    "field_policy": [
+      "optional"
+    ],
+    "field": "score",
+    "locator": "#/paths/~1projects/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [
+    "E-TEST",
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java:109",
+      "file": "catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java",
+      "line": 109,
+      "snippet": ") throws java.text.ParseException {",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/projects",
+      "methods": [
+        "GET"
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java:132",
+      "file": "catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java",
+      "line": 132,
+      "snippet": "ResponseEntity<Collection<ProjectStats>> res = new ResponseEntity<>(result.subList(0, 10), HttpStatus.OK);",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        200
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/github/TakeSnapshotTaskTest.java:128",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/github/TakeSnapshotTaskTest.java",
+      "line": 128,
+      "snippet": "when(scorer.score(any(Project.class))).thenReturn(55);",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:175",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 175,
+      "snippet": ".commitsCount(6).contributorsCount(2).score(20).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:177",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 177,
+      "snippet": ".commitsCount(2).contributorsCount(1).score(20).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:179",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 179,
+      "snippet": ".commitsCount(3).contributorsCount(1).score(20).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:216",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 216,
+      "snippet": ".commitsCount(6).contributorsCount(2).score(20).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:218",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 218,
+      "snippet": ".commitsCount(2).contributorsCount(1).score(50).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:220",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 220,
+      "snippet": ".commitsCount(3).contributorsCount(1).score(15).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:222",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 222,
+      "snippet": ".commitsCount(3).contributorsCount(1).score(30).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java:224",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/service/ProjectServiceImplTest.java",
+      "line": 224,
+      "snippet": ".commitsCount(3).contributorsCount(1).score(39).forksCount(0).create();",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java:22",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java",
+      "line": 22,
+      "snippet": ".commitsCount(10).forksCount(3).contributorsCount(100).score(1)",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java:25",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java",
+      "line": 25,
+      "snippet": ".commitsCount(20).forksCount(4).contributorsCount(200).score(2)",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java:28",
+      "file": "catwatch-backend/src/test/java/org/zalando/catwatch/backend/util/ProjectStatsTest.java",
+      "line": 28,
+      "snippet": ".commitsCount(25).forksCount(5).contributorsCount(300).score(3)",
+      "module": "catwatch-backend",
+      "module_build_file": "catwatch-backend/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [],
+      "field": "score",
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:3",
+      "file": "README.md",
+      "line": 3,
+      "snippet": "[![Apache 2](http://img.shields.io/badge/license-Apache%202-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        202
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:11",
+      "file": "README.md",
+      "line": 11,
+      "snippet": "The data reveals the popularity of your open source projects, most active contributors,",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:95",
+      "file": "README.md",
+      "line": 95,
+      "snippet": "Update temporarily the scoring function for projects (see catwatch-score/scoring.project.sh):",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "score",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:107",
+      "file": "README.md",
+      "line": 107,
+      "snippet": "* not all Zalando projects are listed (confirmed)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 104,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

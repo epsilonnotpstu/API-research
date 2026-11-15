@@ -1,0 +1,106 @@
+{
+  "item_id": "K14",
+  "proposition": "GET /ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files: contract says a tool unavailable in the specified descriptor type receives 404; implementation does return 204 from unsuccessful workflow or tool descriptor branches.",
+  "target": {
+    "side": "response",
+    "method": "GET",
+    "path": "/ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files",
+    "scenario": "workflow/tool unavailable in requested descriptor type",
+    "status": 204,
+    "direction": "documented 404 versus explicit 204 branches"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a),(b): undocumented status intent requires independent branch-specific evidence."
+  },
+  "start_time": "2026-11-15T14:42:43.483258+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:904-945",
+      "disposition": "context",
+      "reason": "Both 204 branches follow failed version-name searches. Matching version returns 200 toolFiles; type is passed to separate filtering."
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K14/source/dockstore-webservice/src/test/java/io/openapi/api/impl/ToolsImplCommonTest.java:91-125",
+      "disposition": "reject",
+      "reason": "Tests getToolFiles filtering/classification; does not assert missing-version or unavailable-type HTTP status.",
+      "checklist": {
+        "a": false,
+        "b": false,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-DOC/E-CONSIST",
+      "scope": "K14/source",
+      "queries": [
+        "toolsIdVersionsVersionIdTypeFiles",
+        "SC_NO_CONTENT",
+        "descriptor.*404",
+        "descriptor.*204"
+      ],
+      "disposition": "context",
+      "reason": "No independent target-branch status intent found. Legacy API class delegates to same implementation; duplicate branches are not independent sites."
+    }
+  ],
+  "decision": {
+    "item_id": "K14",
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K14/source/dockstore-webservice/src/main/resources/openapi3/openapi.yaml:4104#/paths/~1ga4gh~1trs~1v2~1tools~1{id}~1versions~1{version_id}~1{type}~1files/get/responses/404;K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:924;K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:941",
+    "both_candidate": true,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The 204 branches handle missing versions, not descriptor-type filtering. No independent test/doc establishes their intended status. Two branches in one method do not corroborate intent; the proposition does not establish the claimed scenario equivalence.",
+    "details": "Tool exit 2 unsupported YAML flow; manually resolved full path operation, method, test fixtures and docs. Raw verdict NA; complete manual fallback. Proposition scenario qualification recorded rather than assuming every conversion exception or empty result is a failure."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K14/source",
+      "K14/source/dockstore-webservice/src/main/resources/openapi3/openapi.yaml",
+      "--method",
+      "GET",
+      "--path",
+      "/ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files",
+      "--json",
+      "--status",
+      "204"
+    ],
+    "stdout": "search_G1/K14.json",
+    "stderr": "search_G1/K14.stderr",
+    "exit_code_file": "search_G1/K14.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}
