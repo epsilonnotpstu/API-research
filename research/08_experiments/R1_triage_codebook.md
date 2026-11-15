@@ -327,6 +327,7 @@ Baseline-এর সব S-STATUS label (`E2_labelling/*_adjudication.csv`) §11.1
 - **মূল `final_labels_baseline_s1.csv` অপরিবর্তিত, আর সেটাই primary।**
   - P043, P021 আর P019 supervisor-এর 2026-11-14 Q2 সিদ্ধান্ত। এগুলো শুধু `final_labels_baseline_s1_v06.csv`-এর sensitivity view-এ বদলেছে।
 - **Distribution:**
-  - Primary: SPEC 40, SPEC_PARTIAL 4, UNDECIDABLE 20; decidable 115, BOTH 26.1%।
+  - Primary (2026-11-15 নিশ্চিতকরণের আগে): SPEC 40, SPEC_PARTIAL 4, UNDECIDABLE 20; decidable 115, BOTH 26.1%।
+  - **হালনাগাদ, 2026-11-15:** supervisor P043/P021/P019 নিশ্চিত করেছেন, আর সেগুলো মূল label-এ বসানো হয়েছে। এখন primary: SPEC 40, SPEC_PARTIAL 1, UNDECIDABLE 23; decidable 112, BOTH 26.8%। C005 এখনো শুধু sensitivity view-এ।
   - v0.6 view: SPEC 39, SPEC_PARTIAL 1, UNDECIDABLE 24; decidable 111, BOTH 27.0%।
 - ⚠️ শুধু 28টি নমুনা দেখা হয়েছে। নমুনার বাইরে guard-ভিত্তিক অন্য SPEC label-ও v0.6-এ বদলাতে পারে। তাই এই view আংশিক।

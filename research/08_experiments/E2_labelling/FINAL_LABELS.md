@@ -1,6 +1,12 @@
-# Baseline violation-এর চূড়ান্ত label — চার SUT, seed 1 (2026-11-14)
+# Baseline violation-এর চূড়ান্ত label — চার SUT, seed 1 (2026-11-14; 2026-11-15-এ হালনাগাদ)
 
 **ফাইল:** `final_labels_baseline_s1.csv` (161টি সারি)। তৈরি হয় `build_final_labels.py` দিয়ে, চারটি adjudication sheet থেকে। B014/B077 = BOTH (supervisor)।
+
+**2026-11-15 হালনাগাদ:**
+- Supervisor নিশ্চিত করেছেন: P043, P021 আর P019 SPEC_PARTIAL থেকে **UNDECIDABLE**।
+- কারণ: SPEC component-এর ভিত্তি শুধু একটা code guard, স্বাধীন intent-প্রমাণ নেই (codebook v0.6 §11.4, §12.4; T36 pilot)।
+- পরিবর্তন করা হয়েছে `swagger-petstore_adjudication.csv`-এ, আগের note সংরক্ষিত।
+- C005 (SPEC → UNDECIDABLE) এখনো Claude-এর provisional same-class সিদ্ধান্ত। সেটা শুধু `final_labels_baseline_s1_v06.csv`-এ আছে।
 
 **পদ্ধতি:**
 - Labeller A (Claude) ও B (Codex, blind) source code, log আর exchange দেখে label দিয়েছে।
@@ -18,10 +24,10 @@
 | SUT | n | SPEC | SPEC_PARTIAL | IMPL | BOTH | TEST | UNDECIDABLE | PENDING |
 |---|---|---|---|---|---|---|---|---|
 | scout-api | 99 | 31 | 0 | 32 | 17 | 1 | 18 | 0 |
-| swagger-petstore | 43 | 4 | 3 | 7 | 7 | 20 | 2 | 0 |
+| swagger-petstore | 43 | 4 | 0 | 7 | 7 | 20 | 5 | 0 |
 | market | 13 | 4 | 0 | 2 | 6 | 1 | 0 | 0 |
 | cwa-verification | 6 | 1 | 1 | 0 | 0 | 4 | 0 | 0 |
-| **মোট** | **161** | **40** | **4** | **41** | **30** | **26** | **20** | **0** |
+| **মোট** | **161** | **40** | **1** | **41** | **30** | **26** | **23** | **0** |
 
 ## Labeller A–B agreement (adjudication-এর আগে, L1)
 | SUT | n | Agreement | κ |
@@ -36,13 +42,13 @@
 - দুটোই LLM labeller; মানব inter-rater reliability নয়।
 
 ## পড়ার নিয়ম ও প্রাথমিক পর্যবেক্ষণ
-- **Decidable defect** (SPEC + SPEC_PARTIAL + IMPL + BOTH) মোট 115টি:
-  - SPEC-দিক: 44 (38%)।
-  - IMPL: 41 (36%)।
-  - BOTH: 30 (26%)।
+- **Decidable defect** (SPEC + SPEC_PARTIAL + IMPL + BOTH) মোট 112টি (2026-11-14-এ ছিল 115):
+  - SPEC-দিক: 41 (37%)।
+  - IMPL: 41 (37%)।
+  - BOTH: 30 (27%)।
 - ⚠️ [H] চার SUT-এর baseline-এ প্রতি চারটি নির্ণয়যোগ্য অমিলের একটিতে spec আর code দুটোই বদলাতে হয়। তাই শুধু "spec নাকি code" — এই এক-কথার attribution অপর্যাপ্ত। এটা R1-এর একটি প্রধান empirical দাবির প্রার্থী।
 - **TEST 26টি (16%)** আমাদের নিজেদের tooling-এর সীমা: checker-এর coverage, int64 format, fuzzer-এর probe। এটা পরিমাপের নির্ভরযোগ্যতার একটা আলাদা ফল।
-- **UNDECIDABLE 20টি (12%)** প্রায় সবই policy-ambiguous: open schema বনাম কঠোর binding, container policy।
+- **UNDECIDABLE 23টি (14%)** প্রায় সবই policy-ambiguous: open schema বনাম কঠোর binding, container policy, আর guard-only intent।
 - **Stateful fault** (petstore user, #952): একটি root cause পাঁচটি operation-এ ছড়িয়ে আছে। Per-operation attribution-এর একটা সীমা।
 
 ## সীমা

@@ -92,7 +92,7 @@
 
    - Petstore-এ fresh-এর সংকেত তুলনামূলক বেশি। ⚠️ সম্ভবত এর spec-এ header constraint আছে, যা generator সরাসরি ব্যবহার করে।
    - Fresh-এ বরং violation **হারায়** (market V 4/1/3, scout D 12/11/13)। ⚠️ মানে কঠোর spec থেকে generator "কম খারাপ" input পাঠায়, তাই IMPL-ত্রুটি আড়াল হয়।
-2. **[H2] একক-পক্ষের attribution অপর্যাপ্ত।** নির্ণয়যোগ্য baseline অমিলের 26% (30/115) BOTH: spec আর code দুটোই বদলাতে হয়।
+2. **[H2] একক-পক্ষের attribution অপর্যাপ্ত।** নির্ণয়যোগ্য baseline অমিলের 27% (30/112; 2026-11-15-এ P043/P021/P019 → UNDECIDABLE-এর পরে) BOTH: spec আর code দুটোই বদলাতে হয়।
 3. **[H3] Detectability fault class আর spec-এর গঠনের ওপর নির্ভর করে।**
    - RESPONSE_ORACLE ধরা পড়ে কেবল 2xx body আর editable response schema থাকলে। scout-এর 30টি op schema-হীন `default` ঘোষণা করে।
    - REQUEST_LOOSE ধরা পড়ে তিন শর্তে: negative traffic, checker-এর মূল্যায়িত constraint, প্রচলিত rejection status।
