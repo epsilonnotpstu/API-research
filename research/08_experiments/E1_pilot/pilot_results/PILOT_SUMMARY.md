@@ -180,7 +180,11 @@
      - Proposition লিখেছিল miner, যে প্রতিটি item-এর fix direction জানত। দুটি ব্যাখ্যা খোলা: Y-এর স্বভাবগত গুণ, অথবা authoring leakage।
      - Contract specificity-তে proposition-only coder মেলেনি (κ = 0.37, p = 0.20)। অর্থাৎ H-E7-2-তে contract পড়ার নিজস্ব অবদান আছে।
    - সীমা: দুই coder একই LLM; accidental arm-এ n = 11, তাই OR-এর CI খুব চওড়া; hypothesis E6-এর exploratory coding থেকে এসেছে।
-   - পরের ধাপ E8: direction-blind লেখকের লেখা proposition-এ H-E7-1 আবার পরীক্ষা।
+   - **E8 (direction-blind proposition, `../../E8_blindprop/E8_RESULTS.md`):**
+     - Primary-র ফল: deliberate → SPEC 22/29, accidental → SPEC 0/6, p = 0.001। কিন্তু accidental arm-এ item ৮-এর কম, তাই **INSUFFICIENT**।
+     - যে ৩৫টি item-এ একই অমিল মিলেছে, সবগুলোতে E8-এর code = E7-এর code। ⇒ proposition কে লিখেছে, তাতে divergence_kind বদলায় না; authoring leakage-এর ব্যাখ্যা দুর্বল হলো।
+     - Blind reader accidental অমিল বেশি miss করেছে: ১১টির মধ্যে ৫টি, যেখানে deliberate-এ ৩৩টির মধ্যে ২–৪টি (post-hoc)।
+     - পরের ধাপ E8b (B1): sample বাড়ানো (T47), শুধু একবার আরেকটি look।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**
