@@ -1,0 +1,2600 @@
+[
+  {
+    "row_id": "cwa-verification.s1.evomaster",
+    "side": "fresh",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/cwa-verification/20261114T200712Z_batch_962064_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "line": 2,
+    "status": 201,
+    "reasons": [
+      "unsupported parameter serialization: Authorization",
+      "unsupported parameter serialization: Authorization"
+    ],
+    "method": "POST",
+    "template": "/version/v1/tan/teletan",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported parameter serialization: Authorization"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported parameter serialization: Authorization"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "cwa-verification.s1.evomaster",
+    "side": "baseline",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/cwa-verification/20261114T200712Z_batch_962064_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 2,
+    "status": 201,
+    "reasons": [
+      "unsupported parameter serialization: Authorization",
+      "unsupported parameter serialization: Authorization"
+    ],
+    "method": "POST",
+    "template": "/version/v1/tan/teletan",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported parameter serialization: Authorization"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported parameter serialization: Authorization"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "cwa-verification.s2.evomaster",
+    "side": "fresh",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/cwa-verification/20261114T200712Z_batch_962064_mutated_REQUEST_STRICT_p30_s2/exchanges.jsonl",
+    "line": 290,
+    "status": 201,
+    "method": "POST",
+    "template": "/version/v1/tan",
+    "body_string_lengths": {
+      "registrationToken": 36,
+      "responsePadding": 0
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/properties/registrationToken/maxLength",
+            "message": "'6484347a-cc39-4944-a555-98348564b849' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/registrationToken",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s1.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 74,
+    "status": 200,
+    "method": "PUT",
+    "template": "/customer/contacts",
+    "body_string_lengths": {
+      "address": 2,
+      "phone": 13
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/maxLength",
+            "message": "'Uigeadail' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/address/maxLength",
+            "message": "'\\ue6b4⌠' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/address",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/phone/maxLength",
+            "message": "'+943434418\\r80' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/phone",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'_links' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "_links"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s1.evomaster",
+    "side": "fresh",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "line": 6,
+    "status": 500,
+    "method": "PUT",
+    "template": "/customer/contacts",
+    "body_string_lengths": {
+      "address": 0,
+      "phone": 16
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/properties/phone/maxLength",
+            "message": "'+30\\t(756\\t7923480' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/phone",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s1.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 6,
+    "status": 500,
+    "method": "PUT",
+    "template": "/customer/contacts",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/required",
+            "message": "missing required query parameter name",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/parameters/query/name",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/href/maxLength",
+            "message": "'6mBhZ0' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/href",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/media/maxLength",
+            "message": "'3JsqkBYGzSiIXp48' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/media",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'jlKlbQeE3Hz8' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'7Op_3awwN' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/media/maxLength",
+            "message": "'FugRemrMQme4ZYus' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/media",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/name/maxLength",
+            "message": "'tFUvI7' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'HPEnYvuHzQQ9t' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'ACQabB3A7' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/hreflang/maxLength",
+            "message": "'L29Rc_Mp_W6Yx' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/hreflang",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'MvQvok' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'W8TMKMCs' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/type/maxLength",
+            "message": "'ics_' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/type",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'KvFP9rRY2' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'bP' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'address' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "address"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'phone' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "phone"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s2.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s2/exchanges.jsonl",
+    "line": 12,
+    "status": 200,
+    "method": "GET",
+    "template": "/customer/cart",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/maxLength",
+            "message": "'DjHTZm43rzYEDv' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s2.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s2/exchanges.jsonl",
+    "line": 41,
+    "status": 500,
+    "method": "PUT",
+    "template": "/customer/cart",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/maxLength",
+            "message": "'12 y.o. Doublewood' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'1cS7mSRUYyc' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/hreflang/maxLength",
+            "message": "'http://mitmproxy:8080/products/6' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/hreflang",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/name/maxLength",
+            "message": "'12 y.o. Doublewood' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/type/maxLength",
+            "message": "'GFTyUBngXxyBhuf' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/type",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/href/maxLength",
+            "message": "'http://mitmproxy:8080/products/11' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/href",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/name/maxLength",
+            "message": "'15 y.o.' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'gZ1HS5KURach' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/type/maxLength",
+            "message": "'jsWU_kROlRvRss' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/type",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'Jn1AND81Bxhcul' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/media/maxLength",
+            "message": "'bqT' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/media",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/name/maxLength",
+            "message": "'_bUdP' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'qS8uYjb' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'QvKPBKrfkWY3q' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/type/maxLength",
+            "message": "'zeC' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/type",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/productId/maximum",
+            "message": "435 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/productId",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'quantity' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "quantity"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s3.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s3/exchanges.jsonl",
+    "line": 5,
+    "status": 200,
+    "method": "GET",
+    "template": "/customer/orders",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/required",
+            "message": "missing required query parameter name",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/parameters/query/name",
+              "property": "name"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s3.evomaster",
+    "side": "fresh",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "line": 6,
+    "status": 500,
+    "method": "PUT",
+    "template": "/customer/contacts",
+    "body_string_lengths": {
+      "address": 0,
+      "phone": 15
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/properties/phone/maxLength",
+            "message": "'+86(87427666\\r68' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/phone",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "market.s3.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s3/exchanges.jsonl",
+    "line": 33,
+    "status": 500,
+    "method": "PUT",
+    "template": "/customer/contacts",
+    "body_string_lengths": {
+      "address": 1
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/name/required",
+            "message": "missing required query parameter name",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/parameters/query/name",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/type/maxLength",
+            "message": "'F3w1pr9maXMPdx' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/type",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'title' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "title"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/hreflang/maxLength",
+            "message": "'http://mitmproxy:8080/products/10' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/hreflang",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/media/maxLength",
+            "message": "'_X8U4C4Qkptx2z' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/media",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'UgBuSwo7fIwElmL3' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'rel' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "rel"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/href/maxLength",
+            "message": "'http://mitmproxy:8080/products/1' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/href",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/hreflang/maxLength",
+            "message": "'http://mitmproxy:8080/products/3' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/hreflang",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'6Lq2XtH3mS' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'7I38ZCm3sYdK' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/deprecation/maxLength",
+            "message": "'PxytX_w' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/deprecation",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/href/maxLength",
+            "message": "'http://mitmproxy:8080/products/5' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/href",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/name/maxLength",
+            "message": "'15 y.o.' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'ec' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'hreflang' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "hreflang"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'media' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "media"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'profile' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "profile"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/hreflang/maxLength",
+            "message": "'http://mitmproxy:8080/products/4' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/hreflang",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/profile/maxLength",
+            "message": "'ZcQo7FHXS0cG' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/profile",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/properties/title/maxLength",
+            "message": "'03' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/_links/*/title",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'deprecation' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "deprecation"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'href' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "href"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'name' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "name"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/_links/items/required",
+            "message": "'type' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/_links/*",
+              "property": "type"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'phone' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "phone"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR",
+          "UNDOCUMENTED_STATUS"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "fresh",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "line": 55,
+    "status": 200,
+    "method": "DELETE",
+    "template": "/pet/{petId}",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/path/petId/maximum",
+            "message": "435 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 5,
+    "status": 200,
+    "method": "GET",
+    "template": "/user/login",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "RESPONSE_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/username/maxLength",
+            "message": "'JTi67hXljVhTh' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/parameters/query/password/required",
+            "message": "missing required query parameter password",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/parameters/query/password",
+              "property": "password"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED",
+          "RESPONSE_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "fresh",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "line": 35366,
+    "status": 500,
+    "method": "PUT",
+    "template": "/pet",
+    "body_string_lengths": {
+      "name": 1,
+      "status": 7
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/properties/id/maximum",
+            "message": "10 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/id",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 132,
+    "status": 500,
+    "method": "PUT",
+    "template": "/pet",
+    "body_string_lengths": {
+      "name": 6
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/required",
+            "message": "'category' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "category"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'id' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "id"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'status' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "status"
+            }
+          },
+          {
+            "pointer": "/requestBody/required",
+            "message": "'tags' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/",
+              "property": "tags"
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/name/maxLength",
+            "message": "'doggie' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/name",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/photoUrls/items/maxLength",
+            "message": "'K2V2fWo' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/photoUrls/*",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/photoUrls/items/maxLength",
+            "message": "'K2V2fWo' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/photoUrls/*",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/properties/photoUrls/items/maxLength",
+            "message": "'K2V2fWo' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/photoUrls/*",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "fresh",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "line": 18,
+    "status": 404,
+    "reasons": [
+      "unsupported body encoding: application/xml",
+      "unsupported body encoding: application/xml"
+    ],
+    "method": "PUT",
+    "template": "/pet",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/xml"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/xml"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s1.evomaster",
+    "side": "baseline",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s1/exchanges.jsonl",
+    "line": 32,
+    "status": 404,
+    "reasons": [
+      "unsupported body encoding: application/x-www-form-urlencoded",
+      "unsupported body encoding: application/x-www-form-urlencoded"
+    ],
+    "method": "PUT",
+    "template": "/pet",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/x-www-form-urlencoded"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/x-www-form-urlencoded"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s2.evomaster",
+    "side": "fresh",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s2/exchanges.jsonl",
+    "line": 6,
+    "status": 200,
+    "method": "POST",
+    "template": "/user/createWithList",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "RESPONSE_SCHEMA"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/items/properties/userStatus/maximum",
+            "message": "1 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/userStatus",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/username/maxLength",
+            "message": "'theUser' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/username",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/firstName/maxLength",
+            "message": "'John' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/firstName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'James' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'James' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/phone/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/phone",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/email/maxLength",
+            "message": "'john@email.com' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/email",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/userStatus/maximum",
+            "message": "1 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/userStatus",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED",
+          "RESPONSE_SCHEMA"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s2.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s2/exchanges.jsonl",
+    "line": 14,
+    "status": 200,
+    "method": "DELETE",
+    "template": "/pet/{petId}",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/header/api_key/maxLength",
+            "message": "'VAQwPc' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/parameters/path/petId/maximum",
+            "message": "311 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s2.evomaster",
+    "side": "fresh",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s2/exchanges.jsonl",
+    "line": 117,
+    "status": 500,
+    "method": "POST",
+    "template": "/user/createWithList",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/items/properties/id/maximum",
+            "message": "10 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/id",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'James' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s2.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s2/exchanges.jsonl",
+    "line": 70,
+    "status": 500,
+    "method": "GET",
+    "template": "/user/{username}",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/path/username/maxLength",
+            "message": "'KJvHBbKHFLlQ0HT5' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "fresh",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "line": 7,
+    "status": 200,
+    "method": "POST",
+    "template": "/user",
+    "body_string_lengths": {
+      "username": 1,
+      "firstName": 1,
+      "lastName": 1,
+      "email": 0,
+      "password": 5,
+      "phone": 0
+    },
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": []
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/properties/password/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/password",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "baseline",
+    "metric": "violating_2xx",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s3/exchanges.jsonl",
+    "line": 5,
+    "status": 200,
+    "method": "GET",
+    "template": "/user/login",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "RESPONSE_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/parameters/query/username/maxLength",
+            "message": "'TdwfCd' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/parameters/query/password/maxLength",
+            "message": "'YNE' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "INVALID_ACCEPTED",
+          "RESPONSE_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "fresh",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "line": 147,
+    "status": 500,
+    "method": "POST",
+    "template": "/user/createWithList",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/phone/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/phone",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/userStatus/maximum",
+            "message": "1 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/userStatus",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/id/maximum",
+            "message": "10 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/id",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/firstName/maxLength",
+            "message": "'John' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/firstName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/id/maximum",
+            "message": "10 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/id",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'James' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "baseline",
+    "metric": "violating_other",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s3/exchanges.jsonl",
+    "line": 33,
+    "status": 500,
+    "method": "POST",
+    "template": "/user/createWithList",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      },
+      "mutated": {
+        "request_errors": [
+          {
+            "pointer": "/requestBody/items/properties/id/maximum",
+            "message": "292 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/id",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/username/maxLength",
+            "message": "'vHVOguGDcdXoGrn5' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/username",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'Ka3twDpHsCJL_' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/email/maxLength",
+            "message": "'WSNs' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/email",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'1jNMsVHE7rAXvk_' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/phone/maxLength",
+            "message": "'WQJQYWvp0' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/phone",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'userStatus' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "userStatus"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/firstName/maxLength",
+            "message": "'xp01CWcnD' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/firstName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'bvxvdhZXFMG8MK' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/email/maxLength",
+            "message": "'hbogbRZi2RVD3zl' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/email",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'ASMuWX8lnkwo' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/userStatus/maximum",
+            "message": "290 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/userStatus",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'id' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "id"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'username' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "username"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/id/maximum",
+            "message": "10 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/id",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/firstName/maxLength",
+            "message": "'John' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/firstName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'sFh5sPYRqEih6V' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'email' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "email"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'lastName' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "lastName"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'phone' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "phone"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'userStatus' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "userStatus"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'username' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "username"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'ndE89uK' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/email/maxLength",
+            "message": "'john@email.com' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/email",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/password/maxLength",
+            "message": "'12345' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/password",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/userStatus/maximum",
+            "message": "86 is greater than the maximum of 0",
+            "identity": {
+              "keyword": "maximum",
+              "instance_location": "/*/userStatus",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'firstName' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "firstName"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'id' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "id"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'phone' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "phone"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'username' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "username"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/firstName/maxLength",
+            "message": "'John' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/firstName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/lastName/maxLength",
+            "message": "'fOPhmS' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/lastName",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/properties/email/maxLength",
+            "message": "'Qoo' is too long",
+            "identity": {
+              "keyword": "maxLength",
+              "instance_location": "/*/email",
+              "property": ""
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'id' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "id"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'password' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "password"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'phone' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "phone"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'userStatus' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "userStatus"
+            }
+          },
+          {
+            "pointer": "/requestBody/items/required",
+            "message": "'username' is a required property",
+            "identity": {
+              "keyword": "required",
+              "instance_location": "/*",
+              "property": "username"
+            }
+          }
+        ],
+        "uncheckable": [],
+        "kinds": [
+          "SERVER_ERROR"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "fresh",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "line": 37,
+    "status": 200,
+    "reasons": [
+      "unsupported body encoding: application/xml",
+      "unsupported body encoding: application/xml"
+    ],
+    "method": "POST",
+    "template": "/user",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/xml"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/xml"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE"
+        ]
+      }
+    }
+  },
+  {
+    "row_id": "swagger-petstore.s3.evomaster",
+    "side": "baseline",
+    "metric": "uncheckable_requests",
+    "capture": "08_experiments/E1_pilot/runs/swagger-petstore/20261114T170333Z_batch_911778_baseline_NONE_p0_s3/exchanges.jsonl",
+    "line": 20,
+    "status": 200,
+    "reasons": [
+      "unsupported body encoding: application/x-www-form-urlencoded",
+      "unsupported body encoding: application/x-www-form-urlencoded"
+    ],
+    "method": "POST",
+    "template": "/pet",
+    "body_string_lengths": {},
+    "checks": {
+      "original": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/x-www-form-urlencoded"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE",
+          "RESPONSE_SCHEMA"
+        ]
+      },
+      "mutated": {
+        "request_errors": [],
+        "uncheckable": [
+          "unsupported body encoding: application/x-www-form-urlencoded"
+        ],
+        "kinds": [
+          "REQUEST_UNCHECKABLE",
+          "RESPONSE_SCHEMA"
+        ]
+      }
+    }
+  }
+]

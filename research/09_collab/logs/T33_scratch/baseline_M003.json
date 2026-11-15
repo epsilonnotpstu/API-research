@@ -1,0 +1,403 @@
+{
+  "operation": {
+    "method": "PUT",
+    "path": "/customer/cart"
+  },
+  "observed_status": 406,
+  "field": null,
+  "spec": {
+    "file": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+    "path": "/customer/cart",
+    "statuses": [
+      "200",
+      "201",
+      "401",
+      "403",
+      "404"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1customer~1cart/put"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "conflicting",
+  "evidence_types_found": [
+    "E-DOC",
+    "E-CONSIST"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:75",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 75,
+      "snippet": "public CartDTO addItem(Principal principal, @RequestBody @Valid CartItemDTO item) {",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/customer/cart",
+      "methods": [
+        "PUT"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java:112",
+      "file": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java",
+      "line": 112,
+      "snippet": ".andExpect(status().isOk())",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ other_module context only; no handler-class or REST-base-path reference; candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": false,
+      "counts_toward_verdict": false,
+      "module_scope": "other_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.adoc:102",
+      "file": "README.adoc",
+      "line": 102,
+      "snippet": "** storing in the database a shopping cart of a registered customer",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:186",
+      "file": "README_RU.md",
+      "line": 186,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"us",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:193",
+      "file": "README_RU.md",
+      "line": 193,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 201 Created<br>             Location: http://46.101.111.55:8080/rest/customer/orders/13<br>             Conte",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:68",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 68,
+      "snippet": "/**",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:69",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 69,
+      "snippet": "* Adding a product.",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:70",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 70,
+      "snippet": "*",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:71",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 71,
+      "snippet": "* @return updated cart",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:72",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 72,
+      "snippet": "* @throws UnknownEntityException if the specified product does not exist",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CartRestController.java:73",
+      "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+      "line": 73,
+      "snippet": "*/",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:71",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 71,
+      "snippet": "style=\"width: 100%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"user\":",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:78",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 78,
+      "snippet": "<pre style=\"width: 100%;\">заголовок:   Status Code: 201 Created<br>             Location: /customer/orders/13<br>             Content-Type: application/json; ch",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "market-rest/src/main/java/market/rest/exception/RestExceptionHandler.java:74",
+      "file": "market-rest/src/main/java/market/rest/exception/RestExceptionHandler.java",
+      "line": 74,
+      "snippet": "@ResponseStatus(HttpStatus.NOT_ACCEPTABLE)",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 2,
+      "site_class": "RestExceptionHandler",
+      "pattern": [
+        "status",
+        "406"
+      ],
+      "statuses": [
+        406
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "market-web/src/main/java/market/controller/SpringExceptionHandler.java:67",
+      "file": "market-web/src/main/java/market/controller/SpringExceptionHandler.java",
+      "line": 67,
+      "snippet": "@ResponseStatus(HttpStatus.NOT_ACCEPTABLE)",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 2,
+      "site_class": "SpringExceptionHandler",
+      "pattern": [
+        "status",
+        "406"
+      ],
+      "statuses": [
+        406
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "available",
+    "reason": "local git history searched",
+    "queries": [
+      {
+        "file": "market-rest/src/main/java/market/rest/CartRestController.java",
+        "literal": "406",
+        "returncode": 0
+      }
+    ]
+  },
+  "scan": {
+    "text_files": 162,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 5,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

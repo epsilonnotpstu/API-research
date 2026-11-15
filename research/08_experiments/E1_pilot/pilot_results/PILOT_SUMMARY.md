@@ -115,6 +115,10 @@
    - Mapped op-এ কাকতালীয় "প্রত্যাশিত kind" 3/22 noise run-এ।
    - Attribution label-এর মূল্যায়ন: H8 দেখুন।
    - উৎস: `../../E5_codemut/E5_RESULTS.md` §3b।
+   - **হালনাগাদ (2026-11-15):** বিকল্প site (v2, v3) আর নতুন checker (int format) যোগ করে এখন হিসাব 12 mutant, 31 জোড়া-seed।
+     - সংকেত 31/31, প্রত্যাশিত kind 26/31, noise ছাড়ায় **25/31**।
+     - Site-প্রতি একটা গুনলে (v2 বাদ): 26/28 আর 25/28।
+     - উৎস: `E5_RESULTS.md` §3c। Validator-এ provenance আর drift আলাদা করা হয়েছে (T30)।
 
 8. **[H8] শুধু code-এর ভিত্তিতে intent-বিচার ইচ্ছাকৃত-দেখতে code fault-কে SPEC বলে।** Blind E5 labelling (দুটি নতুন Codex session):
    - Crash, guard আর validation fault: IMPL 5/5।
@@ -128,9 +132,23 @@
      - খরচ: annotation fault-এ বিরত থাকা।
    - উৎস: `../../E5_codemut/E5_BLIND_RESULTS.md` (v1 + v2)।
 
+9. **[H9] দ্বিতীয় fuzzer (EvoMaster v6.2.0 black-box) — fault class-স্তরের প্যাটার্ন একই রকম, ঘর-স্তরে generator-নির্ভরতা আছে।** উৎস: `FUZZER_COMPARE.md`।
+   - **Controlled ঘর** (একই mutation set, p30): EvoMaster **20/26**, Schemathesis **19/26**।
+   - পার্থক্য আসে নির্দিষ্ট ঘরে:
+     - market STRICT 0/3 বনাম 3/3: EvoMaster-এর ভাঙা request 500 পায়, 2xx নয় (T32)।
+     - petstore METHOD_SEM 3/3 বনাম 0/3: Schemathesis-এর সংকেত শুধু UNCHECKABLE।
+   - RESPONSE_ORACLE দুই fuzzer-এই শক্তিশালী, REQUEST_LOOSE দুটোতেই দুর্বল।
+   - **একই seed-এ EvoMaster প্রায় একই request sequence পুনরাবৃত্তি করে** (প্রতিটি seed-এ 1টি replicate; cwa হুবহু এক, scout s2 ব্যতিক্রম)।
+     - Observed same-seed reference 45/48 row-এ 0।
+     - Mutated run-এর traffic: request-side mutation-এ baseline থেকে প্রায় পুরো আলাদা (positional median ~0.01), ORACLE-এ প্রায় একই (median 0.966)।
+     - ⚠️ Hypothesis (T34 F1): fresh-mode noise reference fault class অনুযায়ী বাছা উচিত হতে পারে। এখন দুটো reference-ই পাশাপাশি দেওয়া হচ্ছে।
+     - Schemathesis-এর same-seed replicate একে অপরের থেকে অনেক সরে যায় (median 0.26–0.72)।
+   - Scout-এ EvoMaster-এর জন্য derecursed input লেগেছে (recursive schema inline হওয়ায় stall; T31)।
+
 ## 6. সীমা (threats to validity)
 - **External validity:**
-  - চারটিই Java/Spring/Dropwizard SUT; একটি fuzzer; budget 300 s; seed 3টি।
+  - চারটিই Java/Spring/Dropwizard SUT; budget 300 s; seed 3টি।
+  - দুটি fuzzer: Schemathesis (মূল) আর EvoMaster (তুলনা, H9)। EvoMaster-এর তুলনা শুধু fresh mapped-fingerprint স্তরে।
   - Coverage মাঝারি থেকে কম (branch 3–61%)।
 - **Construct validity:**
   - fault তৈরি করা কৃত্রিম (`specmut`)।
@@ -148,5 +166,10 @@
 4. ~~E5 blind labelling আর E5 noise floor~~ — হয়েছে (H7, H8)। বাকি:
    - ~~codebook v0.5 মেনে blind labelling আবার করা; E005-এর সংশোধন~~ — হয়েছে (H8, v2)।
    - Attribution-পদ্ধতিতে নিয়মবদ্ধ intent-প্রমাণ খোঁজার ধাপ (test → docs → history)।
-   - market-এর বিকল্প RESP_FIELD site।
-5. দ্বিতীয় fuzzer (EvoMaster)।
+     - Tool আছে (`tools/intent_evidence.py`)।
+     - Codebook §11.4 proposal (T33) supervisor-এর সিদ্ধান্তের অপেক্ষায়; 7টি প্রশ্ন খোলা।
+   - ~~market-এর বিকল্প RESP_FIELD site~~ — হয়েছে (v2, 3/3; `E5_RESULTS.md` §3c)।
+5. ~~দ্বিতীয় fuzzer (EvoMaster)~~ — হয়েছে (H9)। বাকি:
+   - ~~Schemathesis-এর same-seed replicate দিয়ে একই trajectory বিশ্লেষণ~~ — হয়েছে। Schemathesis-এর replicate নিজেরাই অনেক সরে যায় (positional median 0.26–0.72)।
+   - কোন reference উপযুক্ত, তা নির্ধারণে আরও replicate দরকার (T34 F1)।
+   - market STRICT-এ 500-পথের code-level কারণ।
