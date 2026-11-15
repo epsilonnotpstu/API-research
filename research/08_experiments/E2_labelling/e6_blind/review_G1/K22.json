@@ -1,0 +1,110 @@
+{
+  "item_id": "K22",
+  "proposition": "GET /projects/outlets: contract says office defaults to the user session id; implementation does require a nonempty office query parameter.",
+  "target": {
+    "side": "request",
+    "method": "GET",
+    "path": "/projects/outlets",
+    "scenario": "office query absent/empty",
+    "field": "office",
+    "direction": "documented user-session default versus required query"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a),(c): verify default promise, required-query behavior and independent office policy."
+  },
+  "start_time": "2026-11-15T14:46:44.246850+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K22/source/cwms-data-api/src/test/java/cwms/cda/api/location/kind/OutletControllerTestIT.java:192-209",
+      "disposition": "context",
+      "reason": "Matching GET explicitly supplies office; positive test does not establish missing-office intent.",
+      "checklist": {
+        "a": false,
+        "b": false,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-DOC",
+      "scope": "K22/source",
+      "queries": [
+        "user session id",
+        "projects/outlets"
+      ],
+      "disposition": "context",
+      "reason": "No separate normative override found; sibling annotations repeating defaults are not independent."
+    },
+    {
+      "category": "HANDLER",
+      "locator": "K22/source/cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:332-345;K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:514-518",
+      "disposition": "context",
+      "reason": "Route resolves getAll; helper directly reads queryParam and throws without a session fallback."
+    },
+    {
+      "category": "HANDLER",
+      "locator": "K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:296-299",
+      "disposition": "context",
+      "reason": "RequiredQueryParameterException explicitly maps to HTTP 400."
+    }
+  ],
+  "decision": {
+    "item_id": "K22",
+    "L1": "IMPL",
+    "L2": "I-REJECT-VALID",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K22/source/cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:104@OpenApi.queryParams[office].description;K22/source/cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:120;K22/source/cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:339;K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:518;K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:296",
+    "both_candidate": false,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The contract promises a user-session office default, but requiredParam throws for absent or empty query values before retrieval. This violates the documented default under §10.7, so primary attribution is implementation.",
+    "details": "Tool cannot parse Java annotation contract (exit 2; raw verdict NA); manual route/helper/fixture/test/docs fallback complete. Final attribution follows explicit codebook §10.7 default-promise rule, rather than elevating sole guard to intent. Intent review not_applicable to deterministic rule."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K22/source",
+      "K22/source/cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java",
+      "--method",
+      "GET",
+      "--path",
+      "/projects/outlets",
+      "--json",
+      "--field",
+      "office"
+    ],
+    "stdout": "search_G1/K22.json",
+    "stderr": "search_G1/K22.stderr",
+    "exit_code_file": "search_G1/K22.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

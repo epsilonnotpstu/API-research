@@ -1,0 +1,102 @@
+{
+  "item_id": "K13",
+  "proposition": "GET /offices: contract says 200 uses the selected office representation media type; implementation does write the selected formatter output without setting that formatter media type on the response.",
+  "target": {
+    "side": "response",
+    "method": "GET",
+    "path": "/offices",
+    "scenario": "selected representation formatter response",
+    "field": "Content-Type",
+    "direction": "declared selected media type versus missing formatter response type"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a)-(c): media-type attribution requires independent documentation/test evidence."
+  },
+  "start_time": "2026-11-15T14:41:42.375715+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K13/source/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java:62-88",
+      "disposition": "context",
+      "reason": "Crud route resolves offices/getAll; default response type application/json. No after-filter replaces media type."
+    },
+    {
+      "category": "E-CONSIST",
+      "locator": "K13/source/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java:68-85;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java:71-85",
+      "disposition": "accept",
+      "reason": "Two separate classes implement same negotiated-format policy by selecting matching response Content-Type. CSV witness directly analogous to offices.",
+      "checklist": {
+        "a": true,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-TEST/E-DOC",
+      "scope": "K13/source/cwms_radar_api/src/main/test;K13/source/README.md",
+      "disposition": "context",
+      "reason": "No office-specific response-header assertion or prose override found; README only describes data API."
+    }
+  ],
+  "decision": {
+    "item_id": "K13",
+    "L1": "IMPL",
+    "L2": "I-RESP-CONTRACT",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-CONSIST;E-CROSS",
+    "evidence_locators": "K13/source/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:61@OpenApi.responses[200].content;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java:94;K13/source/cwms_radar_tomcat/src/main/java/cwms/radar/ApiServlet.java:63;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/LocationController.java:75;K13/source/cwms_radar_api/src/main/java/cwms/radar/api/TimeZoneController.java:74",
+    "both_candidate": false,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Office formatting changes the body but leaves the configured JSON content type. Independent controllers set media type for each selected format, supporting the contract policy. Missing response-type assignment is an implementation fault.",
+    "details": "Tool cannot parse Java @OpenApi source (exit 2, raw verdict NA). Manual controller+servlet route/config+formatter+tests+prose+independent controllers close retrieval gap. Result is static and limited to non-default selected representations. §10.7 JSON/plain-text mismatch rule is compatible with implementation attribution."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K13/source",
+      "K13/source/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java",
+      "--method",
+      "GET",
+      "--path",
+      "/offices",
+      "--json",
+      "--status",
+      "200",
+      "--field",
+      "Content-Type"
+    ],
+    "stdout": "search_G1/K13.json",
+    "stderr": "search_G1/K13.stderr",
+    "exit_code_file": "search_G1/K13.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

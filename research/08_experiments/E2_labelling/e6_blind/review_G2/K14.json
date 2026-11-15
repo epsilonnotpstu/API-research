@@ -1,0 +1,147 @@
+{
+  "item_id": "K14",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files",
+    "scenario": "response: existing workflow/tool unavailable in requested descriptor type; unsuccessful descriptor branch returns 204 versus documented 404",
+    "observed_status": 204,
+    "field": null,
+    "supplied_proposition": "GET /ga4gh/trs/v2/tools/{id}/versions/{version_id}/{type}/files: contract says a tool unavailable in the specified descriptor type receives 404; implementation does return 204 from unsuccessful workflow or tool descriptor branches.",
+    "direction": "Assess documented response status/body/type against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(a,b,c): intentional-looking undocumented status needs independent same-scenario evidence.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,b,c): intentional-looking undocumented status needs independent same-scenario evidence."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T14:58:28.657846+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:909-944,987-1028",
+      "reason": "Branch qualification: missing version yields 204; existing version yields file list, with type filtering delegated to getToolFiles.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Branch qualification: missing version yields 204; existing version yields file list, with type filtering delegated to getToolFiles."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Branch qualification: missing version yields 204; existing version yields file list, with type filtering delegated to getToolFiles."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Branch qualification: missing version yields 204; existing version yields file list, with type filtering delegated to getToolFiles."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "204 branches are specifically absent matching workflowVersion/tag (911-924,928-941), not direct descriptor-type guards. Existing versions use getToolFiles and 200; unsupported entry class gives 404. No independent same-error-branch test/doc asserts 204 or 404. Two 204 branches share one method/class."
+        }
+      }
+    },
+    {
+      "locator": "K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:924,941",
+      "disposition": "unresolved",
+      "reason": "Repeated noContent policy in workflow/tool branches of the same method is not clearly independent intent evidence; same_class_policy adjudication required.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Repeated noContent policy in workflow/tool branches of the same method is not clearly independent intent evidence; same_class_policy adjudication required."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Repeated noContent policy in workflow/tool branches of the same method is not clearly independent intent evidence; same_class_policy adjudication required."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Repeated noContent policy in workflow/tool branches of the same method is not clearly independent intent evidence; same_class_policy adjudication required."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "204 branches are specifically absent matching workflowVersion/tag (911-924,928-941), not direct descriptor-type guards. Existing versions use getToolFiles and 200; unsupported entry class gives 404. No independent same-error-branch test/doc asserts 204 or 404. Two 204 branches share one method/class."
+        }
+      }
+    },
+    {
+      "locator": "K14/source/dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java:83-85",
+      "reason": "Older route delegates to same implementation, so not independent corroboration.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Older route delegates to same implementation, so not independent corroboration."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Older route delegates to same implementation, so not independent corroboration."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Older route delegates to same implementation, so not independent corroboration."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "204 branches are specifically absent matching workflowVersion/tag (911-924,928-941), not direct descriptor-type guards. Existing versions use getToolFiles and 200; unsupported entry class gives 404. No independent same-error-branch test/doc asserts 204 or 404. Two 204 branches share one method/class."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-CROSS",
+    "evidence_locators": "K14/source/dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java:909-944,987-1028;K14/source/dockstore-webservice/src/main/resources/openapi3/openapi.yaml#/paths/~1ga4gh~1trs~1v2~1tools~1{id}~1versions~1{version_id}~1{type}~1files/get/responses/404",
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "same_class_policy",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ The 204 branches follow missing-version lookups, not direct descriptor-type rejection. No independent same-branch evidence establishes intended status. Repeated workflow/tool branches belong to one method, so their policy independence requires adjudication."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "Route resolved through exact operationId. toolsIdVersionsVersionIdTypeFilesGet returns 204 for missing requested version in workflow/tool branches, 200 for present version, 404 for other entry type. Proposition is broader than the actual guards; it cannot establish a requested-descriptor-only 204 scenario.",
+  "retrieval_completion": "Manually parsed complete operation and refs after YAML failure, inspected version lookup/type filtering, supplied tests, README and old delegate. No independent error-scenario evidence; route/parser gap resolved, intent and scenario attribution remain ambiguous.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K14/source",
+  "contract_locator_hint": "source/dockstore-webservice/src/main/resources/openapi3/openapi.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K14.json",
+    "stderr": "search_G2/K14.stderr",
+    "exit_code": "search_G2/K14.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

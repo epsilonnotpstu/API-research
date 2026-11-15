@@ -1,0 +1,103 @@
+{
+  "item_id": "K21",
+  "proposition": "GET /pet/findByStatus: contract says the status query parameter is optional; implementation does return 400 when its bound status argument is null",
+  "target": {
+    "side": "request",
+    "method": "GET",
+    "path": "/pet/findByStatus",
+    "scenario": "optional status omitted and bound null",
+    "status": 400,
+    "field": "status",
+    "direction": "optional query versus explicit null rejection"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a)-(c): guard intent needs independent evidence for the omitted-status branch."
+  },
+  "start_time": "2026-11-15T14:46:07.205374+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K21/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:1-5",
+      "disposition": "context",
+      "reason": "Only test class is empty; no missing-status assertion."
+    },
+    {
+      "category": "E-DOC",
+      "locator": "K21/source/README.md:3-11",
+      "disposition": "context",
+      "reason": "Generic Swagger/Inflector sample description has no omitted-status/null policy."
+    },
+    {
+      "category": "HANDLER",
+      "locator": "K21/source/src/main/java/io/swagger/petstore/controller/PetController.java:50-76",
+      "disposition": "context",
+      "reason": "Status guard is deliberate-looking. getPetById guard concerns required resource key, not independently analogous optional filter.",
+      "checklist": {
+        "a": true,
+        "b": false,
+        "c": false,
+        "d": true,
+        "e": true
+      }
+    }
+  ],
+  "decision": {
+    "item_id": "K21",
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT",
+    "evidence_locators": "K21/source/src/main/resources/openapi.yaml:128#/paths/~1pet~1findByStatus/get/parameters/0;K21/source/src/main/java/io/swagger/petstore/controller/PetController.java:51;K21/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3;K21/source/README.md:11",
+    "both_candidate": true,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The null guard returns 400, but the optional parameter also documents default available. No supplied test proves omission binds null or establishes null-branch intent. A guard alone cannot attribute a failure; framework default binding remains unobserved.",
+    "details": "Tool YAML flow parse failure exit 2, raw verdict NA; manual complete path/operationId/controller, schema/default, servlet, all available tests/prose review. No exchange or framework source supplied, so omitted-request -> bound null is not asserted. §10.7 default violation would imply IMPL only if actual failure to apply default were established. No same-class repeated-policy inference used."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K21/source",
+      "K21/source/src/main/resources/openapi.yaml",
+      "--method",
+      "GET",
+      "--path",
+      "/pet/findByStatus",
+      "--json",
+      "--status",
+      "400",
+      "--field",
+      "status"
+    ],
+    "stdout": "search_G1/K21.json",
+    "stderr": "search_G1/K21.stderr",
+    "exit_code_file": "search_G1/K21.exitcode",
+    "exit_code": 2,
+    "runtime_exchange_supplied": false,
+    "raw_verdict": "NA",
+    "parser_gap_resolution": "Package-local directed manual fallback; see manual_additions and decision.details. complete describes reviewed retrieval, not CLI success."
+  }
+}

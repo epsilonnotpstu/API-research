@@ -1,0 +1,58 @@
+{
+  "item_id": "K11",
+  "proposition": "GET /hosts/products/{product_id}: contract says beginning and ending are optional for the OpenShift metrics products; implementation does wrap absent dates with Optional.of in the special-product branch.",
+  "target": {
+    "side": "request",
+    "method": "GET",
+    "path": "/hosts/products/{product_id}",
+    "scenario": "OpenShift metrics product with beginning or ending absent",
+    "field": "beginning;ending",
+    "direction": "optional dates versus Optional.of(null)"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "§11.4.1 deterministic null crash; verify special branch and contract."
+  },
+  "start_time": "2026-11-15T14:41:05.355169+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K11/source/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:38-46",
+      "disposition": "context",
+      "reason": "Unhandled Throwable maps to 500."
+    }
+  ],
+  "decision": {
+    "item_id": "K11",
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K11/source/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java:135;K11/source/api/rhsm-subscriptions-api-spec.yaml:434#/paths/~1hosts~1products~1{product_id}/get/parameters",
+    "both_candidate": false,
+    "intent_search_status": "not_run",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Optional.of rejects missing dates before its fallback can run in the special-product branch. Optional date filters could use the existing now fallback; this deterministic null crash is an implementation fault under §9.3 R1.",
+    "details": "Static Optional.of(null) failure, not a runtime observation. Contract does not mark beginning/ending required and restricts applicability to OpenShift metrics products. §10.6 resource-key/mandatory persistent-field condition does not apply."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": null
+}

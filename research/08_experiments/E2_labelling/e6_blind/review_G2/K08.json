@@ -1,0 +1,147 @@
+{
+  "item_id": "K08",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/tally/products/{product_id}/{metric_id}",
+    "scenario": "request: invalid granularity query enum; determine whether IllegalArgumentException maps to documented 400 or server error",
+    "observed_status": null,
+    "field": "granularity",
+    "supplied_proposition": "GET /v1/tally/products/{product_id}/{metric_id}: contract says granularity is a listed enum and bad requests receive 400; implementation does throw IllegalArgumentException when enum conversion cannot match the query value.",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(b,c): exception occurrence alone does not establish HTTP status; inspect mapper and tests.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(b,c): exception occurrence alone does not establish HTTP status; inspect mapper and tests."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T11:31:17.330262+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K08/source/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:68-83",
+      "reason": "Rejects invalid enum; throwing IllegalArgumentException alone does not establish an HTTP deviation.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Rejects invalid enum; throwing IllegalArgumentException alone does not establish an HTTP deviation."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Rejects invalid enum; throwing IllegalArgumentException alone does not establish an HTTP deviation."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Rejects invalid enum; throwing IllegalArgumentException alone does not establish an HTTP deviation."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Enum converter throws on invalid input, but BadRequestExceptionMapper maps wrapped binding errors to 400 and WebApplicationExceptionMapper preserves wrapper status. DefaultExceptionMapper maps only otherwise-unhandled Throwable to 500. No same-scenario HTTP test resolves framework wrapping."
+        }
+      }
+    },
+    {
+      "locator": "K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/BadRequestExceptionMapper.java:30-49;K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/WebApplicationExceptionMapper.java:36-49",
+      "reason": "Binding/wrapper mappings may yield documented 400; relevant counterevidence to assuming converter exception means 500.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Binding/wrapper mappings may yield documented 400; relevant counterevidence to assuming converter exception means 500."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Binding/wrapper mappings may yield documented 400; relevant counterevidence to assuming converter exception means 500."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Binding/wrapper mappings may yield documented 400; relevant counterevidence to assuming converter exception means 500."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Enum converter throws on invalid input, but BadRequestExceptionMapper maps wrapped binding errors to 400 and WebApplicationExceptionMapper preserves wrapper status. DefaultExceptionMapper maps only otherwise-unhandled Throwable to 500. No same-scenario HTTP test resolves framework wrapping."
+        }
+      }
+    },
+    {
+      "locator": "K08/source/src/test/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapperTest.java:35-54",
+      "reason": "Generic RuntimeException test asserts 500, but not the invalid-granularity binding path; rejected as target intent evidence.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Generic RuntimeException test asserts 500, but not the invalid-granularity binding path; rejected as target intent evidence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Generic RuntimeException test asserts 500, but not the invalid-granularity binding path; rejected as target intent evidence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Generic RuntimeException test asserts 500, but not the invalid-granularity binding path; rejected as target intent evidence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Enum converter throws on invalid input, but BadRequestExceptionMapper maps wrapped binding errors to 400 and WebApplicationExceptionMapper preserves wrapper status. DefaultExceptionMapper maps only otherwise-unhandled Throwable to 500. No same-scenario HTTP test resolves framework wrapping."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "",
+    "confidence": 1,
+    "evidence_types": "E-CODE-INTENT;E-TEST",
+    "evidence_locators": "K08/source/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java:68-83;K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/BadRequestExceptionMapper.java:30-49;K08/source/swatch-core/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:36-44;K08/source/api/rhsm-subscriptions-api-v1-spec.yaml#/paths/~1v1~1tally~1products~1{product_id}~1{metric_id}/get;K08/source/api/rhsm-subscriptions-api-v1-spec.yaml#/components/schemas/GranularityType;K08/source/spec/error-responses.yaml#/$defs/BadRequest",
+    "both_candidate": false,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Invalid enum conversion does throw, but binding exceptions may be wrapped and mapped to 400. No supplied same-scenario HTTP test establishes a contract deviation; generic 500 mapping alone cannot prove this query fails incorrectly."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "TallyResource.java:117-120 takes generated GranularityType. Registered EnumParamConverterProvider rejects unknown value at 82. Source mappers distinguish HTTP/binding wrappers from generic Throwable, so the target proposition's throw claim is true but its HTTP consequence is not established.",
+  "retrieval_completion": "Manual YAML refs, operation, enum, converter provider registration and all supplied exception mappings resolved after parser failure. Directed target tests/docs have no invalid-granularity HTTP assertion. Framework implementation is excluded dependency material; outcome uncertainty retained rather than inventing an exchange.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K08/source",
+  "contract_locator_hint": "source/api/rhsm-subscriptions-api-v1-spec.yaml | source/spec/error-responses.yaml | source/spec/openapi-paths.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K08.json",
+    "stderr": "search_G2/K08.stderr",
+    "exit_code": "search_G2/K08.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

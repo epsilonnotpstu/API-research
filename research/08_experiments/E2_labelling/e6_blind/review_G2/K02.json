@@ -1,0 +1,147 @@
+{
+  "item_id": "K02",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "PUT",
+    "path_template": "/api/secrets/{id}",
+    "scenario": "request: PUT existing secret without body; contract omits requestBody but Spring binding requires Secret",
+    "observed_status": null,
+    "field": null,
+    "supplied_proposition": "PUT /api/secrets/{id}: contract says no request body is required by the PUT operation; implementation does require a Secret request body",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(a,b,c): request-body obligation differs between contract and handler; seek independent tests/docs.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,b,c): request-body obligation differs between contract and handler; seek independent tests/docs."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T11:28:09.721007+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K02/source/api/microcks-openapi-v1.10.yaml:18-20,377-424",
+      "reason": "Manual contract parsing resolves /api server prefix and confirms omitted PUT requestBody.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Manual contract parsing resolves /api server prefix and confirms omitted PUT requestBody."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Manual contract parsing resolves /api server prefix and confirms omitted PUT requestBody."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Manual contract parsing resolves /api server prefix and confirms omitted PUT requestBody."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Contract PUT has no requestBody (394-405); handler requires one. UI client supplies a body but does not establish that body omission must be rejected. No relevant controller test or independent documentation was found."
+        }
+      }
+    },
+    {
+      "locator": "K02/source/webapp/src/main/webapp/src/app/services/secrets.service.ts:27,49-50",
+      "reason": "Client sends Secret on PUT, but positive usage does not establish mandatory body or intended rejection of absence.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Client sends Secret on PUT, but positive usage does not establish mandatory body or intended rejection of absence."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Client sends Secret on PUT, but positive usage does not establish mandatory body or intended rejection of absence."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Client sends Secret on PUT, but positive usage does not establish mandatory body or intended rejection of absence."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Contract PUT has no requestBody (394-405); handler requires one. UI client supplies a body but does not establish that body omission must be rejected. No relevant controller test or independent documentation was found."
+        }
+      }
+    },
+    {
+      "locator": "K02/source/webapp/src/test;K02/source/README.md;K02/source/webapp/README.md",
+      "reason": "Directed secret/route/update search found no applicable missing-body assertion or normative statement; unrelated fixture/authentication hits excluded.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Directed secret/route/update search found no applicable missing-body assertion or normative statement; unrelated fixture/authentication hits excluded."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Directed secret/route/update search found no applicable missing-body assertion or normative statement; unrelated fixture/authentication hits excluded."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Directed secret/route/update search found no applicable missing-body assertion or normative statement; unrelated fixture/authentication hits excluded."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Contract PUT has no requestBody (394-405); handler requires one. UI client supplies a body but does not establish that body omission must be rejected. No relevant controller test or independent documentation was found."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-CROSS",
+    "evidence_locators": "K02/source/webapp/src/main/java/io/github/microcks/web/SecretController.java:46-47,84-87;K02/source/webapp/src/main/webapp/src/app/services/secrets.service.ts:49-50;K02/source/api/microcks-openapi-v1.10.yaml#/paths/~1secrets~1{id}/put",
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ PUT omits requestBody while Spring requires Secret. The client supplies one, but no independent evidence establishes rejection of an absent body. Manual review closes the YAML-tool gap; attribution remains intent-ambiguous."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "SecretController.java:46-47 supplies /api prefix; 84-87 uses @RequestBody Secret and saves it. Explicit binding alone cannot establish intent under 11.2.",
+  "retrieval_completion": "Tool YAML parser failed (exit 2; raw stdout empty, stderr preserved). Manual gap closed by inspecting the entire operation and inherited path parameters, resolving prefix, and directed searching all supplied tests, READMEs and linked client. No unresolved target ref/route or unreadable relevant file remains.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K02/source",
+  "contract_locator_hint": "source/api/microcks-openapi-v1.10.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K02.json",
+    "stderr": "search_G2/K02.stderr",
+    "exit_code": "search_G2/K02.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

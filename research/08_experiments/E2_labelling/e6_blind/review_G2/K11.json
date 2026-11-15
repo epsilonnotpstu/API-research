@@ -1,0 +1,120 @@
+{
+  "item_id": "K11",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/hosts/products/{product_id}",
+    "scenario": "request: OpenShift metrics special product with beginning or ending omitted; Optional.of on nullable dates versus optional contract",
+    "observed_status": null,
+    "field": "beginning",
+    "supplied_proposition": "GET /hosts/products/{product_id}: contract says beginning and ending are optional for the OpenShift metrics products; implementation does wrap absent dates with Optional.of in the special-product branch.",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "3.R1/9.3 Optional.of(null) inside handler and global 500 mapper; exploratory search retained.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(c): verify special branch, filters and tests; null exception may invoke R1."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T14:56:22.335794+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K11/source/src/test/java/org/candlepin/subscriptions/resource/HostsResourceTest.java:77-90,253-271",
+      "reason": "Null-date test covers non-special RHEL; date-validation tests cover supplied dates, not optional-date special branch.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Null-date test covers non-special RHEL; date-validation tests cover supplied dates, not optional-date special branch."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Null-date test covers non-special RHEL; date-validation tests cover supplied dates, not optional-date special branch."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Null-date test covers non-special RHEL; date-validation tests cover supplied dates, not optional-date special branch."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "HostsResourceTest uses null dates for RHEL/non-special products (77-90), which does not cover special branch. Date-validation tests use nonnull dates. No supplied independent evidence requires dates for special products; code itself attempts now fallback after Optional.of."
+        }
+      }
+    },
+    {
+      "locator": "K11/source/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:38-46",
+      "reason": "Generic Throwable maps to 500; confirms unhandled null-exception server error context.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Generic Throwable maps to 500; confirms unhandled null-exception server error context."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Generic Throwable maps to 500; confirms unhandled null-exception server error context."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Generic Throwable maps to 500; confirms unhandled null-exception server error context."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "HostsResourceTest uses null dates for RHEL/non-special products (77-90), which does not cover special branch. Date-validation tests use nonnull dates. No supplied independent evidence requires dates for special products; code itself attempts now fallback after Optional.of."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K11/source/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java:127-138;K11/source/src/main/java/org/candlepin/subscriptions/exception/mapper/DefaultExceptionMapper.java:38-46;K11/source/api/rhsm-subscriptions-api-spec.yaml#/paths/~1hosts~1products~1{product_id}/get/parameters",
+    "both_candidate": false,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Both OpenShift metrics branches call Optional.of on optional dates before their intended now fallback, causing null failure. These filter dates are safely defaultable; R1 and the generic 500 mapper establish implementation attribution."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "HostsResource.java:127-136 resolves both OpenShift metrics products and invokes Optional.of on nullable dates before validation. Optional.of(null) throws; .orElse(now) cannot run. Null query values are already typed and inside handler, not enum binding.",
+  "retrieval_completion": "Manual operation parameters, product branch, date tests and global mapper inspected after YAML parse failure. Exact generated API route linked through getHosts operationId. No unresolved target search gap; no history available.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K11/source",
+  "contract_locator_hint": "source/api/rhsm-subscriptions-api-spec.yaml",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K11.json",
+    "stderr": "search_G2/K11.stderr",
+    "exit_code": "search_G2/K11.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

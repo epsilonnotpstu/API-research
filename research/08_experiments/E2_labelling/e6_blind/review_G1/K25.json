@@ -1,0 +1,58 @@
+{
+  "item_id": "K25",
+  "proposition": "POST /api/v1/payment: contract says an authorized user can receive a successful session response; implementation does pass null as the request used to derive the session return URL.",
+  "target": {
+    "side": "response",
+    "method": "POST",
+    "path": "/api/v1/payment",
+    "scenario": "authorized successful payment-session creation",
+    "field": "request used for session return URL",
+    "direction": "successful session response versus null request dereference"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "§11.4.1 deterministic null crash candidate; verify guards, helper and exception mapping."
+  },
+  "start_time": "2026-11-15T14:48:34.754821+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locator": "K25/source/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:75-83",
+      "disposition": "context",
+      "reason": "Generic Exception handler maps null dereference to INTERNAL_SERVER_ERROR; excludes only argument mismatch and unreadable JSON."
+    }
+  ],
+  "decision": {
+    "item_id": "K25",
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-CONV",
+    "evidence_locators": "K25/source/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:31;K25/source/src/main/java/com/zufar/icedlatte/payment/api/PaymentProcessor.java:30;K25/source/src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:43;K25/source/src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:58;K25/source/src/main/resources/api-specs/payment-openapi.yaml:37#/paths/~1api~1v1~1payment/post/responses/200;K25/source/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:75",
+    "both_candidate": false,
+    "intent_search_status": "not_run",
+    "intent_search_verdict": "NA",
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The endpoint passes null through the processor to getReturnUrl, which dereferences request before the StripeException catch. Authorized session creation therefore contains a deterministic implementation crash; no contract change is needed.",
+    "details": "§11.4.1 deterministic non-gateway exception rule. Null is supplied by server endpoint, not an omitted public field. Appropriate authenticated user/cart preconditions isolate the path. No external Stripe request is reached after this null dereference; no runtime/network execution performed. PaymentExceptionHandler catches StripeSessionCreationException, not null failure."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": null
+}

@@ -1,0 +1,120 @@
+{
+  "item_id": "K22",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/projects/outlets",
+    "scenario": "request: omit office query; contract promises user-session office default but implementation requires nonempty office",
+    "observed_status": null,
+    "field": "office",
+    "supplied_proposition": "GET /projects/outlets: contract says office defaults to the user session id; implementation does require a nonempty office query parameter.",
+    "direction": "Assess input omission/null/invalid-value policy against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "10.7 documented user-session office default and query-only required guard; exploratory search retained.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(c): documented default versus explicit required guard; inspect tests and possible session default resolver."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T15:02:49.641396+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K22/source/cwms-data-api/src/test/java/cwms/cda/api/ControllersTest.java:331-349",
+      "reason": "Tests exact helper's missing-office exception; supports mechanism only, not outlet policy.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Tests exact helper's missing-office exception; supports mechanism only, not outlet policy."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Tests exact helper's missing-office exception; supports mechanism only, not outlet policy."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Tests exact helper's missing-office exception; supports mechanism only, not outlet policy."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Outlet integration tests supply office explicitly; generic requiredParam test establishes throwing behavior, not which operation should require office. Servlet creates office_id context attribute, but requiredParam reads only queryParam. No supplied independent contrary default promise beyond contract is necessary under 10.7."
+        }
+      }
+    },
+    {
+      "locator": "K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:514-523,716-725",
+      "reason": "Resolves outlet route and available default-office context attribute; getAll requiredParam does not consult attribute.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Resolves outlet route and available default-office context attribute; getAll requiredParam does not consult attribute."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Resolves outlet route and available default-office context attribute; getAll requiredParam does not consult attribute."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Resolves outlet route and available default-office context attribute; getAll requiredParam does not consult attribute."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Outlet integration tests supply office explicitly; generic requiredParam test establishes throwing behavior, not which operation should require office. Servlet creates office_id context attribute, but requiredParam reads only queryParam. No supplied independent contrary default promise beyond contract is necessary under 10.7."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-REJECT-VALID",
+    "proposed_L2": "",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-TEST",
+    "evidence_locators": "K22/source/cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java:102-121 (getAll queryParams/office/description default);K22/source/cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:339-344;K22/source/cwms-data-api/src/test/java/cwms/cda/api/ControllersTest.java:331-349;K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:720-721;K22/source/cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:296-299",
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ The documented session-office default is bypassed: requiredParam reads only the query and throws for absence or emptiness, despite an office context attribute. Section 10.7 treats the default as a server promise, establishing implementation rejection of valid omission."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "OutletController.getAll contract:104-105 promises default user-session office. Handler:120 uses requiredParam. Controllers:339-344 throws for missing/empty query value. Session/context default cannot satisfy this direct query-only guard. ApiServlet.java:296-299 explicitly maps RequiredQueryParameterException to 400.",
+  "retrieval_completion": "Manual annotation, helper, helper test, route registration, office context provisioning and supplied outlet tests inspected. Parser gap closed; deterministic documented-default rule 10.7 applies.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K22/source",
+  "contract_locator_hint": "source/cwms-data-api/src/main/java/cwms/cda/api/location/kind/OutletController.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K22.json",
+    "stderr": "search_G2/K22.stderr",
+    "exit_code": "search_G2/K22.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

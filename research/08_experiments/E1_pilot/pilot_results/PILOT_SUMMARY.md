@@ -161,6 +161,13 @@
    - **P2 (M2 > M1) ব্যর্থ।** Roadmap-এর H2 এই benchmark-এ সমর্থিত নয়।
    - ⚠️ কৃত্রিম fault-গুলো "অস্বাভাবিক" দেখায়, আর তাতে zero-shot-এর plausibility heuristic সুবিধা পায়। তবে আসল decoy-তেও (n=22) zero-shot এগিয়ে: 15/22 বনাম 12/22।
    - পরের মূল্যায়ন হতে হবে developer-confirmed আসল defect-এ।
+11. **[H11, E6/RQ2] আসল contract-alignment fix-এও (truth = developer-এর repair direction, n=18) zero-shot codebook-এর চেয়ে ভালো। E4-এর ফল টিকেছে।** উৎস: `../../E6_realfix/E6_RESULTS.md`।
+   - Pre-registered macro-F1: M1 0.86/0.88, M2 0.72/0.70, M0 (majority) 0.36।
+   - Q1 PASS, Q2-তে M1 > M2।
+   - **Q3 FAIL:** M2-এর decided-accuracy 0.92/0.85, বনাম M1-এর গড় 0.91। ⇒ "Codebook বেশি নিরাপদ" দাবি সমর্থিত নয়।
+   - M2-এর বাড়তি abstention (K02, K12, K14 …) পুরোটাই coverage-এর খরচ। M1 ভুল করেছে কিন্তু M2 সঠিক, এমন item একটিও নেই (post-hoc sign test p=0.125, প্রতি জোড়া)।
+   - ⚠️ যৌথ ভুল K21/K22: contract উদার (optional/default), code কঠোর। LLM IMPL বলেছে, developer spec কঠোর করেছে। এটা "repair direction ≠ fault location"-এর উদাহরণ, আর REQUEST_LOOSE-ধাঁচের অমিলে প্রথাগত prior-এর প্রশ্ন তোলে (n=2, hypothesis)।
+   - সীমা: n ছোট; একই model family; popularity ভাগ অর্থহীন (≥500 star-এর item মাত্র 2টি)।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**

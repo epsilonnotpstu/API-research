@@ -1,0 +1,1971 @@
+{
+  "item_id": "K09",
+  "proposition": "POST /v1/payments: contract says the create-payment response property is named paymentId; implementation does serialize the property as payment_id",
+  "target": {
+    "side": "response",
+    "method": "POST",
+    "path": "/v1/payments",
+    "scenario": "successful create payment",
+    "status": 201,
+    "field": "paymentId/payment_id",
+    "direction": "contract camelCase versus serialized snake_case"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a),(c): serialization name requires independent tests/docs."
+  },
+  "start_time": "2026-11-15T11:31:23.025410+00:00",
+  "end_time": "2026-11-15T14:51:47.066106+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "file": "src/main/java/uk/gov/pay/api/model/Payment.java",
+      "line": 18,
+      "disposition": "context",
+      "reason": "Handler/linked response serialization shows behavior, not independent intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 1,
+      "category": "HANDLER",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 244,
+      "disposition": "context",
+      "reason": "Handler/linked response serialization shows behavior, not independent intent.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 2,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/it/CachingAuthenticatorTest.java",
+      "line": 86,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 3,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/it/GetDirectDebitEventsTest.java",
+      "line": 73,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 4,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/it/PaymentResourceSearchITest.java",
+      "line": 599,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 5,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 82,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 6,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 92,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 7,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 135,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 8,
+      "category": "E-TEST",
+      "file": "src/test/java/uk/gov/pay/api/service/SearchRefundsServiceTest.java",
+      "line": 145,
+      "disposition": "reject",
+      "reason": "Wrong scenario/operation: GET payment, event search, payment search or refund search; not POST create response naming.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 9,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 51,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 10,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 60,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 11,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 61,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 12,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 62,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 13,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 63,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 14,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 64,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 15,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 65,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 16,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 66,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 17,
+      "category": "E-DOC",
+      "file": "README.md",
+      "line": 67,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 18,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 3,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 19,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 10,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 20,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 37,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 21,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 38,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 22,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 44,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 23,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 60,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 24,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 64,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 25,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 70,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 26,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 74,
+      "disposition": "accept",
+      "reason": "POST create response examples and field table explicitly name payment_id; same snapshot prose separate from Swagger DTO.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 27,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 99,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 28,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 100,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 29,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 106,
+      "disposition": "context",
+      "reason": "Relevant POST create documentation but this individual hit does not specify the target field name.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 30,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 122,
+      "disposition": "accept",
+      "reason": "POST create response examples and field table explicitly name payment_id; same snapshot prose separate from Swagger DTO.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 31,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 136,
+      "disposition": "accept",
+      "reason": "POST create response examples and field table explicitly name payment_id; same snapshot prose separate from Swagger DTO.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 32,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 239,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 33,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 246,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 34,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 254,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 35,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 260,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 36,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 274,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 37,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 278,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 38,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 284,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 39,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 288,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 40,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 327,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 41,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 333,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 42,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 347,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 43,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 400,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 44,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 405,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 45,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 412,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 46,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 419,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 47,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 424,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 48,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 430,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 49,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 435,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 50,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 441,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 51,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 446,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 52,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 452,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 53,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 459,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 54,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 463,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 55,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 508,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 56,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 512,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 57,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 519,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 58,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 526,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 59,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 530,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 60,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 533,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 61,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 536,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 62,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 544,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 63,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 547,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 64,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 558,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 65,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 561,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 66,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 577,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 67,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 604,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 68,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 611,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 69,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 618,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 70,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 628,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 71,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 631,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 72,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 670,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 73,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 677,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 74,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 697,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 75,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 703,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 76,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 708,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 77,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 762,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 78,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 775,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 79,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 782,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 80,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 844,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 81,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 845,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 82,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 849,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 83,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 856,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 84,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 892,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 85,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 930,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 86,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 934,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 87,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 938,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 88,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 942,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 89,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 948,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 90,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 986,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 91,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 990,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 92,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 994,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 93,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 998,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 94,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1006,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 95,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1009,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 96,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1012,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 97,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1015,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 98,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1018,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 99,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1032,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 100,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1088,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 101,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1096,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 102,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1099,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 103,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1102,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 104,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1105,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 105,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1108,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 106,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1306,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 107,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1311,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 108,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1315,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 109,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1323,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 110,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1332,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 111,
+      "category": "E-DOC",
+      "file": "docs/api_specification.md",
+      "line": 1366,
+      "disposition": "reject",
+      "reason": "Reference index or documentation section for a different operation; no POST create field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 112,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 236,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 113,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 237,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 114,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 238,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 115,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 239,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 116,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 240,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 117,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 241,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 118,
+      "category": "E-DOC",
+      "file": "src/main/java/uk/gov/pay/api/resources/PaymentsResource.java",
+      "line": 242,
+      "disposition": "reject",
+      "reason": "Handler ApiResponse annotation repeats contract context; status-only and not independent field obligation.",
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 119,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/Payment.java",
+      "line": 18,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 120,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/PaymentEvent.java",
+      "line": 11,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 121,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/PaymentEvents.java",
+      "line": 17,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 122,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/RefundsFromConnector.java",
+      "line": 29,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 123,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/links/directdebit/DirectDebitEvent.java",
+      "line": 53,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    },
+    {
+      "index": 124,
+      "category": "E-CONSIST",
+      "file": "src/main/java/uk/gov/pay/api/model/search/card/RefundForSearchRefundsResult.java",
+      "line": 58,
+      "disposition": "context",
+      "reason": "Payment is the questioned serializer; other DTOs cover other responses. Analogy does not independently prove create-field policy.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_linkage": false,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_counterevidence_reviewed": true
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K09/source/src/test/java/uk/gov/pay/api/it/CreatePaymentITest.java:49-70",
+      "disposition": "accept",
+      "reason": "Matching createCardPayment fixture, helper resolves POST /v1/payments; 201 and payment_id asserted. Tool missed helper-linked create assertion.",
+      "checklist": {
+        "a": true,
+        "b": true,
+        "c": true,
+        "d": true,
+        "e": true
+      }
+    },
+    {
+      "category": "E-TEST",
+      "locator": "K09/source/src/test/java/uk/gov/pay/api/it/CreatePaymentITest.java:228-235;K09/source/src/test/java/uk/gov/pay/api/it/PaymentResourceITestBase.java:26",
+      "disposition": "context",
+      "reason": "POST helper uses PAYMENTS_PATH=/v1/payments/; trailing slash matches target operation."
+    }
+  ],
+  "decision": {
+    "item_id": "K09",
+    "L1": "SPEC",
+    "L2": "S-RESP-MISSING",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-DOC;E-AUX",
+    "evidence_locators": "K09/source/swagger/swagger.json#/definitions/CreatePaymentResult/properties/paymentId;K09/source/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:251;K09/source/src/main/java/uk/gov/pay/api/model/Payment.java:18;K09/source/docs/api_specification.md:136;K09/source/src/test/java/uk/gov/pay/api/it/CreatePaymentITest.java:61",
+    "both_candidate": false,
+    "intent_search_status": "complete",
+    "intent_search_verdict": "conflicting",
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Create-payment prose and its integration test explicitly require payment_id. The actual unwrapped Payment serializes that name; Swagger documents paymentId from a separate documentation DTO. The contract property name is wrong.",
+    "details": "Raw conflicting comes from mixed operations/statuses and annotation repetitions. Field-specific target docs and manually retrieved create test support implementation. No true opposing same-scenario field evidence. S-RESP-MISSING describes wrong/omitted property name, rather than value type."
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_basis": "Zero-based index in the saved raw tool hits array.",
+  "history_review": {
+    "scope": "unavailable",
+    "reason": "Task declares no source VCS; no --history-root or outside history queried."
+  },
+  "tool_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K09/source",
+      "K09/source/swagger/swagger.json",
+      "--method",
+      "POST",
+      "--path",
+      "/v1/payments",
+      "--json",
+      "--status",
+      "201",
+      "--field",
+      "payment_id"
+    ],
+    "stdout": "search_G1/K09.json",
+    "stderr": "search_G1/K09.stderr",
+    "exit_code_file": "search_G1/K09.exitcode",
+    "exit_code": 0,
+    "runtime_exchange_supplied": false
+  }
+}

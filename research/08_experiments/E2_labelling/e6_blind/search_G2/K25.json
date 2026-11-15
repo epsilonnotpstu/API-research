@@ -1,0 +1,92 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/api/v1/payment"
+  },
+  "observed_status": null,
+  "field": "request",
+  "spec": {
+    "file": "K25/source/src/main/resources/api-specs/payment-openapi.yaml",
+    "path": "/api/v1/payment",
+    "statuses": [
+      "200",
+      "400",
+      "401",
+      "500"
+    ],
+    "field_policy": [],
+    "field": "request",
+    "locator": "#/paths/~1api~1v1~1payment/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "E-DOC",
+      "location": "docs/plantuml/payment/checkout-sequence.puml:15",
+      "file": "docs/plantuml/payment/checkout-sequence.puml",
+      "line": 15,
+      "snippet": "fe -> be: GET /api/v1/payment",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/plantuml/payment/checkout-sequence.puml:21",
+      "file": "docs/plantuml/payment/checkout-sequence.puml",
+      "line": 21,
+      "snippet": "fe -> be: GET /api/v1/payment/order?sessionId={CHECKOUT_SESSION_ID}",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 300,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [
+    "No Java handler located; routing constants/imports/inheritance may require manual inspection"
+  ],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

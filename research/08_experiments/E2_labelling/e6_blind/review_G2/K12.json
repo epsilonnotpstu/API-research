@@ -1,0 +1,147 @@
+{
+  "item_id": "K12",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/api/v1/management/protocol-adapters/adapters/{adapterId}/tags",
+    "scenario": "response: configured adapter with empty tag list; bodyless 200 versus JSON DomainTagModelList envelope requirement",
+    "observed_status": 200,
+    "field": "items",
+    "supplied_proposition": "GET /api/v1/management/protocol-adapters/adapters/{adapterId}/tags: contract says 200 contains an application/json DomainTagModelList; implementation does return a bodyless 200 when the configured adapter has an empty tag list.",
+    "direction": "Assess documented response status/body/type against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(a,b,c): status alone cannot determine empty-list body obligation; find same empty-tag branch evidence.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,b,c): status alone cannot determine empty-list body obligation; find same empty-tag branch evidence."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T14:57:01.275418+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K12/source/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImplTest.java:69-88",
+      "reason": "Exact operation but nonempty branch; cannot establish empty-branch body requirement.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Exact operation but nonempty branch; cannot establish empty-branch body requirement."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Exact operation but nonempty branch; cannot establish empty-branch body requirement."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Exact operation but nonempty branch; cannot establish empty-branch body requirement."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Exact server test asserts envelope only for ten tags. Frontend empty-list test supplies items:[] as a mock but asserts rendered UI, not that a bodyless response violates an API obligation. Same class getDomainTags returns an empty envelope; independence of this policy is ambiguous under 11.4.2."
+        }
+      }
+    },
+    {
+      "locator": "K12/source/hivemq-edge/src/frontend/src/modules/Device/components/DeviceTagList.spec.cy.tsx:30-41",
+      "reason": "Relevant empty-list consumer test uses envelope fixture but only asserts UI; does not assert server body-presence obligation or reject bodyless 200.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Relevant empty-list consumer test uses envelope fixture but only asserts UI; does not assert server body-presence obligation or reject bodyless 200."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Relevant empty-list consumer test uses envelope fixture but only asserts UI; does not assert server body-presence obligation or reject bodyless 200."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Relevant empty-list consumer test uses envelope fixture but only asserts UI; does not assert server body-presence obligation or reject bodyless 200."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Exact server test asserts envelope only for ten tags. Frontend empty-list test supplies items:[] as a mock but asserts rendered UI, not that a bodyless response violates an API obligation. Same class getDomainTags returns an empty envelope; independence of this policy is ambiguous under 11.4.2."
+        }
+      }
+    },
+    {
+      "locator": "K12/source/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java:530-538",
+      "disposition": "unresolved",
+      "reason": "Another method in same class returns empty DomainTagModelList; same-class policy independence is ambiguous, triggering adjudication flag.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Another method in same class returns empty DomainTagModelList; same-class policy independence is ambiguous, triggering adjudication flag."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Another method in same class returns empty DomainTagModelList; same-class policy independence is ambiguous, triggering adjudication flag."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Another method in same class returns empty DomainTagModelList; same-class policy independence is ambiguous, triggering adjudication flag."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "Exact server test asserts envelope only for ten tags. Frontend empty-list test supplies items:[] as a mock but asserts rendered UI, not that a bodyless response violates an API obligation. Same class getDomainTags returns an empty envelope; independence of this policy is ambiguous under 11.4.2."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "",
+    "confidence": 2,
+    "evidence_types": "E-CODE-INTENT;E-TEST;E-CROSS",
+    "evidence_locators": "K12/source/hivemq-edge/src/main/java/com/hivemq/api/resources/ProtocolAdaptersApi.java:69,344-365 (getDomainTagsForAdapter responses/200/content/application~1json/schema);K12/source/hivemq-edge/src/main/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImpl.java:430-440,530-538;K12/source/hivemq-edge/src/test/java/com/hivemq/api/resources/impl/ProtocolAdaptersResourceImplTest.java:69-88;K12/source/hivemq-edge/src/frontend/src/modules/Device/components/DeviceTagList.spec.cy.tsx:30-41",
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "same_class_policy",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Empty tags explicitly produce bodyless 200, but server tests cover populated lists only. The consumer mock assumes an envelope without asserting body obligation. A differing same-class empty-list policy needs adjudication; intent remains unresolved."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "ProtocolAdaptersApi.java:69,344-365 defines complete route and JSON DomainTagModelList 200. ResourceImpl.java:430-440 explicitly emits empty 200 only for present empty tags, populated envelope for nonempty and 404 for missing adapter.",
+  "retrieval_completion": "Manual annotation parsing, full handler branches, server tests, frontend empty-list fixture and same-class collection policy reviewed. No target route/contract gap remains after tool parser failure; no independent empty-body assertion found.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K12/source",
+  "contract_locator_hint": "source/hivemq-edge/src/main/java/com/hivemq/api/resources/ProtocolAdaptersApi.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K12.json",
+    "stderr": "search_G2/K12.stderr",
+    "exit_code": "search_G2/K12.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "item_id": "K07",
+  "labeller": "G2",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/v1/directdebit/mandates",
+    "scenario": "response: successful mandate search should return search envelope with results and pagination or single MandateResponse",
+    "observed_status": 200,
+    "field": "results",
+    "supplied_proposition": "GET /v1/directdebit/mandates: contract says the 200 response is a MandateResponse; implementation does return a SearchMandateResponse containing a results list and pagination",
+    "direction": "Assess documented response status/body/type against supplied source behavior"
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "11.4.1(a,c): response shape differs from contract annotation; find independent body assertions/docs.",
+    "initial_candidate_decision": {
+      "required": true,
+      "reason": "11.4.1(a,c): response shape differs from contract annotation; find independent body assertions/docs."
+    },
+    "search_executed": true
+  },
+  "start_time": "2026-11-15T11:30:44.377761+00:00",
+  "end_time": "2026-11-15T15:07:18.481174+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "locator": "K07/source/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java:186-221",
+      "disposition": "accept",
+      "support": "supports_impl_behavior",
+      "reason": "GET exact search route returns 200 and asserts total/count/page, results[0] mandate fields and pagination links; full body-shape evidence, not status alone.",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": true,
+          "reason": "Explicit assertion or normative statement for the target behavior."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": true,
+          "reason": "Operation, method, scenario and branch resolved in manual review."
+        },
+        "c_independent_basis": {
+          "satisfied": true,
+          "reason": "Separate test assertion or normative source; not the questioned handler/spec."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "MandatesResource.java:90 advertises a single MandateResponse; the search handler/DTO and exact same-route integration test all use a paginated envelope. README/docs mention mandate creation, not a contrary search-body obligation."
+        }
+      }
+    },
+    {
+      "locator": "K07/source/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java:9-19",
+      "reason": "Serialization and envelope DTO establish implementation shape; context only.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Serialization and envelope DTO establish implementation shape; context only."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Serialization and envelope DTO establish implementation shape; context only."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Serialization and envelope DTO establish implementation shape; context only."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "MandatesResource.java:90 advertises a single MandateResponse; the search handler/DTO and exact same-route integration test all use a paginated envelope. README/docs mention mandate creation, not a contrary search-body obligation."
+        }
+      }
+    },
+    {
+      "locator": "K07/source/docs/api_specification.md:1254;K07/source/README.md:77",
+      "reason": "Mandate creation documentation; method/scenario differs from GET search.",
+      "disposition": "context",
+      "checklist": {
+        "a_expected_behavior_explicit": {
+          "satisfied": false,
+          "reason": "Mandate creation documentation; method/scenario differs from GET search."
+        },
+        "b_target_scenario_linked": {
+          "satisfied": false,
+          "reason": "Mandate creation documentation; method/scenario differs from GET search."
+        },
+        "c_independent_basis": {
+          "satisfied": false,
+          "reason": "Mandate creation documentation; method/scenario differs from GET search."
+        },
+        "d_applicable_revision": {
+          "satisfied": true,
+          "reason": "Supplied package snapshot; no history or external revision substituted."
+        },
+        "e_counterevidence_reviewed": {
+          "satisfied": true,
+          "reason": "MandatesResource.java:90 advertises a single MandateResponse; the search handler/DTO and exact same-route integration test all use a paginated envelope. README/docs mention mandate creation, not a contrary search-body obligation."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-RESP-TYPE",
+    "proposed_L2": "",
+    "confidence": 3,
+    "evidence_types": "E-CODE-INTENT;E-TEST",
+    "evidence_locators": "K07/source/src/main/java/uk/gov/pay/api/resources/MandatesResource.java:90,99-102 (GET searchMandates @ApiResponse 200 response);K07/source/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java:9-19;K07/source/src/test/java/uk/gov/pay/api/it/directdebit/MandateResourceSearchMandateIT.java:196-221",
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ The exact GET integration test asserts results, total/count/page and pagination links. This independently supports the search envelope returned by implementation; the 200 annotation incorrectly names the single-mandate response model."
+  },
+  "history_scope": "unavailable",
+  "handler_review": "MandatesResource.java:80-102 establishes GET search route (trailing slash), annotation contract at 90, and SearchMandateResponse entity at 99-102. DTO has results plus total/count/page/_links.",
+  "retrieval_completion": "Tool cannot parse Java annotation source (exit 2 preserved). Manually resolved annotation contract and DTO, searched all target tests/docs and reviewed full successful integration-test branch with fixture. No unresolved route/ref; parser gap closed.",
+  "intent_search_verdict": "NA",
+  "intent_search_status": "complete",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "package_scope": "K07/source",
+  "contract_locator_hint": "source/src/main/java/uk/gov/pay/api/resources/MandatesResource.java",
+  "intent_search_exit_code": 2,
+  "raw_search_files": {
+    "stdout": "search_G2/K07.json",
+    "stderr": "search_G2/K07.stderr",
+    "exit_code": "search_G2/K07.exitcode"
+  },
+  "evidence_limitations": {
+    "runtime_exchanges": "none supplied; static source/contract review only",
+    "history": "unavailable",
+    "outside_package_evidence_used": false
+  }
+}
