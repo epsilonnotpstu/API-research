@@ -1,0 +1,1 @@
+Created [match_J1.csv](</home/afridi/Documents/API research/research/08_experiments/E2_labelling/e8_match/match_J1.csv>) with all 70 judgments in order. Validated labels and the 25-word rationale limit.
