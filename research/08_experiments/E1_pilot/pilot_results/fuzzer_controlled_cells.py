@@ -4,7 +4,12 @@
 Reads fuzzer_noise_cross_seed.csv. Pairs EvoMaster and Schemathesis rows with the same (sut, fault, severity, seed).
 A pair is CONTROLLED when both runs carry an identical mutation set (manifest_sig); otherwise it is descriptive only.
 Signal = fresh mutated-op checkable NEW > observed cross-seed reference max (checkable), per run.
-Output: fuzzer_controlled_cells.csv and totals on stdout. Offline.
+Denominators (T34 F4):
+- PRIMARY = one pair per unique cell, using the earliest run (by run id = batch timestamp) of each fuzzer in that
+  cell. This is a fixed tie-break rule, chosen without reference to outcomes, for the only duplicated cell:
+  petstore LOOSE p30 s1, two Schemathesis batches.
+- SECONDARY = every evo x sch pair-instance (the earlier report's denominator).
+Output: fuzzer_controlled_cells.csv (column 'primary') and totals on stdout. Offline.
 """
 import csv
 from collections import defaultdict
@@ -22,9 +27,12 @@ def main():
     for k in sorted(idx):
         evo = [r for r in idx[k] if r['fuzzer'] == 'evomaster']
         sch = [r for r in idx[k] if r['fuzzer'] == 'schemathesis']
+        first_e = min((r['run'] for r in evo), default=None)
+        first_s = min((r['run'] for r in sch), default=None)
         for e in evo:
             for s in sch:
                 out.append({'sut': k[0], 'fault': k[1], 'severity': k[2], 'seed': k[3],
+                            'primary': e['run'] == first_e and s['run'] == first_s,
                             'controlled': e['manifest_sig'] == s['manifest_sig'],
                             'evo_run': e['run'], 'sch_run': s['run'],
                             'evo_fresh_checkable_NEW': e['fresh_mut_NEW_checkable'],
@@ -39,15 +47,16 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(out[0]))
         w.writeheader()
         w.writerows(out)
-    for ctl in (True, False):
+    for prim, ctl in ((True, True), (True, False), (False, True), (False, False)):
         agg = defaultdict(lambda: [0, 0, 0])
         for r in out:
-            if r['controlled'] is ctl:
+            if r['controlled'] is ctl and (r['primary'] or not prim):
                 a = agg[(r['sut'], r['fault'])]
                 a[0] += r['evo_signal']
                 a[1] += r['sch_signal']
                 a[2] += 1
-        print('== controlled (identical manifest)' if ctl else '== manifest differs (descriptive only)')
+        print(('== PRIMARY (unique cells) ' if prim else '== SECONDARY (all pair-instances) ') +
+              ('controlled (identical manifest)' if ctl else 'manifest differs (descriptive only)'))
         te = ts = tn = 0
         for k in sorted(agg):
             e, s, n = agg[k]
