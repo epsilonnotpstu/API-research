@@ -1,0 +1,2517 @@
+diff --git a/pom.xml b/pom.xml
+index a19f192..672221d 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -5,7 +5,7 @@
+ 
+   <groupId>app.coronawarn.verification</groupId>
+   <artifactId>cwa-verification-server</artifactId>
+-  <version>1.5.6-SNAPSHOT</version>
++  <version>1.5.7-SNAPSHOT</version>
+   <packaging>jar</packaging>
+ 
+   <name>cwa-verification-server</name>
+@@ -34,20 +34,22 @@
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+     <!-- dependencies -->
+-    <spring.boot.version>2.5.7</spring.boot.version>
+-    <spring-security.version>5.3.10.RELEASE</spring-security.version>
+-    <spring.cloud.version>2020.0.4</spring.cloud.version>
+-    <lombok.version>1.18.16</lombok.version>
+-    <liquibase.version>3.10.0</liquibase.version>
+-    <springdoc.version>1.4.2</springdoc.version>
++    <spring.boot.version>2.6.2</spring.boot.version>
++    <spring-security.version>5.6.1</spring-security.version>
++    <spring.cloud.version>2021.0.0</spring.cloud.version>
++    <lombok.version>1.18.22</lombok.version>
++    <liquibase.version>4.7.1</liquibase.version>
++    <springdoc.version>1.6.4</springdoc.version>
+     <jsonwebtoken.version>0.11.2</jsonwebtoken.version>
+-    <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
++    <hibernate-validator.version>6.2.1.Final</hibernate-validator.version>
++    <shedlock.version>4.32.0</shedlock.version>
++    <reactivex.version>1.3.8</reactivex.version>
+     <!-- plugins -->
+-    <plugin.checkstyle.version>3.1.1</plugin.checkstyle.version>
+-    <plugin.sonar.version>3.6.1.1688</plugin.sonar.version>
+-    <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
+-    <plugin.surefire.version>2.22.2</plugin.surefire.version>
+-    <guava.version>30.0-jre</guava.version>
++    <plugin.checkstyle.version>3.1.2</plugin.checkstyle.version>
++    <plugin.sonar.version>3.9.1.2184</plugin.sonar.version>
++    <plugin.jacoco.version>0.8.7</plugin.jacoco.version>
++    <plugin.surefire.version>3.0.0-M5</plugin.surefire.version>
++    <guava.version>31.0.1-jre</guava.version>
+     <license.projectName>Corona-Warn-App / cwa-verification</license.projectName>
+     <license.inceptionYear>2020</license.inceptionYear>
+     <license.licenseName>apache_v2</license.licenseName>
+@@ -57,7 +59,7 @@
+       **/domain/*,
+       **/config/*,
+       **/exception/*
+-    </sonar.coverage.exclusions>    
++    </sonar.coverage.exclusions>
+   </properties>
+ 
+   <dependencyManagement>
+@@ -91,12 +93,6 @@
+         <artifactId>liquibase-core</artifactId>
+         <version>${liquibase.version}</version>
+       </dependency>
+-      <dependency>
+-        <groupId>org.apache.logging.log4j</groupId>
+-        <artifactId>log4j-bom</artifactId>
+-        <version>2.17.0</version>
+-        <scope>import</scope>
+-      </dependency>
+     </dependencies>
+   </dependencyManagement>
+ 
+@@ -239,17 +235,17 @@
+     <dependency>
+       <groupId>io.reactivex</groupId>
+       <artifactId>rxjava</artifactId>
+-      <version>1.3.8</version>
++      <version>${reactivex.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>net.javacrumbs.shedlock</groupId>
+       <artifactId>shedlock-spring</artifactId>
+-      <version>4.25.0</version>
++      <version>${shedlock.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>net.javacrumbs.shedlock</groupId>
+       <artifactId>shedlock-provider-jdbc-template</artifactId>
+-      <version>4.25.0</version>
++      <version>${shedlock.version}</version>
+     </dependency>
+   </dependencies>
+ 
+diff --git a/src/main/java/app/coronawarn/verification/VerificationApplication.java b/src/main/java/app/coronawarn/verification/VerificationApplication.java
+index 214835f..f15ae22 100644
+--- a/src/main/java/app/coronawarn/verification/VerificationApplication.java
++++ b/src/main/java/app/coronawarn/verification/VerificationApplication.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification;
+diff --git a/src/main/java/app/coronawarn/verification/client/IamClient.java b/src/main/java/app/coronawarn/verification/client/IamClient.java
+index 9eea95f..85cdb79 100644
+--- a/src/main/java/app/coronawarn/verification/client/IamClient.java
++++ b/src/main/java/app/coronawarn/verification/client/IamClient.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.client;
+diff --git a/src/main/java/app/coronawarn/verification/client/TestResultServerClient.java b/src/main/java/app/coronawarn/verification/client/TestResultServerClient.java
+index badcd83..515c9e3 100644
+--- a/src/main/java/app/coronawarn/verification/client/TestResultServerClient.java
++++ b/src/main/java/app/coronawarn/verification/client/TestResultServerClient.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.client;
+diff --git a/src/main/java/app/coronawarn/verification/client/TestResultServerClientConfig.java b/src/main/java/app/coronawarn/verification/client/TestResultServerClientConfig.java
+index c210c9a..f73a225 100644
+--- a/src/main/java/app/coronawarn/verification/client/TestResultServerClientConfig.java
++++ b/src/main/java/app/coronawarn/verification/client/TestResultServerClientConfig.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.client;
+diff --git a/src/main/java/app/coronawarn/verification/config/LocalSecurityConfig.java b/src/main/java/app/coronawarn/verification/config/LocalSecurityConfig.java
+index f79a4b3..94481d2 100644
+--- a/src/main/java/app/coronawarn/verification/config/LocalSecurityConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/LocalSecurityConfig.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.config;
+diff --git a/src/main/java/app/coronawarn/verification/config/MtlsSecurityConfig.java b/src/main/java/app/coronawarn/verification/config/MtlsSecurityConfig.java
+index ed6d546..b78ba1a 100644
+--- a/src/main/java/app/coronawarn/verification/config/MtlsSecurityConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/MtlsSecurityConfig.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.config;
+diff --git a/src/main/java/app/coronawarn/verification/config/OpenApiConfig.java b/src/main/java/app/coronawarn/verification/config/OpenApiConfig.java
+index 23583fc..e1b4b19 100644
+--- a/src/main/java/app/coronawarn/verification/config/OpenApiConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/OpenApiConfig.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.config;
+diff --git a/src/main/java/app/coronawarn/verification/config/RequestSizeLimitFilter.java b/src/main/java/app/coronawarn/verification/config/RequestSizeLimitFilter.java
+index 26f3507..21a277e 100644
+--- a/src/main/java/app/coronawarn/verification/config/RequestSizeLimitFilter.java
++++ b/src/main/java/app/coronawarn/verification/config/RequestSizeLimitFilter.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.config;
+@@ -26,10 +25,9 @@ import javax.servlet.FilterChain;
+ import javax.servlet.ServletException;
+ import javax.servlet.http.HttpServletRequest;
+ import javax.servlet.http.HttpServletResponse;
+-import liquibase.util.StringUtils;
+-import lombok.NonNull;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
++import org.apache.commons.lang3.StringUtils;
+ import org.apache.http.HttpHeaders;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.stereotype.Component;
+@@ -43,7 +41,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
+ @RequiredArgsConstructor
+ public class RequestSizeLimitFilter extends OncePerRequestFilter {
+ 
+-  @NonNull
+   private final VerificationApplicationConfig verificationApplicationConfig;
+ 
+   @Override
+diff --git a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+index cafb648..4b50283 100644
+--- a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.config;
+diff --git a/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java b/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java
+index 59e9171..6469340 100644
+--- a/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java
++++ b/src/main/java/app/coronawarn/verification/controller/ExternalTanController.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ package app.coronawarn.verification.controller;
+ 
+ import static java.util.concurrent.TimeUnit.MILLISECONDS;
+diff --git a/src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java b/src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java
+index 238067b..24487b6 100644
+--- a/src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java
++++ b/src/main/java/app/coronawarn/verification/controller/ExternalTestStateController.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ package app.coronawarn.verification.controller;
+ 
+ import static java.util.concurrent.TimeUnit.MILLISECONDS;
+@@ -136,8 +156,8 @@ public class ExternalTestStateController {
+           stopWatch.stop();
+           fakeDelayService.updateFakeTestRequestDelay(stopWatch.getTotalTimeMillis());
+           scheduledExecutor.schedule(() -> deferredResult.setResult(ResponseEntity.ok(
+-            generateReturnTestResult(LabTestResult.POSITIVE.getTestResult(),
+-              appSession.get().getCreatedAt().toEpochSecond(ZoneOffset.UTC), null))),
++              generateReturnTestResult(LabTestResult.POSITIVE.getTestResult(),
++                appSession.get().getCreatedAt().toEpochSecond(ZoneOffset.UTC), null))),
+             fakeDelayService.realDelayTest(), MILLISECONDS);
+           return deferredResult;
+         default:
+diff --git a/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java b/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java
+index 94c31a9..6267f5a 100644
+--- a/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java
++++ b/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ package app.coronawarn.verification.controller;
+ 
+ import static java.util.concurrent.TimeUnit.MILLISECONDS;
+@@ -18,7 +38,6 @@ import java.util.Optional;
+ import java.util.concurrent.Executors;
+ import java.util.concurrent.ScheduledExecutorService;
+ import javax.validation.Valid;
+-import lombok.NonNull;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.context.annotation.Profile;
+diff --git a/src/main/java/app/coronawarn/verification/controller/InternalTanController.java b/src/main/java/app/coronawarn/verification/controller/InternalTanController.java
+index 1f856b2..c7df10c 100644
+--- a/src/main/java/app/coronawarn/verification/controller/InternalTanController.java
++++ b/src/main/java/app/coronawarn/verification/controller/InternalTanController.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.controller;
+diff --git a/src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java b/src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java
+index 261279b..f0c6ec6 100644
+--- a/src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java
++++ b/src/main/java/app/coronawarn/verification/controller/InternalTestStateController.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ package app.coronawarn.verification.controller;
+ 
+ import app.coronawarn.verification.domain.VerificationAppSession;
+@@ -16,7 +36,6 @@ import java.util.Optional;
+ import javax.validation.Valid;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+-import org.apache.commons.lang3.RandomStringUtils;
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.http.HttpStatus;
+ import org.springframework.http.MediaType;
+@@ -26,7 +45,6 @@ import org.springframework.web.bind.annotation.PostMapping;
+ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+-import org.springframework.web.context.request.async.DeferredResult;
+ 
+ 
+ /**
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+index a13d35c..e337344 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationExceptionHandler.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.controller;
+diff --git a/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java b/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
+index 60517db..7adc53b 100644
+--- a/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
++++ b/src/main/java/app/coronawarn/verification/domain/VerificationAppSession.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.domain;
+diff --git a/src/main/java/app/coronawarn/verification/domain/VerificationTan.java b/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
+index bc1283c..898746b 100644
+--- a/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
++++ b/src/main/java/app/coronawarn/verification/domain/VerificationTan.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.domain;
+diff --git a/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java b/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
+index dad4fc1..359e51a 100644
+--- a/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
++++ b/src/main/java/app/coronawarn/verification/exception/VerificationServerException.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.exception;
+diff --git a/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java b/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
+index 817f37a..4b530cc 100644
+--- a/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
++++ b/src/main/java/app/coronawarn/verification/model/AppSessionSourceOfTrust.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/AuthorizationRole.java b/src/main/java/app/coronawarn/verification/model/AuthorizationRole.java
+index f2bb402..c8dccaf 100644
+--- a/src/main/java/app/coronawarn/verification/model/AuthorizationRole.java
++++ b/src/main/java/app/coronawarn/verification/model/AuthorizationRole.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache 
+- * License, Version 2.0 (the "License"); you may not use this 
+- * file except in compliance with the License. 
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/AuthorizationToken.java b/src/main/java/app/coronawarn/verification/model/AuthorizationToken.java
+index 8aea69f..0f45108 100644
+--- a/src/main/java/app/coronawarn/verification/model/AuthorizationToken.java
++++ b/src/main/java/app/coronawarn/verification/model/AuthorizationToken.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache 
+- * License, Version 2.0 (the "License"); you may not use this 
+- * file except in compliance with the License. 
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/Certs.java b/src/main/java/app/coronawarn/verification/model/Certs.java
+index 6ecbca1..6eb240c 100644
+--- a/src/main/java/app/coronawarn/verification/model/Certs.java
++++ b/src/main/java/app/coronawarn/verification/model/Certs.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/HashedGuid.java b/src/main/java/app/coronawarn/verification/model/HashedGuid.java
+index 55f489e..12d3bd9 100644
+--- a/src/main/java/app/coronawarn/verification/model/HashedGuid.java
++++ b/src/main/java/app/coronawarn/verification/model/HashedGuid.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/InternalTestResult.java b/src/main/java/app/coronawarn/verification/model/InternalTestResult.java
+index 04e343a..2f771f4 100644
+--- a/src/main/java/app/coronawarn/verification/model/InternalTestResult.java
++++ b/src/main/java/app/coronawarn/verification/model/InternalTestResult.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/Key.java b/src/main/java/app/coronawarn/verification/model/Key.java
+index d7cf704..291d9d8 100644
+--- a/src/main/java/app/coronawarn/verification/model/Key.java
++++ b/src/main/java/app/coronawarn/verification/model/Key.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/LabTestResult.java b/src/main/java/app/coronawarn/verification/model/LabTestResult.java
+index 981450b..db86c9d 100644
+--- a/src/main/java/app/coronawarn/verification/model/LabTestResult.java
++++ b/src/main/java/app/coronawarn/verification/model/LabTestResult.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationToken.java b/src/main/java/app/coronawarn/verification/model/RegistrationToken.java
+index 05e772c..2368420 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationToken.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationToken.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java b/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
+index 8f66047..e408461 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationTokenKeyType.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+index f1603b6..700bbf1 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/Tan.java b/src/main/java/app/coronawarn/verification/model/Tan.java
+index 652d7a0..75ec5d9 100644
+--- a/src/main/java/app/coronawarn/verification/model/Tan.java
++++ b/src/main/java/app/coronawarn/verification/model/Tan.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java b/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
+index 04ca659..8cca862 100644
+--- a/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
++++ b/src/main/java/app/coronawarn/verification/model/TanSourceOfTrust.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/TanType.java b/src/main/java/app/coronawarn/verification/model/TanType.java
+index 2f009c0..0083fdd 100644
+--- a/src/main/java/app/coronawarn/verification/model/TanType.java
++++ b/src/main/java/app/coronawarn/verification/model/TanType.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/TeleTan.java b/src/main/java/app/coronawarn/verification/model/TeleTan.java
+index 6b0cf5b..c00317d 100644
+--- a/src/main/java/app/coronawarn/verification/model/TeleTan.java
++++ b/src/main/java/app/coronawarn/verification/model/TeleTan.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/TeleTanType.java b/src/main/java/app/coronawarn/verification/model/TeleTanType.java
+index 48e79dc..80e3ffd 100644
+--- a/src/main/java/app/coronawarn/verification/model/TeleTanType.java
++++ b/src/main/java/app/coronawarn/verification/model/TeleTanType.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+diff --git a/src/main/java/app/coronawarn/verification/model/TestResult.java b/src/main/java/app/coronawarn/verification/model/TestResult.java
+index 68e5f52..c4e4135 100644
+--- a/src/main/java/app/coronawarn/verification/model/TestResult.java
++++ b/src/main/java/app/coronawarn/verification/model/TestResult.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.model;
+@@ -27,7 +26,6 @@ import javax.persistence.Transient;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+-import lombok.RequiredArgsConstructor;
+ 
+ 
+ /**
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+index e24d38a..18d62c6 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.repository;
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+index 1994d5e..6a38cb2 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.repository;
+diff --git a/src/main/java/app/coronawarn/verification/service/AppSessionService.java b/src/main/java/app/coronawarn/verification/service/AppSessionService.java
+index 8b09c34..83793d1 100644
+--- a/src/main/java/app/coronawarn/verification/service/AppSessionService.java
++++ b/src/main/java/app/coronawarn/verification/service/AppSessionService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+index 2ffcf20..cec5154 100644
+--- a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
++++ b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/FakeDelayService.java b/src/main/java/app/coronawarn/verification/service/FakeDelayService.java
+index cb39ec1..65699e3 100644
+--- a/src/main/java/app/coronawarn/verification/service/FakeDelayService.java
++++ b/src/main/java/app/coronawarn/verification/service/FakeDelayService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/FakeRequestService.java b/src/main/java/app/coronawarn/verification/service/FakeRequestService.java
+index d40b672..a2a0c28 100644
+--- a/src/main/java/app/coronawarn/verification/service/FakeRequestService.java
++++ b/src/main/java/app/coronawarn/verification/service/FakeRequestService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/HashingService.java b/src/main/java/app/coronawarn/verification/service/HashingService.java
+index 9a6dd45..3d1a638 100644
+--- a/src/main/java/app/coronawarn/verification/service/HashingService.java
++++ b/src/main/java/app/coronawarn/verification/service/HashingService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/JwtService.java b/src/main/java/app/coronawarn/verification/service/JwtService.java
+index ac5b1ba..ae24c8f 100644
+--- a/src/main/java/app/coronawarn/verification/service/JwtService.java
++++ b/src/main/java/app/coronawarn/verification/service/JwtService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/TanService.java b/src/main/java/app/coronawarn/verification/service/TanService.java
+index 2496e91..dc04bb4 100644
+--- a/src/main/java/app/coronawarn/verification/service/TanService.java
++++ b/src/main/java/app/coronawarn/verification/service/TanService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/main/java/app/coronawarn/verification/service/TestResultServerService.java b/src/main/java/app/coronawarn/verification/service/TestResultServerService.java
+index c17dc8c..88a2fcf 100644
+--- a/src/main/java/app/coronawarn/verification/service/TestResultServerService.java
++++ b/src/main/java/app/coronawarn/verification/service/TestResultServerService.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+@@ -24,7 +23,6 @@ package app.coronawarn.verification.service;
+ import app.coronawarn.verification.client.TestResultServerClient;
+ import app.coronawarn.verification.model.HashedGuid;
+ import app.coronawarn.verification.model.TestResult;
+-import lombok.NonNull;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.stereotype.Component;
+diff --git a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java
+index 0b93495..758f0c9 100644
+--- a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java
++++ b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache 
+- * License, Version 2.0 (the "License"); you may not use this 
+- * file except in compliance with the License. 
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.validator;
+diff --git a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java
+index 58adf76..d67510f 100644
+--- a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java
++++ b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG, SAP AG and all other contributors /
+- * copyright owners license this file to you under the Apache 
+- * License, Version 2.0 (the "License"); you may not use this 
+- * file except in compliance with the License. 
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.validator;
+diff --git a/src/test/java/app/coronawarn/verification/TestUtils.java b/src/test/java/app/coronawarn/verification/TestUtils.java
+index 2805c46..d70bc19 100644
+--- a/src/test/java/app/coronawarn/verification/TestUtils.java
++++ b/src/test/java/app/coronawarn/verification/TestUtils.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ package app.coronawarn.verification;
+ 
+ import app.coronawarn.verification.domain.VerificationAppSession;
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java
+index 2a579e2..669089a 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification;
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestHttp.java b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestHttp.java
+index bad94d1..3395373 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestHttp.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestHttp.java
+@@ -1,3 +1,23 @@
++/*-
++ * ---license-start
++ * Corona-Warn-App / cwa-verification
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
++ */
++
+ //package app.coronawarn.verification;
+ //
+ //import java.io.BufferedReader;
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestWorkaround.java b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestWorkaround.java
+index 9c9486f..4f77e7d 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestWorkaround.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTestWorkaround.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification;
+diff --git a/src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java b/src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java
+index be7ae3d..ad09233 100644
+--- a/src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java
++++ b/src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification;
+diff --git a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+index 0bfc177..10dedbb 100644
+--- a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+diff --git a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+index db1ecf9..4461c5b 100644
+--- a/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/HashingServiceTest.java
+@@ -1,32 +1,31 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+ 
+-import org.junit.jupiter.api.Test;
+-
+ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
++import org.junit.jupiter.api.Test;
++
+ public class HashingServiceTest {
+ 
+   HashingService hashingService = new HashingService();
+diff --git a/src/test/java/app/coronawarn/verification/service/JwtServiceTest.java b/src/test/java/app/coronawarn/verification/service/JwtServiceTest.java
+index 14d8a46..a011780 100644
+--- a/src/test/java/app/coronawarn/verification/service/JwtServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/JwtServiceTest.java
+@@ -1,23 +1,23 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
++
+ package app.coronawarn.verification.service;
+ 
+ import app.coronawarn.verification.client.IamClient;
+@@ -27,6 +27,26 @@ import app.coronawarn.verification.model.Certs;
+ import app.coronawarn.verification.model.Key;
+ import io.jsonwebtoken.Jwts;
+ import io.jsonwebtoken.SignatureAlgorithm;
++import java.io.IOException;
++import java.io.StringWriter;
++import java.io.UnsupportedEncodingException;
++import java.math.BigInteger;
++import java.security.KeyPair;
++import java.security.KeyPairGenerator;
++import java.security.NoSuchAlgorithmException;
++import java.security.PrivateKey;
++import java.security.PublicKey;
++import java.security.Security;
++import java.time.Instant;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.ZoneId;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Date;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
+ import lombok.Setter;
+ import lombok.extern.slf4j.Slf4j;
+ import org.bouncycastle.asn1.x500.X500Name;
+@@ -41,17 +61,6 @@ import org.junit.jupiter.api.Assertions;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ 
+-import java.io.IOException;
+-import java.io.StringWriter;
+-import java.io.UnsupportedEncodingException;
+-import java.math.BigInteger;
+-import java.security.*;
+-import java.time.Instant;
+-import java.time.LocalDate;
+-import java.time.LocalDateTime;
+-import java.time.ZoneId;
+-import java.util.*;
+-
+ @Slf4j
+ public class JwtServiceTest {
+   public static final String TOKEN_PREFIX = "Bearer ";
+diff --git a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+index 21e4011..e71c32d 100644
+--- a/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/TanServiceTest.java
+@@ -1,26 +1,29 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;
+ 
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
+ import app.coronawarn.verification.VerificationApplication;
+ import app.coronawarn.verification.config.VerificationApplicationConfig;
+ import app.coronawarn.verification.domain.VerificationTan;
+@@ -28,6 +31,11 @@ import app.coronawarn.verification.model.TanSourceOfTrust;
+ import app.coronawarn.verification.model.TanType;
+ import app.coronawarn.verification.model.TeleTanType;
+ import app.coronawarn.verification.repository.VerificationTanRepository;
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
++import java.util.Optional;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.jupiter.api.Assertions;
+ import org.junit.jupiter.api.BeforeEach;
+@@ -39,16 +47,6 @@ import org.springframework.test.context.ActiveProfiles;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit.jupiter.SpringExtension;
+ 
+-import java.time.LocalDateTime;
+-import java.time.format.DateTimeFormatter;
+-import java.util.Optional;
+-import java.util.regex.Matcher;
+-import java.util.regex.Pattern;
+-
+-import static org.assertj.core.api.Assertions.assertThat;
+-import static org.junit.jupiter.api.Assertions.assertFalse;
+-import static org.junit.jupiter.api.Assertions.assertTrue;
+-
+ 
+ @Slf4j
+ @ExtendWith(SpringExtension.class)
+diff --git a/src/test/java/app/coronawarn/verification/service/TestResultServerServiceTest.java b/src/test/java/app/coronawarn/verification/service/TestResultServerServiceTest.java
+index ffc3f1a..00087b4 100644
+--- a/src/test/java/app/coronawarn/verification/service/TestResultServerServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/TestResultServerServiceTest.java
+@@ -1,22 +1,21 @@
+-/*
++/*-
++ * ---license-start
+  * Corona-Warn-App / cwa-verification
+- *
+- * (C) 2020, T-Systems International GmbH
+- *
+- * Deutsche Telekom AG and all other contributors /
+- * copyright owners license this file to you under the Apache
+- * License, Version 2.0 (the "License"); you may not use this
+- * file except in compliance with the License.
++ * ---
++ * Copyright (C) 2020 - 2022 T-Systems International GmbH and all other contributors
++ * ---
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+- * http://www.apache.org/licenses/LICENSE-2.0
++ *      http://www.apache.org/licenses/LICENSE-2.0
+  *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ * ---license-end
+  */
+ 
+ package app.coronawarn.verification.service;

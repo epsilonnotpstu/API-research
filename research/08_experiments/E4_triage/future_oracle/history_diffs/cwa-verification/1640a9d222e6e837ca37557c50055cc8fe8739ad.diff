@@ -1,0 +1,28 @@
+diff --git a/src/main/resources/db/changelog.yml b/src/main/resources/db/changelog.yml
+index f4994cb..73281da 100644
+--- a/src/main/resources/db/changelog.yml
++++ b/src/main/resources/db/changelog.yml
+@@ -23,3 +23,6 @@ databaseChangeLog:
+   - include:
+       file: changelog/v006-add-index-dob-hashed-guid.yml
+       relativeToChangelogFile: true
++  - include:
++      file: changelog/v007-add-seperate-unique-constraints-for-hashed-guid.yml
++      relativeToChangelogFile: true
+diff --git a/src/main/resources/db/changelog/v007-add-seperate-unique-constraints-for-hashed-guid.yml b/src/main/resources/db/changelog/v007-add-seperate-unique-constraints-for-hashed-guid.yml
+new file mode 100644
+index 0000000..70c9097
+--- /dev/null
++++ b/src/main/resources/db/changelog/v007-add-seperate-unique-constraints-for-hashed-guid.yml
+@@ -0,0 +1,11 @@
++databaseChangeLog:
++  - changeSet:
++      id: add-seperate-unique-constraints-for-hashed-guid
++      author: f11h
++      changes:
++        - addUniqueConstraint:
++            tableName: app_session
++            columnNames: hashed_guid
++        - addUniqueConstraint:
++            tableName: app_session
++            columnNames: hashed_guid_dob

@@ -1,0 +1,195 @@
+diff --git a/pom.xml b/pom.xml
+index 96f697b..890cc73 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -235,6 +235,16 @@
+       <artifactId>rxjava</artifactId>
+       <version>1.3.8</version>
+     </dependency>
++    <dependency>
++      <groupId>net.javacrumbs.shedlock</groupId>
++      <artifactId>shedlock-spring</artifactId>
++      <version>4.25.0</version>
++    </dependency>
++    <dependency>
++      <groupId>net.javacrumbs.shedlock</groupId>
++      <artifactId>shedlock-provider-jdbc-template</artifactId>
++      <version>4.25.0</version>
++    </dependency>
+   </dependencies>
+ 
+   <build>
+diff --git a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+index a76caed..cafb648 100644
+--- a/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
++++ b/src/main/java/app/coronawarn/verification/config/VerificationApplicationConfig.java
+@@ -136,6 +136,8 @@ public class VerificationApplicationConfig {
+     public static class Cleanup {
+ 
+       private Integer days = 21;
++      private String cron = "0 1 * * * *";
++      private Integer locklimit = 60;
+     }
+ 
+   }
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+index 2f66e40..e24d38a 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationAppSessionRepository.java
+@@ -25,6 +25,8 @@ import app.coronawarn.verification.domain.VerificationAppSession;
+ import java.time.LocalDateTime;
+ import java.util.Optional;
+ import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Modifying;
++import org.springframework.data.jpa.repository.Query;
+ 
+ /**
+  * This class represents the AppSession repository.
+@@ -61,5 +63,7 @@ public interface VerificationAppSessionRepository extends JpaRepository<Verifica
+    *
+    * @param before the Date to delete by
+    */
++  @Modifying
++  @Query("delete from VerificationAppSession a where a.createdAt < ?1")
+   void deleteByCreatedAtBefore(LocalDateTime before);
+ }
+diff --git a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+index c414fde..1994d5e 100644
+--- a/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
++++ b/src/main/java/app/coronawarn/verification/repository/VerificationTanRepository.java
+@@ -26,6 +26,8 @@ import app.coronawarn.verification.model.TanType;
+ import java.time.LocalDateTime;
+ import java.util.Optional;
+ import org.springframework.data.jpa.repository.JpaRepository;
++import org.springframework.data.jpa.repository.Modifying;
++import org.springframework.data.jpa.repository.Query;
+ 
+ /**
+  * This class represents the Tan repository.
+@@ -53,6 +55,8 @@ public interface VerificationTanRepository extends JpaRepository<VerificationTan
+    *
+    * @param before LocalDateTime to delete older entities
+    */
++  @Modifying
++  @Query("delete from VerificationTan a where a.createdAt < ?1")
+   void deleteByCreatedAtBefore(LocalDateTime before);
+ 
+   /**
+diff --git a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+index 08e1cd7..2ffcf20 100644
+--- a/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
++++ b/src/main/java/app/coronawarn/verification/service/EntitiesCleanupService.java
+@@ -29,6 +29,7 @@ import java.time.Period;
+ import javax.transaction.Transactional;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
++import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+ import org.springframework.scheduling.annotation.Scheduled;
+ import org.springframework.stereotype.Component;
+ 
+@@ -48,8 +49,10 @@ public class EntitiesCleanupService {
+    * All entities that are older than configured days get deleted.
+    */
+   @Scheduled(
+-    fixedDelayString = "${entities.cleanup.rate}"
++    cron = "${entities.cleanup.cron}"
+   )
++  @SchedulerLock(name = "VerificationCleanupService_cleanup", lockAtLeastFor = "PT0S",
++    lockAtMostFor = "${entities.cleanup.locklimit}")
+   @Transactional
+   public void cleanup() {
+     log.info("cleanup execution");
+diff --git a/src/main/resources/application.yml b/src/main/resources/application.yml
+index e2fbe2d..6d2cf85 100644
+--- a/src/main/resources/application.yml
++++ b/src/main/resources/application.yml
+@@ -74,8 +74,8 @@ appsession:
+   tancountermax: 1
+ entities:
+   cleanup:
++    cron: "0 1 * * * *"
+     days: 21
+-    rate: 3600000
+ initialFakeDelayMilliseconds: 10
+ fakeDelayMovingAverageSamples: 5
+ request:
+diff --git a/src/main/resources/db/changelog.yml b/src/main/resources/db/changelog.yml
+index c2784f6..f4994cb 100644
+--- a/src/main/resources/db/changelog.yml
++++ b/src/main/resources/db/changelog.yml
+@@ -17,3 +17,9 @@ databaseChangeLog:
+   - include:
+       file: changelog/v004-add-unique-registration-token-teletan.yml
+       relativeToChangelogFile: true
++  - include:
++      file: changelog/v005-add-shedlock.yml
++      relativeToChangelogFile: true
++  - include:
++      file: changelog/v006-add-index-dob-hashed-guid.yml
++      relativeToChangelogFile: true
+diff --git a/src/main/resources/db/changelog/v005-add-shedlock.yml b/src/main/resources/db/changelog/v005-add-shedlock.yml
+new file mode 100644
+index 0000000..41ab28d
+--- /dev/null
++++ b/src/main/resources/db/changelog/v005-add-shedlock.yml
+@@ -0,0 +1,29 @@
++databaseChangeLog:
++  - changeSet:
++      id: add-shedlock
++      author: mschulte-tsi
++      changes:
++        - createTable:
++            tableName: shedlock
++            columns:
++              - column:
++                  name: name
++                  type: varchar(64)
++                  constraints:
++                    nullable: false
++                    primaryKey: true
++              - column:
++                  name: lock_until
++                  type: datetime(2)
++                  constraints:
++                    nullable: false
++              - column:
++                  name: locked_at
++                  type: datetime(2)
++                  constraints:
++                    nullable: false
++              - column:
++                  name: locked_by
++                  type: varchar(255)
++                  constraints:
++                    nullable: false
+diff --git a/src/main/resources/db/changelog/v006-add-index-dob-hashed-guid.yml b/src/main/resources/db/changelog/v006-add-index-dob-hashed-guid.yml
+new file mode 100644
+index 0000000..ddb0f5c
+--- /dev/null
++++ b/src/main/resources/db/changelog/v006-add-index-dob-hashed-guid.yml
+@@ -0,0 +1,12 @@
++databaseChangeLog:
++  - changeSet:
++      id: add-unique-hashed-guid
++      author: mschulte-tsi
++      changes:
++        - createIndex:
++            tableName: app_session
++            indexName: idx_app_session_hashed_guid_dob
++            columns:
++              - column:
++                  name: hashed_guid_dob
++                  type: varchar(64)
+diff --git a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+index cb0f255..0bfc177 100644
+--- a/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
++++ b/src/test/java/app/coronawarn/verification/service/EntitiesCleanupServiceTest.java
+@@ -48,7 +48,7 @@ import rx.Single;
+ @ActiveProfiles("local")
+ @SpringBootTest(
+   properties = {
+-    "entities.cleanup.rate=1000"
++    "entities.cleanup.cron=* * * * * *"
+   }
+ )
+ @ContextConfiguration(classes = VerificationApplication.class)
