@@ -23,6 +23,19 @@
 | T20b | Fix E5 pair-validation false positives | Codex | gpt-6.1-sol / medium | DONE | `08_experiments/E5_codemut/validate_pair.py` | `reports/T20b_report.md` |
 | T20c | E5 ordering and generator-exclusion rules | Codex | gpt-6.1-sol / medium | DONE | `08_experiments/E5_codemut/` | `reports/T20c_report.md` |
 | T22 | E5 control-vs-control noise floor | Codex | gpt-6.1-sol | DONE | `08_experiments/E5_codemut/` excluding work/key | `reports/T22_report.md` |
+| T23 | E5 blind labelling v2 (codebook v0.5), labellers C1/C2 | Codex | gpt-6.1-sol / xhigh | DONE | `E5_codemut/` (blind) | `E5_BLIND_RESULTS.md` v2 |
+| T24 | Review: checker int32/int64 formats | Codex | gpt-6.1-sol / high | DONE | — | `reports/T24_review.md` |
+| T25 / T25b | E5 replacement sites (v2) / petstore-reject-valid-v3 | Codex | gpt-6.1-sol / high | DONE | `E5_codemut/` | `reports/T25_report.md` |
+| T26 / T26b | `intent_evidence.py` + fixes | Codex | gpt-6.1-sol / high | DONE | `tools/intent_evidence.py` | `reports/T26_report.md` |
+| T27 | EvoMaster black-box in harness_v2 (proposed diff) | Codex | gpt-6.1-sol / high | DONE | `harness_v2/` | `reports/T27_report.md` |
+| T28 | EVOMASTER_SCHEMA_ORACLES knob | Codex | gpt-6.1-sol / medium | DONE | `harness_v2/` | `reports/T28_report.md` |
+| T29 | Review: fuzzer_compare + cross-seed | Codex | gpt-6.1-sol / high | DONE (6/6 accepted) | — | `reports/T29_review.md` |
+| T30 | E5 validator provenance vs drift | Codex | gpt-6.1-sol / high | DONE | `E5_codemut/` | `reports/T30_report.md` |
+| T31 | EVOMASTER_INPUT=derecursed | Codex | gpt-6.1-sol / high | DONE | `harness_v2/` | `reports/T31_report.md` |
+| T32 | EvoMaster STRICT exposure | Codex | gpt-6.1-sol / high | DONE | `pilot_results/strict_exposure.*` | `reports/T32_report.md` |
+| T33 | Codebook §11.4 proposal | Codex | gpt-6.1-sol / high | DONE — **SUPERVISOR DECISION PENDING (7 Qs)** | `E2_labelling/proposals/` | `reports/T33_report.md` |
+| T34 | Review: controlled cells, same-seed, trajectory | Codex | gpt-6.1-sol / high | DONE (5/5 accepted) | — | `reports/T34_review.md` |
+| T35 | Market STRICT 500 cause | Codex | gpt-6.1-sol / high | DONE (accepted) | — | `reports/T35_report.md` |
 | T6 | Review/integrate Codex outputs, codebook v0.3 | Claude | — | TODO | `08_experiments/` | — |
 | T7 | Pilot execution (scout-api …) | Claude (supervisor allow rules added) | — | IN PROGRESS | `08_experiments/E1_pilot/runs/` | — |
 | T8 | P038 re-analysis | Claude | — | DONE | `04_paper_analysis/P038_analysis.md`, `matrix/P038.json`, final table, T9 report | — |
