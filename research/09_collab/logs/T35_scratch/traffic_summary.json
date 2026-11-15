@@ -1,0 +1,3958 @@
+[
+  {
+    "id": "market.s1.evomaster.fresh",
+    "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "total": 4287,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 1,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "PUT /customer/contacts": 392
+    },
+    "eligible_status": {
+      "500": 392
+    },
+    "contacts_status": {
+      "500": 885
+    },
+    "contacts_eligible_status": {
+      "500": 392
+    },
+    "contacts_groups": {
+      "500|links=array|eligible=True|Expected relation name": 392,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 493
+    },
+    "contacts_violation_fields": {
+      "phone/maxLength": 392,
+      "address/maxLength": 148
+    },
+    "contacts_response_kinds": {
+      "Expected relation name": 885
+    },
+    "eligible_response_kinds": {
+      "Expected relation name": 392
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 4227,
+      "absent": 60
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:406": 50,
+      "GET /products/{productId}:404": 186,
+      "GET /products:200": 162,
+      "GET /customer/orders/{orderId}:404": 163,
+      "GET /customer/orders:200": 214,
+      "PUT /customer/contacts:500": 885,
+      "GET /customer/contacts:200": 207,
+      "POST /customer/cart/pay:406": 168,
+      "PUT /customer/cart/delivery:200": 216,
+      "DELETE /customer/cart:200": 242,
+      "PUT /customer/cart:406": 434,
+      "GET /customer/cart:200": 241,
+      "GET /customer:200": 184,
+      "POST /register:500": 116,
+      "GET /customer/orders/{orderId}:401": 3,
+      "GET /customer/orders:401": 7,
+      "GET /customer/contacts:401": 4,
+      "PUT /customer/cart/delivery:401": 6,
+      "DELETE /customer/cart:401": 5,
+      "PUT /customer/cart:500": 546,
+      "GET /customer/cart:401": 3,
+      "GET /customer:401": 3,
+      "PUT /customer/cart:404": 137,
+      "GET /customer/orders/{orderId}:200": 40,
+      "PUT /customer/cart:200": 44,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1",
+        "line": 6,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/phone/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links",
+          "address",
+          "phone"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 4,
+        "link_item_shapes": {
+          "object": 4
+        },
+        "rel_shapes": {
+          "object": 4
+        },
+        "phone_type": "str",
+        "phone_length": 16,
+        "address_type": "str",
+        "address_length": 0,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null,
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1",
+        "line": 19,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "absent",
+        "auth_present": false,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 18,
+          "operation": "GET /customer/orders",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 10,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      }
+    }
+  },
+  {
+    "id": "market.s1.evomaster.baseline",
+    "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s1/exchanges.jsonl",
+    "total": 4218,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 1,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /products/{productId}": 165,
+      "PUT /customer/contacts": 1013,
+      "POST /customer/cart/pay": 153
+    },
+    "eligible_status": {
+      "404": 165,
+      "500": 622,
+      "406": 463,
+      "200": 81
+    },
+    "contacts_status": {
+      "500": 624,
+      "406": 310,
+      "200": 81
+    },
+    "contacts_eligible_status": {
+      "500": 622,
+      "406": 310,
+      "200": 81
+    },
+    "contacts_groups": {
+      "500|links=array|eligible=True|Expected relation name": 358,
+      "406|links=absent|eligible=True|other": 310,
+      "500|links=unknown-invalid-JSON|eligible=True|JSON parse error-other": 153,
+      "500|links=unknown-invalid-JSON|eligible=True|Expected relation name": 111,
+      "200|links=absent|eligible=True|other": 81,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 2
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 685,
+      "_links/items/required": 286,
+      "deprecation/maxLength": 226,
+      "href/maxLength": 231,
+      "hreflang/maxLength": 217,
+      "media/maxLength": 206,
+      "name/maxLength": 224,
+      "profile/maxLength": 222,
+      "title/maxLength": 217,
+      "type/maxLength": 209,
+      "/paths/~1customer~1contacts/put/parameters/1/required": 533,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 470,
+      "phone/maxLength": 279,
+      "address/maxLength": 178
+    },
+    "contacts_response_kinds": {
+      "Expected relation name": 471,
+      "other": 391,
+      "JSON parse error-other": 153
+    },
+    "eligible_response_kinds": {
+      "other": 709,
+      "Expected relation name": 469,
+      "JSON parse error-other": 153
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 4161,
+      "absent": 57
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:500": 122,
+      "GET /products/{productId}:404": 186,
+      "GET /products:200": 196,
+      "GET /customer/orders/{orderId}:404": 173,
+      "GET /customer/orders:200": 188,
+      "PUT /customer/contacts:500": 624,
+      "GET /customer/contacts:200": 242,
+      "POST /customer/cart/pay:406": 153,
+      "PUT /customer/cart/delivery:200": 197,
+      "DELETE /customer/cart:200": 189,
+      "PUT /customer/cart:500": 550,
+      "GET /customer/cart:200": 229,
+      "GET /customer:200": 195,
+      "GET /customer/orders/{orderId}:401": 4,
+      "GET /customer/orders:401": 3,
+      "PUT /customer/contacts:406": 310,
+      "GET /customer/contacts:401": 2,
+      "PUT /customer/cart/delivery:401": 3,
+      "DELETE /customer/cart:401": 3,
+      "GET /customer/cart:401": 3,
+      "GET /customer:401": 2,
+      "PUT /customer/cart:406": 370,
+      "PUT /customer/contacts:200": 81,
+      "PUT /customer/cart:404": 120,
+      "POST /register:406": 48,
+      "PUT /customer/cart:401": 4,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 6,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/deprecation/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/href/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/hreflang/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/media/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/name/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/profile/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/title/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/type/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": false,
+        "all_link_strings_length_le_1": false,
+        "links_count": 4,
+        "link_item_shapes": {
+          "object": 4
+        },
+        "rel_shapes": {
+          "absent": 2,
+          "object": 2
+        },
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null,
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 19,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "absent",
+        "auth_present": false,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          13
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 18,
+          "operation": "GET /customer/orders",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 10,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=True|JSON parse error-other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 27,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          29
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 26,
+          "operation": "GET /customer",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 23,
+          "operation": "DELETE /customer/cart",
+          "status": 401
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 29,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 28,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 23,
+          "operation": "DELETE /customer/cart",
+          "status": 401
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "200|links=absent|eligible=True|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 74,
+        "status": 200,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/address/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/phone/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          9
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "address",
+        "body_keys": [
+          "address",
+          "phone"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "str",
+        "phone_length": 13,
+        "address_type": "str",
+        "address_length": 2,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 73,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 68,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+        "line": 1777,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 1776,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 1747,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      }
+    }
+  },
+  {
+    "id": "market.s1.schemathesis.fresh",
+    "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1/exchanges.jsonl",
+    "total": 1202,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 1,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "POST /customer/cart/pay": 86,
+      "PUT /customer/contacts": 95,
+      "GET /products/{productId}": 40
+    },
+    "eligible_status": {
+      "500": 155,
+      "406": 26,
+      "200": 2,
+      "404": 38
+    },
+    "contacts_status": {
+      "500": 98,
+      "406": 2
+    },
+    "contacts_eligible_status": {
+      "500": 93,
+      "406": 2
+    },
+    "contacts_groups": {
+      "500|links=absent|eligible=True|JSON parse error-other": 78,
+      "500|links=absent|eligible=True|other": 12,
+      "500|links=array|eligible=True|Expected relation name": 1,
+      "500|links=absent|eligible=False|JSON parse error-other": 5,
+      "500|links=bool|eligible=True|JSON parse error-other": 2,
+      "406|links=absent|eligible=True|other": 2
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/1/required": 74,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 21,
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 2
+    },
+    "contacts_response_kinds": {
+      "JSON parse error-other": 85,
+      "other": 14,
+      "Expected relation name": 1
+    },
+    "eligible_response_kinds": {
+      "JSON parse error-other": 132,
+      "other": 88,
+      "Expected relation name": 1
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1202
+    },
+    "cookies_present": 1200,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:406": 53,
+      "PUT /customer/cart:500": 47,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 39,
+      "PUT /customer/cart/delivery:500": 61,
+      "POST /customer/cart/pay:500": 67,
+      "POST /customer/cart/pay:406": 33,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:500": 98,
+      "PUT /customer/contacts:406": 2,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 73,
+      "GET /customer/orders/{orderId}:500": 27,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 74,
+      "GET /products/{productId}:500": 24,
+      "GET /products/{productId}:200": 2,
+      "POST /register:406": 31,
+      "POST /register:500": 69
+    },
+    "first_contacts_by_group": {
+      "500|links=absent|eligible=True|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 702,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "\u001a򡉬4򧐗ç",
+          "?",
+          "¦󅒩\u0018\u001f",
+          "æÊÚl",
+          "𝕋𝕙𝕖 𝕢𝕦𝕚𝕔𝕜 𝕓𝕣𝕠𝕨𝕟 𝕗𝕠𝕩 𝕛𝕦𝕞𝕡𝕤 𝕠𝕧𝕖𝕣 𝕥𝕙𝕖 𝕝𝕒𝕫𝕪 𝕕𝕠𝕘"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "str",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 704,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "󶊵,"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 703,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 705,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          2
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "",
+          "&ÿã",
+          "999999999999999999999999999999",
+          "_links",
+          "address",
+          "phone",
+          "~",
+          "Æ󧻙S",
+          "÷񷵑\u000fåâVnÑ⮺¥¹񙔎½;ö\\󽞝Ô\u0017Éi\n(",
+          "񷔩¼Í"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": false,
+        "links_count": 1,
+        "link_item_shapes": {
+          "object": 1
+        },
+        "rel_shapes": {
+          "object": 1
+        },
+        "phone_type": "bool",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 1,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 704,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 712,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "PåÀ4)",
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "int",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 711,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=bool|eligible=True|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 748,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "\u0007E¨",
+          "𽜊\u0013·W"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "_links",
+        "body_keys": [
+          "",
+          "_links"
+        ],
+        "links_shape": "bool",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 747,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s1",
+        "line": 775,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "\u0010"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "",
+        "body_keys": [
+          ""
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 774,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s1.schemathesis.baseline",
+    "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_baseline_NONE_p0_s1/exchanges.jsonl",
+    "total": 1139,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 1,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "POST /customer/cart/pay": 93,
+      "PUT /customer/contacts": 94,
+      "GET /products/{productId}": 22
+    },
+    "eligible_status": {
+      "406": 122,
+      "500": 65,
+      "404": 22
+    },
+    "contacts_status": {
+      "406": 52,
+      "500": 48
+    },
+    "contacts_eligible_status": {
+      "406": 52,
+      "500": 42
+    },
+    "contacts_groups": {
+      "406|links=absent|eligible=True|other": 52,
+      "500|links=array|eligible=True|Expected relation name": 22,
+      "500|links=absent|eligible=False|JSON parse error-other": 6,
+      "500|links=absent|eligible=True|JSON parse error-other": 19,
+      "500|links=absent|eligible=True|other": 1
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 65,
+      "/paths/~1customer~1contacts/put/parameters/1/required": 52,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 28,
+      "phone/maxLength": 19,
+      "_links/items/required": 16,
+      "address/maxLength": 11,
+      "deprecation/maxLength": 4,
+      "type/maxLength": 7,
+      "href/maxLength": 3,
+      "media/maxLength": 1
+    },
+    "contacts_response_kinds": {
+      "other": 53,
+      "Expected relation name": 22,
+      "JSON parse error-other": 25
+    },
+    "eligible_response_kinds": {
+      "other": 148,
+      "JSON parse error-other": 39,
+      "Expected relation name": 22
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1139
+    },
+    "cookies_present": 1137,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:406": 47,
+      "PUT /customer/cart:500": 53,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 40,
+      "PUT /customer/cart/delivery:500": 60,
+      "POST /customer/cart/pay:406": 74,
+      "POST /customer/cart/pay:500": 26,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:406": 52,
+      "PUT /customer/contacts:500": 48,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 73,
+      "GET /customer/orders/{orderId}:500": 27,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 44,
+      "GET /products/{productId}:500": 56,
+      "POST /register:406": 6,
+      "POST /register:500": 31
+    },
+    "first_contacts_by_group": {
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+        "line": 702,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+        "line": 707,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 0,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 706,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+        "line": 727,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "A÷AT",
+          "Hlf",
+          "name",
+          "乛E"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "bool",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 726,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=True|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+        "line": 730,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "Ý򹉯 󍛾"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "array",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 729,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s1",
+        "line": 798,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "T/򢊾",
+          "Âae"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 797,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s2.evomaster.fresh",
+    "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2/exchanges.jsonl",
+    "total": 4148,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 2,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {},
+    "eligible_status": {},
+    "contacts_status": {
+      "200": 78,
+      "500": 546,
+      "406": 280
+    },
+    "contacts_eligible_status": {},
+    "contacts_groups": {
+      "200|links=absent|eligible=False|other": 78,
+      "500|links=array|eligible=False|Expected relation name": 297,
+      "406|links=absent|eligible=False|other": 280,
+      "500|links=unknown-invalid-JSON|eligible=False|JSON parse error-other": 120,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 129
+    },
+    "contacts_violation_fields": {},
+    "contacts_response_kinds": {
+      "other": 358,
+      "Expected relation name": 426,
+      "JSON parse error-other": 120
+    },
+    "eligible_response_kinds": {},
+    "auth_states": {
+      "unrecoverable-redacted": 4085,
+      "absent": 63
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:500": 122,
+      "GET /products/{productId}:404": 175,
+      "GET /products:200": 173,
+      "GET /customer/orders/{orderId}:404": 164,
+      "GET /customer/orders:200": 190,
+      "PUT /customer/contacts:200": 78,
+      "GET /customer/contacts:200": 223,
+      "POST /customer/cart/pay:406": 178,
+      "PUT /customer/cart/delivery:200": 202,
+      "DELETE /customer/cart:200": 224,
+      "PUT /customer/cart:500": 1089,
+      "GET /customer/cart:200": 183,
+      "GET /customer:200": 199,
+      "GET /customer/orders/{orderId}:401": 3,
+      "GET /customer/orders:401": 4,
+      "PUT /customer/contacts:500": 546,
+      "GET /customer/contacts:401": 7,
+      "PUT /customer/cart/delivery:401": 5,
+      "DELETE /customer/cart:401": 2,
+      "GET /customer/cart:401": 5,
+      "GET /customer:401": 3,
+      "PUT /customer/contacts:406": 280,
+      "POST /register:406": 72,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "200|links=absent|eligible=False|other": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+        "line": 6,
+        "status": 200,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          15
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "address",
+        "body_keys": [
+          "address",
+          "phone"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "str",
+        "phone_length": 16,
+        "address_type": "str",
+        "address_length": 2,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null
+      },
+      "500|links=array|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+        "line": 19,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "absent",
+        "auth_present": false,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          6
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links",
+          "address"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": false,
+        "all_link_strings_length_le_1": false,
+        "links_count": 3,
+        "link_item_shapes": {
+          "object": 3
+        },
+        "rel_shapes": {
+          "object": 2,
+          "absent": 1
+        },
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 2,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 18,
+          "operation": "GET /customer/orders",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 10,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "406|links=absent|eligible=False|other": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+        "line": 39,
+        "status": 406,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "address",
+        "body_keys": [
+          "address"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 2,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 38,
+          "operation": "GET /customer",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 23,
+          "operation": "DELETE /customer/cart",
+          "status": 401
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|JSON parse error-other": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+        "line": 69,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 68,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 23,
+          "operation": "DELETE /customer/cart",
+          "status": 401
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+        "line": 111,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          12
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 110,
+          "operation": "GET /customer/orders/{orderId}",
+          "status": 404
+        },
+        "previous_delete": {
+          "line": 99,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      }
+    }
+  },
+  {
+    "id": "market.s2.evomaster.baseline",
+    "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s2/exchanges.jsonl",
+    "total": 4305,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 2,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /products/{productId}": 175,
+      "GET /customer/orders/{orderId}": 145,
+      "PUT /customer/cart": 1095,
+      "GET /customer/cart": 227
+    },
+    "eligible_status": {
+      "404": 437,
+      "406": 391,
+      "200": 280,
+      "401": 8,
+      "500": 526
+    },
+    "contacts_status": {
+      "500": 563,
+      "406": 292,
+      "200": 81
+    },
+    "contacts_eligible_status": {},
+    "contacts_groups": {
+      "500|links=array|eligible=False|Expected relation name": 330,
+      "406|links=absent|eligible=False|other": 292,
+      "500|links=unknown-invalid-JSON|eligible=False|JSON parse error-other": 123,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 110,
+      "200|links=absent|eligible=False|other": 81
+    },
+    "contacts_violation_fields": {},
+    "contacts_response_kinds": {
+      "Expected relation name": 440,
+      "other": 373,
+      "JSON parse error-other": 123
+    },
+    "eligible_response_kinds": {
+      "other": 1108,
+      "Access is denied": 8,
+      "Expected relation name": 526
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 4245,
+      "absent": 60
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:406": 72,
+      "GET /products/{productId}:404": 185,
+      "GET /products:200": 203,
+      "GET /customer/orders/{orderId}:404": 140,
+      "GET /customer/orders:200": 235,
+      "PUT /customer/contacts:500": 563,
+      "GET /customer/contacts:200": 223,
+      "POST /customer/cart/pay:406": 170,
+      "PUT /customer/cart/delivery:200": 203,
+      "DELETE /customer/cart:200": 239,
+      "PUT /customer/cart:406": 391,
+      "GET /customer/cart:200": 229,
+      "GET /customer:200": 203,
+      "POST /register:500": 116,
+      "GET /products/{productId}:200": 7,
+      "GET /customer/orders/{orderId}:401": 6,
+      "GET /customer/orders:401": 3,
+      "PUT /customer/contacts:406": 292,
+      "GET /customer/contacts:401": 2,
+      "PUT /customer/cart/delivery:401": 5,
+      "DELETE /customer/cart:401": 5,
+      "GET /customer/cart:401": 2,
+      "GET /customer:401": 5,
+      "PUT /customer/cart:500": 526,
+      "PUT /customer/cart:404": 130,
+      "PUT /customer/cart:200": 48,
+      "PUT /customer/contacts:200": 81,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "500|links=array|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+        "line": 6,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": false,
+        "all_link_strings_length_le_1": false,
+        "links_count": 4,
+        "link_item_shapes": {
+          "object": 4
+        },
+        "rel_shapes": {
+          "object": 1,
+          "absent": 3
+        },
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null,
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "406|links=absent|eligible=False|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+        "line": 19,
+        "status": 406,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "absent",
+        "auth_present": false,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          14
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 18,
+          "operation": "GET /customer/orders",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 10,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|JSON parse error-other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+        "line": 102,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          7
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 101,
+          "operation": "GET /products",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 79,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+        "line": 105,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          9
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 104,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 79,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "200|links=absent|eligible=False|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+        "line": 212,
+        "status": 200,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "address",
+        "body_keys": [
+          "address",
+          "phone"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "str",
+        "phone_length": 16,
+        "address_type": "str",
+        "address_length": 2,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 211,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 192,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s2.schemathesis.fresh",
+    "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2/exchanges.jsonl",
+    "total": 1154,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 2,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /customer/cart": 63,
+      "PUT /customer/cart": 49,
+      "GET /customer/orders/{orderId}": 31,
+      "GET /products/{productId}": 49
+    },
+    "eligible_status": {
+      "200": 65,
+      "500": 61,
+      "406": 4,
+      "404": 62
+    },
+    "contacts_status": {
+      "406": 41,
+      "500": 59
+    },
+    "contacts_eligible_status": {},
+    "contacts_groups": {
+      "406|links=absent|eligible=False|other": 41,
+      "500|links=array|eligible=False|Expected relation name": 28,
+      "500|links=array|eligible=False|JSON parse error-other": 1,
+      "500|links=absent|eligible=False|JSON parse error-other": 26,
+      "500|links=absent|eligible=False|other": 4
+    },
+    "contacts_violation_fields": {},
+    "contacts_response_kinds": {
+      "other": 45,
+      "Expected relation name": 28,
+      "JSON parse error-other": 27
+    },
+    "eligible_response_kinds": {
+      "other": 150,
+      "JSON parse error-other": 34,
+      "Expected relation name": 8
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1154
+    },
+    "cookies_present": 1152,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:500": 96,
+      "PUT /customer/cart:406": 4,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 37,
+      "PUT /customer/cart/delivery:500": 63,
+      "POST /customer/cart/pay:406": 80,
+      "POST /customer/cart/pay:500": 20,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:406": 41,
+      "PUT /customer/contacts:500": 59,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 77,
+      "GET /customer/orders/{orderId}:500": 23,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 75,
+      "GET /products/{productId}:500": 21,
+      "GET /products/{productId}:200": 2,
+      "GET /products/{productId}:400": 2,
+      "POST /register:406": 31,
+      "POST /register:500": 21
+    },
+    "first_contacts_by_group": {
+      "406|links=absent|eligible=False|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+        "line": 702,
+        "status": 406,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=array|eligible=False|Expected relation name": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+        "line": 705,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "",
+          "_links",
+          "address"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 0,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 15,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 704,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=array|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+        "line": 707,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "񧧷/1\fF\u0017"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "phone",
+        "body_keys": [
+          "_links",
+          "phone"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": false,
+        "all_link_strings_length_le_1": true,
+        "links_count": 1,
+        "link_item_shapes": {
+          "object": 1
+        },
+        "rel_shapes": {
+          "absent": 1
+        },
+        "phone_type": "array",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 706,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+        "line": 710,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "name",
+          "𑇋 􌟚ÉAÊ\u0013",
+          "򜄎\t"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "float",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 709,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=False|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s2",
+        "line": 794,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "\u001f񵛪񺾐&1",
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 793,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s2.schemathesis.baseline",
+    "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s2",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_baseline_NONE_p0_s2/exchanges.jsonl",
+    "total": 1154,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 2,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /customer/cart": 67,
+      "PUT /customer/cart": 100,
+      "GET /customer/orders/{orderId}": 90,
+      "GET /products/{productId}": 26
+    },
+    "eligible_status": {
+      "200": 67,
+      "406": 54,
+      "500": 64,
+      "404": 98
+    },
+    "contacts_status": {
+      "406": 39,
+      "500": 61
+    },
+    "contacts_eligible_status": {},
+    "contacts_groups": {
+      "406|links=absent|eligible=False|other": 39,
+      "500|links=array|eligible=False|Expected relation name": 22,
+      "500|links=absent|eligible=False|JSON parse error-other": 39
+    },
+    "contacts_violation_fields": {},
+    "contacts_response_kinds": {
+      "other": 39,
+      "Expected relation name": 22,
+      "JSON parse error-other": 39
+    },
+    "eligible_response_kinds": {
+      "other": 241,
+      "JSON parse error-other": 21,
+      "Expected relation name": 21
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1154
+    },
+    "cookies_present": 1152,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:406": 54,
+      "PUT /customer/cart:500": 45,
+      "PUT /customer/cart:404": 1,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 37,
+      "PUT /customer/cart/delivery:500": 63,
+      "POST /customer/cart/pay:406": 73,
+      "POST /customer/cart/pay:500": 27,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:406": 39,
+      "PUT /customer/contacts:500": 61,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 72,
+      "GET /customer/orders/{orderId}:500": 28,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 53,
+      "GET /products/{productId}:500": 47,
+      "POST /register:406": 31,
+      "POST /register:500": 21
+    },
+    "first_contacts_by_group": {
+      "406|links=absent|eligible=False|other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s2",
+        "line": 702,
+        "status": 406,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=array|eligible=False|Expected relation name": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s2",
+        "line": 705,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "",
+          "_links",
+          "address"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 0,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 15,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 704,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s2",
+        "line": 709,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          7
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "float",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 708,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s3.evomaster.fresh",
+    "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "total": 4081,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 3,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "PUT /customer/contacts": 361
+    },
+    "eligible_status": {
+      "500": 361
+    },
+    "contacts_status": {
+      "500": 789
+    },
+    "contacts_eligible_status": {
+      "500": 361
+    },
+    "contacts_groups": {
+      "500|links=array|eligible=True|Expected relation name": 361,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 428
+    },
+    "contacts_violation_fields": {
+      "phone/maxLength": 361,
+      "address/maxLength": 128
+    },
+    "contacts_response_kinds": {
+      "Expected relation name": 789
+    },
+    "eligible_response_kinds": {
+      "Expected relation name": 361
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 4023,
+      "absent": 58
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:406": 68,
+      "GET /products/{productId}:404": 189,
+      "GET /products:200": 220,
+      "GET /customer/orders/{orderId}:404": 172,
+      "GET /customer/orders:200": 175,
+      "PUT /customer/contacts:500": 789,
+      "GET /customer/contacts:200": 156,
+      "POST /customer/cart/pay:406": 164,
+      "PUT /customer/cart/delivery:200": 234,
+      "DELETE /customer/cart:200": 213,
+      "PUT /customer/cart:500": 538,
+      "GET /customer/cart:200": 221,
+      "GET /customer:200": 193,
+      "POST /register:500": 117,
+      "GET /customer/orders/{orderId}:401": 3,
+      "GET /customer/orders:401": 6,
+      "GET /customer/contacts:401": 4,
+      "PUT /customer/cart/delivery:401": 4,
+      "DELETE /customer/cart:401": 7,
+      "GET /customer/cart:401": 3,
+      "GET /customer:401": 3,
+      "PUT /customer/cart:406": 422,
+      "PUT /customer/cart:404": 114,
+      "GET /products/{productId}:200": 3,
+      "GET /customer/orders/{orderId}:200": 42,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3",
+        "line": 6,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/phone/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links",
+          "address",
+          "phone"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 1,
+        "link_item_shapes": {
+          "object": 1
+        },
+        "rel_shapes": {
+          "object": 1
+        },
+        "phone_type": "str",
+        "phone_length": 15,
+        "address_type": "str",
+        "address_length": 0,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null,
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3",
+        "line": 19,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "absent",
+        "auth_present": false,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 18,
+          "operation": "GET /customer/orders",
+          "status": 401
+        },
+        "previous_delete": {
+          "line": 10,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      }
+    }
+  },
+  {
+    "id": "market.s3.evomaster.baseline",
+    "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_baseline_NONE_p0_s3/exchanges.jsonl",
+    "total": 4199,
+    "metadata": {
+      "fuzzer": "evomaster",
+      "seed": 3,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /customer/orders": 200,
+      "PUT /customer/contacts": 885,
+      "GET /customer/contacts": 207,
+      "GET /customer": 196
+    },
+    "eligible_status": {
+      "200": 667,
+      "406": 272,
+      "401": 10,
+      "500": 539
+    },
+    "contacts_status": {
+      "406": 272,
+      "500": 540,
+      "200": 74
+    },
+    "contacts_eligible_status": {
+      "406": 272,
+      "500": 539,
+      "200": 74
+    },
+    "contacts_groups": {
+      "406|links=absent|eligible=True|other": 272,
+      "500|links=array|eligible=True|Expected relation name": 303,
+      "500|links=unknown-invalid-JSON|eligible=True|Expected relation name": 113,
+      "200|links=absent|eligible=True|other": 74,
+      "500|links=unknown-invalid-JSON|eligible=True|JSON parse error-other": 123,
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": 1
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 598,
+      "/paths/~1customer~1contacts/put/parameters/1/required": 413,
+      "_links/items/required": 257,
+      "deprecation/maxLength": 190,
+      "href/maxLength": 184,
+      "hreflang/maxLength": 207,
+      "media/maxLength": 190,
+      "name/maxLength": 206,
+      "profile/maxLength": 192,
+      "title/maxLength": 195,
+      "type/maxLength": 191,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 463,
+      "address/maxLength": 101,
+      "phone/maxLength": 227
+    },
+    "contacts_response_kinds": {
+      "other": 346,
+      "Expected relation name": 417,
+      "JSON parse error-other": 123
+    },
+    "eligible_response_kinds": {
+      "other": 943,
+      "Access is denied": 6,
+      "Expected relation name": 416,
+      "JSON parse error-other": 123
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 4150,
+      "absent": 49
+    },
+    "cookies_present": 0,
+    "operation_status": {
+      "POST /register:406": 61,
+      "GET /products/{productId}:404": 169,
+      "GET /products:200": 180,
+      "GET /customer/orders/{orderId}:404": 167,
+      "GET /customer/orders:200": 199,
+      "PUT /customer/contacts:406": 272,
+      "GET /customer/contacts:200": 206,
+      "POST /customer/cart/pay:406": 149,
+      "PUT /customer/cart/delivery:200": 232,
+      "DELETE /customer/cart:200": 206,
+      "PUT /customer/cart:500": 557,
+      "GET /customer/cart:200": 229,
+      "GET /customer:200": 213,
+      "POST /register:500": 109,
+      "GET /customer/orders/{orderId}:401": 3,
+      "GET /customer/orders:401": 3,
+      "GET /customer/contacts:401": 3,
+      "PUT /customer/cart/delivery:401": 2,
+      "DELETE /customer/cart:401": 2,
+      "PUT /customer/cart:406": 456,
+      "GET /customer/cart:401": 4,
+      "GET /customer:401": 4,
+      "PUT /customer/contacts:500": 540,
+      "PUT /customer/cart:404": 138,
+      "PUT /customer/contacts:200": 74,
+      "OPTIONS /customer:200": 2,
+      "OPTIONS /customer/cart:200": 2,
+      "OPTIONS /customer/cart/delivery:200": 2,
+      "OPTIONS /customer/cart/pay:200": 2,
+      "OPTIONS /customer/contacts:200": 2,
+      "OPTIONS /customer/orders:200": 2,
+      "OPTIONS /customer/orders/{orderId}:200": 2,
+      "OPTIONS /products:200": 2,
+      "OPTIONS /products/{productId}:200": 2,
+      "OPTIONS /register:200": 2,
+      "OPTIONS /customer:401": 1
+    },
+    "first_contacts_by_group": {
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 6,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 5,
+          "operation": "GET /customer/orders",
+          "status": 200
+        },
+        "previous_delete": null
+      },
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 33,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/deprecation/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/href/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/hreflang/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/media/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/name/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/profile/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/title/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/_links/items/properties/type/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links",
+          "address"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": false,
+        "all_link_strings_length_le_1": false,
+        "links_count": 5,
+        "link_item_shapes": {
+          "object": 5
+        },
+        "rel_shapes": {
+          "absent": 2,
+          "object": 3
+        },
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "str",
+        "address_length": 1,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 32,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 23,
+          "operation": "DELETE /customer/cart",
+          "status": 401
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=unknown-invalid-JSON|eligible=True|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 80,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          7
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 79,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 46,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "200|links=absent|eligible=True|other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 112,
+        "status": 200,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/0/schema/properties/phone/maxLength",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "address",
+        "body_keys": [
+          "address",
+          "phone"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "str",
+        "phone_length": 18,
+        "address_type": "str",
+        "address_length": 1,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 111,
+          "operation": "GET /products",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 105,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=True|JSON parse error-other": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 123,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/maxLength"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          7
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 122,
+          "operation": "GET /customer",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 105,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=unknown-invalid-JSON|eligible=False|Expected relation name": {
+        "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+        "line": 970,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": false,
+        "query_keys": [
+          "name"
+        ],
+        "query_name_lengths": [
+          0
+        ],
+        "body_json_parse_error": true,
+        "body_json_type": "null",
+        "raw_links_array_prefix": true,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "unknown-invalid-JSON",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 969,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 831,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      }
+    }
+  },
+  {
+    "id": "market.s3.schemathesis.fresh",
+    "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3/exchanges.jsonl",
+    "total": 1164,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 3,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /customer": 66,
+      "GET /customer/contacts": 66,
+      "PUT /customer/contacts": 98,
+      "GET /customer/orders": 66
+    },
+    "eligible_status": {
+      "200": 198,
+      "500": 85,
+      "406": 13
+    },
+    "contacts_status": {
+      "500": 87,
+      "406": 13
+    },
+    "contacts_eligible_status": {
+      "500": 85,
+      "406": 13
+    },
+    "contacts_groups": {
+      "500|links=absent|eligible=True|JSON parse error-other": 78,
+      "500|links=absent|eligible=True|other": 7,
+      "406|links=null|eligible=True|other": 2,
+      "406|links=bool|eligible=True|other": 1,
+      "406|links=str|eligible=True|other": 1,
+      "406|links=absent|eligible=True|other": 9,
+      "500|links=absent|eligible=False|JSON parse error-other": 2
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/1/required": 85,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 13,
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 4
+    },
+    "contacts_response_kinds": {
+      "JSON parse error-other": 80,
+      "other": 20
+    },
+    "eligible_response_kinds": {
+      "other": 218,
+      "JSON parse error-other": 78
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1164
+    },
+    "cookies_present": 1162,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:406": 34,
+      "PUT /customer/cart:500": 64,
+      "PUT /customer/cart:404": 2,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 43,
+      "PUT /customer/cart/delivery:500": 57,
+      "POST /customer/cart/pay:406": 73,
+      "POST /customer/cart/pay:500": 27,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:500": 87,
+      "PUT /customer/contacts:406": 13,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 76,
+      "GET /customer/orders/{orderId}:400": 1,
+      "GET /customer/orders/{orderId}:500": 23,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 44,
+      "GET /products/{productId}:500": 56,
+      "POST /register:406": 11,
+      "POST /register:500": 51
+    },
+    "first_contacts_by_group": {
+      "500|links=absent|eligible=True|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 702,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          ")\u0005\u0005ýñWï",
+          "",
+          "",
+          "²򁯚"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "int",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 707,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "7񬁳򉗧:>|5y¥",
+          "C*󃽸ÊQP澷\u0018ºe\b",
+          "N񐿑Dö«´񇉧m4iùàõo",
+          "À\u001f7\u0017ÑP󔷈\u001b򂲓񦊔ð"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "null",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 706,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "406|links=null|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 719,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          ""
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "null",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 718,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "406|links=bool|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 723,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "Õ𸏂~󂟌}\\zg򐦣D"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "bool",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 722,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "406|links=str|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 735,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "\u0002",
+          "\u000e􍨱D𑚻ó񋾲!f¶"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": "_links",
+        "body_keys": [
+          "_links"
+        ],
+        "links_shape": "str",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 734,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 750,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "HÂ",
+          "V±",
+          "__main__",
+          "񈂊ã\f)󱎋Ä1\u0010"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": " Dÿ´",
+        "body_keys": [
+          " Dÿ´",
+          "ªã¤"
+        ],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 749,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_mutated_REQUEST_STRICT_p30_s3",
+        "line": 756,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "m𔯦Ïq񀺚_#Ç®񂄒î\u0018",
+          "name",
+          "A9"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "int",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 755,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "market.s3.schemathesis.baseline",
+    "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s3",
+    "capture": "08_experiments/E1_pilot/runs/market/20261114T104059Z_batch_339514_baseline_NONE_p0_s3/exchanges.jsonl",
+    "total": 1155,
+    "metadata": {
+      "fuzzer": null,
+      "seed": 3,
+      "complete": true,
+      "sut_jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+      "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+      "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+      "auth": "user",
+      "auth_source_sha256": "1621b51f0bbb0372bf4ae0d8e0b8b0709303b336f8a7bf678abfe3badac98f33",
+      "emb_commit": "915859080da033fc36feae54bab3ad4a7b04e872",
+      "code_mutation": null,
+      "emb_config_sha256": {
+        "dockerfiles/market.yaml": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+        "dockerfiles/market.dockerfile": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02"
+      }
+    },
+    "eligible_operations": {
+      "GET /customer": 84,
+      "GET /customer/contacts": 84,
+      "PUT /customer/contacts": 98,
+      "GET /customer/orders": 84
+    },
+    "eligible_status": {
+      "200": 252,
+      "406": 60,
+      "500": 38
+    },
+    "contacts_status": {
+      "406": 60,
+      "500": 40
+    },
+    "contacts_eligible_status": {
+      "406": 60,
+      "500": 38
+    },
+    "contacts_groups": {
+      "406|links=absent|eligible=True|other": 60,
+      "500|links=array|eligible=True|Expected relation name": 10,
+      "500|links=absent|eligible=True|JSON parse error-other": 28,
+      "500|links=absent|eligible=False|JSON parse error-other": 2
+    },
+    "contacts_violation_fields": {
+      "/paths/~1customer~1contacts/put/parameters/0/schema/required": 67,
+      "/paths/~1customer~1contacts/put/parameters/1/required": 68,
+      "/paths/~1customer~1contacts/put/parameters/1/maxLength": 25,
+      "address/maxLength": 12,
+      "phone/maxLength": 26,
+      "_links/items/required": 7,
+      "deprecation/maxLength": 3,
+      "name/maxLength": 3,
+      "profile/maxLength": 6
+    },
+    "contacts_response_kinds": {
+      "other": 60,
+      "Expected relation name": 10,
+      "JSON parse error-other": 30
+    },
+    "eligible_response_kinds": {
+      "other": 312,
+      "Expected relation name": 10,
+      "JSON parse error-other": 28
+    },
+    "auth_states": {
+      "unrecoverable-redacted": 1155
+    },
+    "cookies_present": 1153,
+    "operation_status": {
+      "GET [unmatched]:400": 1,
+      "GET /customer:200": 100,
+      "GET /customer/cart:200": 100,
+      "PUT /customer/cart:406": 32,
+      "PUT /customer/cart:500": 68,
+      "DELETE /customer/cart:200": 100,
+      "PUT /customer/cart/delivery:200": 36,
+      "PUT /customer/cart/delivery:500": 64,
+      "POST /customer/cart/pay:406": 81,
+      "POST /customer/cart/pay:500": 19,
+      "GET /customer/contacts:200": 100,
+      "PUT /customer/contacts:406": 60,
+      "PUT /customer/contacts:500": 40,
+      "GET /customer/orders:200": 100,
+      "GET /customer/orders/{orderId}:404": 72,
+      "GET /customer/orders/{orderId}:500": 27,
+      "GET /customer/orders/{orderId}:400": 1,
+      "GET /products:200": 1,
+      "GET /products/{productId}:404": 44,
+      "GET /products/{productId}:500": 56,
+      "POST /register:406": 5,
+      "POST /register:500": 48
+    },
+    "first_contacts_by_group": {
+      "406|links=absent|eligible=True|other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s3",
+        "line": 702,
+        "status": 406,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "other",
+        "previous_request": {
+          "line": 701,
+          "operation": "GET /customer/contacts",
+          "status": 200
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=array|eligible=True|Expected relation name": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s3",
+        "line": 718,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "object",
+        "raw_links_array_prefix": true,
+        "first_body_key": "_links",
+        "body_keys": [
+          "",
+          "__main__",
+          "_links",
+          "",
+          "ÝÝ򧼂k󀕰"
+        ],
+        "links_shape": "array",
+        "all_link_properties_present": true,
+        "all_link_strings_length_le_1": true,
+        "links_count": 0,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "Expected relation name",
+        "previous_request": {
+          "line": 717,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        },
+        "response_evidence": {
+          "com.fasterxml.jackson.databind.JsonMappingException": true,
+          "market.dto.ContactsDTO": true,
+          "_links": true
+        },
+        "empty_field_errors": true,
+        "null_entity_name": true
+      },
+      "500|links=absent|eligible=True|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s3",
+        "line": 722,
+        "status": 500,
+        "eligible": true,
+        "breaches": [
+          "/paths/~1customer~1contacts/put/parameters/1/required"
+        ],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "6Ý\u0018u\\\u0014"
+        ],
+        "query_name_lengths": [],
+        "body_json_parse_error": false,
+        "body_json_type": "array",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 721,
+          "operation": "PUT /customer/contacts",
+          "status": 406
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      },
+      "500|links=absent|eligible=False|JSON parse error-other": {
+        "run": "20261114T104059Z_batch_339514_baseline_NONE_p0_s3",
+        "line": 744,
+        "status": 500,
+        "eligible": false,
+        "breaches": [],
+        "content_type": "application/json",
+        "accept": "*/*",
+        "auth_state": "unrecoverable-redacted",
+        "auth_present": true,
+        "cookie_present": true,
+        "query_keys": [
+          "",
+          "\u000f\u0011÷c",
+          "name"
+        ],
+        "query_name_lengths": [
+          1
+        ],
+        "body_json_parse_error": false,
+        "body_json_type": "float",
+        "raw_links_array_prefix": false,
+        "first_body_key": null,
+        "body_keys": [],
+        "links_shape": "absent",
+        "all_link_properties_present": null,
+        "all_link_strings_length_le_1": null,
+        "links_count": null,
+        "link_item_shapes": {},
+        "rel_shapes": {},
+        "phone_type": "null",
+        "phone_length": null,
+        "address_type": "null",
+        "address_length": null,
+        "body_truncated": false,
+        "response_kind": "JSON parse error-other",
+        "previous_request": {
+          "line": 743,
+          "operation": "PUT /customer/contacts",
+          "status": 500
+        },
+        "previous_delete": {
+          "line": 401,
+          "operation": "DELETE /customer/cart",
+          "status": 200
+        }
+      }
+    }
+  }
+]

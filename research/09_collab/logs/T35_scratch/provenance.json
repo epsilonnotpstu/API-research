@@ -1,0 +1,759 @@
+{
+  "source_tree": "08_experiments/_external/emb/jdk_11_maven/cs/rest-gui/market",
+  "jar_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+  "dist_sha256": "527b06a6fb8d45cc5371af2862b8fb881d42441c7b022f4bfd4d3714dd737f95",
+  "all_12_recorded_jars_match": true,
+  "all_12_code_mutation_null": true,
+  "all_12_configured_auth_user": true,
+  "source_spec_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+  "all_12_source_spec_matches": true,
+  "config_hashes": {
+    "dockerfiles/market.yaml": {
+      "sha256": "755d2dc01d702daa4e4744ee1c1f5dd75bf5f62646a823404cbbc56d10be0bec",
+      "all_12_recorded_match": true
+    },
+    "dockerfiles/market.dockerfile": {
+      "sha256": "2961cf4531554efeeffab22e0722a8f57c2eeb836c2ffb9fcbb792666e7ebc02",
+      "all_12_recorded_match": true
+    }
+  },
+  "classes": [
+    {
+      "class": "market/rest/ContactsRestController.class",
+      "sha256": "311e56d020d25858b511607bfe49f9a4ee002352d75494fd45ad184ebcd54dfd",
+      "target_class_matches": true,
+      "source_file": "ContactsRestController.java",
+      "methods": [
+        {
+          "name": "<init>",
+          "descriptor": "(Lmarket/service/ContactsService;)V",
+          "line_numbers": [
+            29,
+            31,
+            32,
+            33
+          ]
+        },
+        {
+          "name": "getContacts",
+          "descriptor": "(Ljava/security/Principal;)Lmarket/dto/ContactsDTO;",
+          "line_numbers": [
+            40,
+            41
+          ]
+        },
+        {
+          "name": "updateContacts",
+          "descriptor": "(Ljava/security/Principal;Lmarket/dto/ContactsDTO;)Lmarket/dto/ContactsDTO;",
+          "line_numbers": [
+            51,
+            52,
+            53,
+            54
+          ]
+        },
+        {
+          "name": "toDto",
+          "descriptor": "(Lmarket/domain/Contacts;)Lmarket/dto/ContactsDTO;",
+          "line_numbers": [
+            58,
+            59,
+            60
+          ]
+        }
+      ]
+    },
+    {
+      "class": "market/rest/exception/RestExceptionHandler.class",
+      "sha256": "a456cd04af6365aac74ca04deaee13978d931098e57bf2638d0b285e726fb386",
+      "target_class_matches": true,
+      "source_file": "RestExceptionHandler.java",
+      "methods": [
+        {
+          "name": "<init>",
+          "descriptor": "(Lorg/springframework/context/MessageSource;)V",
+          "line_numbers": [
+            33,
+            34,
+            35
+          ]
+        },
+        {
+          "name": "otherExceptions",
+          "descriptor": "(Ljava/lang/Exception;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            40,
+            41,
+            42
+          ]
+        },
+        {
+          "name": "accessDeniedException",
+          "descriptor": "(Lorg/springframework/security/access/AccessDeniedException;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            48,
+            49,
+            50
+          ]
+        },
+        {
+          "name": "unknownEntityException",
+          "descriptor": "(Lmarket/exception/UnknownEntityException;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            56,
+            57,
+            58,
+            59,
+            60
+          ]
+        },
+        {
+          "name": "customNotValidException",
+          "descriptor": "(Lmarket/exception/CustomNotValidException;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            66,
+            67,
+            68,
+            69,
+            70
+          ]
+        },
+        {
+          "name": "processValidationError",
+          "descriptor": "(Lorg/springframework/web/bind/MethodArgumentNotValidException;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            76,
+            77,
+            78,
+            79,
+            80,
+            81
+          ]
+        },
+        {
+          "name": "createLocalizedResponse",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lorg/springframework/web/context/request/WebRequest;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            87,
+            88,
+            89,
+            90
+          ]
+        },
+        {
+          "name": "resolveFieldErrors",
+          "descriptor": "(Lmarket/rest/exception/RestErrorResponse;Ljava/util/List;)Lmarket/rest/exception/RestErrorResponse;",
+          "line_numbers": [
+            94,
+            95,
+            96,
+            97,
+            98
+          ]
+        },
+        {
+          "name": "resolveErrorMessage",
+          "descriptor": "(Lorg/springframework/validation/FieldError;)Ljava/lang/String;",
+          "line_numbers": [
+            102,
+            103,
+            105,
+            106,
+            107,
+            108,
+            110
+          ]
+        },
+        {
+          "name": "<clinit>",
+          "descriptor": "()V",
+          "line_numbers": [
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "class": "market/rest/exception/RestErrorResponse.class",
+      "sha256": "f5da768a6a819a0f1d43fb66f747c7244dad40520893fb3225a4db87ec722a68",
+      "target_class_matches": true,
+      "source_file": "RestErrorResponse.java",
+      "methods": [
+        {
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Lorg/springframework/web/context/request/WebRequest;)V",
+          "line_numbers": [
+            20,
+            21
+          ]
+        },
+        {
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Lorg/springframework/web/context/request/WebRequest;)V",
+          "line_numbers": [
+            24,
+            25
+          ]
+        },
+        {
+          "name": "<init>",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
+          "line_numbers": [
+            17,
+            27,
+            28,
+            29,
+            30,
+            31
+          ]
+        },
+        {
+          "name": "addFieldError",
+          "descriptor": "(Ljava/lang/String;Ljava/lang/String;)V",
+          "line_numbers": [
+            34,
+            35
+          ]
+        },
+        {
+          "name": "getDescription",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            38
+          ]
+        },
+        {
+          "name": "getMessage",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            42
+          ]
+        },
+        {
+          "name": "getEntityName",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            46
+          ]
+        },
+        {
+          "name": "getFieldErrors",
+          "descriptor": "()Ljava/util/List;",
+          "line_numbers": [
+            50
+          ]
+        },
+        {
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            55
+          ]
+        }
+      ]
+    },
+    {
+      "class": "market/dto/ContactsDTO.class",
+      "sha256": "63bb1a312022b1f464112227a6ec88812e935137de42df83dc572694a6d03286",
+      "target_class_matches": true,
+      "source_file": "ContactsDTO.java",
+      "methods": [
+        {
+          "name": "<init>",
+          "descriptor": "()V",
+          "line_numbers": [
+            13
+          ]
+        },
+        {
+          "name": "getPhone",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            26
+          ]
+        },
+        {
+          "name": "setPhone",
+          "descriptor": "(Ljava/lang/String;)V",
+          "line_numbers": [
+            30,
+            31
+          ]
+        },
+        {
+          "name": "getAddress",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            34
+          ]
+        },
+        {
+          "name": "setAddress",
+          "descriptor": "(Ljava/lang/String;)V",
+          "line_numbers": [
+            38,
+            39
+          ]
+        },
+        {
+          "name": "equals",
+          "descriptor": "(Ljava/lang/Object;)Z",
+          "line_numbers": [
+            43,
+            44,
+            45,
+            46,
+            47
+          ]
+        },
+        {
+          "name": "hashCode",
+          "descriptor": "()I",
+          "line_numbers": [
+            52
+          ]
+        },
+        {
+          "name": "toString",
+          "descriptor": "()Ljava/lang/String;",
+          "line_numbers": [
+            57
+          ]
+        }
+      ]
+    },
+    {
+      "class": "market/service/impl/ContactsServiceImpl.class",
+      "sha256": "fc16aad98de86bfcebe27039f991fa60d3fcd888822d2fb36fc22a461a9832f0",
+      "target_class_matches": true,
+      "source_file": "ContactsServiceImpl.java",
+      "methods": [
+        {
+          "name": "<init>",
+          "descriptor": "(Lmarket/dao/ContactsDAO;Lmarket/service/UserAccountService;)V",
+          "line_numbers": [
+            17,
+            18,
+            19,
+            20
+          ]
+        },
+        {
+          "name": "getContacts",
+          "descriptor": "(Ljava/lang/String;)Lmarket/domain/Contacts;",
+          "line_numbers": [
+            25,
+            26
+          ]
+        },
+        {
+          "name": "updateUserContacts",
+          "descriptor": "(Lmarket/domain/Contacts;Ljava/lang/String;)Lmarket/domain/Contacts;",
+          "line_numbers": [
+            32,
+            33,
+            34,
+            36,
+            37,
+            38,
+            39
+          ]
+        }
+      ]
+    }
+  ],
+  "log_traces": [
+    {
+      "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1/compose.log",
+      "sha256": "ad107415fb281d77e747f50e60921d76c70beb319851d181bd5ed27b4afae092",
+      "first_error_line": 65,
+      "first_error_has_HttpMessageNotReadableException": false,
+      "first_HttpMessageNotReadableException_line": 67,
+      "first_JsonMappingException_line": 310,
+      "first_JsonParseException_line": 321,
+      "frames": [
+        {
+          "line": 69,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 70,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 71,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 72,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 73,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        },
+        {
+          "line": 319,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:376)"
+        },
+        {
+          "line": 323,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:597)"
+        },
+        {
+          "line": 324,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:553)"
+        },
+        {
+          "line": 334,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 335,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 336,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 337,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 338,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        },
+        {
+          "line": 433,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:376)"
+        },
+        {
+          "line": 437,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:597)"
+        },
+        {
+          "line": 438,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:553)"
+        },
+        {
+          "line": 449,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 450,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 453,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 456,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 458,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        }
+      ]
+    },
+    {
+      "capture": "08_experiments/E1_pilot/runs/market/20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3/compose.log",
+      "sha256": "811c597b116e16c9656d3b1f9176eb75314a77b3c0cf53eb2c87d62576e11960",
+      "first_error_line": 65,
+      "first_error_has_HttpMessageNotReadableException": false,
+      "first_HttpMessageNotReadableException_line": 67,
+      "first_JsonMappingException_line": 159,
+      "first_JsonParseException_line": 170,
+      "frames": [
+        {
+          "line": 69,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 70,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 71,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 72,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 73,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        },
+        {
+          "line": 168,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:376)"
+        },
+        {
+          "line": 172,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:597)"
+        },
+        {
+          "line": 173,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:553)"
+        },
+        {
+          "line": 182,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 183,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 184,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 185,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 186,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        },
+        {
+          "line": 281,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:376)"
+        },
+        {
+          "line": 285,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:597)"
+        },
+        {
+          "line": 286,
+          "frame": "org.springframework.hateoas.mediatype.hal.Jackson2HalModule$HalLinkListDeserializer.deserialize(Jackson2HalModule.java:553)"
+        },
+        {
+          "line": 294,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.readJavaType(AbstractJackson2HttpMessageConverter.java:387)"
+        },
+        {
+          "line": 295,
+          "frame": "org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter.read(AbstractJackson2HttpMessageConverter.java:342)"
+        },
+        {
+          "line": 296,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.AbstractMessageConverterMethodArgumentResolver.readWithMessageConverters(AbstractMessageConverterMethodArgumentResolver.java:186)"
+        },
+        {
+          "line": 297,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.readWithMessageConverters(RequestResponseBodyMethodProcessor.java:158)"
+        },
+        {
+          "line": 298,
+          "frame": "org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor.resolveArgument(RequestResponseBodyMethodProcessor.java:131)"
+        }
+      ]
+    }
+  ],
+  "generator_binding": [
+    {
+      "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s1",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    },
+    {
+      "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s1",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    },
+    {
+      "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s2",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    },
+    {
+      "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s2",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    },
+    {
+      "run": "20261114T183929Z_batch_940129_mutated_REQUEST_STRICT_p30_s3",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    },
+    {
+      "run": "20261114T183929Z_batch_940129_baseline_NONE_p0_s3",
+      "argv_mentions_spec_test": true,
+      "recorded_spec_test_hash_matches": true
+    }
+  ],
+  "hal_deserializer": {
+    "jar_member": "BOOT-INF/lib/spring-hateoas-1.2.4.jar!/org/springframework/hateoas/mediatype/hal/Jackson2HalModule$HalLinkListDeserializer.class",
+    "source_file": "Jackson2HalModule.java",
+    "methods": [
+      {
+        "name": "<init>",
+        "descriptor": "()V",
+        "line_numbers": [
+          558,
+          559
+        ]
+      },
+      {
+        "name": "getContentType",
+        "descriptor": "()Lcom/fasterxml/jackson/databind/JavaType;",
+        "line_numbers": [
+          568
+        ]
+      },
+      {
+        "name": "getContentDeserializer",
+        "descriptor": "()Lcom/fasterxml/jackson/databind/JsonDeserializer;",
+        "line_numbers": [
+          578
+        ]
+      },
+      {
+        "name": "deserialize",
+        "descriptor": "(Lcom/fasterxml/jackson/core/JsonParser;Lcom/fasterxml/jackson/databind/DeserializationContext;)Ljava/util/List;",
+        "line_numbers": [
+          589,
+          594,
+          596,
+          597,
+          601,
+          603,
+          604,
+          605,
+          606,
+          607,
+          610,
+          611,
+          612,
+          616
+        ],
+        "prefix_data_disassembly": [
+          {
+            "pc": 0,
+            "line": 589,
+            "opcode": "new",
+            "reference": "java/util/ArrayList"
+          },
+          {
+            "pc": 3,
+            "line": 589,
+            "opcode": "dup"
+          },
+          {
+            "pc": 4,
+            "line": 589,
+            "opcode": "invokespecial",
+            "reference": "java/util/ArrayList.<init>.()V"
+          },
+          {
+            "pc": 7,
+            "line": 589,
+            "opcode": "astore_3"
+          },
+          {
+            "pc": 8,
+            "line": 594,
+            "opcode": "getstatic",
+            "reference": "com/fasterxml/jackson/core/JsonToken.END_OBJECT.Lcom/fasterxml/jackson/core/JsonToken;"
+          },
+          {
+            "pc": 11,
+            "line": 594,
+            "opcode": "aload_1"
+          },
+          {
+            "pc": 12,
+            "line": 594,
+            "opcode": "invokevirtual",
+            "reference": "com/fasterxml/jackson/core/JsonParser.nextToken.()Lcom/fasterxml/jackson/core/JsonToken;"
+          },
+          {
+            "pc": 15,
+            "line": 594,
+            "opcode": "invokevirtual",
+            "reference": "com/fasterxml/jackson/core/JsonToken.equals.(Ljava/lang/Object;)Z"
+          },
+          {
+            "pc": 18,
+            "line": 594,
+            "opcode": "ifne",
+            "target": 203
+          },
+          {
+            "pc": 21,
+            "line": 596,
+            "opcode": "getstatic",
+            "reference": "com/fasterxml/jackson/core/JsonToken.FIELD_NAME.Lcom/fasterxml/jackson/core/JsonToken;"
+          },
+          {
+            "pc": 24,
+            "line": 596,
+            "opcode": "aload_1"
+          },
+          {
+            "pc": 25,
+            "line": 596,
+            "opcode": "invokevirtual",
+            "reference": "com/fasterxml/jackson/core/JsonParser.getCurrentToken.()Lcom/fasterxml/jackson/core/JsonToken;"
+          },
+          {
+            "pc": 28,
+            "line": 596,
+            "opcode": "invokevirtual",
+            "reference": "com/fasterxml/jackson/core/JsonToken.equals.(Ljava/lang/Object;)Z"
+          },
+          {
+            "pc": 31,
+            "line": 596,
+            "opcode": "ifne",
+            "target": 45
+          },
+          {
+            "pc": 34,
+            "line": 597,
+            "opcode": "new",
+            "reference": "com/fasterxml/jackson/core/JsonParseException"
+          },
+          {
+            "pc": 37,
+            "line": 597,
+            "opcode": "dup"
+          },
+          {
+            "pc": 38,
+            "line": 597,
+            "opcode": "aload_1"
+          },
+          {
+            "pc": 39,
+            "line": 597,
+            "opcode": "ldc",
+            "reference": "Expected relation name"
+          },
+          {
+            "pc": 41,
+            "line": 597,
+            "opcode": "invokespecial",
+            "reference": "com/fasterxml/jackson/core/JsonParseException.<init>.(Lcom/fasterxml/jackson/core/JsonParser;Ljava/lang/String;)V"
+          },
+          {
+            "pc": 44,
+            "line": 597,
+            "opcode": "athrow"
+          }
+        ]
+      },
+      {
+        "name": "deserialize",
+        "descriptor": "(Lcom/fasterxml/jackson/core/JsonParser;Lcom/fasterxml/jackson/databind/DeserializationContext;)Ljava/lang/Object;",
+        "line_numbers": [
+          553
+        ]
+      }
+    ]
+  }
+}
