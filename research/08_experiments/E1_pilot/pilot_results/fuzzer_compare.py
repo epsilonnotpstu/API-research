@@ -26,6 +26,15 @@ import conformance as c  # noqa: E402
 SERVICE = {'scout-api': 'sut-scout-api', 'swagger-petstore': 'sut-swagger-petstore', 'market': 'sut-market',
            'cwa-verification': 'sut-cwa-verification'}
 _cache = {}
+# Mechanism-expected kinds per spec fault class (Claude, 2026-11-15; fixed from mutator semantics in tools/specmut.py
+# BEFORE looking at per-kind results; motivated by the STRICT ablation's collateral-exposure finding). A NEW of any
+# other kind on a mutated op is 'collateral' (e.g. a pre-existing SUT defect reached via changed generator input).
+EXPECTED_KINDS = {
+    'REQUEST_LOOSE': {'VALID_REJECTED'},
+    'REQUEST_STRICT': {'INVALID_ACCEPTED'},
+    'RESPONSE_ORACLE': {'RESPONSE_SCHEMA', 'UNDOCUMENTED_STATUS'},
+    'METHOD_SEM': {'UNDOCUMENTED_OPERATION', 'UNDOCUMENTED_STATUS', 'VALID_REJECTED'},
+}
 
 
 def fuzzer_of(run, meta):
@@ -52,7 +61,7 @@ def violations(run, spec_path, sut, cache=True):
     return _cache[key]
 
 
-def counts(rows):
+def counts(rows, expected=()):
     d = defaultdict(int)
     for r in rows:
         side = 'mut' if r['op_mutated'] else 'unmut'
@@ -60,6 +69,8 @@ def counts(rows):
             d[side + '_NEW'] += 1
             if not r['kind'].endswith('_UNCHECKABLE'):  # T29 F3: checker inability is not a fault signal
                 d[side + '_NEW_checkable'] += 1
+            if r['kind'] in expected:
+                d[side + '_NEW_expected'] += 1
         elif r['status'] == 'PERSISTENT' and r['mutated_occurrences'] > r['baseline_occurrences']:
             d[side + '_INCREASED'] += 1
         elif r['status'] == 'PERSISTENT' and r['mutated_occurrences'] < r['baseline_occurrences']:
@@ -98,7 +109,12 @@ def main():
         bv, bn = violations(base, base_spec, meta['sut'])
         mv, mn = violations(run, mut_spec, meta['sut'], cache=False)
         rv, _ = violations(base, mut_spec, meta['sut'], cache=False)
-        fresh = counts(attribute.attribute(bv, mv, manifest, 'fresh'))
+        fresh_rows = attribute.attribute(bv, mv, manifest, 'fresh')
+        fresh = counts(fresh_rows, EXPECTED_KINDS[meta['fault']])
+        fresh_kinds = defaultdict(int)
+        for x in fresh_rows:
+            if x['op_mutated'] and x['status'] == 'NEW' and not x['kind'].endswith('_UNCHECKABLE'):
+                fresh_kinds[x['kind']] += 1
         replay = counts(attribute.attribute(bv, rv, manifest, 'replay'))
         row = {'sut': meta['sut'], 'fault': meta['fault'], 'severity': meta['severity'], 'seed': meta['seed'],
                'fuzzer': fz, 'run': run.name, 'mutated_ops': len(manifest['mutations']),
@@ -106,6 +122,8 @@ def main():
                'baseline_exchanges': bn, 'mutated_exchanges': mn}
         for k in ('mut_NEW', 'mut_NEW_checkable', 'mut_INCREASED', 'unmut_NEW', 'unmut_INCREASED', 'unmut_DECREASED'):
             row['fresh_' + k] = fresh[k]
+        row['fresh_mut_NEW_expected'] = fresh['mut_NEW_expected']
+        row['fresh_mut_kinds'] = ';'.join(f'{k}:{v}' for k, v in sorted(fresh_kinds.items()))
         row['replay_mut_NEW'] = replay['mut_NEW']
         row['replay_unmut_changes'] = replay['unmut_NEW'] + replay['unmut_INCREASED'] + replay['unmut_DECREASED']
         out.append(row)

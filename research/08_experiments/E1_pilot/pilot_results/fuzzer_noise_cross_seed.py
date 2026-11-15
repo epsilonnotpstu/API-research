@@ -24,7 +24,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[1] / 'tools'))
 import attribute  # noqa: E402
 import conformance as c  # noqa: E402
-from fuzzer_compare import SERVICE, counts  # noqa: E402
+from fuzzer_compare import EXPECTED_KINDS, SERVICE, counts  # noqa: E402
 
 _cache = {}
 
@@ -59,8 +59,8 @@ def main():
         bv = base_violations(base, r['sut'])
         noise = []
         for o in sorted(others):
-            d = counts(attribute.attribute(bv, base_violations(o, r['sut']), manifest, 'fresh'))
-            noise.append((d['mut_NEW'], d['mut_INCREASED'], d['mut_NEW_checkable']))
+            d = counts(attribute.attribute(bv, base_violations(o, r['sut']), manifest, 'fresh'), EXPECTED_KINDS[r['fault']])
+            noise.append((d['mut_NEW'], d['mut_INCREASED'], d['mut_NEW_checkable'], d['mut_NEW_expected']))
         if not noise:
             continue
         row = dict(r)
@@ -71,6 +71,8 @@ def main():
         row['noise_max_mut_NEW_checkable'] = max(x[2] for x in noise)
         row['beyond_ref_NEW'] = int(r['fresh_mut_NEW']) > row['noise_max_mut_NEW']
         row['beyond_ref_NEW_checkable'] = int(r['fresh_mut_NEW_checkable']) > row['noise_max_mut_NEW_checkable']
+        row['noise_max_mut_NEW_expected'] = max(x[3] for x in noise)
+        row['beyond_ref_NEW_expected'] = int(r['fresh_mut_NEW_expected']) > row['noise_max_mut_NEW_expected']
         out.append(row)
         print(f"{r['fuzzer']:<12} {r['sut']:<17} {r['fault']:<16} p{r['severity']} s{r['seed']} fresh mutNEW "
               f"{r['fresh_mut_NEW']} (checkable {r['fresh_mut_NEW_checkable']}) | ref mutNEW {[x[0] for x in noise]} "

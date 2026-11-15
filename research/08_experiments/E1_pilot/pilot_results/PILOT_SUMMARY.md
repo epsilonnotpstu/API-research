@@ -80,7 +80,7 @@
 
 ## 5. দাবির প্রার্থী (paper-এর জন্য)
 1. **[H1, সংশোধিত] Positive-only fuzzing-এ spec-ত্রুটি প্রায়ই অদৃশ্য; replay সেগুলো দেখায়। Negative data দিলে fresh-ও দেখায়, তবে অনেক বেশি noise-সহ (§3b)।**
-   - **Noise floor (2026-11-14):** baseline replicate দিয়ে মাপলে fresh-এর mutated-op সংকেত 51/61 run-এ noise ছাড়ায়। অপরিবর্তিত op-এর পরিবর্তন প্রায় পুরোটাই noise। ব্যতিক্রম: cwa STRICT/ORACLE, আর market LOOSE (সেখানে শুধু occurrence-স্তরে)। `NOISE_FLOOR_SPEC.md`।
+   - **Noise floor (2026-11-14):** baseline replicate দিয়ে মাপলে fresh-এর mutated-op সংকেত 51/61 run-এ noise ছাড়ায়। **2026-11-15 সংশোধনী:** প্রত্যাশিত kind দিয়ে filter করলে (collateral exposure বাদ) 34/61। STRICT, ORACLE আর METHOD_SEM বেশিরভাগই টিকে থাকে, কিন্তু REQUEST_LOOSE মাত্র 6/25 (cwa আর scout p100)। বিস্তারিত NOISE_FLOOR_SPEC-এর সংযোজনে। অপরিবর্তিত op-এর পরিবর্তন প্রায় পুরোটাই noise। ব্যতিক্রম: cwa STRICT/ORACLE, আর market LOOSE (সেখানে শুধু occurrence-স্তরে)। `NOISE_FLOOR_SPEC.md`।
    - REQUEST_STRICT, তিন seed-এর মোট NEW:
 
      | SUT | Replay | Fresh |
