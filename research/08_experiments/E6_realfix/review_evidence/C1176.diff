@@ -1,0 +1,764 @@
+diff --git a/api/src/test/resources/application.properties b/api/src/test/resources/application.properties
+index 63c1352..dd53e8a 100644
+--- a/api/src/test/resources/application.properties
++++ b/api/src/test/resources/application.properties
+@@ -1,4 +1,5 @@
+ spring.main.banner-mode=off
+ spring.boot.admin.client.url: "http://localhost:8090"
+ management.endpoints.web.exposure.include: "*"
+-spring.resources.add-mappings=true
+\ No newline at end of file
++spring.resources.add-mappings=true
++server.port=9090
+\ No newline at end of file
+diff --git a/quartz-api/src/test/resources/application.properties b/quartz-api/src/test/resources/application.properties
+index 63c1352..dd53e8a 100644
+--- a/quartz-api/src/test/resources/application.properties
++++ b/quartz-api/src/test/resources/application.properties
+@@ -1,4 +1,5 @@
+ spring.main.banner-mode=off
+ spring.boot.admin.client.url: "http://localhost:8090"
+ management.endpoints.web.exposure.include: "*"
+-spring.resources.add-mappings=true
+\ No newline at end of file
++spring.resources.add-mappings=true
++server.port=9090
+\ No newline at end of file
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/JobParamUtil.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/JobParamUtil.java
+index e9c4088..81cbb06 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/JobParamUtil.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/JobParamUtil.java
+@@ -9,26 +9,26 @@ import java.util.Optional;
+ 
+ import org.springframework.batch.core.JobParameter;
+ import org.springframework.batch.core.JobParameters;
+ 
+ public class JobParamUtil {
+-	
++
+ 	public static JobParameters convertRawToJobParams(Map<String, Object> properties) {
+ 		return new JobParameters(convertRawToParamMap(properties));
+ 	}
+-	
++
+ 	public static Map<String, JobParameter> convertRawToParamMap(Map<String, Object> properties) {
+ 		return Optional.ofNullable(properties).orElse(emptyMap()).entrySet().stream()
+-                .collect(toMap(Map.Entry::getKey, e -> createJobParameter(e.getValue())));
++				.collect(toMap(Map.Entry::getKey, e -> createJobParameter(e.getValue())));
++	}
++
++	public static JobParameter createJobParameter(Object value) {
++		if (value instanceof Date)
++			return new JobParameter((Date) value);
++		else if (value instanceof Long)
++			return new JobParameter((Long) value);
++		else if (value instanceof Double)
++			return new JobParameter((Double) value);
++		else
++			return new JobParameter("" + value);
+ 	}
+-	
+-    public static JobParameter createJobParameter(Object value) {
+-        if (value instanceof Date)
+-            return new JobParameter((Date) value);
+-        else if (value instanceof Long)
+-            return new JobParameter((Long) value);
+-        else if (value instanceof Double)
+-            return new JobParameter((Double) value);
+-        else
+-            return new JobParameter("" + value);
+-    }
+ }
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java
+new file mode 100644
+index 0000000..e5a834d
+--- /dev/null
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java
+@@ -0,0 +1,38 @@
++package com.github.chrisgleissner.springbatchrest.util;
++
++import static org.quartz.TriggerBuilder.newTrigger;
++
++import java.util.Date;
++import java.util.TimeZone;
++
++import org.quartz.CronScheduleBuilder;
++import org.quartz.Trigger;
++
++public class TriggerUtil {
++
++	// Also defined in AdHocScheduler. TODO: consider using Quartz default group.
++	private static final String GROUP_NAME = "group";
++
++	public static Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone) {
++		return triggerFor(cronExpression, jobName, timeZone, GROUP_NAME);
++	}
++
++	public static Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone, String groupName) {
++
++		CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(cronExpression);
++
++		if (timeZone != null) {
++			builder = builder.inTimeZone(timeZone);
++		}
++
++		return newTrigger().withIdentity(jobName, groupName).withSchedule(builder).forJob(jobName, groupName).build();
++	}
++
++	public static Trigger triggerFor(Date dateToRun, String jobName) {
++		return triggerFor(dateToRun, jobName, GROUP_NAME);
++	}
++
++	public static Trigger triggerFor(Date dateToRun, String jobName, String groupName) {
++		return newTrigger().withIdentity(jobName, groupName).startAt(dateToRun).forJob(jobName, groupName).build();
++	}
++}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/JobParamsDetail.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/JobParamsDetail.java
+index 471bfbc..777d013 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/JobParamsDetail.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/JobParamsDetail.java
+@@ -9,35 +9,37 @@ import org.quartz.utils.Key;
+ 
+ import lombok.Data;
+ import lombok.EqualsAndHashCode;
+ 
+ /**
+- * Extension class to add JobParameters to a JobDetail for scheduled execution with JobParameters.
++ * Extension class to add JobParameters to a JobDetail for scheduled execution
++ * with JobParameters.
++ * 
+[REDACTED personal attribution]
+  */
+ 
+ @Data
+ @EqualsAndHashCode(callSuper = false)
+ public class JobParamsDetail extends JobDetailImpl {
+-	
++
+ 	private static final long serialVersionUID = -4813776846767160965L;
+ 	private Map<String, Object> rawJobParameters;
+-	
++
+ 	public JobParamsDetail(JobDetail jobDetail) {
+-        
+-        this.setJobClass(jobDetail.getJobClass());
+-        this.setDescription(jobDetail.getDescription());
+-        if(jobDetail.getKey() == null)
+-            this.setKey(new JobKey(Key.createUniqueName(null), null));
+-        this.setKey(jobDetail.getKey()); 
+-        this.setDurability(jobDetail.isDurable());
+-        this.setRequestsRecovery(jobDetail.requestsRecovery());
+-        
+-        if(!jobDetail.getJobDataMap().isEmpty())
+-            this.setJobDataMap(jobDetail.getJobDataMap());
++
++		this.setJobClass(jobDetail.getJobClass());
++		this.setDescription(jobDetail.getDescription());
++		if (jobDetail.getKey() == null)
++			this.setKey(new JobKey(Key.createUniqueName(null), null));
++		this.setKey(jobDetail.getKey());
++		this.setDurability(jobDetail.isDurable());
++		this.setRequestsRecovery(jobDetail.requestsRecovery());
++
++		if (!jobDetail.getJobDataMap().isEmpty())
++			this.setJobDataMap(jobDetail.getJobDataMap());
+ 	}
+-	
++
+ 	public JobParamsDetail(JobDetail jobDetail, Map<String, Object> rawJobParameters) {
+ 		this(jobDetail);
+ 		this.rawJobParameters = rawJobParameters;
+ 	}
+ }
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
+index 834a729..94e5963 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
+@@ -1,7 +1,8 @@
+ package com.github.chrisgleissner.springbatchrest.util.quartz;
+ 
++import com.github.chrisgleissner.springbatchrest.util.TriggerUtil;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobParamsDetail;
+ 
+ import lombok.extern.slf4j.Slf4j;
+@@ -14,230 +15,202 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Component;
+ 
+ import static java.lang.String.format;
+ import static org.quartz.JobBuilder.newJob;
+-import static org.quartz.TriggerBuilder.newTrigger;
+ 
+ import java.util.Date;
+ import java.util.TimeZone;
+ 
+-import org.quartz.CronScheduleBuilder;
+-
+ /**
+- * Allows to schedule Spring Batch jobs via Quartz by using a {@link #schedule(String, Job, String)} method
+- * rather than Spring wiring each job. This allows for programmatic creation of multiple jobs at run-time.
++ * Allows to schedule Spring Batch jobs via Quartz by using a
++ * {@link #schedule(String, Job, String)} method rather than Spring wiring each
++ * job. This allows for programmatic creation of multiple jobs at run-time.
+  */
+ @Slf4j
+ @Component
+ public class AdHocScheduler {
+-    private static final String GROUP_NAME = "group";
+-
+-    private final JobBuilder jobBuilder;
+-    private Scheduler scheduler;
+-    private JobBuilderFactory jobBuilderFactory;
+-    private StepBuilderFactory stepBuilderFactory;
+-
+-    @Autowired
+-    public AdHocScheduler(JobBuilder jobBuilder, Scheduler scheduler, JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
+-        this.jobBuilder = jobBuilder;
+-        this.scheduler = scheduler;
+-        this.jobBuilderFactory = jobBuilderFactory;
+-        this.stepBuilderFactory = stepBuilderFactory;
+-    }
+-
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression.
+-     * Job referenced via jobConfig's name must be a valid registered bean name for a Job object.
+-     */
+-    public synchronized void schedule(JobConfig jobConfig, Date dateToRun) {
+-        log.debug("Scheduling job {} with custom Trigger", jobConfig.getName());
+-        try {
+-            JobDetail jobDetail = this.jobDetailFor(jobConfig);
+-            Trigger trigger = this.triggerFor(dateToRun, jobConfig.getName());
+-            scheduler.unscheduleJob(trigger.getKey());
+-            scheduler.scheduleJob(jobDetail, trigger);
+-            log.info("Scheduled job {} with Date {}", jobConfig.getName(), dateToRun.toString());
+-        } catch (Exception e) {
+-            throw new RuntimeException(format("Can't schedule job %s with date: %s", jobConfig.getName(), dateToRun.toString()), e);
+-        }
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression. Uses the job name of the provided job.
+-     */
+-    public synchronized Job schedule(Job job, String cronExpression) {
+-    	return this.schedule(job.getName(), job, cronExpression, null);
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression. Uses the job name of the provided job.
+-     */
+-    public synchronized Job schedule(Job job, String cronExpression, TimeZone timeZone) {
+-    	return this.schedule(job.getName(), job, cronExpression, timeZone);
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression.
+-     * Also registers the job with the specified jobName, rather than the job param's name
+-     */
+-    public synchronized Job schedule(String jobName, Job job, String cronExpression) {
+-    	return this.schedule(jobName, job, cronExpression, null);
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression.
+-     * Also registers the job with the specified jobName, rather than the job param's name
+-     */
+-    public synchronized Job schedule(String jobName, Job job, String cronExpression, TimeZone timeZone) {
+-        log.debug("Scheduling job {} with CRON expression {}", jobName, cronExpression);
+-        try {
+-            jobBuilder.registerJob(job);
+-            JobDetail jobDetail = this.jobDetailFor(jobName);
+-
+-            Trigger trigger = this.triggerFor(cronExpression, jobName, timeZone);
+-
+-            scheduler.unscheduleJob(trigger.getKey());
+-            scheduler.scheduleJob(jobDetail, trigger);
+-            log.info("Scheduled job {} with CRON expression {}", jobName, cronExpression);
+-        } catch (Exception e) {
+-            throw new RuntimeException(format("Can't schedule job %s with cronExpression %s", jobName, cronExpression), e);
+-        }
+-        return job;
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression.
+-     * Job referenced via jobConfig's name must be a valid registered bean name for a Job object.
+-     */
+-    public synchronized void schedule(JobConfig jobConfig, String cronExpression) {
+-    	this.schedule(jobConfig, cronExpression, null);
+-    }
+-    
+-    /**
+-     * Schedules a Spring Batch job via a Quartz cron expression.
+-     */
+-    public synchronized void schedule(JobConfig jobConfig, String cronExpression, TimeZone timeZone) {
+-        log.debug("Scheduling job {} with CRON expression {}", jobConfig.getName(), cronExpression);
+-        try {
+-            JobDetail jobDetail = this.jobDetailFor(jobConfig);
+-
+-            Trigger trigger = this.triggerFor(cronExpression, jobConfig.getName(), timeZone);
+-
+-            scheduler.unscheduleJob(trigger.getKey());
+-            scheduler.scheduleJob(jobDetail, trigger);
+-            log.info("Scheduled job {} with CRON expression {}", jobConfig.getName(), cronExpression);
+-        } catch (Exception e) {
+-            throw new RuntimeException(format("Can't schedule job %s with cronExpression %s", jobConfig.getName(), cronExpression), e);
+-        }
+-    }
+-
+-    /**
+-     * Starts the Quartz scheduler unless it is already started. Necessary for any scheduled jobs to start.
+-     */
+-    public synchronized void start() {
+-        try {
+-            if (!scheduler.isStarted()) {
+-                scheduler.start();
+-                log.info("Started Quartz scheduler");
+-            } else {
+-                log.warn("Quartz scheduler already started");
+-            }
+-        } catch (Exception e) {
+-            throw new RuntimeException("Could not start Quartz scheduler", e);
+-        }
+-    }
+-
+-    public synchronized void pause() {
+-        try {
+-            if (scheduler.isStarted() && !scheduler.isInStandbyMode()) {
+-                scheduler.pauseAll();
+-                log.info("Paused Quartz scheduler");
+-            }
+-        } catch (Exception e) {
+-            throw new RuntimeException("Could not pause Quartz scheduler", e);
+-        }
+-    }
+-
+-    public synchronized void resume() {
+-        try {
+-            if (scheduler.isStarted() && scheduler.isInStandbyMode()) {
+-                scheduler.resumeAll();
+-                log.info("Resumed Quartz scheduler");
+-            }
+-        } catch (Exception e) {
+-            throw new RuntimeException("Could not resumse Quartz scheduler", e);
+-        }
+-    }
+-
+-    public synchronized void stop() {
+-        try {
+-            if (scheduler.isStarted() && !scheduler.isShutdown()) {
+-                scheduler.shutdown();
+-                log.info("Stopped Quartz scheduler");
+-            }
+-        } catch (Exception e) {
+-            throw new RuntimeException("Could not stop Quartz scheduler", e);
+-        }
+-    }
+-
+-    public JobBuilderFactory jobs() {
+-        return jobBuilderFactory;
+-    }
+-
+-    public StepBuilderFactory steps() {
+-        return stepBuilderFactory;
+-    }
+-    
+-    // ===============
+-    // Private Helpers
+-    // ===============
+-    
+-    private JobDetail jobDetailFor(String jobName) {
+-        JobConfig config = new JobConfig();
+-        config.setName(jobName);
+-        return this.jobDetailFor(config);
+-    }
+-    
+-    private JobDetail jobDetailFor(JobConfig jobConfig) {
+-        JobDetail jobDetail = newJob(QuartzJobLauncher.class)
+-                .withIdentity(jobConfig.getName(), GROUP_NAME)
+-                .usingJobData(QuartzJobLauncher.JOB_NAME, jobConfig.getName())
+-                .build();
+-        
+-        if (jobConfig.getProperties() != null) {
+-        	jobDetail = new JobParamsDetail(jobDetail, jobConfig.getProperties());
+-        }
+-        return jobDetail;
+-    }
+-    
+-    private Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone) {
+-    	return triggerFor(cronExpression, jobName, timeZone, GROUP_NAME);
+-    }
+-    
+-    private Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone, String groupName) {
+-    	
+-    	CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(cronExpression);
+-    	
+-    	if (timeZone != null) {
+-    		builder.inTimeZone(timeZone);
+-    	}
+-    	
+-        return newTrigger()
+-                .withIdentity(jobName, groupName)
+-                .withSchedule(builder)
+-                .forJob(jobName, groupName)
+-                .build();
+-    }
+-    
+-    private Trigger triggerFor(Date dateToRun, String jobName) {
+-    	return this.triggerFor(dateToRun, jobName, GROUP_NAME);
+-    }
+-    
+-    private Trigger triggerFor(Date dateToRun, String jobName, String groupName) {
+-        return newTrigger()
+-        		.withIdentity(jobName, groupName)
+-        		.startAt(dateToRun)
+-        		.forJob(jobName, groupName)
+-        		.build();
+-    }
++	private static final String GROUP_NAME = "group";
++
++	private final JobBuilder jobBuilder;
++	private Scheduler scheduler;
++	private JobBuilderFactory jobBuilderFactory;
++	private StepBuilderFactory stepBuilderFactory;
++
++	@Autowired
++	public AdHocScheduler(JobBuilder jobBuilder, Scheduler scheduler, JobBuilderFactory jobBuilderFactory,
++			StepBuilderFactory stepBuilderFactory) {
++		this.jobBuilder = jobBuilder;
++		this.scheduler = scheduler;
++		this.jobBuilderFactory = jobBuilderFactory;
++		this.stepBuilderFactory = stepBuilderFactory;
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Job referenced via
++	 * jobConfig's name must be a valid registered bean name for a Job object.
++	 */
++	public synchronized void schedule(JobConfig jobConfig, Date dateToRun) {
++		log.debug("Scheduling job {} with custom Trigger", jobConfig.getName());
++		try {
++			JobDetail jobDetail = this.jobDetailFor(jobConfig);
++			Trigger trigger = TriggerUtil.triggerFor(dateToRun, jobConfig.getName());
++			scheduler.unscheduleJob(trigger.getKey());
++			scheduler.scheduleJob(jobDetail, trigger);
++			log.info("Scheduled job {} with Date {}", jobConfig.getName(), dateToRun.toString());
++		} catch (Exception e) {
++			throw new RuntimeException(
++					format("Can't schedule job %s with date: %s", jobConfig.getName(), dateToRun.toString()), e);
++		}
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Uses the job name
++	 * of the provided job.
++	 */
++	public synchronized Job schedule(Job job, String cronExpression) {
++		return this.schedule(job.getName(), job, cronExpression, null);
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Uses the job name
++	 * of the provided job.
++	 */
++	public synchronized Job schedule(Job job, String cronExpression, TimeZone timeZone) {
++		return this.schedule(job.getName(), job, cronExpression, timeZone);
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Also registers the
++	 * job with the specified jobName, rather than the job param's name
++	 */
++	public synchronized Job schedule(String jobName, Job job, String cronExpression) {
++		return this.schedule(jobName, job, cronExpression, null);
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Also registers the
++	 * job with the specified jobName, rather than the job param's name
++	 */
++	public synchronized Job schedule(String jobName, Job job, String cronExpression, TimeZone timeZone) {
++		log.debug("Scheduling job {} with CRON expression {}", jobName, cronExpression);
++		try {
++			jobBuilder.registerJob(job);
++			JobDetail jobDetail = this.jobDetailFor(jobName);
++
++			Trigger trigger = TriggerUtil.triggerFor(cronExpression, jobName, timeZone);
++
++			scheduler.unscheduleJob(trigger.getKey());
++			scheduler.scheduleJob(jobDetail, trigger);
++			log.info("Scheduled job {} with CRON expression {}", jobName, cronExpression);
++		} catch (Exception e) {
++			throw new RuntimeException(format("Can't schedule job %s with cronExpression %s", jobName, cronExpression),
++					e);
++		}
++		return job;
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression. Job referenced via
++	 * jobConfig's name must be a valid registered bean name for a Job object.
++	 */
++	public synchronized void schedule(JobConfig jobConfig, String cronExpression) {
++		this.schedule(jobConfig, cronExpression, null);
++	}
++
++	/**
++	 * Schedules a Spring Batch job via a Quartz cron expression.
++	 */
++	public synchronized void schedule(JobConfig jobConfig, String cronExpression, TimeZone timeZone) {
++		log.debug("Scheduling job {} with CRON expression {}", jobConfig.getName(), cronExpression);
++		try {
++			JobDetail jobDetail = this.jobDetailFor(jobConfig);
++
++			Trigger trigger = TriggerUtil.triggerFor(cronExpression, jobConfig.getName(), timeZone);
++
++			scheduler.unscheduleJob(trigger.getKey());
++			scheduler.scheduleJob(jobDetail, trigger);
++			log.info("Scheduled job {} with CRON expression {}", jobConfig.getName(), cronExpression);
++		} catch (Exception e) {
++			throw new RuntimeException(
++					format("Can't schedule job %s with cronExpression %s", jobConfig.getName(), cronExpression), e);
++		}
++	}
++
++	/**
++	 * Starts the Quartz scheduler unless it is already started. Necessary for any
++	 * scheduled jobs to start.
++	 */
++	public synchronized void start() {
++		try {
++			if (!scheduler.isStarted()) {
++				scheduler.start();
++				log.info("Started Quartz scheduler");
++			} else {
++				log.warn("Quartz scheduler already started");
++			}
++		} catch (Exception e) {
++			throw new RuntimeException("Could not start Quartz scheduler", e);
++		}
++	}
++
++	public synchronized void pause() {
++		try {
++			if (scheduler.isStarted() && !scheduler.isInStandbyMode()) {
++				scheduler.pauseAll();
++				log.info("Paused Quartz scheduler");
++			}
++		} catch (Exception e) {
++			throw new RuntimeException("Could not pause Quartz scheduler", e);
++		}
++	}
++
++	public synchronized void resume() {
++		try {
++			if (scheduler.isStarted() && scheduler.isInStandbyMode()) {
++				scheduler.resumeAll();
++				log.info("Resumed Quartz scheduler");
++			}
++		} catch (Exception e) {
++			throw new RuntimeException("Could not resumse Quartz scheduler", e);
++		}
++	}
++
++	public synchronized void stop() {
++		try {
++			if (scheduler.isStarted() && !scheduler.isShutdown()) {
++				scheduler.shutdown();
++				log.info("Stopped Quartz scheduler");
++			}
++		} catch (Exception e) {
++			throw new RuntimeException("Could not stop Quartz scheduler", e);
++		}
++	}
++
++	public JobBuilderFactory jobs() {
++		return jobBuilderFactory;
++	}
++
++	public StepBuilderFactory steps() {
++		return stepBuilderFactory;
++	}
++
++	// ===============
++	// Private Helpers
++	// ===============
++
++	private JobDetail jobDetailFor(String jobName) {
++		JobConfig config = new JobConfig();
++		config.setName(jobName);
++		return this.jobDetailFor(config);
++	}
++
++	private JobDetail jobDetailFor(JobConfig jobConfig) {
++		JobDetail jobDetail = newJob(QuartzJobLauncher.class).withIdentity(jobConfig.getName(), GROUP_NAME)
++				.usingJobData(QuartzJobLauncher.JOB_NAME, jobConfig.getName()).build();
++
++		if (jobConfig.getProperties() != null) {
++			jobDetail = new JobParamsDetail(jobDetail, jobConfig.getProperties());
++		}
++		return jobDetail;
++	}
+ }
+\ No newline at end of file
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
+index 5f0efde..0bf4ff7 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
+@@ -1,51 +1,116 @@
+ package com.github.chrisgleissner.springbatchrest.util.quartz;
+ 
+ import org.junit.Test;
++import org.junit.jupiter.api.AfterAll;
++import org.junit.jupiter.api.BeforeEach;
+ import org.junit.runner.RunWith;
+ import org.springframework.batch.core.Job;
+ import org.springframework.batch.core.launch.support.RunIdIncrementer;
+ import org.springframework.batch.repeat.RepeatStatus;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
++import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
++import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
++
+ import java.util.concurrent.CountDownLatch;
+ 
+ import static java.util.concurrent.TimeUnit.SECONDS;
+ 
++import java.time.Instant;
++import java.util.Date;
++
+ /**
+- * Tests the ad-hoc Quartz scheduling of Spring Batch jobs, allowing for programmatic scheduling after Spring wiring.
++ * Tests the ad-hoc Quartz scheduling of Spring Batch jobs, allowing for
++ * programmatic scheduling after Spring wiring.
+  */
+ @RunWith(SpringRunner.class)
+ @ContextConfiguration(classes = AdHocSchedulerConfig.class)
+ public class AdHocSchedulerTest {
+ 
+-    private static final String TRIGGER_EVERY_SECOND = "0/1 * * * * ?";
+-    private static final int NUMBER_OF_EXECUTIONS_PER_JOB = 2;
+-
+-    @Autowired
+-    private AdHocScheduler scheduler;
+-
+-    private CountDownLatch latch1 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
+-    private CountDownLatch latch2 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
+-
+-    @Test
+-    public void scheduleWorks() throws InterruptedException {
+-        scheduler.schedule("j1", job("j1", latch1), TRIGGER_EVERY_SECOND);
+-        scheduler.schedule("j2", job("j2", latch2), TRIGGER_EVERY_SECOND);
+-        scheduler.start();
+-
+-        latch1.await(4, SECONDS);
+-        latch2.await(4, SECONDS);
+-        scheduler.stop();
+-    }
+-
+-    private Job job(String jobName, CountDownLatch latch) {
+-        return scheduler.jobs().get(jobName)
+-                .incrementer(new RunIdIncrementer()) // adds unique parameter on each run so that createJob can be rerun
+-                .start(scheduler.steps().get("step").tasklet((contribution, chunkContext) -> {
+-                    latch.countDown();
+-                    return RepeatStatus.FINISHED;
+-                }).allowStartIfComplete(true).build()).build();
+-    }
++	private static final String TRIGGER_EVERY_SECOND = "0/1 * * * * ?";
++	private static final int NUMBER_OF_EXECUTIONS_PER_JOB = 2;
++
++	@Autowired
++	private AdHocScheduler scheduler;
++
++	@Autowired
++	private JobBuilder jobBuilder;
++
++	private CountDownLatch latch1 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
++	private CountDownLatch latch2 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
++
++	@BeforeEach
++	public void before() {
++		latch1 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
++		latch2 = new CountDownLatch(NUMBER_OF_EXECUTIONS_PER_JOB);
++	}
++
++	@AfterAll
++	public void afterAll() {
++		scheduler.stop();
++	}
++
++	@Test
++	public void scheduleCronWithJobReferenceWorks() throws InterruptedException {
++		scheduler.schedule("j1", job("j1", latch1), TRIGGER_EVERY_SECOND);
++		scheduler.schedule("j2", job("j2", latch2), TRIGGER_EVERY_SECOND);
++		scheduler.start();
++
++		latch1.await(4, SECONDS);
++		latch2.await(4, SECONDS);
++		scheduler.pause();
++	}
++
++	@Test
++	public void scheduleWithJobConfigAndDateWorks() throws InterruptedException {
++		Job job1 = job("j1", latch1);
++		Job job2 = job("j2", latch2);
++
++		jobBuilder.registerJob(job1);
++		jobBuilder.registerJob(job2);
++
++		JobConfig job1Config = JobConfig.builder().name("j1").build();
++		JobConfig job2Config = JobConfig.builder().name("j2").build();
++
++		Date oneSecondFromNow = Date.from(Instant.now().plusMillis(1000));
++
++		scheduler.schedule(job1Config, oneSecondFromNow);
++		scheduler.schedule(job2Config, oneSecondFromNow);
++		scheduler.start();
++
++		latch1.await(4, SECONDS);
++		latch2.await(4, SECONDS);
++		scheduler.pause();
++	}
++
++	@Test
++	public void scheduleWithJobConfigAndCronWorks() throws InterruptedException {
++		Job job1 = job("j1", latch1);
++		Job job2 = job("j2", latch2);
++
++		jobBuilder.registerJob(job1);
++		jobBuilder.registerJob(job2);
++
++		JobConfig job1Config = JobConfig.builder().name("j1").build();
++		JobConfig job2Config = JobConfig.builder().name("j2").build();
++
++		scheduler.schedule(job1Config, TRIGGER_EVERY_SECOND);
++		scheduler.schedule(job2Config, TRIGGER_EVERY_SECOND);
++		scheduler.start();
++
++		latch1.await(4, SECONDS);
++		latch2.await(4, SECONDS);
++		scheduler.pause();
++	}
++
++	private Job job(String jobName, CountDownLatch latch) {
++		return scheduler.jobs().get(jobName).incrementer(new RunIdIncrementer()) // adds unique parameter on each run so
++																					// that createJob can be rerun
++				.start(scheduler.steps().get("step").tasklet((contribution, chunkContext) -> {
++					latch.countDown();
++					return RepeatStatus.FINISHED;
++				}).allowStartIfComplete(true).build()).build();
++	}
+ }
+diff --git a/util/src/test/resources/application.properties b/util/src/test/resources/application.properties
+index 132728a..069a689 100644
+--- a/util/src/test/resources/application.properties
++++ b/util/src/test/resources/application.properties
+@@ -1 +1,2 @@
+-spring.batch.job.enabled=false
+\ No newline at end of file
++spring.batch.job.enabled=false
++server.port=9090
+\ No newline at end of file

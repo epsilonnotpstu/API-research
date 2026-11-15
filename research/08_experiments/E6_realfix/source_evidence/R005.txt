@@ -1,0 +1,137 @@
+[parent contract] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:api/microcks-openapi-v1.10.yaml:2191
+2188:         frequency:
+2189:           description: Reserved for future usage
+2190:           type: string
+2191:         createdDate:
+2192:           format: int32
+2193:           description: Creation timestamp for this ImportJob
+2194:           type: integer
+2195:         lastImportDate:
+2196:           format: int32
+
+[parent route] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:api/microcks-openapi-v1.10.yaml:91
+88:         - user
+89:       operationId: GetServicesCounter
+90:       summary: Get the Services counter
+91:   /jobs:
+92:     summary: This path operations deal with ImportJobs
+93:     get:
+94:       tags:
+95:       - job
+96:       parameters:
+97:       - name: page
+98:         description: Page of ImportJobs to retrieve (starts at and defaults to 0)
+99:         schema:
+100:           type: integer
+101:         in: query
+102:       - name: size
+103:         description: Size of a page. Maximum number of ImportJobs to include in a
+104:           response (defaults to 20)
+105:         schema:
+106:           type: integer
+107:         in: query
+108:       - name: name
+109:         description: Name like criterion for query
+110:         schema:
+111:           type: string
+112:         in: query
+113:       responses:
+114:         "200":
+115:           content:
+116:             application/json:
+117:               schema:
+118:                 type: array
+119:                 items:
+120:                   $ref: '#/components/schemas/ImportJob'
+121:           description: List of found ImportJobs
+122:       security:
+123:       - jwt-bearer:
+124:         - user
+125:       operationId: GetImportJobs
+126:       summary: Get ImportJobs
+
+[parent implementation] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:commons/model/src/main/java/io/github/microcks/domain/ImportJob.java:97
+94:       this.frequency = frequency;
+95:    }
+96: 
+97:    public Date getCreatedDate() {
+98:       return createdDate;
+99:    }
+100: 
+101:    public void setCreatedDate(Date createdDate) {
+102:       this.createdDate = createdDate;
+
+[parent implementation] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:webapp/src/main/resources/config/application.properties:3
+1: # Application configuration properties
+2: spring.servlet.multipart.max-file-size=${MAX_UPLOAD_FILE_SIZE:2MB}
+3: spring.jackson.serialization.write-dates-as-timestamps=true
+4: spring.jackson.default-property-inclusion=non_null
+5: 
+6: server.forward-headers-strategy=NATIVE
+7: 
+8: management.endpoints.enabled-by-default=false
+
+[parent route] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:webapp/src/main/java/io/github/microcks/web/JobController.java:66
+63: 
+64: 
+65:    @RequestMapping(value = "/jobs", method = RequestMethod.GET)
+66:    public List<ImportJob> listJobs(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+67:          @RequestParam(value = "size", required = false, defaultValue = "20") int size,
+68:          @RequestParam(value = "name", required = false) String name) {
+69:       log.debug("Getting job list for page {} and size {}", page, size);
+70:       if (name != null) {
+71:          return jobRepository.findByNameLike(name);
+
+[parent implementation] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:webapp/src/main/java/io/github/microcks/web/JobController.java:119
+116:          labels = job.getMetadata().getLabels();
+117:       }
+118:       job.setMetadata(new Metadata());
+119:       job.setCreatedDate(new Date());
+120:       // Restore labels.
+121:       if (labels != null) {
+122:          job.getMetadata().setLabels(labels);
+123:       }
+124:       return new ResponseEntity<>(jobRepository.save(job), HttpStatus.CREATED);
+
+[fix contract] 045b7acc02c375973716e0d3c4bee4d035ae1d03:api/microcks-openapi-v1.10.yaml:2191
+2188:         frequency:
+2189:           description: Reserved for future usage
+2190:           type: string
+2191:         createdDate:
+2192:           format: int64
+2193:           description: Creation timestamp for this ImportJob
+2194:           type: integer
+2195:         lastImportDate:
+2196:           format: int64
+
+[fix implementation] 045b7acc02c375973716e0d3c4bee4d035ae1d03:commons/model/src/main/java/io/github/microcks/domain/ImportJob.java:97
+94:       this.frequency = frequency;
+95:    }
+96: 
+97:    public Date getCreatedDate() {
+98:       return createdDate;
+99:    }
+100: 
+101:    public void setCreatedDate(Date createdDate) {
+102:       this.createdDate = createdDate;
+
+[fix implementation] 045b7acc02c375973716e0d3c4bee4d035ae1d03:webapp/src/main/resources/config/application.properties:3
+1: # Application configuration properties
+2: spring.servlet.multipart.max-file-size=${MAX_UPLOAD_FILE_SIZE:2MB}
+3: spring.jackson.serialization.write-dates-as-timestamps=true
+4: spring.jackson.default-property-inclusion=non_null
+5: 
+6: server.forward-headers-strategy=NATIVE
+7: 
+8: management.endpoints.enabled-by-default=false
+
+[parent route] 4e0d0585ca5303e7ad3cd30fa4323b563c29bb94:webapp/src/main/java/io/github/microcks/web/JobController.java:49
+46: [REDACTED personal attribution]
+47:  */
+48: @RestController
+49: @RequestMapping("/api")
+50: public class JobController {
+51: 
+52:    /** A simple logger for diagnostic messages. */
+53:    private static Logger log = LoggerFactory.getLogger(JobController.class);
+54: 

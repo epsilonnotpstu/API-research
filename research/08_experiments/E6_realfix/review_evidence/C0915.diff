@@ -1,0 +1,551 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/CardDetails.java b/src/main/java/uk/gov/pay/api/model/CardDetails.java
+index 0b652ada..edb115ee 100644
+--- a/src/main/java/uk/gov/pay/api/model/CardDetails.java
++++ b/src/main/java/uk/gov/pay/api/model/CardDetails.java
+@@ -7,10 +7,11 @@ import io.swagger.annotations.ApiModelProperty;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ import java.util.Optional;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include.ALWAYS;
++import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+ 
+ @JsonInclude(ALWAYS)
+ @ApiModel(value = "CardDetails", description = "A structure representing the payment card")
+ @Schema(name = "CardDetails", description = "A structure representing the payment card")
+ public class CardDetails {
+@@ -51,17 +52,17 @@ public class CardDetails {
+         this.cardBrand = cardBrand;
+         this.cardType = cardType;
+     }
+ 
+     @ApiModelProperty(example = "1234")
+-    @Schema(example = "1234")
++    @Schema(example = "1234", accessMode = READ_ONLY)
+     public String getLastDigitsCardNumber() {
+         return lastDigitsCardNumber;
+     }
+ 
+     @ApiModelProperty(example = "123456")
+-    @Schema(example = "123456")
++    @Schema(example = "123456", accessMode = READ_ONLY)
+     public String getFirstDigitsCardNumber() {
+         return firstDigitsCardNumber;
+     }
+ 
+     @ApiModelProperty(example = "Mr. Card holder")
+@@ -69,26 +70,26 @@ public class CardDetails {
+     public String getCardHolderName() {
+         return cardHolderName;
+     }
+ 
+     @ApiModelProperty(value = "The expiry date of the card in MM/yy format", example = "04/24")
+-    @Schema(description = "The expiry date of the card in MM/yy format", example = "04/24")
++    @Schema(description = "The expiry date of the card in MM/yy format", example = "04/24", accessMode = READ_ONLY)
+     public String getExpiryDate() {
+         return expiryDate;
+     }
+ 
+     public Optional<Address> getBillingAddress() {
+         return Optional.ofNullable(billingAddress);
+     }
+ 
+     @ApiModelProperty(example = "Visa")
+-    @Schema(example = "Visa")
++    @Schema(example = "Visa", accessMode = READ_ONLY)
+     public String getCardBrand() {
+         return cardBrand;
+     }
+ 
+     @ApiModelProperty(value = "The card type, `debit` or `credit` or `null` if not able to determine", allowableValues = "debit,credit,null", example = "debit")
+-    @Schema(description = "The card type, `debit` or `credit` or `null` if not able to determine", allowableValues = {"debit","credit","null"}, example = "debit")
++    @Schema(description = "The card type, `debit` or `credit` or `null` if not able to determine", allowableValues = {"debit","credit","null"}, example = "debit", accessMode = READ_ONLY)
+     public String getCardType() {
+         return cardType;
+     }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/model/CardPayment.java b/src/main/java/uk/gov/pay/api/model/CardPayment.java
+index ca77e8b0..c8567f65 100644
+--- a/src/main/java/uk/gov/pay/api/model/CardPayment.java
++++ b/src/main/java/uk/gov/pay/api/model/CardPayment.java
+@@ -129,10 +129,11 @@ public class CardPayment extends Payment {
+     public Optional<CardDetails> getCardDetails() {
+         return Optional.ofNullable(cardDetails);
+     }
+ 
+     @ApiModelProperty(example = "en", allowableValues = "en,cy")
++    @Schema(name = "language", example = "en")
+     public SupportedLanguage getLanguage() {
+         return language;
+     }
+ 
+     @ApiModelProperty(value = "delayed capture flag", example = "false")
+diff --git a/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java b/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
+index c3c5dcbc..483454ca 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
+@@ -118,11 +118,11 @@ public class CreateCardPaymentRequest {
+     public Optional<SupportedLanguage> getLanguage() {
+         return Optional.ofNullable(language);
+     }
+ 
+     @ApiModelProperty(value = "email", required = false, example = "[REDACTED email]")
+-    @Schema(name = "email", example = "[REDACTED email]")
++    @Schema(name = "email", example = "[REDACTED email]", description = "email")
+     @JsonProperty(EMAIL_FIELD_NAME)
+     public Optional<String> getEmail() {
+         return Optional.ofNullable(email);
+     }
+     
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java
+index 65181ab0..468214c6 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentRefundRequest.java
+@@ -15,15 +15,15 @@ public class CreatePaymentRefundRequest {
+ 
+     public static final String REFUND_AMOUNT_AVAILABLE = "refund_amount_available";
+     public static final int REFUND_MIN_VALUE = 1;
+ 
+     @Schema(description = "Amount in pence. Can't be more than the available amount for refunds", required = true,
+-            example = "150000")
++            example = "150000", minimum = "1", maximum = "10000000")
+     private int amount;
+     @JsonProperty("refund_amount_available")
+     @Schema(description = "Amount in pence. Total amount still available before issuing the refund", required = false,
+-            example = "200000", accessMode = READ_ONLY)
++            example = "200000", accessMode = READ_ONLY, minimum = "1", maximum = "10000000")
+     private Integer refundAmountAvailable;
+ 
+     public CreatePaymentRefundRequest() {
+     }
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/RefundSummary.java b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+index 00ac6f1e..c0085535 100644
+--- a/src/main/java/uk/gov/pay/api/model/RefundSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ 
++import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
++
+ @ApiModel(value = "RefundSummary", description = "A structure representing the refunds availability")
+ @Schema(name = "RefundSummary", description = "A structure representing the refunds availability")
+ @JsonIgnoreProperties(ignoreUnknown = true)
+ public class RefundSummary {
+ 
+@@ -32,16 +34,16 @@ public class RefundSummary {
+     public String getStatus() {
+         return status;
+     }
+ 
+     @ApiModelProperty(value = "Amount available for refund in pence", example = "100")
+-    @Schema(description = "Amount available for refund in pence", example = "100")
++    @Schema(description = "Amount available for refund in pence", example = "100", accessMode = READ_ONLY)
+     public long getAmountAvailable() {
+         return amountAvailable;
+     }
+ 
+     @ApiModelProperty(value = "Amount submitted for refunds on this Payment in pence")
+-    @Schema(description = "Amount submitted for refunds on this Payment in pence")
++    @Schema(description = "Amount submitted for refunds on this Payment in pence", accessMode = READ_ONLY)
+     public long getAmountSubmitted() {
+         return amountSubmitted;
+     }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+index c6db3a30..4792dcad 100644
+--- a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
+ import io.swagger.v3.oas.annotations.media.Schema;
+ 
++import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
++
+ @JsonInclude(value = JsonInclude.Include.NON_NULL)
+ @ApiModel(value="SettlementSummary", description = "A structure representing information about a settlement")
+ @Schema(name = "SettlementSummary", description = "A structure representing information about a settlement")
+ public class SettlementSummary {
+ 
+@@ -24,16 +26,16 @@ public class SettlementSummary {
+         this.capturedDate = capturedDate;
+     }
+ 
+     @ApiModelProperty(value = "Date and time capture request has been submitted (may be null if capture request was not immediately acknowledged by payment gateway)", example = "2016-01-21T17:15:000Z")
+     @Schema(description = "Date and time capture request has been submitted (may be null if capture request was not immediately acknowledged by payment gateway)", 
+-            example = "2016-01-21T17:15:000Z")
++            example = "2016-01-21T17:15:000Z", accessMode = READ_ONLY)
+     public String getCaptureSubmitTime() {
+         return captureSubmitTime;
+     }
+ 
+     @ApiModelProperty(value = "Date of the capture event", example = "2016-01-21")
+-    @Schema(description = "Date of the capture event", example = "2016-01-21")
++    @Schema(description = "Date of the capture event", example = "2016-01-21", accessMode = READ_ONLY)
+     public String getCapturedDate() {
+         return capturedDate;
+     }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java b/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
+index 41786cd2..d954bd93 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentLinks.java
+@@ -1,18 +1,20 @@
+ package uk.gov.pay.api.model.links;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
++import io.swagger.v3.oas.annotations.media.Schema;
+ import uk.gov.pay.api.model.PaymentConnectorResponseLink;
+ 
+ import java.util.List;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ import static javax.ws.rs.HttpMethod.POST;
+ 
+ @ApiModel(value = "PaymentLinks", description = "links for payment")
++@Schema(name = "PaymentLinks", description = "links for payment")
+ public class PaymentLinks {
+ 
+     private static final String SELF = "self";
+     private static final String NEXT_URL = "next_url";
+     private static final String NEXT_URL_POST = "next_url_post";
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
+index 150476f8..5d92a639 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PaymentLinksForSearch.java
+@@ -1,15 +1,17 @@
+ package uk.gov.pay.api.model.links;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
++import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ import static javax.ws.rs.HttpMethod.GET;
+ import static javax.ws.rs.HttpMethod.POST;
+ 
+ @ApiModel(value = "PaymentLinksForSearch", description = "links for search payment resource")
++@Schema(name = "PaymentLinksForSearch", description = "links for search payment resource")
+ public class PaymentLinksForSearch {
+ 
+     private static final String SELF = "self";
+     private static final String EVENTS = "events";
+     private static final String CANCEL = "cancel";
+@@ -50,10 +52,11 @@ public class PaymentLinksForSearch {
+     public Link getRefunds() {
+         return refunds;
+     }
+ 
+     @ApiModelProperty(value = CAPTURE, dataType = "uk.gov.pay.api.model.links.PostLink")
++    @Schema(name = CAPTURE, implementation = PostLink.class)
+     public Link getCapture() {
+         return capture;
+     }
+ 
+     public void addSelf(String href) {
+diff --git a/src/main/java/uk/gov/pay/api/model/links/PostLink.java b/src/main/java/uk/gov/pay/api/model/links/PostLink.java
+index 5488368b..cf8cb75e 100644
+--- a/src/main/java/uk/gov/pay/api/model/links/PostLink.java
++++ b/src/main/java/uk/gov/pay/api/model/links/PostLink.java
+@@ -7,10 +7,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
+ 
+ import java.util.Map;
+ import java.util.Objects;
+ 
+ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
++import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+ 
+ @ApiModel(value = "PostLink", description = "A POST link related to a payment")
+ @Schema(name = "PostLink", description = "A POST link related to a payment")
+ @JsonInclude(Include.NON_NULL)
+ public class PostLink extends Link {
+@@ -27,11 +28,11 @@ public class PostLink extends Link {
+     public PostLink(String href, String method) {
+         super(href, method);
+     }
+ 
+     @ApiModelProperty(example = "POST")
+-    @Schema(example = "POST")
++    @Schema(example = "POST", accessMode = READ_ONLY)
+     public String getMethod() {
+         return super.getMethod();
+     }
+ 
+     @ApiModelProperty(example = "application/x-www-form-urlencoded")
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/PaymentForSearchResult.java b/src/main/java/uk/gov/pay/api/model/search/card/PaymentForSearchResult.java
+index f904a742..1f0e9026 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/card/PaymentForSearchResult.java
++++ b/src/main/java/uk/gov/pay/api/model/search/card/PaymentForSearchResult.java
+@@ -1,10 +1,11 @@
+ package uk.gov.pay.api.model.search.card;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import io.swagger.annotations.ApiModel;
+ import io.swagger.annotations.ApiModelProperty;
++import io.swagger.v3.oas.annotations.media.Schema;
+ import uk.gov.pay.api.model.CardDetails;
+ import uk.gov.pay.api.model.CardPayment;
+ import uk.gov.pay.api.model.ChargeFromResponse;
+ import uk.gov.pay.api.model.PaymentConnectorResponseLink;
+ import uk.gov.pay.api.model.PaymentState;
+@@ -17,10 +18,11 @@ import uk.gov.pay.commons.model.charge.ExternalMetadata;
+ 
+ import java.net.URI;
+ import java.util.List;
+ 
+ @ApiModel(value = "PaymentDetailForSearch")
++@Schema(name = "PaymentDetailForSearch")
+ public class PaymentForSearchResult extends CardPayment {
+ 
+     @JsonProperty(LINKS_JSON_ATTRIBUTE)
+     private PaymentLinksForSearch links = new PaymentLinksForSearch();
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+index c933c615..35f9565d 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+@@ -1,9 +1,10 @@
+ package uk.gov.pay.api.model.search.directdebit;
+ 
+ import io.swagger.annotations.ApiParam;
+ import io.swagger.v3.oas.annotations.Parameter;
++import io.swagger.v3.oas.annotations.media.Schema;
+ import uk.gov.pay.commons.validation.ValidDate;
+ 
+ import javax.validation.constraints.Max;
+ import javax.validation.constraints.Min;
+ import javax.validation.constraints.Pattern;
+@@ -16,11 +17,11 @@ import static uk.gov.pay.api.model.CreateDirectDebitPaymentRequest.REFERENCE_MAX
+ 
+ public class DirectDebitSearchPaymentsParams {
+     
+     @QueryParam("reference")
+     @ApiParam(value = "Your payment reference to search")
+-    @Parameter(description = "Your payment reference to search")
++    @Parameter(description = "Your payment reference to search", schema = @Schema(minLength = 1, maxLength = REFERENCE_MAX_LENGTH))
+     @Size(min = 1, max = REFERENCE_MAX_LENGTH, message = "Must be less than or equal to {max} characters length")
+     private String reference;
+     
+     @QueryParam("state")
+     @ApiParam(value = "State of payments to be searched. Example=success")
+@@ -29,11 +30,11 @@ public class DirectDebitSearchPaymentsParams {
+             message = "Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+     private String state;
+     
+     @QueryParam("mandate_id")
+     @ApiParam(value = "The GOV.UK Pay identifier for the mandate")
+-    @Parameter(description = "The GOV.UK Pay identifier for the mandate")
++    @Parameter(description = "The GOV.UK Pay identifier for the mandate", schema = @Schema(minLength = 1, maxLength = MANDATE_ID_MAX_LENGTH))
+     @Size(min = 1, max = MANDATE_ID_MAX_LENGTH, message = "Must be less than or equal to {max} characters length")
+     private String mandateId;
+     
+     @QueryParam("from_date")
+     @ApiParam(value = "From date of Direct Debit payments to be searched (this date is inclusive). Example=2015-08-13T12:35:00Z")
+@@ -47,17 +48,19 @@ public class DirectDebitSearchPaymentsParams {
+     @ValidDate
+     private String toDate;
+     
+     @QueryParam("page")
+     @ApiParam(value = "Page number requested for the search, should be a positive integer (optional, defaults to 1)")
+-    @Parameter(description = "Page number requested for the search, should be a positive integer (optional, defaults to 1)")
++    @Parameter(description = "Page number requested for the search, should be a positive integer (optional, defaults to 1)",
++            schema = @Schema(minimum = "1"))
+     @Min(value = 1, message = "Must be greater than or equal to {value}")
+     private Integer page;
+     
+     @QueryParam("display_size")
+     @ApiParam(value = "Number of results to be shown per page, should be a positive integer (optional, defaults to 500, max 500)")
+-    @Parameter(description = "Number of results to be shown per page, should be a positive integer (optional, defaults to 500, max 500)")
++    @Parameter(description = "Number of results to be shown per page, should be a positive integer (optional, defaults to 500, max 500)",
++            schema = @Schema(minimum = "1", maximum = "500"))
+     @Min(value = 1, message = "Must be greater than or equal to {value}")
+     @Max(value = 500, message = "Must be less than or equal to {value}")
+     private Integer displaySize;
+     
+     public String getReference() {
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java
+index f8bdf621..fbcc9e1b 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/SearchMandateResponse.java
+@@ -1,21 +1,28 @@
+ package uk.gov.pay.api.model.search.directdebit;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.v3.oas.annotations.media.Schema;
+ import uk.gov.pay.api.model.directdebit.mandates.MandateResponse;
+ import uk.gov.pay.api.model.links.SearchNavigationLinks;
+ 
+ import java.util.List;
+ 
++import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
++
+ public class SearchMandateResponse {
+     @JsonProperty("total")
++    @Schema(accessMode = READ_ONLY)
+     private final int total;
+     @JsonProperty("count")
++    @Schema(accessMode = READ_ONLY)
+     private final int count;
+     @JsonProperty("page")
++    @Schema(accessMode = READ_ONLY)
+     private final int page;
+     @JsonProperty("results")
++    @Schema(accessMode = READ_ONLY)
+     private final List<MandateResponse> mandates;
+     @JsonProperty("_links")
+     private final SearchNavigationLinks links;
+ 
+     private SearchMandateResponse(SearchMandateResponseBuilder builder) {
+diff --git a/src/main/java/uk/gov/pay/api/resources/MandatesResource.java b/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
+index 479bd67d..aee4dd6b 100644
+--- a/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/MandatesResource.java
+@@ -168,11 +168,11 @@ public class MandatesResource {
+                     "The Authorisation token needs to be specified in the 'Authorization' header " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created",
+                             content = @Content(schema = @Schema(implementation = MandateResponse.class))),
+-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
++                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad request",
+                             content = @Content(schema = @Schema(implementation = PaymentError.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401",
+                             description = "Credentials are required to access this resource"),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "Too many requests",
+                             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
+index 653f1fc0..395e5863 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentRefundsResource.java
+@@ -100,11 +100,12 @@ public class PaymentRefundsResource {
+     @GET
+     @Timed
+     @Produces(APPLICATION_JSON)
+     @Operation(security = {@SecurityRequirement(name = "BearerAuth")},
+             operationId = "Get all refunds for a payment",
+-            summary = "Return refunds for a payment. " +
++            summary = "Get all refunds for a payment",
++            description = "Return refunds for a payment. " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK",
+                             content = @Content(schema = @Schema(implementation = RefundForSearchResult.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Credentials are required to access this resource"),
+@@ -146,11 +147,12 @@ public class PaymentRefundsResource {
+     @GET
+     @Timed
+     @Path("/{refundId}")
+     @Operation(security = {@SecurityRequirement(name = "BearerAuth")},
+             operationId = "Get a payment refund",
+-            summary = "Return payment refund information by Refund ID " +
++            summary = "Find payment refund by ID",
++            description = "Return payment refund information by Refund ID " +
+                     "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK",
+                             content = @Content(schema = @Schema(implementation = RefundResult.class))),
+@@ -198,11 +200,12 @@ public class PaymentRefundsResource {
+     @Timed
+     @Produces(APPLICATION_JSON)
+     @Consumes(APPLICATION_JSON)
+     @Operation(security = {@SecurityRequirement(name = "BearerAuth")},
+             operationId = "Submit a refund for a payment",
+-            summary = "Return issued refund information. " +
++            summary = "Submit a refund for a payment",
++            description = "Return issued refund information. " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "successful operation",
+                             content = @Content(schema = @Schema(implementation = RefundResult.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "ACCEPTED"),
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+index 5fe0d2b2..ec8d655c 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+@@ -310,11 +310,11 @@ public class PaymentsResource {
+     @Path("/v1/payments")
+     @Consumes(APPLICATION_JSON)
+     @Produces(APPLICATION_JSON)
+     @Operation(security = {@SecurityRequirement(name = "BearerAuth")},
+             operationId = "Create a payment",
+-            summary = "Create a payment",
++            summary = "Create new payment",
+             description = "Create a new payment for the account associated to the Authorisation token. " +
+                     "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created",
+@@ -346,11 +346,11 @@ public class PaymentsResource {
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 422, message = "Invalid attribute value: description. Must be less than or equal to 255 characters length", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+     public Response createNewPayment(@ApiParam(value = "accountId", hidden = true) @Parameter(hidden = true) @Auth Account account,
+-                                     @ApiParam(value = "requestPayload", required = true) @Parameter(required = true, name = "requestPayload")
++                                     @ApiParam(value = "requestPayload", required = true) @Parameter(required = true, description = "requestPayload")
+                                      @Valid CreateCardPaymentRequest createCardPaymentRequest) {
+         logger.info("Payment create request parsed to {}", createCardPaymentRequest);
+ 
+         PaymentWithAllLinks createdPayment = createPaymentService.create(account, createCardPaymentRequest);
+ 
+@@ -378,11 +378,11 @@ public class PaymentsResource {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "No Content"),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Cancellation of payment failed",
+                             content = @Content(schema = @Schema(implementation = PaymentError.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401",
+                             description = "Credentials are required to access this resource"),
+-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found",
++                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found",
+                             content = @Content(schema = @Schema(implementation = PaymentError.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Conflict",
+                             content = @Content(schema = @Schema(implementation = PaymentError.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "Too many requests",
+                             content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+diff --git a/src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java b/src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java
+index e099abe5..068d5b15 100644
+--- a/src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java
+@@ -55,11 +55,12 @@ public class SearchRefundsResource {
+     @Path("/v1/refunds")
+     @Produces(APPLICATION_JSON)
+     @Operation(
+             security = {@SecurityRequirement(name = "BearerAuth")},
+             operationId = "Search refunds",
+-            summary = "Search refunds by 'from' and 'to' date. " +
++            summary = "Search refunds",
++            description = "Search refunds by 'from' and 'to' date. " +
+                     "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+             responses = {
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = SearchRefundsResults.class))),
+                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Credentials are required to access this resource"),
+diff --git a/src/main/resources/swagger-config.yaml b/src/main/resources/swagger-config.yaml
+index ab1c0377..c85abb75 100644
+--- a/src/main/resources/swagger-config.yaml
++++ b/src/main/resources/swagger-config.yaml
+@@ -1,11 +1,12 @@
+ resourceClasses:
+-    - uk.gov.pay.api.resources.PaymentRefundsResource
+-    - uk.gov.pay.api.resources.SearchRefundsResource
+-    - uk.gov.pay.api.resources.PaymentsResource
+-    - uk.gov.pay.api.resources.MandatesResource
+-    - uk.gov.pay.api.resources.directdebit.DirectDebitPaymentsResource
++  - uk.gov.pay.api.resources.PaymentRefundsResource
++  - uk.gov.pay.api.resources.SearchRefundsResource
++  - uk.gov.pay.api.resources.PaymentsResource
++  - uk.gov.pay.api.resources.MandatesResource
++  - uk.gov.pay.api.resources.directdebit.DirectDebitPaymentsResource
++readAllResources: false
+ openAPI:
+   info:
+     description: 'GOV.UK Pay API'
+     version: '1.0.3'
+     title: 'GOV.UK Pay API'

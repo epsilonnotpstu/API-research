@@ -1,0 +1,2483 @@
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/ArenaOrdsTokenClient.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/ArenaOrdsTokenClient.java
+index 6ee6e8ce..8b89c9b3 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/ArenaOrdsTokenClient.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/ArenaOrdsTokenClient.java
+@@ -7,11 +7,11 @@ import org.springframework.http.HttpEntity;
+ import org.springframework.http.HttpHeaders;
+ import org.springframework.http.MediaType;
+ import org.springframework.stereotype.Component;
+ import org.springframework.web.client.RestTemplate;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ 
+ @Component
+ public class ArenaOrdsTokenClient {
+ 
+     private static final long expireEarlySeconds = 30L;
+@@ -59,14 +59,14 @@ public class ArenaOrdsTokenClient {
+     private static boolean isMissingOrExpired(CachedOrdsToken token) {
+         if (token == null) {
+             return true;
+         }
+ 
+-        LocalDateTime expiresAt = token.getCachedAt()
++        Instant expiresAt = token.getCachedAt()
+             .plusSeconds(token.getToken().expiresIn())
+             .minusSeconds(expireEarlySeconds);
+ 
+-        return Now.localDateTime().isAfter(expiresAt);
++        return Now.instant().isAfter(expiresAt);
+     }
+ 
+ 
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/CachedOrdsToken.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/CachedOrdsToken.java
+index 5f06e283..571d4777 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/CachedOrdsToken.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/client/ords/CachedOrdsToken.java
+@@ -2,16 +2,16 @@ package no.nav.tag.tiltaksgjennomforing.arena.client.ords;
+ 
+ import com.fasterxml.jackson.annotation.JsonProperty;
+ import lombok.Getter;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ 
+ @Getter
+ public class CachedOrdsToken {
+     private final OrdsToken token;
+-    private final LocalDateTime cachedAt = Now.localDateTime();
++    private final Instant cachedAt = Now.instant();
+ 
+     public CachedOrdsToken(OrdsToken token) {
+         this.token = token;
+     }
+ 
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/event/ArenaEvent.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/event/ArenaEvent.java
+index d8dd3cd9..bfc9257b 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/event/ArenaEvent.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/event/ArenaEvent.java
+@@ -16,10 +16,11 @@ import no.nav.tag.tiltaksgjennomforing.arena.models.arena.ArenaTable;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.arena.Operation;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.hibernate.annotations.JdbcTypeCode;
+ import org.hibernate.type.SqlTypes;
+ 
++import java.time.Instant;
+ import java.time.LocalDateTime;
+ import java.util.Optional;
+ import java.util.UUID;
+ 
+ @Getter
+@@ -30,11 +31,11 @@ import java.util.UUID;
+ public class ArenaEvent {
+     @Id
+     private UUID id;
+     private String arenaId;
+     private String arenaTable;
+-    private LocalDateTime created;
++    private Instant created;
+     @Enumerated(EnumType.STRING)
+     private ArenaEventStatus status;
+     private int retryCount;
+     private String operation;
+     private LocalDateTime operationTime;
+@@ -59,11 +60,11 @@ public class ArenaEvent {
+             .id(UUID.randomUUID())
+             .operation(operation)
+             .operationTime(operationTime)
+             .currentTs(currentTs)
+             .payload(payload)
+-            .created(Now.localDateTime())
++            .created(Now.instant())
+             .retryCount(0)
+             .status(status)
+             .pos(pos)
+             .build();
+     }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/migration/ArenaAgreementMigration.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/migration/ArenaAgreementMigration.java
+index 6fdd006b..23198c50 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/migration/ArenaAgreementMigration.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/models/migration/ArenaAgreementMigration.java
+@@ -9,11 +9,11 @@ import jakarta.persistence.Transient;
+ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+ import lombok.NoArgsConstructor;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.arena.ArenaTiltakskode;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Entity
+ @Builder
+ @NoArgsConstructor
+@@ -28,12 +28,12 @@ public class ArenaAgreementMigration {
+     @Enumerated(EnumType.STRING)
+     private ArenaMigrationAction action;
+     private UUID avtaleId;
+     private UUID eksternId;
+     @Transient
+-    private LocalDateTime created;
+-    private LocalDateTime modified;
++    private Instant created;
++    private Instant modified;
+     @Enumerated(EnumType.STRING)
+     @Convert(converter = ArenaTiltakskode.Convert.class)
+     private ArenaTiltakskode tiltakstype;
+     private String error;
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementProcessingService.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementProcessingService.java
+index fa0357e9..5dc5f75f 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementProcessingService.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementProcessingService.java
+@@ -28,15 +28,16 @@ import no.nav.tag.tiltaksgjennomforing.enhet.veilarboppfolging.Veilarboppfolging
+ import no.nav.tag.tiltaksgjennomforing.featuretoggles.FeatureToggle;
+ import no.nav.tag.tiltaksgjennomforing.featuretoggles.FeatureToggleService;
+ import no.nav.tag.tiltaksgjennomforing.orgenhet.EregService;
+ import no.nav.tag.tiltaksgjennomforing.orgenhet.Organisasjon;
+ import no.nav.tag.tiltaksgjennomforing.persondata.PersondataService;
++import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.scheduling.annotation.Async;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import java.time.LocalDateTime;
++import java.time.ZoneId;
+ import java.util.Optional;
+ import java.util.UUID;
+ 
+ @Slf4j
+ @Service
+@@ -169,11 +170,11 @@ public class ArenaAgreementProcessingService {
+                 .tiltakdeltakerId(tiltakdeltakerId)
+                 .status(status)
+                 .action(action)
+                 .avtaleId(agreementId)
+                 .eksternId(eksternId)
+-                .modified(LocalDateTime.now())
++                .modified(Now.instant())
+                 .tiltakstype(tiltakskode)
+                 .error(error)
+                 .build()
+         );
+     }
+@@ -313,11 +314,12 @@ public class ArenaAgreementProcessingService {
+         });
+ 
+         getOppfolgingsenhetnavnFromNorg2(avtale.getEnhetOppfolging()).ifPresent(avtale::setEnhetsnavnOppfolging);
+ 
+         AvtaleInnhold avtaleinnhold = avtale.getGjeldendeInnhold();
+-        Optional.ofNullable(agreementAggregate.getRegDato()).ifPresent(avtale::setOpprettetTidspunkt);
++        Optional.ofNullable(agreementAggregate.getRegDato())
++            .ifPresent(regdato -> avtale.setOpprettetTidspunkt(regdato.atZone(ZoneId.systemDefault()).toInstant()));
+         agreementAggregate.getAntallDagerPrUke().ifPresent(avtaleinnhold::setAntallDagerPerUke);
+         agreementAggregate.getProsentDeltid().ifPresent(avtaleinnhold::setStillingprosent);
+         agreementAggregate.findStartdato().ifPresent(avtaleinnhold::setStartDato);
+         if (!agreementAggregate.isSluttdatoBeforeStartdato() && !agreementAggregate.isDeltakerForGammelPaaSluttDato()) {
+             agreementAggregate.findSluttdato().ifPresent(avtaleinnhold::setSluttDato);
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementService.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementService.java
+index b8e66370..6ee25e0f 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementService.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/arena/service/ArenaAgreementService.java
+@@ -4,14 +4,14 @@ import lombok.extern.slf4j.Slf4j;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.arena.ArenaTiltakskode;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.migration.ArenaAgreementAggregate;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.migration.ArenaAgreementMigration;
+ import no.nav.tag.tiltaksgjennomforing.arena.models.migration.ArenaAgreementMigrationStatus;
+ import no.nav.tag.tiltaksgjennomforing.arena.repository.ArenaAgreementMigrationRepository;
++import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import java.time.LocalDateTime;
+ import java.util.Map;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+ 
+ @Slf4j
+@@ -45,11 +45,11 @@ public class ArenaAgreementService {
+                         .id(entry.getKey())
+                         .tiltakgjennomforingId(entry.getValue().getTiltakgjennomforingId())
+                         .tiltakdeltakerId(entry.getValue().getTiltakdeltakerId())
+                         .eksternId(entry.getValue().getEksternIdAsUuid().orElse(null))
+                         .status(ArenaAgreementMigrationStatus.PROCESSING)
+-                        .modified(LocalDateTime.now())
++                        .modified(Now.instant())
+                         .tiltakstype(entry.getValue().getTiltakskode())
+                         .build()
+                 )
+                 .toList()
+         );
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AlleredeRegistrertAvtale.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AlleredeRegistrertAvtale.java
+index d0aa191b..26cb8ffd 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AlleredeRegistrertAvtale.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AlleredeRegistrertAvtale.java
+@@ -3,12 +3,12 @@ package no.nav.tag.tiltaksgjennomforing.avtale;
+ 
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
++import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.LocalDateTime;
+ import java.util.List;
+ import java.util.UUID;
+ import java.util.stream.Stream;
+ 
+ @Data
+@@ -36,13 +36,13 @@ public class AlleredeRegistrertAvtale {
+     private Status status;
+     private Avtaleopphav opphav;
+ 
+     private LocalDate startDato;
+     private LocalDate sluttDato;
+-    private LocalDateTime godkjentAvVeileder;
+-    private LocalDateTime godkjentAvBeslutter;
+-    private LocalDateTime avtaleInngått;
++    private Instant godkjentAvVeileder;
++    private Instant godkjentAvBeslutter;
++    private Instant avtaleInngått;
+ 
+     private static List<AlleredeRegistrertAvtale> filtrerAvtaler(Stream<Avtale> avtaler) {
+         return avtaler.map(AlleredeRegistrertAvtale::setAvtaleFelter).toList();
+     }
+ 
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/Avtale.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/Avtale.java
+index 906d2adb..f87af9ac 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/Avtale.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/Avtale.java
+@@ -99,11 +99,10 @@ import org.hibernate.annotations.SortNatural;
+ import org.hibernate.generator.EventType;
+ import org.springframework.data.domain.AbstractAggregateRoot;
+ 
+ import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.LocalDateTime;
+ import java.time.YearMonth;
+ import java.time.temporal.ChronoUnit;
+ import java.util.Comparator;
+ import java.util.EnumSet;
+ import java.util.List;
+@@ -146,11 +145,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+ 
+     @Enumerated(EnumType.STRING)
+     @Column(updatable = false)
+     private Tiltakstype tiltakstype;
+ 
+-    private LocalDateTime opprettetTidspunkt;
++    private Instant opprettetTidspunkt;
+ 
+     @Generated(event = EventType.INSERT)
+     private Integer avtaleNr;
+ 
+     @OneToOne(cascade = CascadeType.ALL)
+@@ -217,11 +216,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .erOver30årFørsteJanuar()) {
+             throw new FeilkodeException(Feilkode.SOMMERJOBB_FOR_GAMMEL);
+         }
+ 
+         this.id = UUID.randomUUID();
+-        this.opprettetTidspunkt = Now.localDateTime();
++        this.opprettetTidspunkt = Now.instant();
+         this.deltakerFnr = opprettAvtale.getDeltakerFnr();
+         this.bedriftNr = opprettAvtale.getBedriftNr();
+         this.fnrOgBedrift = new FnrOgBedrift(this.deltakerFnr, this.bedriftNr);
+         this.tiltakstype = opprettAvtale.getTiltakstype();
+         this.sistEndret = Now.instant();
+@@ -239,11 +238,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .erOver30årFørsteJanuar()) {
+             throw new FeilkodeException(Feilkode.SOMMERJOBB_FOR_GAMMEL);
+         }
+ 
+         this.id = UUID.randomUUID();
+-        this.opprettetTidspunkt = Now.localDateTime();
++        this.opprettetTidspunkt = Now.instant();
+         this.deltakerFnr = opprettMentorAvtale.getDeltakerFnr();
+         this.mentorFnr = opprettMentorAvtale.getMentorFnr();
+         this.bedriftNr = opprettMentorAvtale.getBedriftNr();
+         this.fnrOgBedrift = new FnrOgBedrift(this.deltakerFnr, this.bedriftNr);
+         this.tiltakstype = opprettMentorAvtale.getTiltakstype();
+@@ -341,11 +340,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             annuller(AnnullertGrunn.ANNULLERT_I_ARENA, Identifikator.ARENA);
+             return;
+         }
+ 
+         gjeldendeInnhold = getGjeldendeInnhold().nyGodkjentVersjon(AvtaleInnholdType.ENDRET_AV_ARENA);
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+ 
+         if (EndreAvtaleArena.Handling.AVSLUTT == action) {
+             LocalDate sluttDato = Stream.of(endreAvtaleArena.getSluttdato(), gjeldendeInnhold.getSluttDato())
+                 .filter(dato -> dato.isBefore(LocalDate.now()))
+                 .findFirst()
+@@ -471,36 +470,36 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+     public boolean erAvtaleInngått() {
+         return gjeldendeInnhold.getAvtaleInngått() != null;
+     }
+ 
+     @JsonProperty
+-    public LocalDateTime godkjentAvDeltaker() {
++    public Instant godkjentAvDeltaker() {
+         return gjeldendeInnhold.getGodkjentAvDeltaker();
+     }
+ 
+     @JsonProperty
+-    public LocalDateTime godkjentAvMentor() {
++    public Instant godkjentAvMentor() {
+         return gjeldendeInnhold.getGodkjentTaushetserklæringAvMentor();
+     }
+ 
+     @JsonProperty
+-    public LocalDateTime godkjentAvArbeidsgiver() {
++    public Instant godkjentAvArbeidsgiver() {
+         return gjeldendeInnhold.getGodkjentAvArbeidsgiver();
+     }
+ 
+     @JsonProperty
+-    public LocalDateTime godkjentAvVeileder() {
++    public Instant godkjentAvVeileder() {
+         return gjeldendeInnhold.getGodkjentAvVeileder();
+     }
+ 
+     @JsonProperty
+-    public LocalDateTime godkjentAvBeslutter() {
++    public Instant godkjentAvBeslutter() {
+         return gjeldendeInnhold.getGodkjentAvBeslutter();
+     }
+ 
+     @JsonProperty
+-    private LocalDateTime avtaleInngått() {
++    private Instant avtaleInngått() {
+         return gjeldendeInnhold.getAvtaleInngått();
+     }
+ 
+     @JsonProperty
+     private NavIdent godkjentAvNavIdent() {
+@@ -603,11 +602,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         sjekkAtIkkeAvtaleErAnnullertEllerAvbrutt();
+         sjekkOmAltErKlarTilGodkjenning();
+         if (erGodkjentAvArbeidsgiver()) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_GODKJENNE_ARBEIDSGIVER_HAR_ALLEREDE_GODKJENT);
+         }
+-        gjeldendeInnhold.setGodkjentAvArbeidsgiver(Now.localDateTime());
++        gjeldendeInnhold.setGodkjentAvArbeidsgiver(Now.instant());
+         utforEndring(new GodkjentAvArbeidsgiver(this, utfortAv));
+     }
+ 
+     public void godkjennForVeileder(NavIdent utfortAv) {
+         sjekkAtIkkeAvtaleErAnnullertEllerAvbrutt();
+@@ -634,19 +633,19 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         if (this.getTiltakstype() == Tiltakstype.VTAO && this.getDeltakerFnr()
+             .erOver67ÅrFraSluttDato(getGjeldendeInnhold().getSluttDato())) {
+             throw new FeilkodeException(Feilkode.DELTAKER_67_AAR);
+         }
+ 
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         gjeldendeInnhold.setGodkjentAvVeileder(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvNavIdent(new NavIdent(utfortAv.asString()));
+         inngåAvtale(tidspunkt, Avtalerolle.VEILEDER, utfortAv);
+         gjeldendeInnhold.setIkrafttredelsestidspunkt(tidspunkt);
+         utforEndring(new GodkjentAvVeileder(this, utfortAv));
+     }
+ 
+-    private void inngåAvtale(LocalDateTime tidspunkt, Avtalerolle utførtAvRolle, NavIdent utførtAv) {
++    private void inngåAvtale(Instant tidspunkt, Avtalerolle utførtAvRolle, NavIdent utførtAv) {
+         if (!utførtAvRolle.erInternBruker()) {
+             throw new FeilkodeException(Feilkode.IKKE_TILGANG_TIL_A_INNGAA_AVTALE);
+         }
+         if (erAvtaleInngått()) {
+             throw new FeilkodeException(Feilkode.AVTALE_ER_ALLEREDE_INNGAATT);
+@@ -697,11 +696,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .erOver67ÅrFraSluttDato(getGjeldendeInnhold().getSluttDato())) {
+             throw new FeilkodeException(Feilkode.DELTAKER_67_AAR);
+         }
+ 
+         paVegneAvGrunn.valgtMinstEnGrunn();
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         gjeldendeInnhold.setGodkjentAvVeileder(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvDeltaker(tidspunkt);
+         gjeldendeInnhold.setGodkjentPaVegneAv(true);
+         gjeldendeInnhold.setGodkjentPaVegneGrunn(paVegneAvGrunn);
+         gjeldendeInnhold.setGodkjentAvNavIdent(new NavIdent(utfortAv.asString()));
+@@ -736,11 +735,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .erOver67ÅrFraSluttDato(getGjeldendeInnhold().getSluttDato())) {
+             throw new FeilkodeException(Feilkode.DELTAKER_67_AAR);
+         }
+ 
+         godkjentPaVegneAvArbeidsgiverGrunn.valgtMinstEnGrunn();
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         gjeldendeInnhold.setGodkjentAvVeileder(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvArbeidsgiver(tidspunkt);
+         gjeldendeInnhold.setGodkjentPaVegneAvArbeidsgiver(true);
+         gjeldendeInnhold.setGodkjentPaVegneAvArbeidsgiverGrunn(godkjentPaVegneAvArbeidsgiverGrunn);
+         gjeldendeInnhold.setGodkjentAvNavIdent(new NavIdent(utfortAv.asString()));
+@@ -775,11 +774,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .erOver67ÅrFraSluttDato(getGjeldendeInnhold().getSluttDato())) {
+             throw new FeilkodeException(Feilkode.DELTAKER_67_AAR);
+         }
+ 
+         paVegneAvDeltakerOgArbeidsgiverGrunn.valgtMinstEnGrunn();
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         gjeldendeInnhold.setGodkjentAvVeileder(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvDeltaker(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvArbeidsgiver(tidspunkt);
+         gjeldendeInnhold.setGodkjentPaVegneAv(true);
+         gjeldendeInnhold.setGodkjentPaVegneAvArbeidsgiver(true);
+@@ -794,19 +793,19 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+     public void godkjennForDeltaker(Identifikator utfortAv) {
+         sjekkOmAltErKlarTilGodkjenning();
+         if (erGodkjentAvDeltaker()) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_GODKJENNE_DELTAKER_HAR_ALLEREDE_GODKJENT);
+         }
+-        gjeldendeInnhold.setGodkjentAvDeltaker(Now.localDateTime());
++        gjeldendeInnhold.setGodkjentAvDeltaker(Now.instant());
+         utforEndring(new GodkjentAvDeltaker(this, utfortAv));
+     }
+ 
+     void godkjennForMentor(Identifikator utfortAv) {
+         if (erGodkjentTaushetserklæringAvMentor()) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_GODKJENNE_MENTOR_HAR_ALLEREDE_GODKJENT);
+         }
+-        gjeldendeInnhold.setGodkjentTaushetserklæringAvMentor(Now.localDateTime());
++        gjeldendeInnhold.setGodkjentTaushetserklæringAvMentor(Now.instant());
+         utforEndring(new SignertAvMentor(this, utfortAv));
+     }
+ 
+     void sjekkOmAltErKlarTilGodkjenning() {
+         sjekkAtIkkeAvtaleErAnnullertEllerAvbrutt();
+@@ -949,18 +948,18 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+ 
+         // Sjekk om samme løpenummer allerede er godkjent og annullert. Trenger da en "ekstra" resendingsnummer
+         Integer resendingsnummer = finnResendingsNummer(gjeldendePeriode);
+         gjeldendePeriode.godkjenn(beslutter, enhet);
+         if (!erAvtaleInngått()) {
+-            LocalDateTime tidspunkt = Now.localDateTime();
++            Instant tidspunkt = Now.instant();
+             godkjennForBeslutter(tidspunkt, beslutter);
+             inngåAvtale(tidspunkt, Avtalerolle.BESLUTTER, beslutter);
+         }
+         utforEndring(new TilskuddsperiodeGodkjent(this, gjeldendePeriode, beslutter, resendingsnummer));
+     }
+ 
+-    private void godkjennForBeslutter(LocalDateTime tidspunkt, NavIdent beslutter) {
++    private void godkjennForBeslutter(Instant tidspunkt, NavIdent beslutter) {
+         gjeldendeInnhold.setGodkjentAvBeslutter(tidspunkt);
+         gjeldendeInnhold.setGodkjentAvBeslutterNavIdent(beslutter);
+     }
+ 
+     public void avslåTilskuddsperiode(
+@@ -1446,11 +1445,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         }
+ 
+         gjeldendeInnhold = getGjeldendeInnhold().nyGodkjentVersjon(AvtaleInnholdType.ENDRE_TILSKUDDSBEREGNING);
+         this.hentBeregningStrategi().endreBeregning(this, endreTilskuddsberegning);
+         endreBeløpOgProsentITilskuddsperioder();
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         utforEndring(new TilskuddsberegningEndret(this, utførtAv));
+     }
+ 
+     // Metode for å rydde opp i beregnede felter som ikke har blitt satt etter at lønnstilskuddsprosent manuelt i databasen har blitt satt inn
+     public void reberegnLønnstilskudd() {
+@@ -1534,11 +1533,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             }
+         }
+ 
+         gjeldendeInnhold = getGjeldendeInnhold().nyGodkjentVersjon(AvtaleInnholdType.ENDRE_KONTAKTINFO);
+         getGjeldendeInnhold().endreKontaktInfo(endreKontaktInformasjon);
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new KontaktinformasjonEndret(this, utførtAv));
+     }
+ 
+     public void godkjennOppfolgingAvAvtale(NavIdent utførtAv) {
+@@ -1564,11 +1563,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         ) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_ENDRE_STILLINGSBESKRIVELSE_GRUNN_MANGLER);
+         }
+         gjeldendeInnhold = getGjeldendeInnhold().nyGodkjentVersjon(AvtaleInnholdType.ENDRE_STILLING);
+         getGjeldendeInnhold().endreStillingsInfo(endreStillingsbeskrivelse);
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         getGjeldendeInnhold().reberegnLønnstilskudd();
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new StillingsbeskrivelseEndret(this, utførtAv));
+     }
+ 
+@@ -1588,11 +1587,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         ) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_ENDRE_OPPFØLGING_OG_TILRETTELEGGING_GRUNN_MANGLER);
+         }
+         gjeldendeInnhold = gjeldendeInnhold.nyGodkjentVersjon(AvtaleInnholdType.ENDRE_OPPFØLGING_OG_TILRETTELEGGING);
+         gjeldendeInnhold.endreOppfølgingOgTilretteleggingInfo(endreOppfølgingOgTilrettelegging);
+-        gjeldendeInnhold.setIkrafttredelsestidspunkt(Now.localDateTime());
++        gjeldendeInnhold.setIkrafttredelsestidspunkt(Now.instant());
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new OppfølgingOgTilretteleggingEndret(this, utførtAv));
+     }
+ 
+     public void endreMål(EndreMål endreMål, NavIdent utførtAv) {
+@@ -1618,11 +1617,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+                 .setBeskrivelse(m.getBeskrivelse())
+                 .setKategori(m.getKategori()))
+             .toList();
+         getGjeldendeInnhold().getMaal().addAll(nyeMål);
+         getGjeldendeInnhold().getMaal().forEach(m -> m.setAvtaleInnhold(getGjeldendeInnhold()));
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new MålEndret(this, utførtAv));
+     }
+ 
+     public void endreInkluderingstilskudd(EndreInkluderingstilskudd endreInkluderingstilskudd, NavIdent utførtAv) {
+@@ -1661,11 +1660,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+             .map(Inkluderingstilskuddsutgift::new)
+             .toList();
+ 
+         getGjeldendeInnhold().getInkluderingstilskuddsutgift().addAll(nyeInkluderingstilskuddsutgifter);
+         getGjeldendeInnhold().getInkluderingstilskuddsutgift().forEach(i -> i.setAvtaleInnhold(getGjeldendeInnhold()));
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new InkluderingstilskuddEndret(this, utførtAv));
+     }
+ 
+     public void endreOmMentor(EndreOmMentor endreOmMentor, NavIdent utførtAv) {
+@@ -1682,11 +1681,11 @@ public class Avtale extends AbstractAggregateRoot<Avtale> implements AuditerbarE
+         )) {
+             throw new FeilkodeException(Feilkode.KAN_IKKE_ENDRE_OM_MENTOR_UGYLDIG_INPUT);
+         }
+         gjeldendeInnhold = getGjeldendeInnhold().nyGodkjentVersjon(AvtaleInnholdType.ENDRE_OM_MENTOR);
+         getGjeldendeInnhold().endreOmMentor(endreOmMentor);
+-        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         reaktiverTilskuddsperiodeOgSendTilbakeTilBeslutter();
+         utforEndring(new OmMentorEndret(this, utførtAv));
+     }
+ 
+     /**
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleController.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleController.java
+index 2baaea4b..76195261 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleController.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleController.java
+@@ -164,11 +164,11 @@ public class AvtaleController {
+         if (filterSok == null) {
+             return PageableAvtalelisteResponse.tom();
+         }
+ 
+         filterSok.setAntallGangerSokt(filterSok.getAntallGangerSokt() + 1);
+-        filterSok.setSistSoktTidspunkt(Now.localDateTime());
++        filterSok.setSistSoktTidspunkt(Now.instant());
+         filterSokRepository.save(filterSok);
+         AvtaleQueryParameter avtalePredicate = filterSok.getAvtalePredicate();
+ 
+         Pageable pageable = PageRequest.of(
+             Math.abs(page),
+@@ -214,11 +214,11 @@ public class AvtaleController {
+         );
+ 
+         FilterSok filterSokiDb = filterSokRepository.findFilterSokBySokId(queryParametre.generateHash()).orElse(null);
+         if (filterSokiDb != null) {
+             filterSokiDb.setAntallGangerSokt(filterSokiDb.getAntallGangerSokt() + 1);
+-            filterSokiDb.setSistSoktTidspunkt(Now.localDateTime());
++            filterSokiDb.setSistSoktTidspunkt(Now.instant());
+             filterSokRepository.save(filterSokiDb);
+             if (!filterSokiDb.erLik(queryParametre)) {
+                 log.error("Kollisjon i søkId: {}", filterSokiDb.getSokId());
+             }
+             return PageableAvtalelisteResponse.fra(
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleInnhold.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleInnhold.java
+index 9acef1b0..346018f4 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleInnhold.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleInnhold.java
+@@ -23,12 +23,12 @@ import lombok.experimental.FieldNameConstants;
+ import no.nav.tag.tiltaksgjennomforing.tilskuddsperiode.beregning.EndreTilskuddsberegning;
+ import org.hibernate.annotations.Fetch;
+ import org.hibernate.annotations.FetchMode;
+ 
+ import java.math.BigDecimal;
++import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.LocalDateTime;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.UUID;
+@@ -135,17 +135,17 @@ public class AvtaleInnhold {
+     public Integer inkluderingstilskuddSats() {
+         return InkluderingstilskuddStrategy.getInkluderingstilskuddSats(this.sluttDato);
+     }
+ 
+     // Godkjenning
+-    private LocalDateTime godkjentAvDeltaker;
+-    private LocalDateTime godkjentTaushetserklæringAvMentor;
+-    private LocalDateTime godkjentAvArbeidsgiver;
+-    private LocalDateTime godkjentAvVeileder;
+-    private LocalDateTime godkjentAvBeslutter;
+-    private LocalDateTime avtaleInngått;
+-    private LocalDateTime ikrafttredelsestidspunkt;
++    private Instant godkjentAvDeltaker;
++    private Instant godkjentTaushetserklæringAvMentor;
++    private Instant godkjentAvArbeidsgiver;
++    private Instant godkjentAvVeileder;
++    private Instant godkjentAvBeslutter;
++    private Instant avtaleInngått;
++    private Instant ikrafttredelsestidspunkt;
+     @Convert(converter = NavIdentConverter.class)
+     private NavIdent godkjentAvNavIdent;
+     @Convert(converter = NavIdentConverter.class)
+     private NavIdent godkjentAvBeslutterNavIdent;
+ 
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/BaseAvtaleInnholdStrategy.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/BaseAvtaleInnholdStrategy.java
+index 7e91dafc..f8f47ca1 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/BaseAvtaleInnholdStrategy.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/BaseAvtaleInnholdStrategy.java
+@@ -64,8 +64,8 @@ public abstract class BaseAvtaleInnholdStrategy implements AvtaleInnholdStrategy
+     }
+ 
+     @Override
+     public void endreSluttDato(LocalDate nySluttDato) {
+         avtaleInnhold.setSluttDato(nySluttDato);
+-        avtaleInnhold.setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtaleInnhold.setIkrafttredelsestidspunkt(Now.instant());
+     }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/FilterSok.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/FilterSok.java
+index 01539669..8b16034b 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/FilterSok.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/FilterSok.java
+@@ -9,26 +9,25 @@ import jakarta.persistence.Id;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ import lombok.SneakyThrows;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ 
+ @Data
+ @Entity
+ @NoArgsConstructor
+ public class FilterSok {
+     @Id
+     private String sokId;
+-    private LocalDateTime sistSoktTidspunkt;
++    private Instant sistSoktTidspunkt;
+     private String queryParametre;
+     private Integer antallGangerSokt;
+ 
+-
+     @SneakyThrows
+     public FilterSok(AvtaleQueryParameter queryParametre) {
+-        this.sistSoktTidspunkt = Now.localDateTime();
++        this.sistSoktTidspunkt = Now.instant();
+         this.antallGangerSokt = 1;
+         this.sokId = queryParametre.generateHash();
+         ObjectMapper mapper = new ObjectMapper();
+         this.queryParametre = mapper.writeValueAsString(queryParametre);
+     }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/TilskuddPeriode.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/TilskuddPeriode.java
+index a6110c34..cf6f7b6c 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/TilskuddPeriode.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/TilskuddPeriode.java
+@@ -22,12 +22,12 @@ import no.nav.tag.tiltaksgjennomforing.exceptions.Feilkode;
+ import no.nav.tag.tiltaksgjennomforing.exceptions.FeilkodeException;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.apache.commons.lang3.builder.CompareToBuilder;
+ import org.jetbrains.annotations.NotNull;
+ 
++import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.LocalDateTime;
+ import java.util.EnumSet;
+ import java.util.Optional;
+ import java.util.Set;
+ import java.util.TreeSet;
+ import java.util.UUID;
+@@ -57,11 +57,11 @@ public class TilskuddPeriode implements Comparable<TilskuddPeriode> {
+     private LocalDate sluttDato;
+ 
+     @Convert(converter = NavIdentConverter.class)
+     private NavIdent godkjentAvNavIdent;
+ 
+-    private LocalDateTime godkjentTidspunkt;
++    private Instant godkjentTidspunkt;
+ 
+     /**
+      * "Enhet" i denne konteksten er oppfølgingsenheten til deltaker;
+      * og betegnes også som "kostnadssted" i feks besluttervisning.
+      * <p>
+@@ -79,11 +79,11 @@ public class TilskuddPeriode implements Comparable<TilskuddPeriode> {
+     private Set<Avslagsårsak> avslagsårsaker = EnumSet.noneOf(Avslagsårsak.class);
+ 
+     private String avslagsforklaring;
+     @Convert(converter = NavIdentConverter.class)
+     private NavIdent avslåttAvNavIdent;
+-    private LocalDateTime avslåttTidspunkt;
++    private Instant avslåttTidspunkt;
+     private Integer løpenummer = 1;
+ 
+     @Enumerated(EnumType.STRING)
+     private TilskuddPeriodeStatus status = TilskuddPeriodeStatus.UBEHANDLET;
+ 
+@@ -183,11 +183,11 @@ public class TilskuddPeriode implements Comparable<TilskuddPeriode> {
+     }
+ 
+     void godkjenn(NavIdent beslutter, String enhet) {
+         sjekkOmKanBehandles();
+ 
+-        setGodkjentTidspunkt(Now.localDateTime());
++        setGodkjentTidspunkt(Now.instant());
+         setGodkjentAvNavIdent(beslutter);
+         setEnhet(enhet);
+         setStatus(TilskuddPeriodeStatus.GODKJENT);
+     }
+ 
+@@ -198,11 +198,11 @@ public class TilskuddPeriode implements Comparable<TilskuddPeriode> {
+         }
+         if (avslagsårsaker.isEmpty()) {
+             throw new FeilkodeException(Feilkode.TILSKUDDSPERIODE_INGEN_AVSLAGSAARSAKER);
+         }
+ 
+-        setAvslåttTidspunkt(Now.localDateTime());
++        setAvslåttTidspunkt(Now.instant());
+         setAvslåttAvNavIdent(beslutter);
+         this.avslagsårsaker.addAll(avslagsårsaker);
+         setAvslagsforklaring(avslagsforklaring);
+         setStatus(TilskuddPeriodeStatus.AVSLÅTT);
+     }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/admin/AdminService.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/admin/AdminService.java
+index 247f3b61..65fd1967 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/admin/AdminService.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/admin/AdminService.java
+@@ -7,10 +7,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.AvtaleRepository;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtalerolle;
+ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Identifikator;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Status;
+ import no.nav.tag.tiltaksgjennomforing.datadeling.AvtaleHendelseUtførtAvRolle;
++import no.nav.tag.tiltaksgjennomforing.utils.DatoUtils;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import no.nav.tag.tiltaksgjennomforing.varsel.Varsel;
+ import no.nav.tag.tiltaksgjennomforing.varsel.VarselFactory;
+ import no.nav.tag.tiltaksgjennomforing.varsel.VarselRepository;
+ import org.springframework.scheduling.annotation.Async;
+@@ -52,11 +53,11 @@ public class AdminService {
+                     .isBefore(Now.localDate().minusWeeks(12))
+                     && avtale.getStatus().equals(Status.AVSLUTTET);
+ 
+                 boolean skalBehandles = avtaleGodkjentAvArbeidsgiver != null
+                     // arbeidsgiver godkjente før vi endret avtalekravene
+-                    && avtaleGodkjentAvArbeidsgiver.isBefore(avtalekravDato)
++                    && DatoUtils.instantTilLocalDateTime(avtaleGodkjentAvArbeidsgiver).isBefore(avtalekravDato)
+                     // trenger ikke varsle om endringer i krav på avtaler som er eldre enn 12 uker
+                     && !eldreEnn12UkerOgAvsluttet;
+ 
+                 if (!skalBehandles) {
+                     antallSomIkkeSkalBehandles.getAndIncrement();
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/service/AvtalestatusService.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/service/AvtalestatusService.java
+index 58d4cedd..cbbeae2e 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/service/AvtalestatusService.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/avtale/service/AvtalestatusService.java
+@@ -19,11 +19,11 @@ import no.nav.tag.tiltaksgjennomforing.datavarehus.DvhMeldingEntitet;
+ import no.nav.tag.tiltaksgjennomforing.datavarehus.DvhMeldingEntitetRepository;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Slf4j
+ @Service
+ public class AvtalestatusService {
+@@ -71,11 +71,11 @@ public class AvtalestatusService {
+         AvroTiltakHendelse avroTiltakHendelse = AvroTiltakHendelseFabrikk.konstruer(avtale, DvhHendelseType.STATUSENDRING, "system");
+         dvhMeldingRepository.save(new DvhMeldingEntitet(avtale, avroTiltakHendelse));
+     }
+ 
+     private void sendAvtaleMelding(Avtale avtale) {
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         AvtaleMelding avtaleMelding = AvtaleMelding.create(avtale, avtale.getGjeldendeInnhold(), new Identifikator("tiltaksgjennomforing-api"), AvtaleHendelseUtførtAvRolle.SYSTEM, HendelseType.STATUSENDRING);
+         try {
+             String meldingSomString = objectMapper.writeValueAsString(avtaleMelding);
+             AvtaleMeldingEntitet entitet = new AvtaleMeldingEntitet(UUID.randomUUID(), avtale.getId(), tidspunkt, HendelseType.STATUSENDRING, avtale.getStatus(), meldingSomString);
+             avtaleMeldingEntitetRepository.save(entitet);
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelseLytter.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelseLytter.java
+index 5eb53cfe..4bed1c6f 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelseLytter.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelseLytter.java
+@@ -40,11 +40,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.events.StillingsbeskrivelseEndret;
+ import no.nav.tag.tiltaksgjennomforing.avtale.events.TilskuddsberegningEndret;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.context.event.EventListener;
+ import org.springframework.stereotype.Component;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Component
+ @RequiredArgsConstructor
+ @Slf4j
+@@ -211,14 +211,12 @@ public class AvtaleHendelseLytter {
+ 
+     private void lagHendelse(Avtale avtale, HendelseType hendelseType, Identifikator utførtAv, AvtaleHendelseUtførtAvRolle utførtAvRolle) {
+         lagHendelse(avtale, hendelseType, utførtAv, utførtAvRolle, null);
+     }
+     private void lagHendelse(Avtale avtale, HendelseType hendelseType, Identifikator utførtAv, AvtaleHendelseUtførtAvRolle utførtAvRolle, ForkortetGrunn forkortetGrunn) {
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         UUID meldingId = UUID.randomUUID();
+-
+-
+         AvtaleMelding melding = AvtaleMelding.create(avtale, avtale.getGjeldendeInnhold(), utførtAv, utførtAvRolle, hendelseType, forkortetGrunn);
+         try {
+             String meldingSomString = objectMapper.writeValueAsString(melding);
+             AvtaleMeldingEntitet entitet = new AvtaleMeldingEntitet(meldingId, avtale.getId(), tidspunkt, hendelseType, avtale.getStatus(), meldingSomString);
+             avtaleMeldingEntitetRepository.save(entitet);
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelsePatchService.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelsePatchService.java
+index de2e638f..dcc1fdad 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelsePatchService.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleHendelsePatchService.java
+@@ -10,11 +10,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Identifikator;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.scheduling.annotation.Async;
+ import org.springframework.stereotype.Service;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.List;
+ import java.util.UUID;
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
+ @Slf4j
+@@ -78,11 +78,11 @@ public class AvtaleHendelsePatchService {
+     }
+ 
+     private void lagMelding(Avtale avtale) {
+         var melding = AvtaleMelding.create(avtale, avtale.getGjeldendeInnhold(), new Identifikator("tiltaksgjennomforing-api"), AvtaleHendelseUtførtAvRolle.SYSTEM, HendelseType.PATCH);
+         UUID meldingId = UUID.randomUUID();
+-        LocalDateTime tidspunkt = Now.localDateTime();
++        Instant tidspunkt = Now.instant();
+         try {
+             String meldingSomString = objectMapper.writeValueAsString(melding);
+             AvtaleMeldingEntitet entitet = new AvtaleMeldingEntitet(meldingId, avtale.getId(), tidspunkt, HendelseType.PATCH, avtale.getStatus(), meldingSomString);
+             avtaleMeldingEntitetRepository.save(entitet);
+         } catch (JsonProcessingException e) {
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMelding.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMelding.java
+index c3918153..9d5d1114 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMelding.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMelding.java
+@@ -17,10 +17,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.Status;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Stillingstype;
+ import no.nav.tag.tiltaksgjennomforing.avtale.TilskuddPeriode;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Tiltakstype;
+ import no.nav.tag.tiltaksgjennomforing.enhet.Formidlingsgruppe;
+ import no.nav.tag.tiltaksgjennomforing.enhet.Kvalifiseringsgruppe;
++import no.nav.tag.tiltaksgjennomforing.utils.DatoUtils;
+ 
+ import java.math.BigDecimal;
+ import java.time.Instant;
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
+@@ -153,11 +154,11 @@ public class AvtaleMelding {
+         avtaleMelding.setDeltakerFnr(avtale.getDeltakerFnr());
+         avtaleMelding.setMentorFnr(avtale.getMentorFnr());
+         avtaleMelding.setBedriftNr(avtale.getBedriftNr());
+         avtaleMelding.setVeilederNavIdent(avtale.getVeilederNavIdent());
+         avtaleMelding.setTiltakstype(avtale.getTiltakstype());
+-        avtaleMelding.setOpprettetTidspunkt(avtale.getOpprettetTidspunkt());
++        avtaleMelding.setOpprettetTidspunkt(DatoUtils.instantTilLocalDateTime(avtale.getOpprettetTidspunkt()));
+         avtaleMelding.setAvtaleId(avtale.getId());
+         avtaleMelding.setAvtaleNr(avtale.getAvtaleNr());
+         avtaleMelding.setSistEndret(avtale.getSistEndret());
+         avtaleMelding.setAnnullertTidspunkt(avtale.getAnnullertTidspunkt());
+         avtaleMelding.setAnnullertGrunn(avtale.getAnnullertGrunn());
+@@ -217,17 +218,17 @@ public class AvtaleMelding {
+         avtaleMelding.setSumLønnstilskuddRedusert(avtaleInnhold.getSumLønnstilskuddRedusert());
+         avtaleMelding.setDatoForRedusertProsent(avtaleInnhold.getDatoForRedusertProsent());
+         avtaleMelding.setStillingstype(avtaleInnhold.getStillingstype());
+         avtaleMelding.setInkluderingstilskuddBegrunnelse(avtaleInnhold.getInkluderingstilskuddBegrunnelse());
+         avtaleMelding.setInkluderingstilskuddTotalBeløp(avtaleInnhold.inkluderingstilskuddTotalBeløp());
+-        avtaleMelding.setGodkjentAvDeltaker(avtaleInnhold.getGodkjentAvDeltaker());
+-        avtaleMelding.setGodkjentTaushetserklæringAvMentor(avtaleInnhold.getGodkjentTaushetserklæringAvMentor());
+-        avtaleMelding.setGodkjentAvArbeidsgiver(avtaleInnhold.getGodkjentAvArbeidsgiver());
+-        avtaleMelding.setGodkjentAvVeileder(avtaleInnhold.getGodkjentAvVeileder());
+-        avtaleMelding.setGodkjentAvBeslutter(avtaleInnhold.getGodkjentAvBeslutter());
+-        avtaleMelding.setAvtaleInngått(avtaleInnhold.getAvtaleInngått());
+-        avtaleMelding.setIkrafttredelsestidspunkt(avtaleInnhold.getIkrafttredelsestidspunkt());
++        avtaleMelding.setGodkjentAvDeltaker(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getGodkjentAvDeltaker()));
++        avtaleMelding.setGodkjentTaushetserklæringAvMentor(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getGodkjentTaushetserklæringAvMentor()));
++        avtaleMelding.setGodkjentAvArbeidsgiver(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getGodkjentAvArbeidsgiver()));
++        avtaleMelding.setGodkjentAvVeileder(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getGodkjentAvVeileder()));
++        avtaleMelding.setGodkjentAvBeslutter(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getGodkjentAvBeslutter()));
++        avtaleMelding.setAvtaleInngått(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getAvtaleInngått()));
++        avtaleMelding.setIkrafttredelsestidspunkt(DatoUtils.instantTilLocalDateTime(avtaleInnhold.getIkrafttredelsestidspunkt()));
+         avtaleMelding.setGodkjentAvNavIdent(avtaleInnhold.getGodkjentAvNavIdent());
+         avtaleMelding.setGodkjentAvBeslutterNavIdent(avtaleInnhold.getGodkjentAvBeslutterNavIdent());
+         avtaleMelding.setEnhetKostnadssted(avtaleInnhold.getEnhetKostnadssted());
+         avtaleMelding.setEnhetsnavnKostnadssted(avtaleInnhold.getEnhetsnavnKostnadssted());
+         avtaleMelding.setGodkjentPaVegneGrunn(avtaleInnhold.getGodkjentPaVegneGrunn());
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMeldingEntitet.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMeldingEntitet.java
+index f493371e..1bf00c0d 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMeldingEntitet.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datadeling/AvtaleMeldingEntitet.java
+@@ -9,11 +9,11 @@ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Status;
+ import org.springframework.data.domain.AbstractAggregateRoot;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Entity
+ @Data
+ @NoArgsConstructor
+@@ -26,16 +26,16 @@ public class AvtaleMeldingEntitet extends AbstractAggregateRoot<AvtaleMeldingEnt
+     @Enumerated(EnumType.STRING)
+     private HendelseType hendelseType;
+ 
+     @Enumerated(EnumType.STRING)
+     private Status avtaleStatus;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     private String json;
+     private boolean sendt;
+     private boolean sendtCompacted;
+ 
+-    public AvtaleMeldingEntitet(UUID meldingId, UUID avtaleId, LocalDateTime tidspunkt, HendelseType hendelseType, Status avtaleStatus, String meldingAsJson) {
++    public AvtaleMeldingEntitet(UUID meldingId, UUID avtaleId, Instant tidspunkt, HendelseType hendelseType, Status avtaleStatus, String meldingAsJson) {
+         this.meldingId = meldingId;
+         this.avtaleId = avtaleId;
+         this.hendelseType = hendelseType;
+         this.tidspunkt = tidspunkt;
+         this.json = meldingAsJson;
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/AvroTiltakHendelseFabrikk.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/AvroTiltakHendelseFabrikk.java
+index 4876f3de..dc575579 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/AvroTiltakHendelseFabrikk.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/AvroTiltakHendelseFabrikk.java
+@@ -5,13 +5,10 @@ import no.nav.tag.tiltaksgjennomforing.avtale.Avtale;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtaleopphav;
+ import no.nav.tag.tiltaksgjennomforing.avtale.ForkortetGrunn;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Tiltakstype;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ 
+-import java.time.Instant;
+-import java.time.LocalDateTime;
+-import java.time.ZoneId;
+ import java.util.Optional;
+ import java.util.UUID;
+ 
+ @UtilityClass
+ public class AvroTiltakHendelseFabrikk {
+@@ -56,16 +53,16 @@ public class AvroTiltakHendelseFabrikk {
+         hendelse.setGodkjentPaVegneAv(avtale.getGjeldendeInnhold().isGodkjentPaVegneAv());
+         hendelse.setIkkeBankId(avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn() != null && avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn().isIkkeBankId());
+         hendelse.setReservert(avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn() != null && avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn().isReservert());
+         hendelse.setDigitalKompetanse(avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn() != null && avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn().isDigitalKompetanse());
+         hendelse.setArenaMigreringDeltaker(avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn() != null && avtale.getGjeldendeInnhold().getGodkjentPaVegneGrunn().isArenaMigreringDeltaker());
+-        hendelse.setGodkjentAvDeltaker(toInstant(avtale.getGjeldendeInnhold().getGodkjentAvDeltaker()));
+-        hendelse.setGodkjentAvArbeidsgiver(toInstant(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver()));
+-        hendelse.setGodkjentAvArbeidsgiver(toInstant(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver()));
+-        hendelse.setGodkjentAvVeileder(toInstant(avtale.getGjeldendeInnhold().getGodkjentAvVeileder()));
+-        hendelse.setGodkjentAvBeslutter(toInstant(avtale.getGjeldendeInnhold().getGodkjentAvBeslutter()));
+-        hendelse.setAvtaleInngaatt(toInstant(avtale.getGjeldendeInnhold().getAvtaleInngått()));
++        hendelse.setGodkjentAvDeltaker(avtale.getGjeldendeInnhold().getGodkjentAvDeltaker());
++        hendelse.setGodkjentAvArbeidsgiver(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver());
++        hendelse.setGodkjentAvArbeidsgiver(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver());
++        hendelse.setGodkjentAvVeileder(avtale.getGjeldendeInnhold().getGodkjentAvVeileder());
++        hendelse.setGodkjentAvBeslutter(avtale.getGjeldendeInnhold().getGodkjentAvBeslutter());
++        hendelse.setAvtaleInngaatt(avtale.getGjeldendeInnhold().getAvtaleInngått());
+         hendelse.setUtfortAv(utførtAv);
+         hendelse.setEnhetOppfolging(avtale.getEnhetOppfolging());
+         hendelse.setEnhetGeografisk(avtale.getEnhetGeografisk());
+         hendelse.setOpprettetAvArbeidsgiver(Avtaleopphav.ARBEIDSGIVER.equals(avtale.getOpphav()));
+         hendelse.setAnnullertTidspunkt(avtale.getAnnullertTidspunkt());
+@@ -79,13 +76,6 @@ public class AvroTiltakHendelseFabrikk {
+         if (avtale.getTiltakstype() == Tiltakstype.SOMMERJOBB || avtale.getTiltakstype() == Tiltakstype.MIDLERTIDIG_LONNSTILSKUDD || avtale.getTiltakstype() == Tiltakstype.VARIG_LONNSTILSKUDD) {
+             return Boolean.TRUE;
+         }
+         return Boolean.FALSE;
+     }
+-
+-    private static Instant toInstant(LocalDateTime tidspunkt) {
+-        if (tidspunkt == null) {
+-            return null;
+-        }
+-        return tidspunkt.atZone(ZoneId.systemDefault()).toInstant();
+-    }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/DvhMeldingEntitet.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/DvhMeldingEntitet.java
+index c15eae40..65c2c582 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/DvhMeldingEntitet.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/datavarehus/DvhMeldingEntitet.java
+@@ -9,32 +9,31 @@ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtale;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Status;
+ import org.springframework.data.domain.AbstractAggregateRoot;
+ 
+-import java.time.LocalDateTime;
+-import java.time.ZoneId;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Entity
+ @Data
+ @NoArgsConstructor
+ @Table(name = "dvh_melding")
+ public class DvhMeldingEntitet extends AbstractAggregateRoot<DvhMeldingEntitet> {
+     @Id
+     private UUID meldingId;
+     private UUID avtaleId;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     @Enumerated(EnumType.STRING)
+     private Status tiltakStatus;
+     private String json;
+     private boolean sendt;
+ 
+     public DvhMeldingEntitet(Avtale avtale, AvroTiltakHendelse avroTiltakHendelse) {
+         this.meldingId = UUID.fromString(avroTiltakHendelse.getMeldingId());
+         this.avtaleId = avtale.getId();
+-        this.tidspunkt = LocalDateTime.ofInstant(avroTiltakHendelse.getTidspunkt(), ZoneId.systemDefault());
++        this.tidspunkt = avroTiltakHendelse.getTidspunkt();
+         this.tiltakStatus = avtale.getStatus();
+         this.json = avroTiltakHendelse.toString();
+         registerEvent(new DvhMeldingOpprettet(this, avroTiltakHendelse));
+     }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapper.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapper.java
+index d2a449c2..f0829a60 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapper.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapper.java
+@@ -5,11 +5,13 @@ import no.nav.tag.tiltaksgjennomforing.avtale.AvtaleInnhold;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtalerolle;
+ import no.nav.tag.tiltaksgjennomforing.avtale.GodkjentPaVegneGrunn;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Identifikator;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Maal;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Tiltakstype;
++import no.nav.tag.tiltaksgjennomforing.utils.DatoUtils;
+ 
++import java.time.ZoneId;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+ import static no.nav.tag.tiltaksgjennomforing.satser.Sats.VTAO_SATS;
+ 
+@@ -30,14 +32,14 @@ public class AvtaleTilJournalfoeringMapper {
+         avtaleTilJournalfoering.setMentorFornavn(avtale.getGjeldendeInnhold().getMentorFornavn());
+         avtaleTilJournalfoering.setMentorEtternavn(avtale.getGjeldendeInnhold().getMentorEtternavn());
+         avtaleTilJournalfoering.setMentorOppgaver(avtale.getGjeldendeInnhold().getMentorOppgaver());
+         avtaleTilJournalfoering.setMentorAntallTimer(avtale.getGjeldendeInnhold().getMentorAntallTimer());
+         avtaleTilJournalfoering.setMentorTimelonn(avtale.getGjeldendeInnhold().getMentorTimelonn());
+-        avtaleTilJournalfoering.setGodkjentAvArbeidsgiver(avtaleInnhold.getGodkjentAvArbeidsgiver().toLocalDate());
+-        avtaleTilJournalfoering.setGodkjentAvVeileder(avtaleInnhold.getGodkjentAvVeileder().toLocalDate());
+-        avtaleTilJournalfoering.setGodkjentAvDeltaker(avtaleInnhold.getGodkjentAvDeltaker().toLocalDate());
+-        avtaleTilJournalfoering.setOpprettet(avtale.getOpprettetTidspunkt().toLocalDate());
++        avtaleTilJournalfoering.setGodkjentAvArbeidsgiver(DatoUtils.instantTilLocalDate(avtaleInnhold.getGodkjentAvArbeidsgiver()));
++        avtaleTilJournalfoering.setGodkjentAvVeileder(DatoUtils.instantTilLocalDate(avtaleInnhold.getGodkjentAvVeileder()));
++        avtaleTilJournalfoering.setGodkjentAvDeltaker(DatoUtils.instantTilLocalDate(avtaleInnhold.getGodkjentAvDeltaker()));
++        avtaleTilJournalfoering.setOpprettet(avtale.getOpprettetTidspunkt().atZone(ZoneId.systemDefault()).toLocalDate());
+         avtaleTilJournalfoering.setAvtaleId(avtale.getId());
+         avtaleTilJournalfoering.setAvtaleVersjonId(avtaleInnhold.getId());
+         avtaleTilJournalfoering.setDeltakerFnr(identifikatorAsString(avtale.getDeltakerFnr()));
+         avtaleTilJournalfoering.setMentorFnr(identifikatorAsString(avtale.getMentorFnr()));
+         avtaleTilJournalfoering.setBedriftNr(identifikatorAsString(avtale.getBedriftNr()));
+@@ -54,11 +56,11 @@ public class AvtaleTilJournalfoeringMapper {
+         avtaleTilJournalfoering.setVeilederEtternavn(avtaleInnhold.getVeilederEtternavn());
+         avtaleTilJournalfoering.setVeilederTlf(avtaleInnhold.getVeilederTlf());
+         avtaleTilJournalfoering.setOppfolging(avtaleInnhold.getOppfolging());
+         avtaleTilJournalfoering.setTilrettelegging(avtaleInnhold.getTilrettelegging());
+         avtaleTilJournalfoering.setStartDato(avtaleInnhold.getStartDato());
+-        avtaleTilJournalfoering.setOpprettetAar(avtale.getOpprettetTidspunkt().getYear());
++        avtaleTilJournalfoering.setOpprettetAar(avtale.getOpprettetTidspunkt().atZone(ZoneId.systemDefault()).getYear());
+         avtaleTilJournalfoering.setSluttDato(avtaleInnhold.getSluttDato());
+         avtaleTilJournalfoering.setStillingprosent(avtale.getGjeldendeInnhold().getStillingprosent());
+         avtaleTilJournalfoering.setAntallDagerPerUke(avtale.getGjeldendeInnhold().getAntallDagerPerUke());
+         avtaleTilJournalfoering.setMaal(maalListToMaalTilJournalfoeringList(avtaleInnhold.getMaal()));
+         avtaleTilJournalfoering.setGodkjentPaVegneGrunn(godkjentPaVegneGrunn(avtaleInnhold.getGodkjentPaVegneGrunn()));
+@@ -80,17 +82,15 @@ public class AvtaleTilJournalfoeringMapper {
+ 
+         if (avtalerolle != null) {
+             avtaleTilJournalfoering.setAvtalerolle(avtalerolle);
+         }
+         if (avtaleInnhold.getGodkjentTaushetserklæringAvMentor() != null) {
+-            avtaleTilJournalfoering.setGodkjentTaushetserklæringAvMentor(avtaleInnhold.getGodkjentTaushetserklæringAvMentor().toLocalDate());
++            avtaleTilJournalfoering.setGodkjentTaushetserklæringAvMentor(DatoUtils.instantTilLocalDate(avtaleInnhold.getGodkjentTaushetserklæringAvMentor()));
+         }
+ 
+         if (avtale.getTiltakstype().equals(Tiltakstype.VTAO)) {
+-            avtaleTilJournalfoering.setSumLonnstilskudd(
+-                    VTAO_SATS.hentGjeldendeSats(avtale.getOpprettetTidspunkt().toLocalDate())
+-            );
++            avtaleTilJournalfoering.setSumLonnstilskudd(VTAO_SATS.hentGjeldendeSats(avtale.getOpprettetTidspunkt()));
+         }
+ 
+         return avtaleTilJournalfoering;
+     }
+ 
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/satser/Sats.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/satser/Sats.java
+index fcc3f534..d1a5d63b 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/satser/Sats.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/satser/Sats.java
+@@ -1,8 +1,10 @@
+ package no.nav.tag.tiltaksgjennomforing.satser;
+ 
++import java.time.Instant;
+ import java.time.LocalDate;
++import java.time.ZoneId;
+ import java.util.ArrayList;
+ import java.util.Comparator;
+ import java.util.List;
+ import java.util.NavigableMap;
+ import java.util.Objects;
+@@ -65,10 +67,14 @@ public class Sats {
+ 
+     public NavigableMap<LocalDate, Integer> getSatsePerioder() {
+         return satsePerioder;
+     }
+ 
++    public Integer hentGjeldendeSats(Instant instant) {
++        return hentGjeldendeSats(instant.atZone(ZoneId.systemDefault()).toLocalDate());
++    }
++
+     public Integer hentGjeldendeSats(LocalDate dato) {
+         var entry = satsePerioder.floorEntry(dato);
+         return entry == null ? null : entry.getValue();
+     }
+ 
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/sporingslogg/Sporingslogg.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/sporingslogg/Sporingslogg.java
+index e37c98a2..a93afe86 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/sporingslogg/Sporingslogg.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/sporingslogg/Sporingslogg.java
+@@ -8,28 +8,28 @@ import lombok.Data;
+ import lombok.EqualsAndHashCode;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtale;
+ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Data
+ @EqualsAndHashCode(callSuper = false)
+ @Entity
+ public class Sporingslogg {
+     @Id
+     private UUID id;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     private UUID avtaleId;
+     @Enumerated(EnumType.STRING)
+     private HendelseType hendelseType;
+ 
+     public static Sporingslogg nyHendelse(Avtale avtale, HendelseType hendelseType) {
+         Sporingslogg sporingslogg = new Sporingslogg();
+         sporingslogg.id = UUID.randomUUID();
+-        sporingslogg.tidspunkt = Now.localDateTime();
++        sporingslogg.tidspunkt = Now.instant();
+         sporingslogg.avtaleId = avtale.getId();
+         sporingslogg.hendelseType = hendelseType;
+         return sporingslogg;
+     }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/tilskuddsperiode/TilskuddsperiodeGodkjentMelding.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/tilskuddsperiode/TilskuddsperiodeGodkjentMelding.java
+index e97c7b09..2e6b582f 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/tilskuddsperiode/TilskuddsperiodeGodkjentMelding.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/tilskuddsperiode/TilskuddsperiodeGodkjentMelding.java
+@@ -7,10 +7,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.Avtale;
+ import no.nav.tag.tiltaksgjennomforing.avtale.BedriftNr;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Identifikator;
+ import no.nav.tag.tiltaksgjennomforing.avtale.NavIdent;
+ import no.nav.tag.tiltaksgjennomforing.avtale.TilskuddPeriode;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Tiltakstype;
++import no.nav.tag.tiltaksgjennomforing.utils.DatoUtils;
+ 
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
+ import java.util.UUID;
+ 
+@@ -82,10 +83,10 @@ public class TilskuddsperiodeGodkjentMelding {
+                 resendingsnummer,
+                 tilskuddsperiode.getEnhet(),
+                 tilskuddsperiode.getGodkjentAvNavIdent(),
+                 avtale.getGjeldendeInnhold().getVeilederFornavn(),
+                 avtale.getGjeldendeInnhold().getVeilederEtternavn(),
+-                tilskuddsperiode.getGodkjentTidspunkt(),
++                DatoUtils.instantTilLocalDateTime(tilskuddsperiode.getGodkjentTidspunkt()),
+                 avtale.getGjeldendeInnhold().getArbeidsgiverKontonummer()
+         );
+     }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/utils/DatoUtils.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/utils/DatoUtils.java
+index deefe8ff..02180e37 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/utils/DatoUtils.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/utils/DatoUtils.java
+@@ -1,16 +1,39 @@
+ package no.nav.tag.tiltaksgjennomforing.utils;
+ 
+ import lombok.experimental.UtilityClass;
+ 
++import java.time.Instant;
+ import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.ZoneId;
++import java.time.ZonedDateTime;
++import java.util.Optional;
+ 
+ @UtilityClass
+ public class DatoUtils {
+     public static LocalDate sisteDatoIMnd(LocalDate dato) {
+         return LocalDate.of(dato.getYear(), dato.getMonth(), dato.lengthOfMonth());
+     }
+ 
+     public static LocalDate maksDato(LocalDate date1, LocalDate date2) {
+         return date1.isAfter(date2) ? date1 : date2;
+     }
++
++    public static LocalDateTime instantTilLocalDateTime(Instant instant) {
++        return Optional.ofNullable(instant)
++            .map(DatoUtils::instantTilZonedDateTime)
++            .map(ZonedDateTime::toLocalDateTime)
++            .orElse(null);
++    }
++
++    public static LocalDate instantTilLocalDate(Instant instant) {
++        return Optional.ofNullable(instant)
++            .map(DatoUtils::instantTilZonedDateTime)
++            .map(ZonedDateTime::toLocalDate)
++            .orElse(null);
++    }
++
++    private static ZonedDateTime instantTilZonedDateTime(Instant instant) {
++        return instant.atZone(ZoneId.systemDefault());
++    }
+ }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Sms.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Sms.java
+index a10e59ee..82961978 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Sms.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Sms.java
+@@ -15,11 +15,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.Identifikator;
+ import no.nav.tag.tiltaksgjennomforing.avtale.IdentifikatorConverter;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import no.nav.tag.tiltaksgjennomforing.varsel.events.SmsSendt;
+ import org.springframework.data.domain.AbstractAggregateRoot;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Slf4j
+ @Data
+ @EqualsAndHashCode(callSuper = false)
+@@ -32,11 +32,11 @@ public class Sms extends AbstractAggregateRoot<Sms> {
+     private String telefonnummer;
+     @Convert(converter = IdentifikatorConverter.class)
+     private Identifikator identifikator;
+     private String meldingstekst;
+     private UUID avtaleId;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     @Enumerated(EnumType.STRING)
+     private HendelseType hendelseType;
+     private String avsenderApplikasjon;
+ 
+     public static Sms nyttVarsel(String telefonnummer,
+@@ -48,11 +48,11 @@ public class Sms extends AbstractAggregateRoot<Sms> {
+         sms.smsVarselId = UUID.randomUUID();
+         sms.telefonnummer = telefonnummer;
+         sms.identifikator = identifikator;
+         sms.meldingstekst = meldingstekst;
+         sms.hendelseType = hendelseType;
+-        sms.tidspunkt = Now.localDateTime();
++        sms.tidspunkt = Now.instant();
+         sms.avtaleId = avtaleId;
+         sms.avsenderApplikasjon = "tiltaksgjennomforing-api";
+         sms.registerEvent(new SmsSendt(sms));
+         return sms;
+     }
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Varsel.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Varsel.java
+index 513994a5..3c53461b 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Varsel.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/Varsel.java
+@@ -17,11 +17,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.IdentifikatorConverter;
+ import no.nav.tag.tiltaksgjennomforing.avtale.TilskuddPeriode;
+ import no.nav.tag.tiltaksgjennomforing.datadeling.AvtaleHendelseUtførtAvRolle;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.springframework.data.domain.AbstractAggregateRoot;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.time.format.DateTimeFormatter;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+ 
+ @Data
+@@ -40,11 +40,11 @@ public class Varsel extends AbstractAggregateRoot<Varsel> {
+     private String tekst;
+     @Enumerated(EnumType.STRING)
+     private HendelseType hendelseType;
+     private boolean bjelle;
+     private UUID avtaleId;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     @Enumerated(EnumType.STRING)
+     private Avtalerolle mottaker;
+     @Enumerated(EnumType.STRING)
+     private AvtaleHendelseUtførtAvRolle utførtAv;
+ 
+@@ -88,11 +88,11 @@ public class Varsel extends AbstractAggregateRoot<Varsel> {
+             HendelseType hendelseType,
+             TilskuddPeriode tilskuddPeriode
+     ) {
+         Varsel varsel = new Varsel();
+         varsel.id = UUID.randomUUID();
+-        varsel.tidspunkt = Now.localDateTime();
++        varsel.tidspunkt = Now.instant();
+         varsel.identifikator = identifikator;
+         varsel.utførtAvIdentifikator = utførtAvIdentifikator;
+         varsel.tekst = lagVarselTekst(avtale, tilskuddPeriode, hendelseType);
+         varsel.hendelseType = hendelseType;
+         varsel.avtaleId = avtale.getId();
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/VarselRespons.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/VarselRespons.java
+index 09e48573..9c4322cb 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/VarselRespons.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/VarselRespons.java
+@@ -1,21 +1,21 @@
+ package no.nav.tag.tiltaksgjennomforing.varsel;
+ 
+ import no.nav.tag.tiltaksgjennomforing.avtale.Avtalerolle;
+ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ public record VarselRespons(
+         UUID id,
+         boolean lest,
+         String tekst,
+         HendelseType hendelseType,
+         boolean bjelle,
+         UUID avtaleId,
+-        LocalDateTime tidspunkt,
++        Instant tidspunkt,
+         String utførtAv
+ ) {
+     public VarselRespons(Varsel varsel, Avtalerolle innloggetPart) {
+         this(
+                 varsel.getId(),
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/notifikasjon/ArbeidsgiverNotifikasjon.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/notifikasjon/ArbeidsgiverNotifikasjon.java
+index 7890beb0..8755d99e 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/notifikasjon/ArbeidsgiverNotifikasjon.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/varsel/notifikasjon/ArbeidsgiverNotifikasjon.java
+@@ -13,11 +13,11 @@ import no.nav.tag.tiltaksgjennomforing.avtale.Avtale;
+ import no.nav.tag.tiltaksgjennomforing.avtale.BedriftNr;
+ import no.nav.tag.tiltaksgjennomforing.avtale.BedriftNrConverter;
+ import no.nav.tag.tiltaksgjennomforing.avtale.HendelseType;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ 
+-import java.time.LocalDateTime;
++import java.time.Instant;
+ import java.util.UUID;
+ 
+ @Data
+ @EqualsAndHashCode(callSuper = false)
+ @AllArgsConstructor
+@@ -25,11 +25,11 @@ import java.util.UUID;
+ @Entity
+ public class ArbeidsgiverNotifikasjon {
+ 
+     @Id
+     private UUID id;
+-    private LocalDateTime tidspunkt;
++    private Instant tidspunkt;
+     private UUID avtaleId;
+     @Enumerated(EnumType.STRING)
+     private HendelseType hendelseType;
+     @Convert(converter = BedriftNrConverter.class)
+     private BedriftNr virksomhetsnummer;
+@@ -54,11 +54,11 @@ public class ArbeidsgiverNotifikasjon {
+ 
+         final String lenke = notifikasjonService.getAvtaleLenke(avtale);
+ 
+         ArbeidsgiverNotifikasjon notifikasjon = new ArbeidsgiverNotifikasjon();
+         notifikasjon.id = UUID.randomUUID();
+-        notifikasjon.tidspunkt = Now.localDateTime();
++        notifikasjon.tidspunkt = Now.instant();
+         notifikasjon.avtaleId = avtale.getId();
+         notifikasjon.hendelseType = hendelseType;
+         notifikasjon.virksomhetsnummer = avtale.getBedriftNr();
+         notifikasjon.lenke = lenke;
+         notifikasjon.serviceCode = notifikasjonerProperties.getServiceCode();
+diff --git a/src/main/resources/db/migration/common/V129__tidssoner.sql b/src/main/resources/db/migration/common/V129__tidssoner.sql
+new file mode 100644
+index 00000000..dacf3f3f
+--- /dev/null
++++ b/src/main/resources/db/migration/common/V129__tidssoner.sql
+@@ -0,0 +1,77 @@
++alter table arbeidsgiver_notifikasjon alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
++
++alter table arena_agreement_migration alter column created type timestamp with time zone
++    using created at time zone 'Europe/Oslo';
++
++alter table arena_agreement_migration alter column modified type timestamp with time zone
++    using modified at time zone 'Europe/Oslo';
++
++alter table arena_event alter column created type timestamp with time zone
++    using created at time zone 'Europe/Oslo';
++
++alter table avtale alter column opprettet_tidspunkt type timestamp with time zone
++    using opprettet_tidspunkt at time zone 'Europe/Oslo';
++
++alter table avtale alter column sist_endret type timestamp with time zone
++    using sist_endret at time zone 'UTC';
++
++alter table avtale alter column annullert_tidspunkt type timestamp with time zone
++    using annullert_tidspunkt at time zone 'UTC';
++
++alter table avtale_forkortet alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'UTC';
++
++alter table avtale_innhold alter column godkjent_av_deltaker type timestamp with time zone
++    using godkjent_av_deltaker at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column godkjent_av_arbeidsgiver type timestamp with time zone
++    using godkjent_av_arbeidsgiver at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column godkjent_av_veileder type timestamp with time zone
++    using godkjent_av_veileder at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column godkjent_av_beslutter type timestamp with time zone
++    using godkjent_av_beslutter at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column godkjent_taushetserklæring_av_mentor type timestamp with time zone
++    using godkjent_taushetserklæring_av_mentor at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column avtale_inngått type timestamp with time zone
++    using avtale_inngått at time zone 'Europe/Oslo';
++
++alter table avtale_innhold alter column ikrafttredelsestidspunkt type timestamp with time zone
++    using ikrafttredelsestidspunkt at time zone 'Europe/Oslo';
++
++alter table avtale_melding alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
++
++alter table dvh_melding alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
++
++alter table filter_sok alter column sist_sokt_tidspunkt type timestamp with time zone
++    using sist_sokt_tidspunkt at time zone 'Europe/Oslo';
++
++alter table inkluderingstilskuddsutgift alter column tidspunkt_lagt_til type timestamp with time zone
++    using tidspunkt_lagt_til at time zone 'Europe/Oslo';
++
++alter table maal alter column opprettet_tidspunkt type timestamp with time zone
++    using opprettet_tidspunkt at time zone 'Europe/Oslo';
++
++alter table oppgave alter column opprettet_tidspunkt type timestamp with time zone
++    using opprettet_tidspunkt at time zone 'Europe/Oslo';
++
++alter table sms alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
++
++alter table sporingslogg alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
++
++alter table tilskudd_periode alter column godkjent_tidspunkt type timestamp with time zone
++    using godkjent_tidspunkt at time zone 'Europe/Oslo';
++
++alter table tilskudd_periode alter column avslått_tidspunkt type timestamp with time zone
++    using avslått_tidspunkt at time zone 'Europe/Oslo';
++
++alter table varsel alter column tidspunkt type timestamp with time zone
++    using tidspunkt at time zone 'Europe/Oslo';
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/LastInnTestData.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/LastInnTestData.java
+index 9783748f..1e1dd122 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/LastInnTestData.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/LastInnTestData.java
+@@ -47,11 +47,11 @@ public class LastInnTestData implements ApplicationListener<ApplicationReadyEven
+         avtaler.add(TestData.enAvtaleMedAltUtfylt());
+         avtaler.add(TestData.enAvtaleMedAltUtfyltGodkjentAvVeileder());
+         avtaler.add(TestData.enAvtaleMedFlereVersjoner());
+         avtaler.add(TestData.enAvtaleKlarForOppstart());
+         Avtale lilly = TestData.enMidlertidigLonnstilskuddAvtaleMedAltUtfylt();
+-        lilly.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        lilly.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         avtaler.add(lilly);
+         avtaler.add(TestData.enMidlertidigLonnstilskuddAvtaleGodkjentAvVeileder());
+ 
+         avtaler.add(TestData.enLonnstilskuddAvtaleGodkjentAvVeilederTilbakeITid());
+         Now.fixedDate(LocalDate.of(2021, 6, 1));
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/ArbeidsgiverTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/ArbeidsgiverTest.java
+index 5f91914b..d0004e95 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/ArbeidsgiverTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/ArbeidsgiverTest.java
+@@ -36,20 +36,20 @@ import static org.mockito.Mockito.when;
+ public class ArbeidsgiverTest {
+ 
+     @Test
+     public void opphevGodkjenninger__kan_oppheve_ved_deltakergodkjenning() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         Arbeidsgiver arbeidsgiver = TestData.enArbeidsgiver(avtale);
+         arbeidsgiver.opphevGodkjenninger(avtale);
+         assertThat(avtale.erGodkjentAvDeltaker()).isFalse();
+     }
+ 
+     @Test
+     public void opphevGodkjenninger__kan_ikke_oppheve_veiledergodkjenning() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         Arbeidsgiver arbeidsgiver = TestData.enArbeidsgiver(avtale);
+         assertThatThrownBy(() -> arbeidsgiver.opphevGodkjenninger(avtale)).isInstanceOf(KanIkkeOppheveException.class);
+     }
+ 
+     @Test
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleRepositoryTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleRepositoryTest.java
+index 3cf57241..68764acc 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleRepositoryTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleRepositoryTest.java
+@@ -157,11 +157,11 @@ public class AvtaleRepositoryTest {
+     }
+ 
+     @Test
+     public void avtale_godkjent_pa_vegne_av_skal_lagres_med_pa_vegne_av_grunn() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         GodkjentPaVegneGrunn godkjentPaVegneGrunn = TestData.enGodkjentPaVegneGrunn();
+         godkjentPaVegneGrunn.setIkkeBankId(true);
+         Veileder veileder = TestData.enVeileder(avtale);
+ 
+         veileder.godkjennForVeilederOgDeltaker(godkjentPaVegneGrunn, avtale);
+@@ -171,11 +171,11 @@ public class AvtaleRepositoryTest {
+     }
+ 
+     @Test
+     public void lagre_pa_vegne_skal_publisere_domainevent() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         Veileder veileder = TestData.enVeileder(avtale);
+         GodkjentPaVegneGrunn godkjentPaVegneGrunn = TestData.enGodkjentPaVegneGrunn();
+         veileder.godkjennForVeilederOgDeltaker(godkjentPaVegneGrunn, avtale);
+ 
+         avtaleRepository.save(avtale);
+@@ -215,12 +215,12 @@ public class AvtaleRepositoryTest {
+     }
+ 
+     @Test
+     public void godkjennForVeileder__skal_publisere_domainevent() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         TestData.enVeileder(avtale).godkjennAvtale(avtale);
+         avtaleRepository.save(avtale);
+         verify(metrikkRegistrering).godkjentAvVeileder(any());
+     }
+ 
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleTest.java
+index 67b4dd94..67ec3642 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtaleTest.java
+@@ -390,16 +390,16 @@ public class AvtaleTest {
+ 
+     @Test
+     public void test_riktig_beregning_NEDSATT_ARBEIDSEVNE_Midlertidig_Lonnstilskudd_Avtale_som_varer_i_2_aar() {
+         Now.fixedDate(LocalDate.of(2024, 7, 29));
+         Avtale avtale = TestData.enMidLonnstilskuddAvtaleMedVarigTilpassetSatsMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         double otpSats = 0.048;
+         BigDecimal feriepengesats = new BigDecimal("0.166");
+         BigDecimal arbeidsgiveravgift = BigDecimal.ZERO;
+         int manedslonn = 44444;
+@@ -943,53 +943,53 @@ public class AvtaleTest {
+     @Test
+     public void status__avsluttet_i_gaar() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().minusWeeks(4).minusDays(1));
+         avtale.getGjeldendeInnhold().setSluttDato(avtale.getGjeldendeInnhold().getStartDato().plusWeeks(4));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.AVSLUTTET);
+     }
+ 
+     @Test
+     public void status__avslutter_i_dag() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().minusWeeks(4));
+         avtale.getGjeldendeInnhold().setSluttDato(avtale.getGjeldendeInnhold().getStartDato().plusWeeks(4));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.GJENNOMFØRES);
+     }
+ 
+     @Test
+     public void status__startet_i_dag() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate());
+         avtale.getGjeldendeInnhold().setSluttDato(avtale.getGjeldendeInnhold().getStartDato().plusWeeks(4));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.GJENNOMFØRES);
+     }
+ 
+     @Test
+     public void status__starter_i_morgen() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().plusDays(1));
+         avtale.getGjeldendeInnhold().setSluttDato(avtale.getGjeldendeInnhold().getStartDato().plusWeeks(4));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.KLAR_FOR_OPPSTART);
+     }
+ 
+     @Test
+@@ -1002,14 +1002,14 @@ public class AvtaleTest {
+     @Test
+     public void status__veileder_har_godkjent() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().plusDays(1));
+         avtale.getGjeldendeInnhold().setSluttDato(Now.localDate().plusDays(1).plusMonths(1).minusDays(1));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.KLAR_FOR_OPPSTART);
+     }
+ 
+     @Test
+@@ -1017,14 +1017,14 @@ public class AvtaleTest {
+         // Deltaker tlf ble innført etter at avtaler er opprettet. Det kan derfor være
+         // avtaler som er inngått som mangler tlf.
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().minusDays(1));
+         avtale.getGjeldendeInnhold().setSluttDato(Now.localDate().minusDays(1).plusMonths(1));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setDeltakerTlf(null);
+         avtale.setStatus(Status.fra(avtale));
+         assertThat(avtale.getStatus()).isEqualTo(Status.GJENNOMFØRES);
+     }
+ 
+@@ -1111,11 +1111,11 @@ public class AvtaleTest {
+ 
+     @Test
+     public void utforEndring__kalles_ved_godkjennForVeilederOgDeltaker() throws InterruptedException {
+         Instant førEndringen = Now.instant();
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         Thread.sleep(10);
+         avtale.godkjennForVeilederOgDeltaker(TestData.enNavIdent(), TestData.enGodkjentPaVegneGrunn());
+         assertThat(avtale.getSistEndret()).isAfter(førEndringen);
+     }
+ 
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtalepartTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtalepartTest.java
+index 8f82e99f..d8e52509 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtalepartTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/AvtalepartTest.java
+@@ -223,20 +223,20 @@ public class AvtalepartTest {
+         );
+ 
+         when(tilgangskontrollService.hentSkrivetilgang(veileder, avtale.getDeltakerFnr())).thenReturn(new Tilgang.Tillat());
+         when(eregService.hentVirksomhet(any())).thenReturn(new Organisasjon(TestData.etBedriftNr(), "Arbeidsplass AS"));
+ 
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         veileder.godkjennAvtale(avtale);
+         assertThat(avtale.erGodkjentAvArbeidsgiver()).isTrue();
+     }
+ 
+     @Test
+     public void opphevGodkjenninger__veileder_skal_kunne_trekke_tilbake_egen_godkjenning() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         Veileder veileder = TestData.enVeileder(avtale);
+         veileder.opphevGodkjenninger(avtale);
+         assertThat(avtale.erGodkjentAvVeileder()).isFalse();
+     }
+ 
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/DeltakerAlleredePaTiltakTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/DeltakerAlleredePaTiltakTest.java
+index 9ecb04e3..6cdf513c 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/DeltakerAlleredePaTiltakTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/DeltakerAlleredePaTiltakTest.java
+@@ -14,12 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.test.annotation.DirtiesContext;
+ import org.springframework.test.context.ActiveProfiles;
+ 
+ import java.sql.Date;
++import java.time.Instant;
+ import java.time.LocalDate;
+-import java.time.LocalDateTime;
+ import java.util.List;
+ import java.util.UUID;
+ 
+ @SpringBootTest
+ @ActiveProfiles(Miljø.TEST)
+@@ -65,33 +65,33 @@ public class DeltakerAlleredePaTiltakTest {
+         settAvtaleInformasjon(
+                 TestData.enArbeidstreningAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enMentorAvtaleUsignert(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enInkluderingstilskuddAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+     }
+ 
+-    private void settAvtaleInformasjon(Avtale avtale, Fnr deltakerFnr, LocalDate startDato, LocalDate sluttDato, LocalDateTime godkjentAvVeileder) {
++    private void settAvtaleInformasjon(Avtale avtale, Fnr deltakerFnr, LocalDate startDato, LocalDate sluttDato, Instant godkjentAvVeileder) {
+         avtale.setDeltakerFnr(deltakerFnr);
+         avtale.getGjeldendeInnhold().setStartDato(startDato);
+         avtale.getGjeldendeInnhold().setSluttDato(sluttDato);
+-        if(godkjentAvVeileder != null) {
++        if (godkjentAvVeileder != null) {
+             avtale.getGjeldendeInnhold().setGodkjentAvVeileder(godkjentAvVeileder);
+         }
+         avtaleRepository.save(avtale);
+     }
+ 
+@@ -163,25 +163,25 @@ public class DeltakerAlleredePaTiltakTest {
+         settAvtaleInformasjon(
+                 TestData.enArbeidstreningAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate().plusMonths(1).plusDays(1),
+                 Now.localDate().plusMonths(3),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enMentorAvtaleUsignert(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enInkluderingstilskuddAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         List<AlleredeRegistrertAvtale> treffPaAvtalerSomErUlovligMatch = veileder_z123456.hentAvtaleDeltakerAlleredeErRegistrertPaa(
+                 new Fnr("00000000000"),
+                 Tiltakstype.ARBEIDSTRENING,
+                 null,
+@@ -198,25 +198,25 @@ public class DeltakerAlleredePaTiltakTest {
+         settAvtaleInformasjon(
+                 TestData.enArbeidstreningAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate().plusMonths(1).plusDays(1),
+                 Now.localDate().plusMonths(3),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enMentorAvtaleUsignert(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enInkluderingstilskuddAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         List<AlleredeRegistrertAvtale> treffPaAvtalerSomErUlovligMatch = veileder_z123456.hentAvtaleDeltakerAlleredeErRegistrertPaa(
+                 new Fnr("00000000000"),
+                 Tiltakstype.MENTOR,
+                 null,
+@@ -233,11 +233,11 @@ public class DeltakerAlleredePaTiltakTest {
+         settAvtaleInformasjon(
+                 TestData.enArbeidstreningAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate().plusMonths(1).plusDays(1),
+                 Now.localDate().plusMonths(3),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enArbeidstreningAvtale(),
+                 new Fnr("00000000000"),
+                 null,
+@@ -247,18 +247,18 @@ public class DeltakerAlleredePaTiltakTest {
+         settAvtaleInformasjon(
+                 TestData.enMentorAvtaleUsignert(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         settAvtaleInformasjon(
+                 TestData.enInkluderingstilskuddAvtale(),
+                 new Fnr("00000000000"),
+                 Now.localDate(),
+                 Now.localDate().plusMonths(2),
+-                Now.localDateTime()
++                Now.instant()
+         );
+         List<AlleredeRegistrertAvtale> treffPaAvtalerSomErUlovligMatch = veileder_z123456.hentAvtaleDeltakerAlleredeErRegistrertPaa(
+                 new Fnr("00000000000"),
+                 Tiltakstype.ARBEIDSTRENING,
+                 null,
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/TestData.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/TestData.java
+index 9858a031..25b58ecb 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/TestData.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/TestData.java
+@@ -88,11 +88,11 @@ public class TestData {
+ 
+     public static Avtale enInkluderingstilskuddAvtaleUtfyltOgGodkjentAvArbeidsgiver() {
+         NavIdent veilderNavIdent = new NavIdent("Z123456");
+         Avtale avtale = Avtale.opprett(lagOpprettAvtale(Tiltakstype.INKLUDERINGSTILSKUDD), Avtaleopphav.VEILEDER, veilderNavIdent);
+         avtale.endreAvtale(endringPåAlleInkluderingstilskuddFelter(), Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         return avtale;
+     }
+ 
+     public static Avtale enSommerjobbAvtale() {
+         NavIdent veilderNavIdent = new NavIdent("Z123456");
+@@ -181,17 +181,17 @@ public class TestData {
+         return avtale;
+     }
+ 
+     public static Avtale enAvtaleMedAltUtfyltGodkjentAvVeileder() {
+         Avtale avtale = enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentTaushetserklæringAvMentor(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentTaushetserklæringAvMentor(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         avtale.getGjeldendeInnhold().setRefusjonKontaktperson(new RefusjonKontaktperson("Donald", "Duck", "55555123", true));
+         return avtale;
+     }
+ 
+@@ -383,16 +383,16 @@ public class TestData {
+     }
+ 
+ 
+     public static Avtale enMidlertidigLonnstilskuddAvtaleGodkjentAvVeileder() {
+         Avtale avtale = enMidlertidigLonnstilskuddAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ 
+     public static Avtale enMidlertidigLonnstilskuddAvtaleGodkjentAvVeilederAvslåttePerioderSomMåFølgesOpp() {
+@@ -408,55 +408,55 @@ public class TestData {
+         return avtale;
+     }
+ 
+     public static Avtale enSommerjobbLonnstilskuddAvtaleGodkjentAvVeileder(int lonnstilskuddProsent) {
+         Avtale avtale = enSommerjobbLonnstilskuddAvtaleMedAltUtfylt(lonnstilskuddProsent);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ 
+     public static Avtale enMidlertidigLonnstilskuddAvtaleMedSpesieltTilpassetInnsatsGodkjentAvVeileder() {
+         Avtale avtale = enMidlertidigLonnstilskuddAvtaleMedSpesieltTilpassetInnsatsOgAltUtfylt(Tiltakstype.MIDLERTIDIG_LONNSTILSKUDD);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ 
+     public static Avtale enLonnstilskuddAvtaleGodkjentAvVeilederUtenTilskuddsperioder() {
+         Avtale avtale = enMidlertidigLonnstilskuddAvtaleMedAltUtfyltUtenTilskuddsperioder();
+         avtale.setKvalifiseringsgruppe(Kvalifiseringsgruppe.VARIG_TILPASSET_INNSATS);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ 
+     public static Avtale enLonnstilskuddAvtaleGodkjentAvVeilederTilbakeITid() {
+         Avtale avtale = enMidlertidigLonnstilskuddAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setDeltakerFornavn("Geir");
+         avtale.getGjeldendeInnhold().setDeltakerEtternavn("Geirsen");
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().minusMonths(3));
+         avtale.getGjeldendeInnhold().setSluttDato(Now.localDate().plusMonths(1));
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+@@ -469,13 +469,13 @@ public class TestData {
+         endreAvtale.setFeriepengesats(new BigDecimal("0.12"));
+         endreAvtale.setArbeidsgiveravgift(new BigDecimal("0.141"));
+         endreAvtale.setStartDato(LocalDate.of(2021, 6, 1));
+         endreAvtale.setSluttDato(LocalDate.of(2021, 6, 1).plusWeeks(4).minusDays(1));
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         NavIdent veileder = TestData.enNavIdent();
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(veileder);
+         avtale.setVeilederNavIdent(veileder);
+         return avtale;
+     }
+@@ -489,16 +489,16 @@ public class TestData {
+         endreAvtale.setFeriepengesats(new BigDecimal("0.12"));
+         endreAvtale.setArbeidsgiveravgift(new BigDecimal("0.141"));
+         endreAvtale.setStartDato(LocalDate.of(2021, 6, 1));
+         endreAvtale.setSluttDato(LocalDate.of(2021, 6, 1).plusWeeks(4).minusDays(1));
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvBeslutter(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvBeslutter(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+         avtale.getGjeldendeInnhold().setRefusjonKontaktperson(null);
+         return avtale;
+     }
+ 
+@@ -510,12 +510,12 @@ public class TestData {
+         endreAvtale.setFeriepengesats(new BigDecimal("0.12"));
+         endreAvtale.setArbeidsgiveravgift(new BigDecimal("0.141"));
+         endreAvtale.setStartDato(LocalDate.of(2021, 6, 1));
+         endreAvtale.setSluttDato(LocalDate.of(2021, 6, 1).plusWeeks(4).minusDays(1));
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         return avtale;
+     }
+ 
+     public static Avtale enMentorAvtaleMedMedAltUtfylt() {
+         Avtale avtale = enAvtaleMedAltUtfylt();
+@@ -532,24 +532,24 @@ public class TestData {
+     public static Avtale enVtaoAvtaleGodkjentAvVeileder(){
+         Avtale avtale = Avtale.opprett(new OpprettAvtale(TestData.etFodselsnummer(), new BedriftNr("999999999"), Tiltakstype.VTAO), Avtaleopphav.VEILEDER, new NavIdent("Z123456"));
+         setOppfølgingPåAvtale(avtale);
+         EndreAvtale endreAvtale = endringPåAlleVTAOFelter();
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         return avtale;
+     }
+ 
+     public static Avtale enVtaoAvtaleGodkjentAvVeilederAvslåttePerioderSomMåFølgesOpp(){
+         Avtale avtale = Avtale.opprett(new OpprettAvtale(TestData.etFodselsnummer(), new BedriftNr("999999999"), Tiltakstype.VTAO), Avtaleopphav.VEILEDER, new NavIdent("Z123456"));
+         setOppfølgingPåAvtale(avtale);
+         EndreAvtale endreAvtale = endringPåAlleVTAOFelter();
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         avtale.getGjeldendeTilskuddsperiode().avslå(TestData.enNavIdent2(),EnumSet.of(Avslagsårsak.FEIL_I_PROSENTSATS), "Feil i prosentsats");
+         return avtale;
+     }
+ 
+     public static Avtale enVtaoAvtaleGodkjentAvVeilederAvslåttePerioderSomHarBlittRettetAvVeileder(){
+@@ -563,13 +563,13 @@ public class TestData {
+         Avtale avtale = Avtale.opprett(new OpprettAvtale(new Fnr("11111111111"), new BedriftNr("999999999"), Tiltakstype.VTAO), Avtaleopphav.VEILEDER, new NavIdent("A123456"));
+         avtale.setEnhetOppfolging("0904");
+         avtale.setEnhetsnavnOppfolging("Vinstra");
+         EndreAvtale endreAvtale = endringPåAlleVTAOFelter();
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(avtale.getVeilederNavIdent());
+         return avtale;
+     }
+ 
+     public static Avtale enEtterRegistrerdVtaoAvtaleGodkjentAvVeileder(){
+@@ -579,24 +579,24 @@ public class TestData {
+         EndreAvtale endreAvtale = endringPåAlleVTAOFelter();
+         endreAvtale.setDeltakerFornavn("Test");
+         endreAvtale.setDeltakerEtternavn("Testesen");
+         endreAvtale.setStartDato(Now.localDate().minusMonths(12));
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(avtale.getVeilederNavIdent());
+         return avtale;
+     }
+ 
+     public static Avtale enVtaoAvtaleGodkjentAvArbeidsgiver() {
+         Avtale avtale = Avtale.opprett(new OpprettAvtale(TestData.etFodselsnummer(), new BedriftNr("999999999"), Tiltakstype.VTAO), Avtaleopphav.VEILEDER, new NavIdent("Z123456"));
+         setOppfølgingPåAvtale(avtale);
+         EndreAvtale endreAvtale = endringPåAlleVTAOFelter();
+         avtale.endreAvtale(endreAvtale, Avtalerolle.VEILEDER);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         return avtale;
+     }
+ 
+     public static Avtale enVtaoAvtaleIKKEGodkjentAvArbeidsgiver() {
+         Avtale avtale = Avtale.opprett(new OpprettAvtale(TestData.etFodselsnummer(), new BedriftNr("999999999"), Tiltakstype.VTAO),Avtaleopphav.VEILEDER, new NavIdent("Z123456"));
+@@ -1006,16 +1006,16 @@ public class TestData {
+ 
+     public static Avtale enAvtaleKlarForOppstart() {
+         Avtale avtale = enAvtaleMedAltUtfylt();
+         avtale.getGjeldendeInnhold().setStartDato(Now.localDate().plusDays(7));
+         avtale.getGjeldendeInnhold().setSluttDato(avtale.getGjeldendeInnhold().getStartDato().plusMonths(1));
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         avtale.getGjeldendeInnhold().setGodkjentAvNavIdent(TestData.enNavIdent());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ 
+     public static BedriftNr etBedriftNr() {
+@@ -1096,14 +1096,14 @@ public class TestData {
+         return avtale;
+     }
+ 
+     public static Avtale enArbeidstreningAvtaleGodkjentAvVeileder() {
+         Avtale avtale = enArbeidstreningAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
++        avtale.getGjeldendeInnhold().setIkrafttredelsestidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setJournalpostId("1");
+         return avtale;
+     }
+ }
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/VeilederTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/VeilederTest.java
+index 9f4906c6..70567a2b 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/VeilederTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/avtale/VeilederTest.java
+@@ -77,12 +77,12 @@ public class VeilederTest {
+     @Test
+     public void godkjennAvtale__kan_godkjenne_sist() {
+         // GITT
+         Avtale avtale = TestData.enVarigLonnstilskuddAvtaleMedAltUtfylt();
+         avtale.setKvalifiseringsgruppe(Kvalifiseringsgruppe.SITUASJONSBESTEMT_INNSATS);
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+ 
+         VeilarboppfolgingService veilarboppfolgingService = mock(VeilarboppfolgingService.class);
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+         PersondataService persondataService = mock(PersondataService.class);
+         EregService eregService  = mock(EregService.class);
+@@ -116,11 +116,11 @@ public class VeilederTest {
+     @Test
+     public void godkjennForVeilederOgDeltaker__kan_godkjenne_med_riktig_oppfølgingsstatus() {
+         // GITT
+         Avtale avtale = TestData.enVarigLonnstilskuddAvtaleMedAltUtfylt();
+         avtale.setKvalifiseringsgruppe(Kvalifiseringsgruppe.SITUASJONSBESTEMT_INNSATS);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         VeilarboppfolgingService veilarboppfolgingService = mock(VeilarboppfolgingService.class);
+ 
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+@@ -189,11 +189,11 @@ public class VeilederTest {
+     public void godkjennForVeilederOgArbeidsgiver__kan_godkjenne_med_riktig_oppfølgingsstatus() {
+         // GITT
+         Avtale avtale = TestData.enVarigLonnstilskuddAvtaleMedAltUtfylt();
+         avtale.setOpphav(Avtaleopphav.ARENA);
+         avtale.setKvalifiseringsgruppe(Kvalifiseringsgruppe.SITUASJONSBESTEMT_INNSATS);
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
+         VeilarboppfolgingService veilarboppfolgingService = mock(VeilarboppfolgingService.class);
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+ 
+@@ -224,12 +224,12 @@ public class VeilederTest {
+     }
+ 
+     @Test
+     public void godkjennAvtale__kan_ikke_godkjenne_kode6_med_togglet_adressesperresjekk() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         when(featureToggleService.isEnabled(FeatureToggle.KODE_6_SPERRE)).thenReturn(true);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+ 
+         VeilarboppfolgingService veilarboppfolgingService = mock(VeilarboppfolgingService.class);
+@@ -256,12 +256,12 @@ public class VeilederTest {
+     }
+ 
+     @Test
+     public void godkjennAvtale__kan_godkjenne_kode6_uten_togglet_adressesperresjekk() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         when(featureToggleService.isEnabled(FeatureToggle.KODE_6_SPERRE)).thenReturn(false);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+         VeilarboppfolgingService veilarboppfolgingService = mock(VeilarboppfolgingService.class);
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+@@ -289,11 +289,11 @@ public class VeilederTest {
+     }
+ 
+     @Test
+     public void godkjennForVeilederOgDeltaker__kan_ikke_godkjenne_kode6_med_togglet_adressesperresjekk() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         when(featureToggleService.isEnabled(FeatureToggle.KODE_6_SPERRE)).thenReturn(true);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+ 
+@@ -317,11 +317,11 @@ public class VeilederTest {
+ 
+     @Test
+     public void godkjennForVeilederOgDeltaker__kan_godkjenne_kode6_uten_togglet_adressesperresjekk() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+         when(featureToggleService.isEnabled(FeatureToggle.KODE_6_SPERRE)).thenReturn(false);
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         TilgangskontrollService tilgangskontrollService = mock(TilgangskontrollService.class);
+         PersondataService persondataService = mock(PersondataService.class);
+         when(persondataService.hentDiskresjonskode(avtale.getDeltakerFnr())).thenReturn(Diskresjonskode.STRENGT_FORTROLIG);
+ 
+         Veileder veileder = new Veileder(
+@@ -344,14 +344,14 @@ public class VeilederTest {
+     }
+ 
+     @Test
+     public void opphevGodkjenninger__kan_ikke_oppheve_godkjenninger_når_avtale_er_inngått() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
++        avtale.getGjeldendeInnhold().setAvtaleInngått(Now.instant());
+         Veileder veileder = TestData.enVeileder(avtale);
+         assertFeilkode(
+                 Feilkode.KAN_IKKE_OPPHEVE_GODKJENNINGER_VED_INNGAATT_AVTALE,
+                 () -> veileder.opphevGodkjenninger(avtale)
+         );
+@@ -468,24 +468,24 @@ public class VeilederTest {
+ 
+ 
+     @Test
+     public void annullerAvtale__kan_annuller_avtale_etter_veiledergodkjenning() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         Veileder veileder = TestData.enVeileder(avtale);
+         veileder.annullerAvtale("enGrunn", avtale);
+         assertThat(avtale.getAnnullertTidspunkt()).isNotNull();
+         assertThat(avtale.getAnnullertGrunn()).isEqualTo("enGrunn");
+     }
+ 
+     @Test
+     public void annullerAvtale__kan_annullere_avtale_foer_veiledergodkjenning() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfylt();
+-        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.localDateTime());
+-        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.localDateTime());
++        avtale.getGjeldendeInnhold().setGodkjentAvDeltaker(Now.instant());
++        avtale.getGjeldendeInnhold().setGodkjentAvArbeidsgiver(Now.instant());
+         Veileder veileder = TestData.enVeileder(avtale);
+         veileder.annullerAvtale("enGrunn", avtale);
+         assertThat(avtale.getAnnullertTidspunkt()).isNotNull();
+         assertThat(avtale.getAnnullertGrunn()).isEqualTo("enGrunn");
+     }
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapperTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapperTest.java
+index 5da25228..48901bd0 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapperTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/AvtaleTilJournalfoeringMapperTest.java
+@@ -5,15 +5,17 @@ import no.nav.tag.tiltaksgjennomforing.avtale.AvtaleInnhold;
+ import no.nav.tag.tiltaksgjennomforing.avtale.GodkjentPaVegneGrunn;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Maal;
+ import no.nav.tag.tiltaksgjennomforing.avtale.MaalKategori;
+ import no.nav.tag.tiltaksgjennomforing.avtale.Stillingstype;
+ import no.nav.tag.tiltaksgjennomforing.avtale.TestData;
++import no.nav.tag.tiltaksgjennomforing.utils.DatoUtils;
+ import no.nav.tag.tiltaksgjennomforing.utils.Now;
+ import org.junit.jupiter.api.AfterEach;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ 
++import java.time.ZoneId;
+ import java.util.Arrays;
+ import java.util.UUID;
+ 
+ import static no.nav.tag.tiltaksgjennomforing.journalfoering.AvtaleTilJournalfoeringMapper.tilJournalfoering;
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+@@ -46,21 +48,21 @@ public class AvtaleTilJournalfoeringMapperTest {
+     @Test
+     public void mapper() {
+         final UUID avtaleId = UUID.randomUUID();
+         avtale.setId(avtaleId);
+         avtale.getGjeldendeInnhold().setGodkjentPaVegneAv(true);
+-        avtale.setOpprettetTidspunkt(Now.localDateTime());
++        avtale.setOpprettetTidspunkt(Now.instant());
+         avtale.getGjeldendeInnhold().setStillingstype(Stillingstype.FAST);
+ 
+         tilJournalfoering = tilJournalfoering(avtaleInnhold, null);
+ 
+         assertEquals(avtaleId.toString(), tilJournalfoering.getAvtaleId().toString());
+         assertEquals(avtaleInnhold.getId().toString(), tilJournalfoering.getAvtaleVersjonId().toString());
+         assertEquals(avtale.getDeltakerFnr().asString(), tilJournalfoering.getDeltakerFnr());
+         assertEquals(avtale.getBedriftNr().asString(), tilJournalfoering.getBedriftNr());
+         assertEquals(avtale.getVeilederNavIdent().asString(), tilJournalfoering.getVeilederNavIdent());
+-        assertEquals(avtale.getOpprettetTidspunkt().toLocalDate(), tilJournalfoering.getOpprettet());
++        assertEquals(avtale.getOpprettetTidspunkt().atZone(ZoneId.systemDefault()).toLocalDate(), tilJournalfoering.getOpprettet());
+         assertEquals(avtale.getGjeldendeInnhold().getDeltakerFornavn(), tilJournalfoering.getDeltakerFornavn());
+         assertEquals(avtale.getGjeldendeInnhold().getDeltakerEtternavn(), tilJournalfoering.getDeltakerEtternavn());
+         assertEquals(avtale.getGjeldendeInnhold().getDeltakerTlf(), tilJournalfoering.getDeltakerTlf());
+         assertEquals(avtale.getGjeldendeInnhold().getBedriftNavn(), tilJournalfoering.getBedriftNavn());
+         assertEquals(avtale.getGjeldendeInnhold().getArbeidsgiverFornavn(), tilJournalfoering.getArbeidsgiverFornavn());
+@@ -73,13 +75,13 @@ public class AvtaleTilJournalfoeringMapperTest {
+         assertEquals(avtale.getGjeldendeInnhold().getTilrettelegging(), tilJournalfoering.getTilrettelegging());
+         assertEquals(avtale.getGjeldendeInnhold().getStartDato(), tilJournalfoering.getStartDato());
+         assertEquals(avtale.getGjeldendeInnhold().getSluttDato(), tilJournalfoering.getSluttDato());
+         assertEquals(avtale.getGjeldendeInnhold().getStillingprosent(), tilJournalfoering.getStillingprosent());
+         assertEquals(avtale.getGjeldendeInnhold().getAntallDagerPerUke(), tilJournalfoering.getAntallDagerPerUke());
+-        assertEquals(avtale.getGjeldendeInnhold().getGodkjentAvDeltaker().toLocalDate(), tilJournalfoering.getGodkjentAvDeltaker());
+-        assertEquals(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver().toLocalDate(), tilJournalfoering.getGodkjentAvArbeidsgiver());
+-        assertEquals(avtale.getGjeldendeInnhold().getGodkjentAvVeileder().toLocalDate(), tilJournalfoering.getGodkjentAvVeileder());
++        assertEquals(DatoUtils.instantTilLocalDate(avtale.getGjeldendeInnhold().getGodkjentAvDeltaker()), tilJournalfoering.getGodkjentAvDeltaker());
++        assertEquals(DatoUtils.instantTilLocalDate(avtale.getGjeldendeInnhold().getGodkjentAvArbeidsgiver()), tilJournalfoering.getGodkjentAvArbeidsgiver());
++        assertEquals(DatoUtils.instantTilLocalDate(avtale.getGjeldendeInnhold().getGodkjentAvVeileder()), tilJournalfoering.getGodkjentAvVeileder());
+         assertEquals(avtale.getGjeldendeInnhold().isGodkjentPaVegneAv(), tilJournalfoering.isGodkjentPaVegneAv());
+         assertEquals(avtale.getGjeldendeInnhold().getVersjon(), tilJournalfoering.getVersjon());
+         assertEquals(avtale.getTiltakstype(), tilJournalfoering.getTiltakstype());
+         assertEquals(avtale.getGjeldendeInnhold().getArbeidsgiverKontonummer(), tilJournalfoering.getArbeidsgiverKontonummer());
+         assertEquals(avtale.getGjeldendeInnhold().getStillingstittel(), tilJournalfoering.getStillingstittel());
+diff --git a/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/InternalAvtaleControllerTest.java b/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/InternalAvtaleControllerTest.java
+index 8fa5373e..3e41a2e5 100644
+--- a/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/InternalAvtaleControllerTest.java
++++ b/src/test/java/no/nav/tag/tiltaksgjennomforing/journalfoering/InternalAvtaleControllerTest.java
+@@ -103,22 +103,21 @@ public class InternalAvtaleControllerTest {
+ 
+     private static List<Avtale> treAvtalerSomSkalJournalføres() {
+         Avtale avtale = TestData.enAvtaleMedAltUtfyltGodkjentAvVeileder();
+         avtale.setId(AVTALE_ID_1);
+         Avtale avtale2 = TestData.enAvtaleMedFlereVersjoner();
+-        avtale2.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale2.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         avtale2.setId(AVTALE_ID_2);
+         Avtale avtale3 = TestData.enAvtaleMedFlereVersjoner();
+-        avtale3.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale3.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         avtale3.setId(AVTALE_ID_3);
+ 
+         return Arrays.asList(avtale, avtale2, avtale3);
+     }
+ 
+     private static List<Avtale> enAvtaleMedTilskudsPerioderSomSkalJournalføres() {
+         Avtale avtale4 = TestData.enMidlertidigLønnstilskuddsAvtaleMedStartOgSluttGodkjentAvAlleParter(Now.localDate(), Now.localDate());
+-        avtale4.getGjeldendeInnhold().setGodkjentAvVeileder(Now.localDateTime());
++        avtale4.getGjeldendeInnhold().setGodkjentAvVeileder(Now.instant());
+         avtale4.setId(AVTALE_ID_3);
+         return Arrays.asList(avtale4);
+     }
+ }
+-

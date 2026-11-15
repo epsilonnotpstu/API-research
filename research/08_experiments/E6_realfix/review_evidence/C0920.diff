@@ -1,0 +1,127 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java b/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
+index 676016f1..7f65575c 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
++++ b/src/main/java/uk/gov/pay/api/model/CreateCardPaymentRequest.java
+@@ -71,10 +71,11 @@ public class CreateCardPaymentRequest {
+     @JsonProperty("return_url")
+     private final String returnUrl;
+ 
+     private final Boolean delayedCapture;
+ 
++    @ApiModelProperty(name = "metadata", dataType = "Map[String,String]")
+     private final ExternalMetadata metadata;
+ 
+     @Valid
+     private final PrefilledCardholderDetails prefilledCardholderDetails;
+     
+@@ -103,11 +104,11 @@ public class CreateCardPaymentRequest {
+     @ApiModelProperty(value = "payment description", required = true, example = "New passport application")
+     public String getDescription() {
+         return description;
+     }
+ 
+-    @ApiModelProperty(value = "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages", required = false, example = "en")
++    @ApiModelProperty(value = "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages", required = false, example = "en", allowableValues = "en,cy")
+     @JsonProperty(LANGUAGE_FIELD_NAME)
+     public Optional<SupportedLanguage> getLanguage() {
+         return Optional.ofNullable(language);
+     }
+ 
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+index adbdeb3b..fb0d1e22 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+@@ -30,11 +30,11 @@ public class CreatePaymentResult {
+     @JsonProperty
+     @ApiModelProperty(example = "your-reference")
+     private String reference;
+ 
+     @JsonProperty
+-    @ApiModelProperty(name = "language", access = "language", example = "en")
++    @ApiModelProperty(name = "language", access = "language", example = "en", allowableValues = "en,cy")
+     private SupportedLanguage language;
+ 
+     @JsonProperty
+     @ApiModelProperty(name = "payment_id", example = "hu20sqlact5260q2nanm0q8u93")
+     private String paymentId;
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index b4182b80..4685e721 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -1134,11 +1134,11 @@
+         "language" : {
+           "type" : "string",
+           "example" : "en",
+           "description" : "ISO-639-1 Alpha-2 code of a supported language to use on the payment pages",
+           "readOnly" : true,
+-          "enum" : [ "ENGLISH", "WELSH" ]
++          "enum" : [ "en", "cy" ]
+         },
+         "email" : {
+           "type" : "string",
+           "example" : "[REDACTED email]",
+           "description" : "email",
+@@ -1157,12 +1157,15 @@
+           "example" : false,
+           "description" : "delayed capture flag",
+           "readOnly" : true
+         },
+         "metadata" : {
++          "type" : "object",
+           "readOnly" : true,
+-          "$ref" : "#/definitions/ExternalMetadata"
++          "additionalProperties" : {
++            "type" : "string"
++          }
+         },
+         "prefilled_cardholder_details" : {
+           "description" : "prefilled_cardholder_details",
+           "readOnly" : true,
+           "$ref" : "#/definitions/PrefilledCardholderDetails"
+@@ -1260,11 +1263,11 @@
+           "example" : "your-reference"
+         },
+         "language" : {
+           "type" : "string",
+           "example" : "en",
+-          "enum" : [ "ENGLISH", "WELSH" ]
++          "enum" : [ "en", "cy" ]
+         },
+         "payment_id" : {
+           "type" : "string",
+           "example" : "hu20sqlact5260q2nanm0q8u93"
+         },
+@@ -1471,21 +1474,10 @@
+           "example" : "Too many requests"
+         }
+       },
+       "description" : "An error response"
+     },
+-    "ExternalMetadata" : {
+-      "type" : "object",
+-      "properties" : {
+-        "metadata" : {
+-          "type" : "object",
+-          "additionalProperties" : {
+-            "type" : "object"
+-          }
+-        }
+-      }
+-    },
+     "GetPaymentResult" : {
+       "type" : "object",
+       "properties" : {
+         "amount" : {
+           "type" : "integer",
+@@ -2281,10 +2273,11 @@
+           "items" : {
+             "$ref" : "#/definitions/RefundDetailForSearch"
+           }
+         },
+         "_links" : {
++          "readOnly" : true,
+           "$ref" : "#/definitions/SearchNavigationLinks"
+         }
+       }
+     },
+     "RefundSummary" : {

@@ -1,0 +1,91 @@
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/config/ConfigController.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/config/ConfigController.java
+new file mode 100644
+index 0000000..2ad09ce
+--- /dev/null
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/config/ConfigController.java
+@@ -0,0 +1,28 @@
++package org.zalando.catwatch.backend.web.config;
++
++import static java.util.Collections.singletonMap;
++import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
++import static org.springframework.web.bind.annotation.RequestMethod.GET;
++
++import java.util.Map;
++
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.core.env.Environment;
++import org.springframework.stereotype.Controller;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.ResponseBody;
++
++@Controller
++public class ConfigController {
++
++	@Autowired
++	private Environment env;
++
++	@RequestMapping(value = "/config", method = GET, produces = { APPLICATION_JSON_VALUE })
++	@ResponseBody
++	public Map<String, String> config() {
++		String orgaListParam = "organization.list";
++		return singletonMap(orgaListParam, env.getProperty(orgaListParam));
++	}
++
++}
+diff --git a/catwatch-backend/src/main/resources/static/index.html b/catwatch-backend/src/main/resources/static/index.html
+index 3783b3c..620cb8a 100644
+--- a/catwatch-backend/src/main/resources/static/index.html
++++ b/catwatch-backend/src/main/resources/static/index.html
+@@ -6,17 +6,19 @@
+ </head>
+ <body>
+ 
+ <h1>CatWatch Backend</h1>
+ 
+-<p>
+-Source code: <a href="https://github.com/zalando/catwatch">CatWatch</a> - the project on GitHub
+-</p>
+-
+-<p>
+-API description: <a href="https://github.com/zalando/catwatch/blob/master/catwatch/catwatch-backend/doc/catwatch-api.yaml"></a> - Swagger API description file
+-</p>
+-
+-
++<ul>
++	<li>
++		<a href="https://github.com/zalando/catwatch">CatWatch</a> - the project source code on GitHub
++	</li>
++	<li>
++		<a href="https://github.com/zalando/catwatch/blob/master/catwatch/catwatch-backend/doc/catwatch-api.yaml">API description</a> - Swagger API description file
++	</li>
++	<li>
++		<a href="/config">Configuration</a> - the configuration of this application
++	</li>
++</ul>
+ 
+ </body>
+ </html>
+\ No newline at end of file
+diff --git a/catwatch-backend/src/test/java/org/zalando/catwatch/backend/web/ConfigControllerIT.java b/catwatch-backend/src/test/java/org/zalando/catwatch/backend/web/ConfigControllerIT.java
+new file mode 100644
+index 0000000..7d4ca8a
+--- /dev/null
++++ b/catwatch-backend/src/test/java/org/zalando/catwatch/backend/web/ConfigControllerIT.java
+@@ -0,0 +1,17 @@
++package org.zalando.catwatch.backend.web;
++
++import static org.hamcrest.Matchers.containsString;
++import static org.junit.Assert.assertThat;
++
++import org.junit.Test;
++import org.springframework.http.ResponseEntity;
++
++public class ConfigControllerIT extends AbstractCatwatchIT {
++
++	@Test
++	public void testConfigOutput() throws Exception {
++		ResponseEntity<String> response = template.getForEntity(base.toString() + "/config", String.class);
++		assertThat(response.getBody(), containsString("organization.list"));
++		assertThat(response.getBody(), containsString("zalando")); // default value
++	}
++}

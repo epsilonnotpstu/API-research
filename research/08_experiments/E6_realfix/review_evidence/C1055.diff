@@ -1,0 +1,36 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+index 6592c5d1..7cca60f5 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+@@ -23,11 +23,10 @@ public class DirectDebitSearchPaymentsParams {
+     private String reference;
+     
+     @QueryParam("state")
+     @ApiParam(value = "State of payments to be searched. Example=success")
+     @Pattern(regexp = "created|pending|success|failed|cancelled|paidout|indemnityclaim|error",
+-            flags = Pattern.Flag.CASE_INSENSITIVE,
+             message = "Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+     private String state;
+     
+     @QueryParam("mandate_id")
+     @ApiParam(value = "The GOV.UK Pay identifier for the mandate")
+diff --git a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
+index 96905fca..5de7606f 100644
+--- a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
++++ b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
+@@ -171,10 +171,15 @@ public class DirectDebitPaymentsResourceGetIT extends DirectDebitResourceITBase
+                 someParameters()
+                         .withQueryString("?state=fake_state")
+                         .withErrorField("state")
+                         .withErrorMessage("Invalid attribute value: state. Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+                         .build(),
++                someParameters()
++                        .withQueryString("?state=PENDING")
++                        .withErrorField("state")
++                        .withErrorMessage("Invalid attribute value: state. Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
++                        .build(),
+                 someParameters()
+                         .withQueryString("?from_date=not_a_date")
+                         .withErrorField("from_date")
+                         .withErrorMessage("Invalid attribute value: from_date. Must be a valid date")
+                         .build(),

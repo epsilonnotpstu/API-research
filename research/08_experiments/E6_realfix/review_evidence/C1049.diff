@@ -1,0 +1,83 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+index 2ce75a84..93b16655 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+@@ -33,11 +33,11 @@ public class CreatePaymentResult {
+     @JsonProperty
+     @ApiModelProperty(name = "language", access = "language", example = "en")
+     private SupportedLanguage language;
+ 
+     @JsonProperty
+-    @ApiModelProperty(example = "hu20sqlact5260q2nanm0q8u93")
++    @ApiModelProperty(name = "payment_id", example = "hu20sqlact5260q2nanm0q8u93")
+     private String paymentId;
+ 
+     @JsonProperty
+     @ApiModelProperty(name = "payment_provider", example = "worldpay")
+     private String paymentProvider;
+@@ -63,8 +63,8 @@ public class CreatePaymentResult {
+     @JsonProperty
+     @ApiModelProperty(name = LINKS_JSON_ATTRIBUTE)
+     private PaymentLinks links;
+ 
+     @JsonProperty
+-    @ApiModelProperty(example = "null")
++    @ApiModelProperty(name = "provider_id", example = "null")
+     private String providerId;
+ }
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index cefa284e..1985ddc7 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -741,11 +741,11 @@
+         "language" : {
+           "type" : "string",
+           "example" : "en",
+           "enum" : [ "ENGLISH", "WELSH" ]
+         },
+-        "paymentId" : {
++        "payment_id" : {
+           "type" : "string",
+           "example" : "hu20sqlact5260q2nanm0q8u93"
+         },
+         "payment_provider" : {
+           "type" : "string",
+@@ -763,10 +763,14 @@
+           "type" : "boolean"
+         },
+         "_links" : {
+           "$ref" : "#/definitions/PaymentLinks"
+         },
++        "provider_id" : {
++          "type" : "string",
++          "example" : "null"
++        },
+         "refund_summary" : {
+           "$ref" : "#/definitions/RefundSummary"
+         },
+         "settlement_summary" : {
+           "$ref" : "#/definitions/SettlementSummary"
+@@ -876,10 +880,11 @@
+           "example" : 1450,
+           "readOnly" : true
+         },
+         "provider_id" : {
+           "type" : "string",
++          "example" : "reference-from-payment-gateway",
+           "readOnly" : true
+         },
+         "_links" : {
+           "$ref" : "#/definitions/PaymentLinks"
+         },
+@@ -985,10 +990,11 @@
+           "example" : 1450,
+           "readOnly" : true
+         },
+         "provider_id" : {
+           "type" : "string",
++          "example" : "reference-from-payment-gateway",
+           "readOnly" : true
+         },
+         "_links" : {
+           "readOnly" : true,
+           "$ref" : "#/definitions/PaymentLinksForSearch"

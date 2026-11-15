@@ -1,0 +1,115 @@
+diff --git a/annotation/pom.xml b/annotation/pom.xml
+index de140ca..165ed6b 100644
+--- a/annotation/pom.xml
++++ b/annotation/pom.xml
+@@ -47,18 +47,18 @@
+       <artifactId>spring-boot-starter-data-mongodb</artifactId>
+     </dependency>
+     <dependency>
+       <groupId>io.springfox</groupId>
+       <artifactId>springfox-swagger2</artifactId>
+-      <version>2.2.2</version>
++      <version>2.3.1</version>
+       <scope>compile</scope>
+     </dependency>
+     <dependency>
+-        <groupId>io.springfox</groupId>
+-        <artifactId>springfox-swagger-ui</artifactId>
+-        <version>2.2.2</version>
+-        <scope>compile</scope>
++      <groupId>io.springfox</groupId>
++      <artifactId>springfox-swagger-ui</artifactId>
++      <version>2.3.1</version>
++      <scope>compile</scope>
+     </dependency>
+   </dependencies>
+ 
+   <build>
+     <plugins>
+diff --git a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/GenomeNexusAnnotation.java b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/GenomeNexusAnnotation.java
+index 0296d3a..e5f4d12 100644
+--- a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/GenomeNexusAnnotation.java
++++ b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/GenomeNexusAnnotation.java
+@@ -57,23 +57,25 @@ public class GenomeNexusAnnotation extends SpringBootServletInitializer
+         SpringApplication.run(GenomeNexusAnnotation.class, args);
+     }
+ 
+     @Bean
+     public Docket annotationApi() {
++        // default swagger definition file location: <root>/v2/api-docs?group=variant_annotation
++        // default swagger UI location: <root>/swagger-ui.html
+         return new Docket(DocumentationType.SWAGGER_2)
+             .groupName("variant_annotation")
+-            .apiInfo(apiInfo())
++            .apiInfo(annotationApiInfo())
+             .select()
+-            .paths(PathSelectors.regex("/variant_annotation/*.*"))
++            .paths(PathSelectors.regex("/variant_annotation.*"))
+             .build();
+     }
+ 
+-    private ApiInfo apiInfo() {
++    private ApiInfo annotationApiInfo() {
+         return new ApiInfoBuilder()
+             .title("Genome Nexus API")
+-            .description("Genome Nexus API")
+-            .termsOfServiceUrl("http://terms-of-service-url")
++            .description("Genome Nexus Variant Annotation API")
++            //.termsOfServiceUrl("http://terms-of-service-url")
+             .contact("CMO, MSKCC")
+             .license("GNU AFFERO GENERAL PUBLIC LICENSE Version 3")
+             .licenseUrl("https://github.com/cBioPortal/genome-nexus/blob/master/LICENSE")
+             .version("2.0")
+             .build();
+diff --git a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
+index 4705ac6..1c22776 100644
+--- a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
++++ b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
+@@ -58,23 +58,28 @@ public class AnnotationController
+     {
+         this.variantAnnotationService = variantAnnotationService;
+         this.variantAnnotationRepository = variantAnnotationRepository;
+     }
+ 
+-    @ApiOperation(value = "getVariantAnnotation", nickname = "getVariantAnnotation")
+-    @ApiImplicitParams({
++    @ApiOperation(value = "getVariantAnnotation",
++        nickname = "getVariantAnnotation")
++    @ApiImplicitParams(value = {
+         @ApiImplicitParam(name = "variants",
+             value = "Comma separated list of variants",
+             required = true,
+             dataType = "string",
+             paramType = "path")
+     })
+     @ApiResponses(value = {
+-        @ApiResponse(code = 200, message = "Success", response = VariantAnnotation.class, responseContainer = "List"),
+-        @ApiResponse(code = 400, message = "Bad Request"),
+-        @ApiResponse(code = 404, message = "Not Found")})
+-	@RequestMapping(value = "/hgvs/{variants:.+}", method = RequestMethod.GET)
++        @ApiResponse(code = 200, message = "Success",
++            response = VariantAnnotation.class,
++            responseContainer = "List"),
++        @ApiResponse(code = 400, message = "Bad Request")
++    })
++	@RequestMapping(value = "/hgvs/{variants:.+}",
++        method = RequestMethod.GET,
++        produces = "application/json")
+ 	public List<VariantAnnotation> getVariantAnnotation(@PathVariable List<String> variants)
+ 	{
+ 		List<VariantAnnotation> variantAnnotations = new ArrayList<>();
+ 
+ 		for (String variant: variants)
+@@ -84,11 +89,11 @@ public class AnnotationController
+ 
+ 		return variantAnnotations;
+ 	}
+ 
+     //@RequestMapping(value = "/hgvs/{variant:.+}", method = RequestMethod.GET)
+-    private VariantAnnotation getVariantAnnotation(@PathVariable String variant)
++    private VariantAnnotation getVariantAnnotation(String variant)
+     {
+         VariantAnnotation variantAnnotation = variantAnnotationRepository.findOne(variant);
+ 
+         if (variantAnnotation == null) {
+             variantAnnotation = variantAnnotationService.getAnnotation(variant);

@@ -1,0 +1,1862 @@
+diff --git a/api/pom.xml b/api/pom.xml
+index 14ac17d..6da27a2 100644
+--- a/api/pom.xml
++++ b/api/pom.xml
+@@ -67,10 +67,20 @@
+         </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-hateoas</artifactId>
+         </dependency>
++        <!--
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-security</artifactId>
++        </dependency>
++        -->
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-thymeleaf</artifactId>
++        </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-web</artifactId>
+         </dependency>
+         <dependency>
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/SpringBatchRestApplication.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/SpringBatchRestApplication.java
+index 6c23b8a..6576cb6 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/SpringBatchRestApplication.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/SpringBatchRestApplication.java
+@@ -1,14 +1,38 @@
+ package com.github.chrisgleissner.springbatchrest.api;
+ 
++import com.github.chrisgleissner.springbatchrest.api.job.JobController;
++import com.github.chrisgleissner.springbatchrest.api.jobdetail.JobDetailController;
++import com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecutionController;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
+ import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.ComponentScan;
++import org.springframework.context.annotation.FilterType;
++import org.springframework.stereotype.Controller;
++import springfox.documentation.builders.PathSelectors;
++import springfox.documentation.builders.RequestHandlerSelectors;
++import springfox.documentation.spi.DocumentationType;
++import springfox.documentation.spring.web.plugins.Docket;
++import springfox.documentation.swagger2.annotations.EnableSwagger2;
+ 
+ @SpringBootApplication
+ @EnableBatchProcessing
++@EnableSwagger2
++@ComponentScan(basePackageClasses= {AdHocStarter.class, JobController.class, JobDetailController.class, JobExecutionController.class })
+ public class SpringBatchRestApplication {
+ 
+     public static void main(String[] args) {
+         SpringApplication.run(SpringBatchRestApplication.class, args);
+     }
++
++    @Bean
++    public Docket api() {
++        return new Docket(DocumentationType.SWAGGER_2)
++                .select()
++                .apis(RequestHandlerSelectors.any())
++                .paths(PathSelectors.any())
++                .build();
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobController.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobController.java
+index 1da62e3..ed3c491 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobController.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobController.java
+@@ -1,20 +1,22 @@
+ package com.github.chrisgleissner.springbatchrest.api.job;
+ 
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.hateoas.Resources;
+-import org.springframework.web.bind.annotation.*;
+-import com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecutionResource;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PathVariable;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
+ 
+ import java.util.Collection;
+ 
+ import static java.util.stream.Collectors.toList;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+ @RestController
+-@RequestMapping(value = "/job", produces = "application/hal+json")
++@RequestMapping(value = "/jobs", produces = "application/hal+json")
+ public class JobController {
+ 
+     @Autowired
+     private JobService jobService;
+ 
+@@ -27,11 +29,6 @@ public class JobController {
+     public Resources<JobResource> all() {
+         Collection<JobResource> jobs = jobService.jobs().stream().map(JobResource::new).collect(toList());
+         return new Resources<>(jobs, linkTo(methodOn(JobController.class).all()).withSelfRel());
+ 
+     }
+-
+-    @PutMapping("/{jobName}")
+-    public JobExecutionResource put(@PathVariable String jobName) {
+-        return new JobExecutionResource(jobService.launch(jobName));
+-    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobResource.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobResource.java
+index 518a314..976b571 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobResource.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobResource.java
+@@ -1,17 +1,23 @@
+ package com.github.chrisgleissner.springbatchrest.api.job;
+ 
+-import lombok.Getter;
++import org.springframework.batch.core.repository.JobRepository;
+ import org.springframework.hateoas.ResourceSupport;
+ 
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+-@Getter
+ public class JobResource extends ResourceSupport {
+-    private final Job job;
++    private Job job;
++
++    // For Jackson
++    private JobResource() {}
+ 
+     public JobResource(final Job job) {
+         this.job = job;
+         add(linkTo(methodOn(JobController.class).get(job.getName())).withSelfRel());
+     }
++
++    public Job getJob() {
++        return job;
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobService.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobService.java
+index 8612164..a5ff1a0 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobService.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/job/JobService.java
+@@ -1,68 +1,28 @@
+ package com.github.chrisgleissner.springbatchrest.api.job;
+ 
+-import org.slf4j.Logger;
+-import org.slf4j.LoggerFactory;
+-import org.springframework.batch.core.JobParameters;
+-import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.explore.JobExplorer;
+-import org.springframework.batch.core.launch.JobLauncher;
+-import org.springframework.batch.core.launch.NoSuchJobException;
+-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+-import org.springframework.batch.core.repository.JobRepository;
+ import org.springframework.beans.factory.annotation.Autowired;
+-import org.springframework.core.task.SimpleAsyncTaskExecutor;
+ import org.springframework.stereotype.Service;
+-import com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecution;
+ 
+ import java.util.Collection;
+ 
+-import static java.lang.String.format;
+ import static java.util.stream.Collectors.toList;
+ 
+ @Service
+ public class JobService {
+ 
+-    private final static Logger logger = LoggerFactory.getLogger(JobService.class);
+-
+-    private JobLocator jobLocator;
+-    private JobLauncher jobLauncher;
+     private JobExplorer jobExplorer;
+ 
+     @Autowired
+-    public JobService(JobLocator jobLocator,
+-                      JobExplorer jobExplorer,
+-                      JobRepository jobRepository) {
+-        this.jobLocator = jobLocator;
++    public JobService(JobExplorer jobExplorer) {
+         this.jobExplorer = jobExplorer;
+-        SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
+-        jobLauncher.setJobRepository(jobRepository);
+-        SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
+-        jobLauncher.setTaskExecutor(simpleAsyncTaskExecutor);
+-        this.jobLauncher = jobLauncher;
+     }
+ 
+     public Collection<Job> jobs() {
+         return jobExplorer.getJobNames().stream().map(n -> new Job(n)).collect(toList());
+     }
+ 
+-    public JobExecution launch(String jobName) {
+-        logger.debug("Launching job {}...", jobName);
+-        try {
+-            org.springframework.batch.core.Job job = jobLocator.getJob(jobName);
+-            try {
+-
+-                org.springframework.batch.core.JobExecution jobExecution = jobLauncher.run(job, new JobParameters());
+-                logger.info("Successfully launched job {}: ", jobName, jobExecution);
+-                return JobExecution.fromSpring(jobName, jobExecution);
+-            } catch (Exception e) {
+-                throw new RuntimeException(format("Failed to launch job: %s", jobName), e);
+-            }
+-        } catch (NoSuchJobException e) {
+-            throw new RuntimeException(format("Could not find job: %s", jobName), e);
+-        }
+-    }
+-
+     public Job job(String jobName) {
+         return new Job(jobName);
+     }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailController.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailController.java
+index f067ef1..e46790d 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailController.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailController.java
+@@ -10,11 +10,11 @@ import java.util.Optional;
+ import static java.util.stream.Collectors.toList;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+ @RestController
+-@RequestMapping(value = "/jobDetail", produces = "application/hal+json")
++@RequestMapping(value = "/jobDetails", produces = "application/hal+json")
+ public class JobDetailController {
+ 
+     @Autowired
+     private JobDetailService jobDetailService;
+ 
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailResource.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailResource.java
+index 2b28e00..ba6f933 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailResource.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailResource.java
+@@ -1,17 +1,23 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobdetail;
+ 
+-import lombok.Getter;
+ import org.springframework.hateoas.ResourceSupport;
+ 
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+-@Getter
+ public class JobDetailResource extends ResourceSupport {
+-    private final JobDetail jobDetail;
++    private JobDetail jobDetail;
++
++    // For Jackson
++    private JobDetailResource() {
++    }
+ 
+     public JobDetailResource(final JobDetail jobDetail) {
+         this.jobDetail = jobDetail;
+         add(linkTo(methodOn(JobDetailController.class).get(jobDetail.getQuartzGroupName(), jobDetail.getQuartzJobName())).withSelfRel());
+     }
++
++    public JobDetail getJobDetail() {
++        return jobDetail;
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailService.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailService.java
+index 8f048ce..dc4211c 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailService.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailService.java
+@@ -1,8 +1,9 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobdetail;
+ 
+ import com.github.chrisgleissner.springbatchrest.util.DateUtil;
++import lombok.extern.slf4j.Slf4j;
+ import org.quartz.*;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ 
+ import java.util.*;
+@@ -11,10 +12,11 @@ import static java.lang.String.format;
+ import static java.time.LocalDateTime.now;
+ import static java.util.stream.Collectors.toList;
+ import static org.quartz.impl.matchers.GroupMatcher.jobGroupEquals;
+ import static com.github.chrisgleissner.springbatchrest.util.adhoc.QuartzJobLauncher.JOB_NAME;
+ 
++@Slf4j
+ @Service
+ public class JobDetailService {
+ 
+     private final Scheduler scheduler;
+ 
+@@ -35,10 +37,11 @@ public class JobDetailService {
+             return jobDetails.stream()
+                     .filter(d -> enabled.isPresent() ? enabled.get() == d.getNextFireTime().isBefore(now().plusYears(1)) : true)
+                     .filter(d -> springBatchJobName.isPresent() ? d.getSpringBatchJobName().get().equals(springBatchJobName.get()) : true)
+                     .collect(toList());
+         } catch (Exception e) {
++            log.error("Couldn't get job details", e);
+             throw new RuntimeException("Couldn't get job details", e);
+         }
+     }
+ 
+     public JobDetail jobDetail(String quartzGroupName, String quartzJobName) {
+@@ -65,10 +68,11 @@ public class JobDetailService {
+                     .springBatchJobName(Optional.ofNullable(springBatchJobName))
+                     .nextFireTime(DateUtil.localDateTime(nextFireTime))
+                     .previousFireTime(DateUtil.localDateTime(previousFireTime))
+                     .cronExpression(Optional.ofNullable(cronExpression)).build();
+         } catch (Exception e) {
++            log.error("Couldn't get job detail", e);
+             throw new RuntimeException(format("Couldn't get job detail for group name '%s' and job name '%s'", quartzGroupName, quartzJobName), e);
+         }
+ 
+     }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecution.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecution.java
+index 2a26819..e1cb134 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecution.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecution.java
+@@ -1,28 +1,33 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
++import com.fasterxml.jackson.core.JsonGenerator;
++import com.fasterxml.jackson.databind.JsonSerializer;
++import com.fasterxml.jackson.databind.SerializerProvider;
++import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+ import com.github.chrisgleissner.springbatchrest.util.DateUtil;
+ import com.google.common.base.Throwables;
+ import lombok.Builder;
+ import lombok.Value;
+ import org.springframework.batch.core.BatchStatus;
+ import org.springframework.batch.core.ExitStatus;
+ 
++import java.io.IOException;
+ import java.time.LocalDateTime;
+ import java.util.Collection;
+ 
+ import static java.util.stream.Collectors.toList;
+ 
+ @Value
+ @Builder
+ public class JobExecution implements Comparable<JobExecution> {
+ 
+-    public static JobExecution fromSpring(String jobName, org.springframework.batch.core.JobExecution je) {
++    public static JobExecution fromSpring(org.springframework.batch.core.JobExecution je) {
+         return JobExecution.builder()
+                 .jobId(je.getJobId())
+                 .id(je.getId())
+-                .jobName(jobName)
++                .jobName(je.getJobInstance().getJobName())
+                 .startTime(DateUtil.localDateTime(je.getStartTime()))
+                 .endTime(DateUtil.localDateTime(je.getEndTime()))
+                 .exitStatus(je.getExitStatus())
+                 .status(je.getStatus())
+                 .exceptions(je.getFailureExceptions().stream().map(e -> e.getMessage() + ": " + Throwables.getStackTraceAsString(e)).collect(toList()))
+@@ -32,20 +37,35 @@ public class JobExecution implements Comparable<JobExecution> {
+     private long id;
+     private long jobId;
+     private String jobName;
+     private LocalDateTime startTime;
+     private LocalDateTime endTime;
++    @JsonSerialize(using = ExitStatusSerializer.class)
+     private ExitStatus exitStatus;
++    @JsonSerialize(using = BatchStatusSerializer.class)
+     private BatchStatus status;
+     private Collection<String> exceptions;
+ 
+-
+     @Override
+     public int compareTo(JobExecution o) {
+         int result = this.getJobName() != null ? this.getJobName().compareToIgnoreCase(o.getJobName()) : 0;
+         if (result == 0)
+             result = id > o.id ? 1 : (id < o.id ? -1 : 0);
+         if (result == 0)
+             result = jobId > o.jobId ? 1 : (jobId < o.jobId ? -1 : 0);
+         return result;
+     }
++
++    static class ExitStatusSerializer extends JsonSerializer<ExitStatus> {
++        @Override
++        public void serialize(ExitStatus exitStatus, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
++            jsonGenerator.writeString(exitStatus.getExitCode());
++        }
++    }
++
++    static class BatchStatusSerializer extends JsonSerializer<BatchStatus> {
++        @Override
++        public void serialize(BatchStatus batchStatus, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
++            jsonGenerator.writeString(batchStatus.name());
++        }
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionController.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionController.java
+index 0cf6b7b..90ab812 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionController.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionController.java
+@@ -1,9 +1,11 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobConfig;
+ import org.springframework.batch.core.ExitStatus;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.hateoas.Resource;
+ import org.springframework.hateoas.Resources;
+ import org.springframework.web.bind.annotation.*;
+ 
+ import java.util.Collection;
+ import java.util.Optional;
+@@ -11,11 +13,11 @@ import java.util.stream.Collectors;
+ 
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+ @RestController
+-@RequestMapping(value = "/jobExecution", produces = "application/hal+json")
++@RequestMapping(value = "/jobExecutions", produces = "application/hal+json")
+ public class JobExecutionController {
+ 
+     @Autowired
+     private JobExecutionService jobExecutionService;
+ 
+@@ -36,6 +38,12 @@ public class JobExecutionController {
+                 Optional.ofNullable(maxNumberOfJobInstances),
+                 Optional.ofNullable(maxNumberOfJobExecutionsPerInstance)).stream().map(JobExecutionResource::new).collect(Collectors.toList());
+         return new Resources<>(jobExecutions, linkTo(methodOn(JobExecutionController.class)
+                 .all(jobName, exitStatus, maxNumberOfJobInstances, maxNumberOfJobExecutionsPerInstance)).withSelfRel());
+     }
++
++
++    @PostMapping
++    public JobExecutionResource put(@RequestBody JobConfig jobConfig) {
++        return new JobExecutionResource(jobExecutionService.launch(jobConfig));
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionResource.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionResource.java
+index 5c0ea36..90fa000 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionResource.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionResource.java
+@@ -1,17 +1,26 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
+ import lombok.Getter;
++import lombok.NoArgsConstructor;
+ import org.springframework.hateoas.ResourceSupport;
+ 
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+ 
+-@Getter
++
+ public class JobExecutionResource extends ResourceSupport {
+-    private final JobExecution jobExecution;
++    private JobExecution jobExecution;
++
++    // For Jackson
++    private JobExecutionResource() {
++    }
+ 
+     public JobExecutionResource(final JobExecution jobExecution) {
+         this.jobExecution = jobExecution;
+         add(linkTo(methodOn(JobExecutionController.class).get(jobExecution.getId())).withSelfRel());
+     }
++
++    public JobExecution getJobExecution() {
++        return jobExecution;
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionService.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionService.java
+index e36327a..047c7be 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionService.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionService.java
+@@ -1,44 +1,57 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
++import com.github.chrisgleissner.springbatchrest.api.job.Job;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobConfig;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.batch.core.ExitStatus;
+ import org.springframework.batch.core.JobInstance;
++import org.springframework.batch.core.JobParameters;
++import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.explore.JobExplorer;
++import org.springframework.batch.core.launch.JobLauncher;
++import org.springframework.batch.core.launch.NoSuchJobException;
++import org.springframework.batch.core.launch.support.SimpleJobLauncher;
++import org.springframework.batch.core.repository.JobRepository;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.core.task.SimpleAsyncTaskExecutor;
+ import org.springframework.stereotype.Service;
+ 
+ import java.util.*;
+ import java.util.regex.Pattern;
+ 
++import static com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecution.fromSpring;
+ import static java.lang.Integer.MAX_VALUE;
++import static java.lang.String.format;
+ import static java.util.stream.Collectors.toList;
+ import static java.util.stream.Collectors.toSet;
+ 
+ @Service
+ public class JobExecutionService {
+ 
+     private final static Logger logger = LoggerFactory.getLogger(JobExecutionService.class);
+-
+-    private JobExplorer jobExplorer;
++    private final AdHocStarter adHocStarter;
++    private final JobExplorer jobExplorer;
+ 
+     @Autowired
+-    public JobExecutionService(JobExplorer jobExplorer) {
++    public JobExecutionService(JobExplorer jobExplorer, AdHocStarter adHocStarter) {
+         this.jobExplorer = jobExplorer;
++        this.adHocStarter = adHocStarter;
+     }
+ 
+     public JobExecution jobExecution(long executionId) {
+-        return JobExecution.fromSpring(null, jobExplorer.getJobExecution(executionId));
++        return fromSpring(jobExplorer.getJobExecution(executionId));
+ 
+     }
+ 
+     public Collection<JobExecution> jobExecutions(Optional<String> jobNameRegexp,
+                                                   Optional<ExitStatus> exitStatus,
+                                                   Optional<Integer> maxNumberOfJobInstances,
+                                                   Optional<Integer> maxNumberOfJobExecutionsPerInstance) {
+-        logger.debug("Getting job excecutions(jobNameRegexp={}, exitStatus={}, maxNumberOfJobInstances{}, maxNumberOfJobExecutionsPerInstance={}",
++        logger.debug("Getting createJob excecutions(jobNameRegexp={}, exitStatus={}, maxNumberOfJobInstances{}, maxNumberOfJobExecutionsPerInstance={}",
+                 jobNameRegexp, exitStatus, maxNumberOfJobInstances, maxNumberOfJobExecutionsPerInstance);
+ 
+         Set<JobExecution> allJobExecutions = new TreeSet<>();
+         List<String> jobNames = jobExplorer.getJobNames();
+         if (jobNameRegexp.isPresent()) {
+@@ -53,16 +66,24 @@ public class JobExecutionService {
+                         Math.max(0, jobInstanceCount - maxNumberOfJobInstances.orElse(MAX_VALUE)),
+                         maxNumberOfJobInstances.orElse(MAX_VALUE));
+                 for (JobInstance jobInstance : jobInstances) {
+                     List<JobExecution> jobExecutions = jobExplorer.getJobExecutions(jobInstance).stream()
+                             .limit(maxNumberOfJobExecutionsPerInstance.orElse(MAX_VALUE))
+-                            .map(je -> JobExecution.fromSpring(jobName, je))
++                            .map(JobExecution::fromSpring)
+                             .collect(toList());
+                     allJobExecutions.addAll(jobExecutions);
+                 }
+             } catch (Exception e) {
+-                logger.warn("Could not get job executions for job {}", jobName, e);
++                logger.warn("Could not get executions for job {}", jobName, e);
+             }
+         }
+         return allJobExecutions.stream().filter(je -> !exitStatus.isPresent() || exitStatus.get().equals(je.getExitStatus())).collect(toSet());
+     }
++
++    public JobExecution launch(JobConfig jobConfig) {
++        return fromSpring(adHocStarter.start(jobConfig));
++    }
++
++    public Job job(String jobName) {
++        return new Job(jobName);
++    }
+ }
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/swagger/SwaggerConfig.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/swagger/SwaggerConfig.java
+deleted file mode 100644
+index 9ab3c9a..0000000
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/swagger/SwaggerConfig.java
++++ /dev/null
+@@ -1,22 +0,0 @@
+-package com.github.chrisgleissner.springbatchrest.api.swagger;
+-
+-import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.Configuration;
+-import springfox.documentation.builders.PathSelectors;
+-import springfox.documentation.builders.RequestHandlerSelectors;
+-import springfox.documentation.spi.DocumentationType;
+-import springfox.documentation.spring.web.plugins.Docket;
+-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+-
+-@Configuration
+-@EnableSwagger2
+-public class SwaggerConfig {
+-    @Bean
+-    public Docket api() {
+-        return new Docket(DocumentationType.SWAGGER_2)
+-                .select()
+-                .apis(RequestHandlerSelectors.any())
+-                .paths(PathSelectors.any())
+-                .build();
+-    }
+-}
+\ No newline at end of file
+diff --git a/api/src/main/resources/application.properties b/api/src/main/resources/application.properties
+index 74fc2e9..63c1352 100644
+--- a/api/src/main/resources/application.properties
++++ b/api/src/main/resources/application.properties
+@@ -1,3 +1,4 @@
+ spring.main.banner-mode=off
+-spring.boot.admin.client.url: "http://localhost:8090"  
+-management.endpoints.web.exposure.include: "*" 
+\ No newline at end of file
++spring.boot.admin.client.url: "http://localhost:8090"
++management.endpoints.web.exposure.include: "*"
++spring.resources.add-mappings=true
+\ No newline at end of file
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/MockSetup.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/MockSetup.java
+index 5e12816..ae887c4 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/MockSetup.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/MockSetup.java
+@@ -1,19 +1,18 @@
+ package com.github.chrisgleissner.springbatchrest.api;
+ 
+-import org.springframework.batch.core.BatchStatus;
+-import org.springframework.batch.core.ExitStatus;
+-import org.springframework.batch.core.JobExecution;
+-import org.springframework.batch.core.JobInstance;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
++import org.springframework.batch.core.*;
++import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.explore.JobExplorer;
++import org.springframework.batch.core.job.SimpleJob;
+ import org.springframework.batch.core.launch.NoSuchJobException;
+ 
+ import java.util.Date;
+ 
+ import static com.google.common.collect.Lists.newArrayList;
+-import static org.mockito.ArgumentMatchers.anyInt;
+-import static org.mockito.ArgumentMatchers.eq;
++import static org.mockito.ArgumentMatchers.*;
+ import static org.mockito.Mockito.reset;
+ import static org.mockito.Mockito.when;
+ import static org.springframework.batch.core.ExitStatus.COMPLETED;
+ import static org.springframework.batch.core.ExitStatus.FAILED;
+ 
+@@ -28,10 +27,15 @@ public class MockSetup {
+     public static void configureMock(JobExplorer jobExplorer) {
+         reset(jobExplorer);
+         when(jobExplorer.getJobNames()).thenReturn(newArrayList("j1", "j2"));
+     }
+ 
++    public static void configureMock(AdHocStarter adHocStarter) {
++        reset(adHocStarter);
++        when(adHocStarter.start(any())).thenReturn(jobExecution(j11, 1, ExitStatus.EXECUTING));
++    }
++
+     public static void configureMockForJobExecutionsService(JobExplorer jobExplorer) throws NoSuchJobException {
+         when(jobExplorer.getJobInstanceCount("j1")).thenReturn(2);
+         when(jobExplorer.getJobInstanceCount("j2")).thenReturn(3);
+ 
+         when(jobExplorer.getJobInstances(eq("j1"), anyInt(), anyInt())).thenReturn(newArrayList(j11, j12));
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/ServerTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/ServerTest.java
+index 69447d3..b7c1221 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/ServerTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/ServerTest.java
+@@ -1,116 +1,123 @@
+ package com.github.chrisgleissner.springbatchrest.api;
+ 
+-import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocScheduler;
++import com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecution;
++import com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecutionResource;
+ import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocBatchConfig;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocScheduler;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobBuilder;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobConfig;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+-import org.slf4j.Logger;
+-import org.springframework.batch.core.configuration.DuplicateJobException;
+-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+-import org.springframework.batch.item.ItemProcessor;
++import org.springframework.batch.core.Job;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.context.TestConfiguration;
+ import org.springframework.boot.test.web.client.TestRestTemplate;
+ import org.springframework.boot.web.server.LocalServerPort;
+ import org.springframework.context.annotation.Import;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++import org.springframework.test.context.TestPropertySource;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
++import java.util.Collection;
++import java.util.HashSet;
++import java.util.List;
+ import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ConcurrentSkipListSet;
+-import java.util.concurrent.Semaphore;
++import java.util.concurrent.CopyOnWriteArrayList;
++import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.atomic.AtomicBoolean;
+-import java.util.concurrent.atomic.AtomicInteger;
+ 
++import static com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolvers.JobProperties;
+ import static java.util.concurrent.TimeUnit.SECONDS;
+ import static org.assertj.core.api.Assertions.assertThat;
+-import static org.slf4j.LoggerFactory.getLogger;
++import static org.springframework.batch.core.ExitStatus.COMPLETED;
+ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
+ 
+ @RunWith(SpringRunner.class)
+ @SpringBootTest(webEnvironment = DEFINED_PORT)
++@TestPropertySource(properties = "ServerTest-property=0")
++@Import(AdHocBatchConfig.class)
+ public class ServerTest {
+ 
+-    @TestConfiguration
+-    @Import(AdHocBatchConfig.class)
+-    public static class MyConfig {
+-    }
+-
+-    private static final Logger logger = getLogger(ServerTest.class);
++    private static final String JOB_NAME = "ServerTest-job";
++    private static final String PROPERTY_NAME = "ServerTest-property";
+     private static final String CRON_EXPRESSION = "0/1 * * * * ?";
+-    private static final String JOB_NAME = "testJob";
+-    private static final int MAX_ITEMS = 100;
+ 
+-    private AtomicInteger readerSource = new AtomicInteger();
+-    private Set<String> writerTarget = new ConcurrentSkipListSet<>();
+-    private Semaphore allItemsWrittenSemaphore = new Semaphore(-MAX_ITEMS + 1);
++    private static Set<String> propertyValues = new ConcurrentSkipListSet<>();
+ 
+     @LocalServerPort
+     private int port;
+-
+     @Autowired
+     private TestRestTemplate restTemplate;
+-
+     @Autowired
+-    private AdHocScheduler scheduler;
++    private AdHocScheduler adHocScheduler;
++    @Autowired
++    private JobBuilder jobBuilder;
+ 
+-    private static AtomicBoolean firstExecution = new AtomicBoolean();
++    private JobConfig jobConfig = JobConfig.builder().name(JOB_NAME).asynchronous(false).build();
++    private CountDownLatch jobExecutedOnce = new CountDownLatch(1);
++    private AtomicBoolean firstExecution = new AtomicBoolean(true);
+ 
+     @Before
+-    public void setUp() throws DuplicateJobException, InterruptedException {
+-        if (firstExecution.compareAndSet(false, true)) {
+-            scheduler.schedule(
+-                    JOB_NAME,
+-                    scheduler.jobs().get(JOB_NAME)
+-                            .incrementer(new RunIdIncrementer()) // adds unique parameter on each run so that job can be rerun
+-                            .flow(scheduler.steps().get("step")
+-                                    .<Integer, String>chunk(30)
+-                                    .reader(() -> {
+-                                        int i = readerSource.incrementAndGet();
+-                                        if (i % 10 == 0)
+-                                            logger.info("Read {} item(s) so far", i);
+-                                        return i <= MAX_ITEMS ? i : null;
+-                                    })
+-                                    .processor((ItemProcessor<Integer, String>) (i1) -> i1.toString())
+-                                    .writer(items -> {
+-                                        writerTarget.addAll(items);
+-                                        logger.info("Wrote {} item(s) so far", writerTarget.size());
+-                                        allItemsWrittenSemaphore.release(items.size());
+-                                    })
+-                                    .allowStartIfComplete(true)
+-                                    .build()).end().build(),
+-                    CRON_EXPRESSION);
+-            scheduler.start();
+-
+-            allItemsWrittenSemaphore.tryAcquire(1, 3, SECONDS);
+-            assertThat(writerTarget).hasSize(MAX_ITEMS);
++    public void setUp() throws InterruptedException {
++        if (firstExecution.compareAndSet(true, false)) {
++            Job job = jobBuilder.createJob(JOB_NAME, () -> {
++                String propertyValue = JobProperties.of(JOB_NAME).getProperty(PROPERTY_NAME);
++                propertyValues.add(propertyValue);
++                jobExecutedOnce.countDown();
++            });
++            adHocScheduler.schedule(JOB_NAME, job, CRON_EXPRESSION);
++            adHocScheduler.start();
++            jobExecutedOnce.await(2, SECONDS);
++            adHocScheduler.pause();
+         }
+     }
+ 
+     @Test
+     public void jobExecution() {
+-        assertThat(this.restTemplate.getForObject(url("/jobExecution?exitStatus=COMPLETED"), String.class))
++        assertThat(restTemplate.getForObject(url("/jobExecutions?exitStatus=COMPLETED"), String.class))
+                 .contains("\"status\":\"COMPLETED\"").contains("\"id\":0,\"jobId\":0");
+-        assertThat(this.restTemplate.getForObject(url("/jobExecution?exitStatus=FAILED"), String.class))
+-                .contains("jobExecution?exitStatus=exitCode%3DFAILED");
++        assertThat(restTemplate.getForObject(url("/jobExecutions?exitStatus=FAILED"), String.class))
++                .contains("jobExecutions?exitStatus=exitCode%3DFAILED");
++    }
++
++    @Test
++    public void jobsCanBeStartedWithDifferentProperties() {
++        assertThat(propertyValues).containsExactly("0");
++
++        JobExecution je1 = startJob("1");
++        assertThat(propertyValues).containsExactly("0", "1");
++
++        JobExecution je2 = startJob("2");
++        assertThat(propertyValues).containsExactly("0", "1", "2");
++
++        assertThat(je1.getExitStatus()).isEqualTo(COMPLETED);
++        assertThat(je2.getExitStatus()).isEqualTo(COMPLETED);
++    }
++
++    private JobExecution startJob(String propertyValue) {
++        ResponseEntity<JobExecutionResource> responseEntity = restTemplate.postForEntity(url("/jobExecutions"),
++                jobConfig.toBuilder().property(PROPERTY_NAME, propertyValue).build(),
++                JobExecutionResource.class);
++        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
++        return responseEntity.getBody().getJobExecution();
+     }
+ 
+     @Test
+-    public void jobDetail() {
+-        assertThat(this.restTemplate.getForObject(url("/jobDetail"), String.class))
+-                .contains(CRON_EXPRESSION);
+-        assertThat(this.restTemplate.getForObject(url("/jobDetail?enabled=false"), String.class))
+-                .doesNotContain(CRON_EXPRESSION);
+-        assertThat(this.restTemplate.getForObject(url("/jobDetail?springBatchJobName=" + JOB_NAME), String.class))
+-                .contains(CRON_EXPRESSION).contains(JOB_NAME);
++    public void jobDetails() {
++        assertThat(restTemplate.getForObject(url("/jobDetails?springBatchJobName=" + JOB_NAME), String.class))
++                .contains(JOB_NAME);
+     }
+ 
+     @Test
+     public void swagger() {
+-        assertThat(this.restTemplate.getForObject(url("v2/api-docs"), String.class))
++        assertThat(restTemplate.getForObject(url("v2/api-docs"), String.class))
+                 .contains("{\"swagger\":\"2.0\"");
+     }
+ 
+     private String url(String path) {
+         return "http://localhost:" + port + path;
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobControllerTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobControllerTest.java
+index cb8a54c..a6bc55d 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobControllerTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobControllerTest.java
+@@ -1,14 +1,16 @@
+ package com.github.chrisgleissner.springbatchrest.api.job;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.batch.core.explore.JobExplorer;
+ import org.springframework.batch.core.launch.NoSuchJobException;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.mock.mockito.MockBean;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ 
+@@ -18,28 +20,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+ import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureMock;
+ 
+ @RunWith(SpringRunner.class)
+-@SpringBootTest
+-@AutoConfigureMockMvc
++@WebMvcTest
+ public class JobControllerTest {
+ 
+     @Autowired
+     private MockMvc mockMvc;
+ 
+     @MockBean
+     private JobExplorer jobExplorer;
+ 
++    @MockBean
++    private AdHocStarter adHocStarter;
++
+     @Before
+-    public void setUp() throws NoSuchJobException {
++    public void setUp() {
+         configureMock(jobExplorer);
+     }
+ 
+     @Test
+     public void jobs() throws Exception {
+-        mockMvc.perform(get("/job"))
++        mockMvc.perform(get("/jobs"))
+                 .andDo(print())
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$.*", hasSize(2)));
+     }
+ 
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobServiceTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobServiceTest.java
+index 970fd92..5c0ad3e 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobServiceTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/job/JobServiceTest.java
+@@ -32,48 +32,16 @@ import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureM
+ public class JobServiceTest {
+ 
+     @Mock
+     private JobExplorer jobExplorer;
+ 
+-    @Mock
+-    private JobLocator jobLocator;
+-
+-    @Mock
+-    private JobRepository jobRepository;
+-
+-    @Mock
+-    private Job job;
+-
+-    @Mock
+-    private JobExecution jobExecution;
+-
+     private JobService jobService;
+ 
+     @Before
+-    public void setUp() throws NoSuchJobException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
++    public void setUp() {
+         configureMock(jobExplorer);
+-
+-        when(jobLocator.getJob(anyString())).thenAnswer(i -> job);
+-        when(job.getJobParametersValidator()).thenReturn(new DefaultJobParametersValidator());
+-
+-        when(jobExecution.getStatus()).thenReturn(BatchStatus.STARTED);
+-        when(jobExecution.getEndTime()).thenReturn(new Date());
+-        when(jobExecution.getStartTime()).thenReturn(new Date());
+-        when(jobExecution.getExitStatus()).thenReturn(ExitStatus.UNKNOWN);
+-        when(jobExecution.getFailureExceptions()).thenReturn(Collections.EMPTY_LIST);
+-        when(jobExecution.getJobId()).thenReturn(1L);
+-        when(jobExecution.getId()).thenReturn(2L);
+-        when(jobRepository.createJobExecution(any(), any())).thenReturn(jobExecution);
+-
+-        jobService = new JobService(jobLocator, jobExplorer, jobRepository);
+-    }
+-
+-    @Test
+-    public void launchJob() {
+-        com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecution jobExecution = jobService.launch("foo");
+-        assertThat(jobExecution.getJobName()).matches("foo");
+-        assertThat(jobExecution.getStatus()).matches(BatchStatus::isRunning);
++        jobService = new JobService(jobExplorer);
+     }
+ 
+     @Test
+     public void jobs() {
+         Collection<com.github.chrisgleissner.springbatchrest.api.job.Job> jobs = jobService.jobs();
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailControllerTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailControllerTest.java
+index ce44213..d6ed2bd 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailControllerTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobdetail/JobDetailControllerTest.java
+@@ -1,18 +1,22 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobdetail;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
+ import com.google.common.collect.Lists;
+ import com.google.common.collect.Sets;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.quartz.*;
+ import org.quartz.impl.JobDetailImpl;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.context.annotation.ComponentScan;
++import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ import com.github.chrisgleissner.springbatchrest.util.adhoc.QuartzJobLauncher;
+ 
+ import static com.google.common.collect.Lists.newArrayList;
+@@ -27,17 +31,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+ 
+ 
+ @RunWith(SpringRunner.class)
+-@SpringBootTest
+-@AutoConfigureMockMvc
++@WebMvcTest
+ public class JobDetailControllerTest {
+ 
+     @Autowired
+     private MockMvc mockMvc;
+ 
++    @MockBean
++    private AdHocStarter adHocStarter;
++
+     @MockBean
+     private Scheduler scheduler;
+ 
+     @Before
+     public void setUp() throws SchedulerException {
+@@ -56,19 +62,19 @@ public class JobDetailControllerTest {
+         });
+     }
+ 
+     @Test
+     public void jobDetail() throws Exception {
+-        mockMvc.perform(get("/jobDetail/g1/j1"))
++        mockMvc.perform(get("/jobDetails/g1/j1"))
+                 .andDo(print())
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$..jobDetail", hasSize(1)));
+     }
+ 
+     @Test
+     public void jobDetails() throws Exception {
+-        mockMvc.perform(get("/jobDetail"))
++        mockMvc.perform(get("/jobDetails"))
+                 .andDo(print())
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$..jobDetail", hasSize(2)));
+     }
+ }
+\ No newline at end of file
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
+index 65e121e..b39c021 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
+@@ -1,47 +1,51 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.batch.core.explore.JobExplorer;
+ import org.springframework.batch.core.launch.NoSuchJobException;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+ import org.springframework.boot.test.context.SpringBootTest;
+ import org.springframework.boot.test.mock.mockito.MockBean;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ 
++import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureMock;
++import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureMockForJobExecutionsService;
+ import static org.hamcrest.Matchers.hasSize;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+-import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureMock;
+-import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureMockForJobExecutionsService;
+ 
+ @RunWith(SpringRunner.class)
+-@SpringBootTest
+-@AutoConfigureMockMvc
++@WebMvcTest
+ public class JobExecutionControllerTest {
+ 
+     @Autowired
+     private MockMvc mockMvc;
+ 
+     @MockBean
+     private JobExplorer jobExplorer;
+ 
++    @MockBean
++    private AdHocStarter adHocStarter;
++
+     @Before
+     public void setUp() throws NoSuchJobException {
+         configureMock(jobExplorer);
+         configureMockForJobExecutionsService(jobExplorer);
+     }
+ 
+     @Test
+     public void jobExecutions() throws Exception {
+-        mockMvc.perform(get("/jobExecution"))
++        mockMvc.perform(get("/jobExecutions"))
+                 .andDo(print())
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$..jobExecution", hasSize(6)));
+     }
+ }
+\ No newline at end of file
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionServiceTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionServiceTest.java
+index a67ae58..ab571b7 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionServiceTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionServiceTest.java
+@@ -1,15 +1,25 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobConfig;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.observer.JobExecutionAspect;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolver;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolvers;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.mockito.Mock;
+ import org.mockito.junit.MockitoJUnitRunner;
++import org.springframework.batch.core.BatchStatus;
+ import org.springframework.batch.core.ExitStatus;
++import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.explore.JobExplorer;
+ import org.springframework.batch.core.launch.NoSuchJobException;
++import org.springframework.batch.core.repository.JobRepository;
++import org.springframework.core.env.Environment;
++import org.springframework.mock.env.MockEnvironment;
+ 
+ import java.util.Collection;
+ import java.util.Optional;
+ 
+ import static java.util.Optional.empty;
+@@ -20,18 +30,27 @@ import static com.github.chrisgleissner.springbatchrest.api.MockSetup.configureM
+ @RunWith(MockitoJUnitRunner.class)
+ public class JobExecutionServiceTest {
+ 
+     @Mock
+     private JobExplorer jobExplorer;
+-
++    @Mock
++    private AdHocStarter adHocStarter;
+     private JobExecutionService jobExecutionService;
+ 
+     @Before
+     public void setUp() throws NoSuchJobException {
+         configureMock(jobExplorer);
++        configureMock(adHocStarter);
+         configureMockForJobExecutionsService(jobExplorer);
+-        jobExecutionService = new JobExecutionService(jobExplorer);
++        jobExecutionService = new JobExecutionService(jobExplorer, adHocStarter);
++    }
++
++    @Test
++    public void launchJob() {
++        com.github.chrisgleissner.springbatchrest.api.jobexecution.JobExecution jobExecution = jobExecutionService.launch(JobConfig.builder().name("j1").build());
++        assertThat(jobExecution.getJobName()).matches("j1");
++        assertThat(jobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+     }
+ 
+     @Test
+     public void jobExecutionsAll() {
+         Collection<JobExecution> jes =
+diff --git a/util/pom.xml b/util/pom.xml
+index 8fcff92..ef97a49 100644
+--- a/util/pom.xml
++++ b/util/pom.xml
+@@ -24,10 +24,14 @@
+         </dependency>
+         <dependency>
+             <groupId>org.projectlombok</groupId>
+             <artifactId>lombok</artifactId>
+         </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-aop</artifactId>
++        </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-batch</artifactId>
+         </dependency>
+         <dependency>
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocBatchConfig.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocBatchConfig.java
+index c61ea70..9cef886 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocBatchConfig.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocBatchConfig.java
+@@ -11,10 +11,11 @@ import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+ import org.springframework.batch.core.repository.JobRepository;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.ComponentScan;
+ import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.EnableAspectJAutoProxy;
+ import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
+ 
+ import javax.sql.DataSource;
+ 
+ import java.util.concurrent.ExecutorService;
+@@ -24,10 +25,11 @@ import static com.github.chrisgleissner.springbatchrest.util.adhoc.QuartzJobLaun
+ import static com.github.chrisgleissner.springbatchrest.util.adhoc.QuartzJobLauncher.JOB_LOCATOR;
+ 
+ @Configuration
+ @ComponentScan
+ @EnableBatchProcessing
++@EnableAspectJAutoProxy
+ public class AdHocBatchConfig extends DefaultBatchConfigurer {
+ 
+     @Autowired
+     private JobRepository jobRepository;
+ 
+@@ -51,13 +53,12 @@ public class AdHocBatchConfig extends DefaultBatchConfigurer {
+         scheduler.getContext().put(JOB_LOCATOR, jobLocator);
+         scheduler.getContext().put(JOB_LAUNCHER, jobLauncher);
+         return scheduler;
+     }
+ 
+-    protected JobLauncher createJobLauncher() throws Exception {
++    public JobLauncher getJobLauncher() {
+         SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
+         jobLauncher.setJobRepository(jobRepository);
+         jobLauncher.setTaskExecutor(new ConcurrentTaskExecutor(executorService));
+-        jobLauncher.afterPropertiesSet();
+         return jobLauncher;
+     }
+ }
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocScheduler.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocScheduler.java
+index 3e49d71..84af2bd 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocScheduler.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocScheduler.java
+@@ -1,15 +1,13 @@
+ package com.github.chrisgleissner.springbatchrest.util.adhoc;
+ 
+ import org.quartz.JobDetail;
+ import org.quartz.Scheduler;
+ import org.quartz.Trigger;
++import org.quartz.TriggerKey;
+ import org.slf4j.Logger;
+ import org.springframework.batch.core.Job;
+-import org.springframework.batch.core.configuration.DuplicateJobException;
+-import org.springframework.batch.core.configuration.JobFactory;
+-import org.springframework.batch.core.configuration.JobRegistry;
+ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+ import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Component;
+ 
+@@ -30,41 +28,30 @@ public class AdHocScheduler {
+ 
+     private static final Logger logger = getLogger(AdHocScheduler.class);
+ 
+     private static final String GROUP_NAME = "group";
+ 
+-    private JobRegistry jobRegistry;
++    private final JobBuilder jobBuilder;
+     private Scheduler scheduler;
+     private JobBuilderFactory jobBuilderFactory;
+     private StepBuilderFactory stepBuilderFactory;
+ 
+     @Autowired
+-    public AdHocScheduler(JobRegistry jobRegistry, Scheduler scheduler, JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
+-        this.jobRegistry = jobRegistry;
++    public AdHocScheduler(JobBuilder jobBuilder, Scheduler scheduler, JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
++        this.jobBuilder = jobBuilder;
+         this.scheduler = scheduler;
+         this.jobBuilderFactory = jobBuilderFactory;
+         this.stepBuilderFactory = stepBuilderFactory;
+     }
+ 
+     /**
+      * Schedules a Spring Batch job via a Quartz cron expression.
+      */
+-    public void schedule(String jobName, Job job, String cronExpression) throws DuplicateJobException {
++    public void schedule(String jobName, Job job, String cronExpression) {
+         logger.debug("Scheduling job {} with CRON expression {}", jobName, cronExpression);
+-        jobRegistry.register(new JobFactory() {
+-            @Override
+-            public Job createJob() {
+-                return job;
+-            }
+-
+-            @Override
+-            public String getJobName() {
+-                return jobName;
+-            }
+-        });
+-
+         try {
++            jobBuilder.registerJob(job);
+             JobDetail jobDetail = newJob(QuartzJobLauncher.class)
+                     .withIdentity(jobName, GROUP_NAME)
+                     .usingJobData(QuartzJobLauncher.JOB_NAME, jobName)
+                     .build();
+ 
+@@ -72,10 +59,11 @@ public class AdHocScheduler {
+                     .withIdentity(jobName + "-trigger", GROUP_NAME)
+                     .withSchedule(cronSchedule(cronExpression))
+                     .forJob(jobName, GROUP_NAME)
+                     .build();
+ 
++            scheduler.unscheduleJob(trigger.getKey());
+             scheduler.scheduleJob(jobDetail, trigger);
+             logger.info("Scheduled job {} with CRON expression {}", jobName, cronExpression);
+         } catch (Exception e) {
+             throw new RuntimeException(format("Can't schedule job %s with cronExpression %s", jobName, cronExpression), e);
+         }
+@@ -95,10 +83,36 @@ public class AdHocScheduler {
+         } catch (Exception e) {
+             throw new RuntimeException("Could not start Quartz scheduler", e);
+         }
+     }
+ 
++    public void pause() {
++        try {
++            scheduler.pauseAll();
++            logger.info("Paused Quartz scheduler");
++        } catch (Exception e) {
++            throw new RuntimeException("Could not pause Quartz scheduler", e);
++        }
++    }
++
++    public void resume() {
++        try {
++            scheduler.resumeAll();
++            logger.info("Resumed Quartz scheduler");
++        } catch (Exception e) {
++            throw new RuntimeException("Could not resumse Quartz scheduler", e);
++        }
++    }
++    public void stop() {
++        try {
++            scheduler.shutdown();
++            logger.info("Stopped Quartz scheduler");
++        } catch (Exception e) {
++            throw new RuntimeException("Could not stop Quartz scheduler", e);
++        }
++    }
++
+     public JobBuilderFactory jobs() {
+         return jobBuilderFactory;
+     }
+ 
+     public StepBuilderFactory steps() {
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
+index 96a7d9d..2d65075 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
+@@ -1,78 +1,56 @@
+ package com.github.chrisgleissner.springbatchrest.util.adhoc;
+ 
++import com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolvers;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.batch.core.Job;
+ import org.springframework.batch.core.JobExecution;
++import org.springframework.batch.core.JobParameter;
+ import org.springframework.batch.core.JobParameters;
+-import org.springframework.batch.core.StepContribution;
+ import org.springframework.batch.core.configuration.JobLocator;
+-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+ import org.springframework.batch.core.launch.JobLauncher;
+-import org.springframework.batch.core.launch.support.RunIdIncrementer;
+-import org.springframework.batch.core.scope.context.ChunkContext;
+-import org.springframework.batch.core.step.tasklet.Tasklet;
+-import org.springframework.batch.repeat.RepeatStatus;
++import org.springframework.batch.core.launch.support.SimpleJobLauncher;
++import org.springframework.batch.core.repository.JobRepository;
++import org.springframework.core.task.SimpleAsyncTaskExecutor;
++import org.springframework.core.task.SyncTaskExecutor;
++import org.springframework.core.task.TaskExecutor;
+ import org.springframework.stereotype.Component;
+ 
+-import java.util.function.Consumer;
+-
+-import static org.springframework.batch.repeat.RepeatStatus.FINISHED;
++import static java.util.stream.Collectors.toMap;
+ 
+ @Slf4j
+ @Component
+ public class AdHocStarter {
+ 
+     private final JobLocator jobLocator;
+-    private final JobLauncher jobLauncher;
+-    private final JobBuilderFactory jobs;
+-    private final StepBuilderFactory steps;
++    private final SimpleJobLauncher asyncJobLauncher;
++    private final SimpleJobLauncher syncJobLauncher;
++    private final JobPropertyResolvers jobPropertyResolvers;
+ 
+-    public AdHocStarter(JobLocator jobLocator, JobLauncher jobLauncher, JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
++    public AdHocStarter(JobLocator jobLocator, JobRepository jobRepository, JobPropertyResolvers jobPropertyResolvers) {
+         this.jobLocator = jobLocator;
+-        this.jobLauncher = jobLauncher;
+-        this.jobs = jobBuilderFactory;
+-        this.steps = stepBuilderFactory;
+-    }
+-
+-    public JobExecution start(String jobName, JobParameters jobParameters) {
+-        try {
+-            return start(jobLocator.getJob(jobName), jobParameters);
+-        } catch (Exception e) {
+-            throw new RuntimeException("Failed to launch job " + jobName, e);
+-        }
++        asyncJobLauncher = jobLauncher(new SimpleAsyncTaskExecutor(), jobRepository);
++        syncJobLauncher = jobLauncher(new SyncTaskExecutor(), jobRepository);
++        this.jobPropertyResolvers = jobPropertyResolvers;
+     }
+ 
+-    public JobExecution start(String jobName, Consumer<JobParameters> consumer, JobParameters jobParameters) {
+-        Job job = jobs.get(jobName)
+-                .incrementer(new RunIdIncrementer())
+-                .flow(steps.get("step").allowStartIfComplete(true).tasklet(new ConsumerTaskletAdapter(consumer, jobParameters)).build())
+-                .end().build();
+-        return start(job, jobParameters);
++    private SimpleJobLauncher jobLauncher(TaskExecutor taskExecutor, JobRepository jobRepository) {
++        SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
++        jobLauncher.setJobRepository(jobRepository);
++        jobLauncher.setTaskExecutor(taskExecutor);
++        return jobLauncher;
+     }
+ 
+-    public JobExecution start(Job job, JobParameters jobParameters) {
++    public JobExecution start(JobConfig jobConfig) {
+         try {
+-            log.info("Starting job {}", job.getName());
++            Job job = jobLocator.getJob(jobConfig.getName());
++            jobPropertyResolvers.started(jobConfig);
++            JobParameters jobParameters = new JobParameters(jobConfig.getProperties().entrySet().stream()
++                    .collect(toMap(e -> e.getKey(), e -> new JobParameter(e.getValue()))));
++            log.info("Starting {} with {}", jobConfig.getName(), jobConfig);
++            JobLauncher jobLauncher = jobConfig.isAsynchronous() ? asyncJobLauncher : syncJobLauncher;
+             return jobLauncher.run(job, jobParameters);
+         } catch (Exception e) {
+-            throw new RuntimeException("Failed to launch job " + job.getName(), e);
+-        }
+-    }
+-
+-    private class ConsumerTaskletAdapter implements Tasklet {
+-        private final JobParameters parameters;
+-        private Consumer<JobParameters> consumer;
+-
+-        public ConsumerTaskletAdapter(Consumer<JobParameters> consumer, JobParameters parameters) {
+-            this.consumer = consumer;
+-            this.parameters = parameters;
+-        }
+-
+-        @Override
+-        public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+-            consumer.accept(parameters);
+-            return FINISHED;
++            throw new RuntimeException("Failed to start " + jobConfig.getName(), e);
+         }
+     }
+ }
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobBuilder.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobBuilder.java
+new file mode 100644
+index 0000000..3c7041b
+--- /dev/null
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobBuilder.java
+@@ -0,0 +1,73 @@
++package com.github.chrisgleissner.springbatchrest.util.adhoc;
++
++import org.springframework.batch.core.Job;
++import org.springframework.batch.core.StepContribution;
++import org.springframework.batch.core.configuration.JobFactory;
++import org.springframework.batch.core.configuration.JobRegistry;
++import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
++import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
++import org.springframework.batch.core.launch.support.RunIdIncrementer;
++import org.springframework.batch.core.scope.context.ChunkContext;
++import org.springframework.batch.core.step.tasklet.Tasklet;
++import org.springframework.batch.repeat.RepeatStatus;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Component;
++
++import static org.springframework.batch.repeat.RepeatStatus.FINISHED;
++
++@Component
++public class JobBuilder {
++
++    private final JobRegistry jobRegistry;
++    private final JobBuilderFactory jobs;
++    private final StepBuilderFactory steps;
++
++    @Autowired
++    public JobBuilder(JobRegistry jobRegistry, JobBuilderFactory jobs, StepBuilderFactory steps) {
++        this.jobRegistry = jobRegistry;
++        this.jobs = jobs;
++        this.steps = steps;
++    }
++
++    public Job registerJob(Job job) {
++        jobRegistry.unregister(job.getName());
++        try {
++            jobRegistry.register(new JobFactory() {
++                @Override
++                public Job createJob() {
++                    return job;
++                }
++
++                @Override
++                public String getJobName() {
++                    return job.getName();
++                }
++            });
++        } catch (Exception e) {
++            throw new RuntimeException("Could not create " + job.getName(), e);
++        }
++        return job;
++    }
++
++    public Job createJob(String name, Runnable r) {
++        return registerJob(jobs.get(name)
++                .incrementer(new RunIdIncrementer())
++                .flow(steps.get("step").allowStartIfComplete(true).tasklet(new RunnableTaskletAdapter(r)).build())
++                .end().build());
++    }
++
++    private class RunnableTaskletAdapter implements Tasklet {
++        private Runnable r;
++
++        public RunnableTaskletAdapter(Runnable r) {
++            this.r = r;
++        }
++
++        @Override
++        public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
++            r.run();
++            return FINISHED;
++        }
++    }
++
++}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobConfig.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobConfig.java
+new file mode 100644
+index 0000000..e065693
+--- /dev/null
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/JobConfig.java
+@@ -0,0 +1,17 @@
++package com.github.chrisgleissner.springbatchrest.util.adhoc;
++
++import lombok.Builder;
++import lombok.Data;
++import lombok.Singular;
++
++import java.util.HashMap;
++import java.util.Map;
++
++@Data
++@Builder(toBuilder = true)
++public class JobConfig {
++    private String name;
++    @Singular("property")
++    private Map<String, String> properties = new HashMap<>();
++    private boolean asynchronous;
++}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/QuartzJobLauncher.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/QuartzJobLauncher.java
+index 1a3796e..f74803b 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/QuartzJobLauncher.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/QuartzJobLauncher.java
+@@ -20,21 +20,22 @@ public class QuartzJobLauncher extends QuartzJobBean {
+ 
+     private static final Logger logger = getLogger(QuartzJobLauncher.class);
+ 
+     @Override
+     protected void executeInternal(JobExecutionContext context) {
++        String jobName = null;
+         try {
+             JobDataMap dataMap = context.getJobDetail().getJobDataMap();
+-            String jobName = dataMap.getString(JOB_NAME);
++            jobName = dataMap.getString(JOB_NAME);
+ 
+             JobLocator jobLocator = (JobLocator) context.getScheduler().getContext().get(JOB_LOCATOR);
+             JobLauncher jobLauncher = (JobLauncher) context.getScheduler().getContext().get(JOB_LAUNCHER);
+ 
+             Job job = jobLocator.getJob(jobName);
+-            logger.info("Starting job {}", job.getName());
++            logger.info("Starting {}", job.getName());
+             JobExecution jobExecution = jobLauncher.run(job, new JobParameters());
+             logger.info("{}_{} was completed successfully", job.getName(), jobExecution.getId());
+         } catch (Exception e) {
+-            logger.error("Encountered job execution exception", e);
++            logger.error("Job {} failed", jobName, e);
+         }
+     }
+ }
+\ No newline at end of file
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/observer/JobExecutionAspect.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/observer/JobExecutionAspect.java
+new file mode 100644
+index 0000000..87d77f6
+--- /dev/null
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/observer/JobExecutionAspect.java
+@@ -0,0 +1,29 @@
++package com.github.chrisgleissner.springbatchrest.util.adhoc.observer;
++
++import lombok.extern.slf4j.Slf4j;
++import org.aspectj.lang.annotation.Aspect;
++import org.aspectj.lang.annotation.Before;
++import org.springframework.batch.core.JobExecution;
++import org.springframework.stereotype.Component;
++
++import java.util.LinkedHashSet;
++import java.util.Set;
++import java.util.function.Consumer;
++
++@Slf4j
++@Aspect
++@Component
++public class JobExecutionAspect {
++
++    private Set<Consumer<JobExecution>> consumers = new LinkedHashSet<>();
++
++    public void register(Consumer<JobExecution> consumer) {
++        consumers.add(consumer);
++    }
++
++    @Before("within(org.springframework.batch.core.repository.JobRepository+) && execution(* update(..)) && args(jobExecution)")
++    public void jobExecutionUpdated(JobExecution jobExecution) {
++        log.info("{} {}: {}", jobExecution.getStatus().name(), jobExecution.getJobInstance().getJobName(), jobExecution);
++        consumers.forEach(l -> l.accept(jobExecution));
++    }
++}
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocSchedulerTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocSchedulerTest.java
+index 2a14a06..0461069 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocSchedulerTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocSchedulerTest.java
+@@ -58,11 +58,11 @@ public class AdHocSchedulerTest {
+         assertThat(writer.getItems().iterator().next().getFirstName(), is("JILL"));
+     }
+ 
+     private Job csvImportJobSupplier(String jobName, String csvFilename) {
+         return scheduler.jobs().get(jobName)
+-                .incrementer(new RunIdIncrementer()) // adds unique parameter on each run so that job can be rerun
++                .incrementer(new RunIdIncrementer()) // adds unique parameter on each run so that createJob can be rerun
+                 .listener(listener)
+                 .flow(scheduler.steps().get("step")
+                         .<Person, Person>chunk(10)
+                         .reader(new FlatFileItemReaderBuilder<Person>()
+                                 .name("personItemReader")
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarterTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarterTest.java
+index 22fd5d6..1681d3b 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarterTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarterTest.java
+@@ -1,40 +1,65 @@
+ package com.github.chrisgleissner.springbatchrest.util.adhoc;
+ 
+ import lombok.extern.slf4j.Slf4j;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+-import org.springframework.batch.core.JobParameters;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.test.context.ContextConfiguration;
++import org.springframework.test.context.TestPropertySource;
+ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+ 
++import java.util.HashSet;
++import java.util.Set;
+ import java.util.concurrent.CountDownLatch;
+ 
++import static com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolvers.JobProperties;
+ import static java.util.concurrent.TimeUnit.SECONDS;
+ import static org.assertj.core.api.Assertions.assertThat;
+ 
+ @Slf4j
+ @RunWith(SpringJUnit4ClassRunner.class)
+ @ContextConfiguration(classes = AdHocBatchConfig.class)
++@TestPropertySource(properties = "foo=bar" )
+ public class AdHocStarterTest {
+ 
+     @Autowired
+     private AdHocStarter starter;
+ 
++    @Autowired
++    private JobBuilder jobBuilder;
++
+     @Test
+     public void startWorks() throws InterruptedException {
++        // Check that asynchronous execution with property overrides works
+         int numberOfIterations = 2;
+         int numberOfJobsPerIteration = 2;
++        int propertyValue = 0;
++        Set<String> propertyValues = new HashSet<>();
+         for (int i = 0; i < numberOfIterations; i++) {
+             CountDownLatch latch = new CountDownLatch(numberOfJobsPerIteration);
+             for (int j = 0; j < numberOfJobsPerIteration; j++) {
+                 String jobName = "AdHocStarterTest" + j;
+-                starter.start(jobName, params -> {
++                jobBuilder.createJob(jobName, () -> {
+                     log.info("Running " + jobName);
++                    propertyValues.add(JobProperties.of(jobName).getProperty("foo"));
+                     latch.countDown();
+-                }, new JobParameters());
++                });
++                starter.start(JobConfig.builder()
++                        .name(jobName)
++                        .property("foo", "" + propertyValue++)
++                        .asynchronous(true).build());
+             }
+-            assertThat(latch.await(3, SECONDS)).isTrue();
++            assertThat(latch.await(2, SECONDS)).isTrue();
++            assertThat(propertyValues).hasSize(propertyValue);
+         }
++        Thread.sleep(100); // Job completion takes place after latch is counted down
++        assertThat(JobProperties.of("AdHocStarterTest0").getProperty("foo")).isEqualTo("bar");
++
++        // Check that synchronous execution without overrides works
++        starter.start(JobConfig.builder()
++                .name("AdHocStarterTest0")
++                .asynchronous(false)
++                .build());
++        assertThat(propertyValues).contains("bar");
+     }
+ }
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzConfig.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzConfig.java
+index 8962c63..da082f6 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzConfig.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzConfig.java
+@@ -1,7 +1,8 @@
+ package com.github.chrisgleissner.springbatchrest.util.springboot;
+ 
++import org.quartz.SchedulerException;
+ import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.configuration.JobRegistry;
+ import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
+ import org.springframework.batch.core.launch.JobLauncher;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -9,10 +10,11 @@ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
+ import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
+ import org.springframework.scheduling.quartz.JobDetailFactoryBean;
+ import org.springframework.scheduling.quartz.SchedulerFactoryBean;
+ 
++import javax.annotation.PreDestroy;
+ import java.util.HashMap;
+ import java.util.Map;
+ 
+ @Configuration
+ public class QuartzConfig {
+@@ -21,10 +23,12 @@ public class QuartzConfig {
+     private JobLauncher jobLauncher;
+ 
+     @Autowired
+     private JobLocator jobLocator;
+ 
++    private SchedulerFactoryBean scheduler;
++
+     @Bean
+     public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(JobRegistry jobRegistry) {
+         JobRegistryBeanPostProcessor postProcessor = new JobRegistryBeanPostProcessor();
+         postProcessor.setJobRegistry(jobRegistry);
+         return postProcessor;
+@@ -50,10 +54,16 @@ public class QuartzConfig {
+         return triggerFactory;
+     }
+ 
+     @Bean
+     public SchedulerFactoryBean schedulerFactoryBean() {
+-        SchedulerFactoryBean scheduler = new SchedulerFactoryBean();
++        scheduler = new SchedulerFactoryBean();
+         scheduler.setTriggers(cronTriggerFactoryBean().getObject());
+         return scheduler;
+     }
++
++    @PreDestroy
++    public void preDestroy() throws SchedulerException {
++        scheduler.stop();
++        scheduler.destroy();
++    }
+ }
+\ No newline at end of file
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzJobLauncher.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzJobLauncher.java
+index 970a36f..399a88c 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzJobLauncher.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/QuartzJobLauncher.java
+@@ -1,58 +1,31 @@
+ package com.github.chrisgleissner.springbatchrest.util.springboot;
+ 
++import lombok.Data;
++import lombok.extern.slf4j.Slf4j;
+ import org.quartz.JobExecutionContext;
+-import org.quartz.JobExecutionException;
+-import org.slf4j.Logger;
+ import org.springframework.batch.core.Job;
+ import org.springframework.batch.core.JobExecution;
+ import org.springframework.batch.core.JobParameters;
+ import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.launch.JobLauncher;
+ import org.springframework.scheduling.quartz.QuartzJobBean;
+ 
+-import static org.slf4j.LoggerFactory.getLogger;
+-
++@Slf4j
++@Data
+ public class QuartzJobLauncher extends QuartzJobBean {
+-
+-    private static final Logger logger = getLogger(QuartzJobLauncher.class);
+-
+     private String jobName;
+     private JobLauncher jobLauncher;
+     private JobLocator jobLocator;
+ 
+-    public String getJobName() {
+-        return jobName;
+-    }
+-
+-    public void setJobName(String jobName) {
+-        this.jobName = jobName;
+-    }
+-
+-    public JobLauncher getJobLauncher() {
+-        return jobLauncher;
+-    }
+-
+-    public void setJobLauncher(JobLauncher jobLauncher) {
+-        this.jobLauncher = jobLauncher;
+-    }
+-
+-    public JobLocator getJobLocator() {
+-        return jobLocator;
+-    }
+-
+-    public void setJobLocator(JobLocator jobLocator) {
+-        this.jobLocator = jobLocator;
+-    }
+-
+     @Override
+-    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
++    protected void executeInternal(JobExecutionContext context) {
+         try {
+             Job job = jobLocator.getJob(jobName);
+-            logger.info("Starting job {}", job.getName());
++            log.info("Starting {}", job.getName());
+             JobExecution jobExecution = jobLauncher.run(job, new JobParameters());
+-            logger.info("{}_{} was completed successfully", job.getName(), jobExecution.getId());
++            log.info("{}_{} was completed successfully", job.getName(), jobExecution.getId());
+         } catch (Exception e) {
+-            logger.error("Encountered job execution exception", e);
++            log.error("Job {} failed", jobName, e);
+         }
+     }
+ }
+\ No newline at end of file
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchApplication.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchApplication.java
+index 42f8b81..abde397 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchApplication.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchApplication.java
+@@ -3,10 +3,9 @@ package com.github.chrisgleissner.springbatchrest.util.springboot;
+ import org.springframework.boot.SpringApplication;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ 
+ @SpringBootApplication
+ public class SpringBatchApplication {
+-
+     public static void main(String[] args) {
+         SpringApplication.run(SpringBatchApplication.class, args);
+     }
+ }
+\ No newline at end of file
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchTest.java
+index 7007318..32871e6 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/springboot/SpringBatchTest.java
+@@ -2,10 +2,11 @@ package com.github.chrisgleissner.springbatchrest.util.springboot;
+ 
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
++import org.springframework.test.annotation.DirtiesContext;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import com.github.chrisgleissner.springbatchrest.util.CacheItemWriter;
+ import com.github.chrisgleissner.springbatchrest.util.JobCompletionNotificationListener;
+ import com.github.chrisgleissner.springbatchrest.util.Person;
+ 
+@@ -15,10 +16,11 @@ import static org.junit.Assert.assertThat;
+ /**
+  * Tests the idiomatic Quartz scheduling of Spring Batch jobs via Spring Boot.
+  */
+ @RunWith(SpringRunner.class)
+ @SpringBootTest
++@DirtiesContext
+ public class SpringBatchTest {
+ 
+     @Autowired
+     private CacheItemWriter<Person> writer;
+ 

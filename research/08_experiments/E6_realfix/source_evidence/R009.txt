@@ -1,0 +1,101 @@
+[parent contract] 14721fd5d64bedfe4850f78f159e50bb16c657a6:swagger/swagger.json:173
+170:         "operationId" : "getDirectDebitEvents",
+171:         "produces" : [ "application/json" ],
+172:         "parameters" : [ {
+173:           "name" : "to_date",
+174:           "in" : "query",
+175:           "required" : false,
+176:           "type" : "string"
+177:         }, {
+178:           "name" : "from_date",
+179:           "in" : "query",
+180:           "required" : false,
+181:           "type" : "string"
+182:         }, {
+
+[parent implementation] 14721fd5d64bedfe4850f78f159e50bb16c657a6:src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java:71
+55:             @ApiResponse(code = 401, message = "Credentials are required to access this resource")})
+56:     public Response getDirectDebitEvents(
+57:             @ApiParam(value = "accountId", hidden = true) @Auth Account account,
+58:             @QueryParam("to_date") String toDate,
+59:             @QueryParam("from_date") String fromDate,
+60:             @ApiParam(value = "Defaults to a maximum of 500", hidden = false)
+61:             @QueryParam("display_size") Integer displaySize,
+62:             @QueryParam("page") Integer page,
+63:             @ApiParam(value = "ID of associated agreement", hidden = false)
+64:             @QueryParam("agreement_id") String agreementId,
+65:             @ApiParam(value = "ID of associated payment", hidden = false)
+66:             @QueryParam("payment_id") String paymentId
+67:     ) {
+68: 
+69:         DirectDebitEventSearchValidator.validateSearchParameters(toDate, fromDate);
+70: 
+71:         String uri = connectorUriGenerator.eventsURI(account, ZonedDateTime.parse(toDate), ZonedDateTime.parse(fromDate), page, displaySize, agreementId, paymentId);
+72:         DirectDebitEventsResponse response = directDebitEventService.getResponse(uri);
+73:         return Response.ok(response).build();
+74:     }
+
+[parent implementation] 14721fd5d64bedfe4850f78f159e50bb16c657a6:src/main/java/uk/gov/pay/api/validation/DirectDebitEventSearchValidator.java:40
+37:         }
+38:     }
+39: 
+40:     private static boolean validateDate(String value) {
+41:         return DateValidator.validate(value);
+42:     }
+43: }
+
+[fix contract] 795a4f140d8932d5ff9faebbe6ff6ab638286a8c:swagger/swagger.json:173
+170:         "operationId" : "getDirectDebitEvents",
+171:         "produces" : [ "application/json" ],
+172:         "parameters" : [ {
+173:           "name" : "to_date",
+174:           "in" : "query",
+175:           "required" : false,
+176:           "type" : "string"
+177:         }, {
+178:           "name" : "from_date",
+179:           "in" : "query",
+180:           "required" : false,
+181:           "type" : "string"
+182:         }, {
+
+[fix implementation] 795a4f140d8932d5ff9faebbe6ff6ab638286a8c:src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java:76
+66:             @ApiParam(value = "ID of associated payment", hidden = false)
+67:             @QueryParam("payment_id") String paymentId
+68:     ) {
+69: 
+70:         DirectDebitEventSearchValidator.validateSearchParameters(toDate, fromDate);
+71:         String uri = connectorUriGenerator.eventsURI(account, parseDate(toDate), parseDate(fromDate), page, displaySize, agreementId, paymentId);
+72:         DirectDebitEventsResponse response = directDebitEventService.getResponse(uri);
+73:         return Response.ok(response).build();
+74:     }
+75:     
+76:     private Optional<ZonedDateTime> parseDate(String date) {
+77:         if (!isBlank(date)) {
+78:             return Optional.of(ZonedDateTime.parse(date));
+79:         }
+80:         return Optional.empty();
+81:     }
+82: }
+
+[parent route] 14721fd5d64bedfe4850f78f159e50bb16c657a6:src/main/java/uk/gov/pay/api/resources/DirectDebitEventsResource.java:47
+44: 
+45:     @GET
+46:     @Timed
+47:     @Path("/v1/events")
+48:     @Produces(APPLICATION_JSON)
+49:     @ApiOperation(
+50:             value = "Get direct debit events",
+51:             notes = "The Authorisation token needs to be specified in the 'authorization' header " +
+52: [REDACTED credential-related line]
+
+[parent route] 14721fd5d64bedfe4850f78f159e50bb16c657a6:swagger/swagger.json:166
+163:         }
+164:       }
+165:     },
+166:     "/v1/events" : {
+167:       "get" : {
+168:         "summary" : "Get direct debit events",
+169: [REDACTED credential-related line]
+170:         "operationId" : "getDirectDebitEvents",
+171:         "produces" : [ "application/json" ],

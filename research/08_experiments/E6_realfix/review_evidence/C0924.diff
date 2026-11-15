@@ -1,0 +1,46 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+index fb0d1e22..0a5af532 100644
+--- a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+@@ -70,6 +70,14 @@ public class CreatePaymentResult {
+     private String providerId;
+ 
+     @JsonProperty
+     @ApiModelProperty(name = "metadata", dataType = "Map[String,String]")
+     private ExternalMetadata metadata;
++
++    @JsonProperty
++    @ApiModelProperty(name = "email", example = "[REDACTED email]", required = false)
++    private String email;
++
++    @JsonProperty(value = "card_details")
++    @ApiModelProperty(name = "card_details", required = false)
++    private CardDetails cardDetails;
+ }
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index 4685e721..15f51b30 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -1297,15 +1297,22 @@
+           "type" : "object",
+           "additionalProperties" : {
+             "type" : "string"
+           }
+         },
++        "email" : {
++          "type" : "string",
++          "example" : "[REDACTED email]"
++        },
+         "refund_summary" : {
+           "$ref" : "#/definitions/RefundSummary"
+         },
+         "settlement_summary" : {
+           "$ref" : "#/definitions/SettlementSummary"
++        },
++        "card_details" : {
++          "$ref" : "#/definitions/CardDetails"
+         }
+       }
+     },
+     "DirectDebitConnectorPaymentResponse" : {
+       "type" : "object",

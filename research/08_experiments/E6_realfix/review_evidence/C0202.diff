@@ -1,0 +1,146 @@
+diff --git a/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java b/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
+index 21f8c8f3..43f35db6 100644
+--- a/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
++++ b/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
+@@ -262,10 +262,14 @@ public class OpenAPISchemaValidator {
+    }
+ 
+ 
+    /** Entry point method for converting an OpenAPI schema node to Json schema. */
+    private static JsonNode convertOpenAPISchemaToJsonSchema(JsonNode jsonNode) {
++     // Convert components
++     if(jsonNode.has("components")){
++       convertProperties(jsonNode.path("components").path("schemas").elements());
++     }
+       // Convert schema for all structures.
+       for (String structure : STRUCTURES) {
+          if (jsonNode.has(structure) && jsonNode.path(structure).isArray()) {
+             ArrayNode arrayNode = (ArrayNode) jsonNode.path(structure);
+             for (int i=0; i<arrayNode.size(); i++) {
+diff --git a/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java b/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
+index 47a20c7c..6e02bd0d 100644
+--- a/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
++++ b/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
+@@ -430,6 +430,50 @@ public class OpenAPISchemaValidatorTest {
+       List<String> errors = OpenAPISchemaValidator.validateJsonMessage(openAPISpec, contentNode,
+             "/paths/~1boards~1{slug}/get/responses/200", "application/json");
+ 
+       assertTrue(errors.isEmpty());
+    }
++
++   @Test
++   public void testNullableFieldInComponentRef(){
++     String openAPIText = null;
++     String jsonText = """
++        [
++          {
++           "name": "Brian May",
++           "birthDate": "1947-07-19T00:00:00.0Z"
++          },
++          {
++           "name": "Roger Taylor",
++           "birthDate": "1949-07-26T00:00:00.0Z"
++          },
++          {
++           "name": "John Deacon",
++           "birthDate": "1951-08-19T00:00:00.0Z"
++          },
++          {
++            "name": "Freddy Mercury",
++            "birthDate": "1946-09-15T00:00:00.0Z",
++            "deathDate": "1946-11-24T00:00:00.0Z"
++          }
++        ]
++       """;
++     JsonNode openAPISpec = null;
++     JsonNode contentNode = null;
++
++     try {
++       // Load full specification from file.
++       openAPIText =  FileUtils.readFileToString(
++         new File("target/test-classes/io/github/microcks/util/openapi/nullable-fields-openapi.yaml"));
++       // Extract JSON nodes using OpenAPISchemaValidator methods.
++       openAPISpec = OpenAPISchemaValidator.getJsonNodeForSchema(openAPIText);
++       contentNode = OpenAPISchemaValidator.getJsonNode(jsonText);
++     } catch (Exception e) {
++       fail("Exception should not be thrown");
++     }
++
++     // Validate the content for Get /accounts response message.
++     List<String> errors = OpenAPISchemaValidator.validateJsonMessage(openAPISpec, contentNode,
++       "/paths/~1queen~1members/get/responses/200", "application/json");
++     assertTrue(errors.isEmpty());
++   }
+ }
+diff --git a/commons/util/src/test/resources/io/github/microcks/util/openapi/nullable-fields-openapi.yaml b/commons/util/src/test/resources/io/github/microcks/util/openapi/nullable-fields-openapi.yaml
+new file mode 100644
+index 00000000..df04be0a
+--- /dev/null
++++ b/commons/util/src/test/resources/io/github/microcks/util/openapi/nullable-fields-openapi.yaml
+@@ -0,0 +1,66 @@
++openapi: 3.0.3
++info:
++  title: Sample API
++  version: '1.0'
++paths:
++  /queen/members:
++    get:
++      parameters:
++        - $ref: "#/components/parameters/alive"
++      responses:
++        200:
++          description: OK
++          content:
++            application/json:
++              schema:
++                type: array
++                items:
++                  $ref: "#/components/schemas/human"
++              examples:
++                "Alive":
++                  $ref: '#/components/examples/alive'
++                "Dead":
++                  $ref: '#/components/examples/dead'
++
++components:
++  parameters:
++    alive:
++      name: isAlive
++      in: path
++      required: true
++      schema:
++        type: boolean
++      examples:
++        "Alive":
++          value: true
++        "Dead":
++          value: false
++  schemas:
++    human:
++      properties:
++        name:
++          type: string
++          nullable: false
++        birthDate:
++          type: string
++          format: date-time
++          nullable: false
++        deathDate:
++          type: string
++          format: date-time
++          nullable: true
++
++  examples:
++    alive:
++      value:
++        - name: "Brian May"
++          birthDate: "1947-07-19T00:00:00.0Z"
++        - name: "Roger Taylor"
++          birthDate: "1949-07-26T00:00:00.0Z"
++        - name: "John Deacon"
++          birthDate: "1951-08-19T00:00:00.0Z"
++    dead:
++      value:
++        - name: "Freddy Mercury"
++          birthDate: "1946-09-15T00:00:00.0Z"
++          deathDate: "1946-11-24T00:00:00.0Z"

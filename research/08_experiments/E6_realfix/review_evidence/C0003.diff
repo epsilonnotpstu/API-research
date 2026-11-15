@@ -1,0 +1,191 @@
+diff --git a/src/main/java/io/papermc/bibliothek/controller/api/AbstractProjectsController.java b/src/main/java/io/papermc/bibliothek/controller/api/AbstractProjectsController.java
+index c3c691a..fbe64f5 100644
+--- a/src/main/java/io/papermc/bibliothek/controller/api/AbstractProjectsController.java
++++ b/src/main/java/io/papermc/bibliothek/controller/api/AbstractProjectsController.java
+@@ -42,15 +42,13 @@ import java.time.Duration;
+ import java.util.Map;
+ import org.springframework.http.CacheControl;
+ import org.springframework.http.ResponseEntity;
+ 
+ public abstract class AbstractProjectsController {
+-  protected static final CacheControl PROJECTS_CACHE = HTTP.publicCacheSMA(Duration.ofDays(7));
+-  protected static final CacheControl PROJECT_CACHE = HTTP.publicCacheSMA(Duration.ofMinutes(30));
+-  protected static final CacheControl VERSION_CACHE = HTTP.publicCacheSMA(Duration.ofMinutes(5));
+-  protected static final CacheControl BUILDS_CACHE = HTTP.publicCacheSMA(Duration.ofMillis(5));
+-  protected static final CacheControl BUILD_CACHE = HTTP.publicCacheSMA(Duration.ofDays(7));
++  protected static final CacheControl CACHE_7_DAYS = HTTP.publicCacheSMA(Duration.ofDays(7));
++  protected static final CacheControl CACHE_30_MINUTES = HTTP.publicCacheSMA(Duration.ofMinutes(30));
++  protected static final CacheControl CACHE_5_MINUTES = HTTP.publicCacheSMA(Duration.ofMinutes(5));
+ 
+   private final AppConfiguration downloadsConfig;
+ 
+   protected final ProjectCollection projects;
+   protected final VersionGroupCollection versionGroups;
+diff --git a/src/main/java/io/papermc/bibliothek/controller/api/v1/ProjectsControllerV1.java b/src/main/java/io/papermc/bibliothek/controller/api/v1/ProjectsControllerV1.java
+index bd17e70..633dbe9 100644
+--- a/src/main/java/io/papermc/bibliothek/controller/api/v1/ProjectsControllerV1.java
++++ b/src/main/java/io/papermc/bibliothek/controller/api/v1/ProjectsControllerV1.java
+@@ -39,10 +39,11 @@ import io.papermc.bibliothek.json.JsonFactory;
+ import io.swagger.v3.oas.annotations.Hidden;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.http.CacheControl;
+ import org.springframework.http.MediaType;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.GetMapping;
+ import org.springframework.web.bind.annotation.PathVariable;
+ import org.springframework.web.bind.annotation.RequestMapping;
+@@ -71,11 +72,11 @@ public class ProjectsControllerV1 extends AbstractProjectsController {
+           for(final Version version : reverse) {
+             versionsJson.add(version.name);
+           }
+         }));
+       }),
+-      PROJECT_CACHE
++      CACHE_30_MINUTES
+     );
+   }
+ 
+   @GetMapping("/v1/{project:[a-z]+}/{version:[0-9pre.-]+}")
+   public ResponseEntity<?> version(final @PathVariable("project") String projectName, final @PathVariable("version") String versionName) throws UhOh {
+@@ -95,20 +96,20 @@ public class ProjectsControllerV1 extends AbstractProjectsController {
+               allJson.add(build.number);
+             }
+           }));
+         }));
+       }),
+-      VERSION_CACHE
++      CACHE_5_MINUTES
+     );
+   }
+ 
+   @GetMapping("/v1/{project:[a-z]+}/{version:[0-9pre.-]+}/{build:\\d+}")
+   public ResponseEntity<?> build(final @PathVariable("project") String projectName, final @PathVariable("version") String versionName, final @PathVariable("build") int buildNumber) throws UhOh {
+     final Project project = this.getProject(projectName);
+     final Version version = this.getVersion(project, versionName);
+     final Build build = this.getBuild(project, version, buildNumber);
+-    return this.build(project, version, build);
++    return this.build(project, version, build, CACHE_7_DAYS);
+   }
+ 
+   @GetMapping("/v1/{project:[a-z]+}/{version:[0-9pre.-]+}/{build:\\d+}/download")
+   public ResponseEntity<?> buildDownload(final @PathVariable("project") String projectName, final @PathVariable("version") String versionName, final @PathVariable("build") int buildNumber) throws UhOh {
+     final Project project = this.getProject(projectName);
+@@ -121,11 +122,11 @@ public class ProjectsControllerV1 extends AbstractProjectsController {
+   @GetMapping("/v1/{project:[a-z]+}/{version:[0-9pre.-]+}/latest")
+   public ResponseEntity<?> latestBuild(final @PathVariable("project") String projectName, final @PathVariable("version") String versionName) throws UhOh {
+     final Project project = this.getProject(projectName);
+     final Version version = this.getVersion(project, versionName);
+     final Build build = this.getLatestBuild(project, version);
+-    return this.build(project, version, build);
++    return this.build(project, version, build, CACHE_5_MINUTES);
+   }
+ 
+   @GetMapping("/v1/{project:[a-z]+}/{version:[0-9pre.-]+}/latest/download")
+   public ResponseEntity<?> latestBuildDownload(final @PathVariable("project") String projectName, final @PathVariable("version") String versionName) throws UhOh {
+     final Project project = this.getProject(projectName);
+@@ -133,18 +134,18 @@ public class ProjectsControllerV1 extends AbstractProjectsController {
+     final Build build = this.getLatestBuild(project, version);
+     final String downloadName = this.downloadName(project, version, build);
+     return this.download(project, version, build, downloadName);
+   }
+ 
+-  private ResponseEntity<?> build(final Project project, final Version version, final Build build) throws UhOh {
++  private ResponseEntity<?> build(final Project project, final Version version, final Build build, final CacheControl cache) throws UhOh {
+     return HTTP.ok(
+       this.json.object(json -> {
+         json.put("project", project.name);
+         json.put("version", version.name);
+         json.put("build", build.number);
+       }),
+-      BUILD_CACHE
++      cache
+     );
+   }
+ 
+   private String downloadName(final Project project, final Version version, final Build build) {
+     return project.name + "-" + version.name + "-" + build.number + ".jar";
+diff --git a/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java b/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
+index 0f94b1c..53f5d6f 100644
+--- a/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
++++ b/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
+@@ -114,11 +114,11 @@ public class ProjectsController extends AbstractProjectsController {
+           for(final Project project : this.projects.findAll()) {
+             projectsJson.add(project.name);
+           }
+         }));
+       }),
+-      PROJECTS_CACHE
++      CACHE_7_DAYS
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+@@ -148,11 +148,11 @@ public class ProjectsController extends AbstractProjectsController {
+           for(final Version version : sortVersions(versions)) {
+             versionsJson.add(version.name);
+           }
+         }));
+       }),
+-      PROJECT_CACHE
++      CACHE_30_MINUTES
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+@@ -179,11 +179,11 @@ public class ProjectsController extends AbstractProjectsController {
+           for(final Build build : builds) {
+             buildsJson.add(build.number);
+           }
+         }));
+       }),
+-      VERSION_CACHE
++      CACHE_5_MINUTES
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+@@ -225,11 +225,11 @@ public class ProjectsController extends AbstractProjectsController {
+               downloadJson.put(SHA256, download.getValue().sha256);
+             }));
+           }
+         }));
+       }),
+-      BUILD_CACHE
++      CACHE_7_DAYS
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+@@ -297,11 +297,11 @@ public class ProjectsController extends AbstractProjectsController {
+           for(final Version version : sortVersions(versions)) {
+             versionsJson.add(version.name);
+           }
+         }));
+       }),
+-      VERSION_CACHE
++      CACHE_5_MINUTES
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+@@ -357,11 +357,11 @@ public class ProjectsController extends AbstractProjectsController {
+               }
+             ));
+           }
+         }));
+       }),
+-      BUILDS_CACHE
++      CACHE_5_MINUTES
+     );
+   }
+ 
+   public static List<Version> sortVersions(final Collection<Version> versions) {
+     return semanticSorted(versions, version -> new Semver(version.name, Semver.SemverType.LOOSE));

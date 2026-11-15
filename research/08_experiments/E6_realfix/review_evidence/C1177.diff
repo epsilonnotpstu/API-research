@@ -1,0 +1,503 @@
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/core/RestTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/core/RestTest.java
+index 0ef112c..32a6091 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/core/RestTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/core/RestTest.java
+@@ -1,12 +1,13 @@
+ package com.github.chrisgleissner.springbatchrest.api.core;
+ 
+ import com.github.chrisgleissner.springbatchrest.api.core.jobexecution.JobExecution;
+ import com.github.chrisgleissner.springbatchrest.api.core.jobexecution.JobExecutionResource;
+-import com.github.chrisgleissner.springbatchrest.util.core.AdHocBatchConfig;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
++import com.github.chrisgleissner.springbatchrest.util.core.config.AdHocBatchConfig;
++
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.batch.core.ExitStatus;
+ import org.springframework.batch.core.Job;
+@@ -26,11 +27,10 @@ import java.util.concurrent.CountDownLatch;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ 
+ import static com.github.chrisgleissner.springbatchrest.util.core.property.JobPropertyResolvers.JobProperties;
+ import static org.assertj.core.api.Assertions.assertThat;
+ import static org.springframework.batch.core.ExitStatus.COMPLETED;
+-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.DEFINED_PORT;
+ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+ 
+ @RunWith(SpringRunner.class)
+ @SpringBootTest(webEnvironment = RANDOM_PORT)
+ @TestPropertySource(properties = "ServerTest-property=0")
+diff --git a/quartz-api/src/test/java/com/github/chrisgleissner/springbatchrest/api/quartz/RestTest.java b/quartz-api/src/test/java/com/github/chrisgleissner/springbatchrest/api/quartz/RestTest.java
+index 1239763..dd7809a 100644
+--- a/quartz-api/src/test/java/com/github/chrisgleissner/springbatchrest/api/quartz/RestTest.java
++++ b/quartz-api/src/test/java/com/github/chrisgleissner/springbatchrest/api/quartz/RestTest.java
+@@ -1,12 +1,12 @@
+ package com.github.chrisgleissner.springbatchrest.api.quartz;
+ 
+ import com.github.chrisgleissner.springbatchrest.api.core.jobexecution.JobExecution;
+ import com.github.chrisgleissner.springbatchrest.api.core.jobexecution.JobExecutionResource;
+-import com.github.chrisgleissner.springbatchrest.util.core.AdHocBatchConfig;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
++import com.github.chrisgleissner.springbatchrest.util.core.config.AdHocBatchConfig;
+ import com.github.chrisgleissner.springbatchrest.util.quartz.AdHocScheduler;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.springframework.batch.core.ExitStatus;
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java
+index e5a834d..e51025e 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/TriggerUtil.java
+@@ -8,15 +8,15 @@ import java.util.TimeZone;
+ import org.quartz.CronScheduleBuilder;
+ import org.quartz.Trigger;
+ 
+ public class TriggerUtil {
+ 
+-	// Also defined in AdHocScheduler. TODO: consider using Quartz default group.
+-	private static final String GROUP_NAME = "group";
++	// Defined for clarity - passing in null is not obvious to what is happening under the covers
++	public static final String QUARTZ_DEFAULT_GROUP = null;
+ 
+ 	public static Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone) {
+-		return triggerFor(cronExpression, jobName, timeZone, GROUP_NAME);
++		return triggerFor(cronExpression, jobName, timeZone, QUARTZ_DEFAULT_GROUP);
+ 	}
+ 
+ 	public static Trigger triggerFor(String cronExpression, String jobName, TimeZone timeZone, String groupName) {
+ 
+ 		CronScheduleBuilder builder = CronScheduleBuilder.cronSchedule(cronExpression);
+@@ -27,11 +27,11 @@ public class TriggerUtil {
+ 
+ 		return newTrigger().withIdentity(jobName, groupName).withSchedule(builder).forJob(jobName, groupName).build();
+ 	}
+ 
+ 	public static Trigger triggerFor(Date dateToRun, String jobName) {
+-		return triggerFor(dateToRun, jobName, GROUP_NAME);
++		return triggerFor(dateToRun, jobName, QUARTZ_DEFAULT_GROUP);
+ 	}
+ 
+ 	public static Trigger triggerFor(Date dateToRun, String jobName, String groupName) {
+ 		return newTrigger().withIdentity(jobName, groupName).startAt(dateToRun).forJob(jobName, groupName).build();
+ 	}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarter.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarter.java
+index e7e81cb..d5065de 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarter.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarter.java
+@@ -16,19 +16,15 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
+ import org.springframework.core.task.SyncTaskExecutor;
+ import org.springframework.core.task.TaskExecutor;
+ import org.springframework.stereotype.Component;
+ 
+ import javax.batch.operations.BatchRuntimeException;
+-import java.util.Date;
+ import java.util.HashMap;
+ import java.util.Map;
+-import java.util.Optional;
+ import java.util.UUID;
+ 
+ import static java.lang.String.format;
+-import static java.util.Collections.emptyMap;
+-import static java.util.stream.Collectors.toMap;
+ 
+ @Slf4j
+ @Component
+ public class AdHocStarter {
+ 
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocBatchConfig.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/config/AdHocBatchConfig.java
+similarity index 81%
+rename from util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocBatchConfig.java
+rename to util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/config/AdHocBatchConfig.java
+index c96c5a7..da22b22 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocBatchConfig.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/core/config/AdHocBatchConfig.java
+@@ -1,6 +1,6 @@
+-package com.github.chrisgleissner.springbatchrest.util.core;
++package com.github.chrisgleissner.springbatchrest.util.core.config;
+ 
+ import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
+ import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+ import org.springframework.batch.core.launch.JobLauncher;
+@@ -14,16 +14,23 @@ import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
+ 
+ import javax.sql.DataSource;
+ import java.util.concurrent.ExecutorService;
+ import java.util.concurrent.Executors;
+ 
+-@Configuration @ComponentScan @EnableBatchProcessing @EnableAspectJAutoProxy
++@Configuration 
++@ComponentScan(basePackages = { 
++		"com.github.chrisgleissner.springbatchrest.util.core",
++		"com.github.chrisgleissner.springbatchrest.util.core.property"
++		})
++@EnableBatchProcessing 
++@EnableAspectJAutoProxy
+ public class AdHocBatchConfig extends DefaultBatchConfigurer {
+ 
+     @Autowired
+     private JobRepository jobRepository;
+ 
++    // TODO: These seem to be unused. Consider removal after Chris's feedback.
+     @Autowired
+     private JobLocator jobLocator;
+ 
+     @Autowired
+     private JobLauncher jobLauncher;
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
+index 94e5963..012f8b8 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocScheduler.java
+@@ -27,11 +27,10 @@ import java.util.TimeZone;
+  * job. This allows for programmatic creation of multiple jobs at run-time.
+  */
+ @Slf4j
+ @Component
+ public class AdHocScheduler {
+-	private static final String GROUP_NAME = "group";
+ 
+ 	private final JobBuilder jobBuilder;
+ 	private Scheduler scheduler;
+ 	private JobBuilderFactory jobBuilderFactory;
+ 	private StepBuilderFactory stepBuilderFactory;
+@@ -191,10 +190,14 @@ public class AdHocScheduler {
+ 	}
+ 
+ 	public StepBuilderFactory steps() {
+ 		return stepBuilderFactory;
+ 	}
++	
++	public Scheduler scheduler() {
++		return scheduler;
++	}
+ 
+ 	// ===============
+ 	// Private Helpers
+ 	// ===============
+ 
+@@ -203,11 +206,11 @@ public class AdHocScheduler {
+ 		config.setName(jobName);
+ 		return this.jobDetailFor(config);
+ 	}
+ 
+ 	private JobDetail jobDetailFor(JobConfig jobConfig) {
+-		JobDetail jobDetail = newJob(QuartzJobLauncher.class).withIdentity(jobConfig.getName(), GROUP_NAME)
++		JobDetail jobDetail = newJob(QuartzJobLauncher.class).withIdentity(jobConfig.getName(), TriggerUtil.QUARTZ_DEFAULT_GROUP)
+ 				.usingJobData(QuartzJobLauncher.JOB_NAME, jobConfig.getName()).build();
+ 
+ 		if (jobConfig.getProperties() != null) {
+ 			jobDetail = new JobParamsDetail(jobDetail, jobConfig.getProperties());
+ 		}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/AdHocSchedulerConfig.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/AdHocSchedulerConfig.java
+new file mode 100644
+index 0000000..d8f201e
+--- /dev/null
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/AdHocSchedulerConfig.java
+@@ -0,0 +1,16 @@
++package com.github.chrisgleissner.springbatchrest.util.quartz.config;
++
++import com.github.chrisgleissner.springbatchrest.util.core.config.AdHocBatchConfig;
++import org.springframework.context.annotation.ComponentScan;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Import;
++
++
++@Configuration 
++@ComponentScan(basePackages = {
++		"com.github.chrisgleissner.springbatchrest.util.quartz"
++		})
++@Import({AdHocBatchConfig.class, SchedulerConfig.class})
++public class AdHocSchedulerConfig {
++
++}
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfig.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/SchedulerConfig.java
+similarity index 71%
+rename from util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfig.java
+rename to util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/SchedulerConfig.java
+index ec89496..4923812 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfig.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/quartz/config/SchedulerConfig.java
+@@ -1,25 +1,20 @@
+-package com.github.chrisgleissner.springbatchrest.util.quartz;
++package com.github.chrisgleissner.springbatchrest.util.quartz.config;
++
++import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
++import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
+ 
+-import com.github.chrisgleissner.springbatchrest.util.core.AdHocBatchConfig;
+ import org.quartz.Scheduler;
+ import org.quartz.SchedulerException;
+ import org.quartz.impl.StdSchedulerFactory;
+ import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.launch.JobLauncher;
+ import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.ComponentScan;
+ import org.springframework.context.annotation.Configuration;
+-import org.springframework.context.annotation.Import;
+-
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
+-
+-@Configuration @ComponentScan
+-@Import(AdHocBatchConfig.class)
+-public class AdHocSchedulerConfig {
+ 
++@Configuration
++public class SchedulerConfig {
+     @Bean
+     public Scheduler scheduler(JobLocator jobLocator, JobLauncher jobLauncher) throws SchedulerException {
+         Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+         scheduler.getContext().put(JOB_LOCATOR, jobLocator);
+         scheduler.getContext().put(JOB_LAUNCHER, jobLauncher);
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarterTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarterTest.java
+index 8d2b78e..5b5a657 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarterTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/core/AdHocStarterTest.java
+@@ -7,10 +7,12 @@ import org.springframework.batch.core.Job;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.TestPropertySource;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
++import com.github.chrisgleissner.springbatchrest.util.core.config.AdHocBatchConfig;
++
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Set;
+ import java.util.concurrent.CountDownLatch;
+ 
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfigTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfigTest.java
+deleted file mode 100644
+index 7b411f0..0000000
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerConfigTest.java
++++ /dev/null
+@@ -1,39 +0,0 @@
+-package com.github.chrisgleissner.springbatchrest.util.quartz;
+-
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
+-
+-import org.junit.runner.RunWith;
+-import org.quartz.Scheduler;
+-import org.quartz.SchedulerException;
+-import org.quartz.impl.StdSchedulerFactory;
+-import org.springframework.batch.core.configuration.JobLocator;
+-import org.springframework.batch.core.launch.JobLauncher;
+-import org.springframework.boot.SpringApplication;
+-import org.springframework.boot.test.context.SpringBootTest;
+-import org.springframework.boot.test.mock.mockito.MockBean;
+-import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.ComponentScan;
+-import org.springframework.context.annotation.Configuration;
+-import org.springframework.context.annotation.Import;
+-import org.springframework.context.annotation.Primary;
+-import org.springframework.context.annotation.Profile;
+-import org.springframework.test.context.ActiveProfiles;
+-import org.springframework.test.context.junit4.SpringRunner;
+-
+-import com.github.chrisgleissner.springbatchrest.util.core.AdHocBatchConfig;
+-import com.github.chrisgleissner.springbatchrest.util.quartz.AdHocSchedulerConfig;
+-
+-//@ActiveProfiles("inttest")
+-//@SpringBootTest(classes = { TestConfig.class, AdHocSchedulerConfig.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+-//@Configuration @ComponentScan
+-////@RunWith(SpringRunner.class)
+-////@Configuration @ComponentScan
+-////@Import(AdHocBatchConfig.class)
+-//public class AdHocSchedulerConfigTest {
+-//
+-////	public static void main(String[] args) {
+-////        SpringApplication.run(AdHocSchedulerConfigTest.class, args);
+-////    }
+-//	
+-//}
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerParamsTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerParamsTest.java
+index e6131e9..b03e6ec 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerParamsTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerParamsTest.java
+@@ -3,11 +3,10 @@ package com.github.chrisgleissner.springbatchrest.util.quartz;
+ import org.junit.Test;
+ import org.junit.jupiter.api.AfterAll;
+ import org.junit.jupiter.api.Assertions;
+ import org.junit.runner.RunWith;
+ import org.mockito.ArgumentCaptor;
+-
+ import org.quartz.Scheduler;
+ import org.quartz.SchedulerException;
+ import org.quartz.impl.StdSchedulerFactory;
+ import org.springframework.batch.core.Job;
+ import org.springframework.batch.core.JobExecution;
+@@ -21,23 +20,22 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
+ import org.springframework.batch.core.repository.JobRestartException;
+ import org.springframework.batch.repeat.RepeatStatus;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.mock.mockito.MockBean;
+ import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.Configuration;
++import org.springframework.context.annotation.Primary;
+ import org.springframework.test.annotation.DirtiesContext;
+-import org.springframework.test.annotation.DirtiesContext.ClassMode;
+ import org.springframework.test.annotation.DirtiesContext.MethodMode;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
+ import com.github.chrisgleissner.springbatchrest.util.JobParamUtil;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
++import com.github.chrisgleissner.springbatchrest.util.quartz.config.AdHocSchedulerConfig;
++import com.github.chrisgleissner.springbatchrest.util.quartz.AdHocSchedulerParamsTest.CustomContextConfiguration;
+ 
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
+ import static org.mockito.Mockito.timeout;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ import java.time.Instant;
+@@ -45,22 +43,29 @@ import java.util.Date;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Random;
+ 
++import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
++import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
++
+ /**
+- * Tests the ad-hoc Quartz scheduling of Spring Batch jobs, allowing for
+- * programmatic scheduling after Spring wiring.
++ * Tests the ad-hoc Quartz scheduling of Spring Batch jobs with parameters
+  */
+-@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
+ @RunWith(SpringRunner.class)
+-@ContextConfiguration(classes = { AdHocSchedulerConfig.class }, name = "mockJobLauncherContext")
++@ContextConfiguration(
++		classes = {
++			AdHocSchedulerConfig.class,
++			CustomContextConfiguration.class
++		}, 
++		name = "mockJobLauncherContext"
++		)
+ public class AdHocSchedulerParamsTest {
+ 	
+ 	@Autowired
+ 	private AdHocScheduler scheduler;
+-
++	
+ 	@Autowired
+ 	private JobLauncher jobLauncher;
+ 
+ 	@Autowired
+ 	private JobBuilder jobBuilder;
+@@ -69,31 +74,34 @@ public class AdHocSchedulerParamsTest {
+ 	@AfterAll
+ 	public void afterAll() {
+ 		scheduler.stop();
+ 	}
+ 	
+-    @Configuration
+-    static class ContextConfiguration {
++	// Override the scheduler's job launcher with a mock so we can verify 
++	// that calls to it contain parameters
++    protected static class CustomContextConfiguration {
+ 
+     	@MockBean
+     	public JobLauncher mockJobLauncher;
+     	
+         @Bean
+-        public Scheduler scheduler(JobLocator jobLocator, JobLauncher jobLauncher) throws SchedulerException {
+-            Scheduler scheduler = new StdSchedulerFactory().getScheduler();
++        @Primary
++        public Scheduler scheduler(JobLocator jobLocator) throws SchedulerException {
++        	Scheduler scheduler = new StdSchedulerFactory().getScheduler();
++            scheduler.getContext().remove(JOB_LOCATOR);
+             scheduler.getContext().put(JOB_LOCATOR, jobLocator);
++            scheduler.getContext().remove(JOB_LAUNCHER);
+             scheduler.getContext().put(JOB_LAUNCHER, mockJobLauncher);
+             return scheduler;
+         }
+     }
+ 
+ 	@Test
+-	@DirtiesContext(methodMode = MethodMode.AFTER_METHOD)
++	@DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
+ 	public void paramsAddedToScheduledJobWorks() throws InterruptedException, JobExecutionAlreadyRunningException,
+-			JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
+-		
+-		
++			JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, SchedulerException {
++
+ 		Job job1 = job("j1");
+ 		Job job2 = job("j2");
+ 
+ 		jobBuilder.registerJob(job1);
+ 		jobBuilder.registerJob(job2);
+@@ -113,11 +121,10 @@ public class AdHocSchedulerParamsTest {
+ 		when(jobLauncher.run(job1, expectedParams))
+ 				.thenReturn(new JobExecution(new Random().nextLong(), expectedParams));
+ 
+ 		when(jobLauncher.run(job2, expectedParams))
+ 				.thenReturn(new JobExecution(new Random().nextLong(), expectedParams));
+-
+ 		
+ 		scheduler.schedule(job1Config, now);
+ 		scheduler.schedule(job2Config, now);
+ 
+ 		ArgumentCaptor<Job> jobCaptor = ArgumentCaptor.forClass(Job.class);
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
+index 0bf4ff7..4b6ce4d 100644
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
++++ b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/AdHocSchedulerTest.java
+@@ -11,10 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringRunner;
+ 
+ import com.github.chrisgleissner.springbatchrest.util.core.JobBuilder;
+ import com.github.chrisgleissner.springbatchrest.util.core.JobConfig;
++import com.github.chrisgleissner.springbatchrest.util.quartz.config.AdHocSchedulerConfig;
+ 
+ import java.util.concurrent.CountDownLatch;
+ 
+ import static java.util.concurrent.TimeUnit.SECONDS;
+ 
+diff --git a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/TestConfig.java b/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/TestConfig.java
+deleted file mode 100644
+index 99afa27..0000000
+--- a/util/src/test/java/com/github/chrisgleissner/springbatchrest/util/quartz/TestConfig.java
++++ /dev/null
+@@ -1,32 +0,0 @@
+-package com.github.chrisgleissner.springbatchrest.util.quartz;
+-
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LAUNCHER;
+-import static com.github.chrisgleissner.springbatchrest.util.quartz.QuartzJobLauncher.JOB_LOCATOR;
+-
+-import org.quartz.Scheduler;
+-import org.quartz.SchedulerException;
+-import org.quartz.impl.StdSchedulerFactory;
+-import org.springframework.batch.core.configuration.JobLocator;
+-import org.springframework.batch.core.launch.JobLauncher;
+-import org.springframework.boot.test.mock.mockito.MockBean;
+-import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.ComponentScan;
+-import org.springframework.context.annotation.Configuration;
+-import org.springframework.context.annotation.Primary;
+-
+-//@Configuration
+-//@ComponentScan
+-//public class TestConfig {
+-//	
+-//	@MockBean
+-//	public JobLauncher jobLauncher;
+-//	
+-//    @Bean
+-//    @Primary
+-//    public Scheduler scheduler(JobLocator jobLocator, JobLauncher jobLauncher) throws SchedulerException {
+-//        Scheduler scheduler = new StdSchedulerFactory().getScheduler();
+-//        scheduler.getContext().put(JOB_LOCATOR, jobLocator);
+-//        scheduler.getContext().put(JOB_LAUNCHER, jobLauncher);
+-//        return scheduler;
+-//    }
+-//}

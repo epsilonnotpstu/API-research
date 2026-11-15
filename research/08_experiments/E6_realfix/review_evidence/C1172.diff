@@ -1,0 +1,409 @@
+diff --git a/README.md b/README.md
+index 3bd0860..abe7d79 100644
+--- a/README.md
++++ b/README.md
+@@ -77,19 +77,31 @@ Spring Batch <a href="https://docs.spring.io/spring-batch/4.0.x/api/index.html?o
+ You can change the value `100` with the  `com.github.chrisgleissner.springbatchrest.maxNumberOfExecutionsPerJob` property.
+ 
+ * Spring Batch prevents mutiple invocations of a job unless you use different properties (aka job parameters) each time. To bypass this, a unique property (ie. a random UUID) is added to each job invocation. 
+ You can control this feature via the `com.github.chrisgleissner.springbatchrest.addUniqueJobParameter` property.
+ 
+- 
+-
+ ### Quartz Schedules
+ 
+ | HTTP Method  | Path                   | Description  |
+ |--------------|------------------------|--------------|
+ | GET          | /jobDetails            | All Quartz schedules   |
+ | GET          | /jobsDetails/{quartzGroupName}/{quartzJobName}  | Single Quartz schedule |
+ 
++### Error Handling
++
++Where possible, subclasses of the Spring Batch <a href="https://docs.spring.io/spring-batch/trunk/apidocs/org/springframework/batch/core/JobExecutionException.html">JobExecutionException</a>
++are mapped to an appropriate HTTP status code and the response body contains further details. 
++
++For example, trying to start a nonexistent job results in a 404:
++```
++{
++  "status": "404 NOT_FOUND",
++  "message": "No job configuration with the name [foo] was registered",
++  "exception": "NoSuchJobException",
++  "detail": "Failed to start job 'foo' with JobConfig(name=foo, properties={foo=baz10}, asynchronous=false). Reason: No job configuration with the name [foo] was registered"
++}
++```
+ 
+ ## Job Property Overrides
+ 
+ Properties can be overridden when starting a job via REST. These overrides can then be accessed from a job either via:
+ ```java
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/RestResponseEntityExceptionHandler.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/RestResponseEntityExceptionHandler.java
+deleted file mode 100644
+index 03ed6f4..0000000
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/RestResponseEntityExceptionHandler.java
++++ /dev/null
+@@ -1,20 +0,0 @@
+-package com.github.chrisgleissner.springbatchrest.api;
+-
+-import com.google.common.base.Throwables;
+-import org.springframework.http.HttpHeaders;
+-import org.springframework.http.HttpStatus;
+-import org.springframework.http.ResponseEntity;
+-import org.springframework.web.bind.annotation.ControllerAdvice;
+-import org.springframework.web.bind.annotation.ExceptionHandler;
+-import org.springframework.web.context.request.WebRequest;
+-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+-
+-@ControllerAdvice
+-public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
+-
+-    @ExceptionHandler(value = {Exception.class})
+-    protected ResponseEntity<Object> handleConflict(Exception e, WebRequest request) {
+-        String bodyOfResponse = Throwables.getStackTraceAsString(e);
+-        return handleExceptionInternal(e, bodyOfResponse, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+-    }
+-}
+\ No newline at end of file
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/ResponseExceptionHandler.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/ResponseExceptionHandler.java
+new file mode 100644
+index 0000000..4dc1b36
+--- /dev/null
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/ResponseExceptionHandler.java
+@@ -0,0 +1,67 @@
++package com.github.chrisgleissner.springbatchrest.api.jobexecution;
++
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++import org.springframework.batch.core.JobParametersInvalidException;
++import org.springframework.batch.core.configuration.DuplicateJobException;
++import org.springframework.batch.core.launch.JobParametersNotFoundException;
++import org.springframework.batch.core.launch.NoSuchJobException;
++import org.springframework.batch.core.launch.NoSuchJobExecutionException;
++import org.springframework.batch.core.launch.NoSuchJobInstanceException;
++import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
++import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.ControllerAdvice;
++import org.springframework.web.bind.annotation.ExceptionHandler;
++import org.springframework.web.context.request.WebRequest;
++import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
++
++import javax.batch.operations.BatchRuntimeException;
++
++@ControllerAdvice
++public class ResponseExceptionHandler extends ResponseEntityExceptionHandler {
++
++    @ExceptionHandler(Exception.class)
++    protected ResponseEntity<Object> handleAnyException(Exception e, WebRequest request) {
++        String message = e.getMessage();
++        String causeMessage = "";
++        if (e.getCause() != null)
++            causeMessage = e.getCause().getMessage();
++        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
++        ApiError apiError = new ApiError(status.toString(), message, e.getClass().getSimpleName(), causeMessage);
++        return handleExceptionInternal(e, apiError, new HttpHeaders(), status, request);
++    }
++
++    @ExceptionHandler(BatchRuntimeException.class)
++    protected ResponseEntity<Object> handleBatchRuntimeException(BatchRuntimeException e, WebRequest request) {
++        Throwable cause = e.getCause();
++        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
++        if (cause instanceof DuplicateJobException
++                || cause instanceof JobExecutionAlreadyRunningException
++                || cause instanceof JobInstanceAlreadyCompleteException)
++            status = HttpStatus.CONFLICT;
++        else if (cause instanceof JobParametersInvalidException
++            || cause instanceof JobParametersNotFoundException)
++            status = HttpStatus.BAD_REQUEST;
++        else if (cause instanceof NoSuchJobException
++            || cause instanceof NoSuchJobExecutionException
++            || cause instanceof NoSuchJobInstanceException)
++            status = HttpStatus.NOT_FOUND;
++
++        ApiError apiError = new ApiError(status.toString(), cause.getMessage(), cause.getClass().getSimpleName(), e.getMessage());
++        return handleExceptionInternal(e, apiError, new HttpHeaders(), status, request);
++    }
++
++    @NoArgsConstructor
++    @AllArgsConstructor
++    @Data
++    public class ApiError {
++        String status;
++        String message;
++        String exception;
++        String detail;
++    }
++}
+\ No newline at end of file
+diff --git a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProvider.java b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProvider.java
+index 46db51b..2cf8b91 100644
+--- a/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProvider.java
++++ b/api/src/main/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProvider.java
+@@ -2,17 +2,15 @@ package com.github.chrisgleissner.springbatchrest.api.jobexecution.provider;
+ 
+ import com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobExecutionAspect;
+ import com.google.common.collect.EvictingQueue;
+ import lombok.Data;
+ import lombok.extern.slf4j.Slf4j;
+-import org.springframework.batch.core.ExitStatus;
+ import org.springframework.batch.core.JobExecution;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.stereotype.Component;
+ 
+ import java.util.*;
+-import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.locks.ReadWriteLock;
+ import java.util.concurrent.locks.ReentrantReadWriteLock;
+ import java.util.function.Consumer;
+ import java.util.regex.Pattern;
+ 
+@@ -26,11 +24,11 @@ import static java.util.stream.Collectors.toList;
+ @Component
+ public class CachedJobExecutionProvider implements Consumer<JobExecution>, JobExecutionProvider {
+ 
+     private final int maxNumberOfExecutionsPerJob;
+     private final AllJobExecutionProvider allJobExecutionProvider;
+-    private final Map<String, JobExecutions> jobExecutionsByJobName = new ConcurrentHashMap<>();
++    private final Map<String, JobExecutions> jobExecutionsByJobName = new HashMap<>();
+     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+ 
+     public CachedJobExecutionProvider(JobExecutionAspect executionAspect, AllJobExecutionProvider allJobExecutionProvider,
+                                       @Value("${com.github.chrisgleissner.springbatchrest.maxNumberOfExecutionsPerJob:100}") int maxNumberOfExecutionsPerJob) {
+         executionAspect.register(this);
+@@ -60,39 +58,34 @@ public class CachedJobExecutionProvider implements Consumer<JobExecution>, JobEx
+         }
+     }
+ 
+     @Data
+     class JobExecutions {
+-        private Queue<JobExecution> failedExecutions;
+-        private Queue<JobExecution> allExecutions;
+-
+-        JobExecutions() {
+-            allExecutions = EvictingQueue.create(maxNumberOfExecutionsPerJob);
+-            failedExecutions = EvictingQueue.create(maxNumberOfExecutionsPerJob);
+-        }
++        private Map<String, Queue<JobExecution>> jobExecutionsByExitCode = new HashMap<>();
++        private Queue<JobExecution> jobExecutions = EvictingQueue.create(maxNumberOfExecutionsPerJob);
+ 
+         Collection<JobExecution> getJobExecutions(Optional<String> exitCode) {
+-            return exitCode.isPresent() && ExitStatus.FAILED.getExitCode().equals(exitCode.get()) ? failedExecutions : allExecutions;
++            return exitCode.isPresent() ? jobExecutionsByExitCode.get(exitCode.get()) : jobExecutions;
+         }
+ 
+ 
+         void add(JobExecution jobExecution) {
+-            allExecutions.add(jobExecution);
+-            if (ExitStatus.FAILED.getExitCode().equals(jobExecution.getExitStatus().getExitCode()))
+-                failedExecutions.add(jobExecution);
++            jobExecutionsByExitCode.computeIfAbsent(jobExecution.getExitStatus().getExitCode(),
++                    (exitCode) -> EvictingQueue.create(maxNumberOfExecutionsPerJob)).add(jobExecution);
++            jobExecutions.add(jobExecution);
+         }
+     }
+ 
+     @Override
+     public void accept(JobExecution je) {
+         if (!je.isRunning()) {
+             lock.writeLock().lock();
+             try {
++                String jobName = je.getJobInstance().getJobName();
++                jobExecutionsByJobName.computeIfAbsent(jobName, (n) -> new JobExecutions()).add(je);
+                 log.debug("Added JobExecution(id={}, name={}, jobId={}, jobInstanceIdId={}): {}. Details: {}",
+-                        je.getId(), je.getJobInstance().getJobName(), je.getJobId(), je.getJobInstance().getInstanceId(), je.getExitStatus().getExitCode(), je);
+-                JobExecutions jes = jobExecutionsByJobName.computeIfAbsent(je.getJobInstance().getJobName(), (n) -> new JobExecutions());
+-                jes.add(je);
++                        je.getId(), jobName, je.getJobId(), je.getJobInstance().getInstanceId(), je.getExitStatus().getExitCode(), je);
+             } finally {
+                 lock.writeLock().unlock();
+             }
+         }
+     }
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
+index f19db7e..bbbd052 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/JobExecutionControllerTest.java
+@@ -1,30 +1,43 @@
+ package com.github.chrisgleissner.springbatchrest.api.jobexecution;
+ 
+ import com.github.chrisgleissner.springbatchrest.api.jobexecution.provider.CachedJobExecutionProvider;
+ import com.github.chrisgleissner.springbatchrest.util.adhoc.AdHocStarter;
++import com.github.chrisgleissner.springbatchrest.util.adhoc.JobConfig;
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
++import org.springframework.batch.core.JobExecutionException;
++import org.springframework.batch.core.JobParametersInvalidException;
++import org.springframework.batch.core.configuration.DuplicateJobException;
+ import org.springframework.batch.core.configuration.JobRegistry;
+ import org.springframework.batch.core.explore.JobExplorer;
++import org.springframework.batch.core.launch.NoSuchJobException;
++import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
++import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+ import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.http.HttpStatus;
++import org.springframework.test.context.junit.jupiter.web.SpringJUnitWebConfig;
+ import org.springframework.test.context.junit4.SpringRunner;
+ import org.springframework.test.web.servlet.MockMvc;
+ 
++import javax.batch.operations.BatchRuntimeException;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ 
+ import static com.github.chrisgleissner.springbatchrest.api.Fixtures.*;
+ import static org.hamcrest.Matchers.hasSize;
++import static org.mockito.ArgumentMatchers.any;
+ import static org.mockito.Mockito.when;
++import static org.springframework.http.MediaType.APPLICATION_JSON;
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+ 
++@SpringJUnitWebConfig
+ @RunWith(SpringRunner.class)
+ @WebMvcTest
+ public class JobExecutionControllerTest {
+ 
+     @Autowired
+@@ -93,6 +106,47 @@ public class JobExecutionControllerTest {
+         mockMvc.perform(get("/jobExecutions?jobName=j2&exitCode=COMPLETED&limitPerJob=1"))
+                 .andDo(print())
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$..jobExecution", hasSize(1)));
+     }
++
++    @Test
++    public void jobFailsWithDuplicateJobException() throws Exception {
++        assertJobExecutionExceptionToStatusMapping(new DuplicateJobException("causeMsg"), HttpStatus.CONFLICT);
++    }
++
++    @Test
++    public void jobFailsWithJobInstanceAlreadyCompleteException() throws Exception {
++        assertJobExecutionExceptionToStatusMapping(new JobInstanceAlreadyCompleteException("causeMsg"), HttpStatus.CONFLICT);
++    }
++
++    @Test
++    public void jobFailsWithJobExecutionAlreadyRunningException () throws Exception {
++        assertJobExecutionExceptionToStatusMapping(new JobExecutionAlreadyRunningException("causeMsg"), HttpStatus.CONFLICT);
++    }
++
++    @Test
++    public void jobFailsWithNoSuchJobException() throws Exception {
++        assertJobExecutionExceptionToStatusMapping(new NoSuchJobException("causeMsg"), HttpStatus.NOT_FOUND);
++    }
++
++    @Test
++    public void jobFailsWithJobParametersInvalidException() throws Exception {
++        assertJobExecutionExceptionToStatusMapping(new JobParametersInvalidException("causeMsg"), HttpStatus.BAD_REQUEST);
++    }
++
++    @Test
++    public void jobFailsWithGenericException() throws Exception {
++        when(adHocStarter.start(any(JobConfig.class))).thenThrow(new RuntimeException("msg", new RuntimeException("cause")));
++        mockMvc.perform(post("/jobExecutions").contentType(APPLICATION_JSON).content("{\"name\":\"foo\"}"))
++                .andExpect(status().is(HttpStatus.INTERNAL_SERVER_ERROR.value()))
++                .andExpect(content().string("{\"status\":\"500 INTERNAL_SERVER_ERROR\",\"message\":\"msg\",\"exception\":\"RuntimeException\",\"detail\":\"cause\"}"));
++    }
++
++    private void assertJobExecutionExceptionToStatusMapping(JobExecutionException cause, HttpStatus expectedStatus) throws Exception {
++        when(adHocStarter.start(any(JobConfig.class))).thenThrow(new BatchRuntimeException("msg", cause));
++        mockMvc.perform(post("/jobExecutions").contentType(APPLICATION_JSON).content("{\"name\":\"foo\"}"))
++                .andExpect(status().is(expectedStatus.value()))
++                .andExpect(content().string(String.format("{\"status\":\"%s\",\"message\":\"%s\",\"exception\":\"%s\",\"detail\":\"%s\"}",
++                        expectedStatus.toString(), cause.getMessage(), cause.getClass().getSimpleName(), "msg")));
++    }
+ }
+\ No newline at end of file
+diff --git a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProviderTest.java b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProviderTest.java
+index eb88a92..37e989a 100644
+--- a/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProviderTest.java
++++ b/api/src/test/java/com/github/chrisgleissner/springbatchrest/api/jobexecution/provider/CachedJobExecutionProviderTest.java
+@@ -27,21 +27,30 @@ public class CachedJobExecutionProviderTest extends AbstractJobExecutionProvider
+     @Before
+     public void setUp() {
+         provider = new CachedJobExecutionProvider(executionAspect, allProvider, MAX_CACHED_RESULTS_PER_JOB_NAME);
+         configureForJobExecutionsService(provider);
+ 
+-        assertExecutions(JOB_NAME_1, true, 2);
+-        assertExecutions(JOB_NAME_1, false, 1);
++        assertExecutions(JOB_NAME_1, 2);
++        assertExecutions(JOB_NAME_1, "FAILED", 1);
+ 
+-        assertExecutions(JOB_NAME_2, true, 4);
+-        assertExecutions(JOB_NAME_2, false, 2);
++        assertExecutions(JOB_NAME_2, 4);
++        assertExecutions(JOB_NAME_2, "FAILED", 2);
+     }
+ 
+-    private void assertExecutions(String jobName, boolean all, int expectedSize) {
++    private void assertExecutions(String jobName, String exitCode, int expectedSize) {
+         assertThat(provider).extracting("jobExecutionsByJobName")
+                 .extracting(jobName)
+-                .flatExtracting(all ? "allExecutions" : "failedExecutions").hasSize(expectedSize);
++                .extracting("jobExecutionsByExitCode")
++                .flatExtracting(exitCode)
++                .hasSize(expectedSize);
++    }
++
++    private void assertExecutions(String jobName, int expectedSize) {
++        assertThat(provider).extracting("jobExecutionsByJobName")
++                .extracting(jobName)
++                .flatExtracting("jobExecutions")
++                .hasSize(expectedSize);
+     }
+ 
+     @Test
+     public void delegatesToAllProviderIfRequestingMoreThanMaxCached() {
+         assertThat(provider.getJobExecutions(Optional.of(JOB_NAME_1), Optional.of(COMPLETED.getExitCode()), MAX_CACHED_RESULTS_PER_JOB_NAME + 1)).isEmpty();
+diff --git a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
+index 6745c41..aaddf03 100644
+--- a/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
++++ b/util/src/main/java/com/github/chrisgleissner/springbatchrest/util/adhoc/AdHocStarter.java
+@@ -1,23 +1,21 @@
+ package com.github.chrisgleissner.springbatchrest.util.adhoc;
+ 
+ import com.github.chrisgleissner.springbatchrest.util.adhoc.property.JobPropertyResolvers;
+ import lombok.extern.slf4j.Slf4j;
+-import org.springframework.batch.core.Job;
+-import org.springframework.batch.core.JobExecution;
+-import org.springframework.batch.core.JobParameter;
+-import org.springframework.batch.core.JobParameters;
++import org.springframework.batch.core.*;
+ import org.springframework.batch.core.configuration.JobLocator;
+ import org.springframework.batch.core.launch.JobLauncher;
+ import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+ import org.springframework.batch.core.repository.JobRepository;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.core.task.SimpleAsyncTaskExecutor;
+ import org.springframework.core.task.SyncTaskExecutor;
+ import org.springframework.core.task.TaskExecutor;
+ import org.springframework.stereotype.Component;
+ 
++import javax.batch.operations.BatchRuntimeException;
+ import java.util.Map;
+ import java.util.Optional;
+ import java.util.UUID;
+ 
+ import static java.lang.String.format;
+@@ -63,10 +61,14 @@ public class AdHocStarter {
+             JobParameters jobParameters = new JobParameters(params);
+ 
+             log.info("Starting {} with {}", jobConfig.getName(), jobConfig);
+             JobLauncher jobLauncher = jobConfig.isAsynchronous() ? asyncJobLauncher : syncJobLauncher;
+             return jobLauncher.run(job, jobParameters);
++        } catch (JobExecutionException e) {
++            throw new BatchRuntimeException(format("Failed to start job '%s' with %s. Reason: %s",
++                    jobConfig.getName(), jobConfig, e.getMessage()), e);
+         } catch (Exception e) {
+-            throw new RuntimeException(format("Failed to start job '%s'. Reason: %s", jobConfig.getName(), e.getMessage()), e);
++            throw new RuntimeException(format("Failed to start job '%s' with %s. Reason: %s",
++                    jobConfig.getName(), jobConfig, e.getMessage()), e);
+         }
+     }
+ }

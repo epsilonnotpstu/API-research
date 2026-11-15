@@ -1,0 +1,245 @@
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiException.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiException.java
+deleted file mode 100644
+index 9fb675b..0000000
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiException.java
++++ /dev/null
+@@ -1,9 +0,0 @@
+-package org.zalando.catwatch.backend.web;
+-
+-public class ApiException extends Exception{
+-	private int code;
+-	public ApiException (int code, String msg) {
+-		super(msg);
+-		this.code = code;
+-	}
+-}
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiOriginFilter.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiOriginFilter.java
+deleted file mode 100644
+index 48eb65a..0000000
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiOriginFilter.java
++++ /dev/null
+@@ -1,26 +0,0 @@
+-package org.zalando.catwatch.backend.web;
+-
+-import java.io.IOException;
+-
+-import javax.servlet.*;
+-import javax.servlet.http.HttpServletResponse;
+-
+-public class ApiOriginFilter implements javax.servlet.Filter {
+-	@Override
+-	public void doFilter(ServletRequest request, ServletResponse response,
+-			FilterChain chain) throws IOException, ServletException {
+-		HttpServletResponse res = (HttpServletResponse) response;
+-		res.addHeader("Access-Control-Allow-Origin", "*");
+-		res.addHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT");
+-		res.addHeader("Access-Control-Allow-Headers", "Content-Type");
+-		chain.doFilter(request, response);
+-	}
+-
+-	@Override
+-	public void destroy() {
+-	}
+-
+-	@Override
+-	public void init(FilterConfig filterConfig) throws ServletException {
+-	}
+-}
+\ No newline at end of file
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiResponseMessage.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiResponseMessage.java
+deleted file mode 100644
+index 1b3b17f..0000000
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ApiResponseMessage.java
++++ /dev/null
+@@ -1,68 +0,0 @@
+-package org.zalando.catwatch.backend.web;
+-
+-import javax.xml.bind.annotation.XmlTransient;
+-
+[REDACTED email]
+-public class ApiResponseMessage {
+-	public static final int ERROR = 1;
+-	public static final int WARNING = 2;
+-	public static final int INFO = 3;
+-	public static final int OK = 4;
+-	public static final int TOO_BUSY = 5;
+-
+-	int code;
+-	String type;
+-	String message;
+-	
+-	public ApiResponseMessage(){}
+-	
+-	public ApiResponseMessage(int code, String message){
+-		this.code = code;
+-		switch(code){
+-		case ERROR:
+-			setType("error");
+-			break;
+-		case WARNING:
+-			setType("warning");
+-			break;
+-		case INFO:
+-			setType("info");
+-			break;
+-		case OK:
+-			setType("ok");
+-			break;
+-		case TOO_BUSY:
+-			setType("too busy");
+-			break;
+-		default:
+-			setType("unknown");
+-			break;
+-		}
+-		this.message = message;
+-	}
+-
+-	@XmlTransient
+-	public int getCode() {
+-		return code;
+-	}
+-
+-	public void setCode(int code) {
+-		this.code = code;
+-	}
+-
+-	public String getType() {
+-		return type;
+-	}
+-
+-	public void setType(String type) {
+-		this.type = type;
+-	}
+-
+-	public String getMessage() {
+-		return message;
+-	}
+-
+-	public void setMessage(String message) {
+-		this.message = message;
+-	}
+-}
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ContributorsApi.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ContributorsApi.java
+index 6f4d01c..a3bda5a 100644
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ContributorsApi.java
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ContributorsApi.java
+@@ -103,11 +103,11 @@ public class ContributorsApi {
+ 
+ 	@ApiParam(value = "query paramater for search query (this will be contributor names prefix)") //
+ 	@RequestParam(value = Constants.API_REQUEST_PARAM_Q, required = false) //
+ 	String q //
+ 
+-	) throws NotFoundException {
++	) {
+ 
+ 		validate(organizations, offset, limit, sortBy, startDate, endDate);
+ 
+ 		if (startDate != null && endDate != null && repository.findPreviousSnapShotDate(iso8601(endDate)) != null
+ 				&& repository.findPreviousSnapShotDate(iso8601(startDate)) != null) {
+@@ -125,11 +125,11 @@ public class ContributorsApi {
+ 					"this parameter configuration is not implemented yet" + " .. start date, end date required atm");
+ 
+ 		}
+ 	}
+ 
+-	private List<Contributor> contributorsGet_noTimeSpan(String organizations, Integer limit, Integer offset,String endDate, String sortBy, String q) throws NotFoundException {
++	private List<Contributor> contributorsGet_noTimeSpan(String organizations, Integer limit, Integer offset,String endDate, String sortBy, String q) {
+ 
+ 		Date endDateDate = endDate != null ? iso8601(endDate) : new Date();
+ 		Date endDateInDb = repository.findPreviousSnapShotDate(endDateDate);
+ 
+ 		ArrayListMultimap<Long, Contributor> multiMap = ArrayListMultimap.create();
+@@ -147,11 +147,11 @@ public class ContributorsApi {
+ 
+ 		return sublist(limit, offset, sorted);
+ 	}
+ 
+ 	private List<Contributor> contributorsGet_timeSpan(String organizations, Integer limit, Integer offset,
+-			String startDate, String endDate, String sortBy, String q) throws NotFoundException {
++			String startDate, String endDate, String sortBy, String q) {
+ 
+ 		Date startDateInDb = repository.findPreviousSnapShotDate(iso8601(startDate));
+ 		Date endDateInDb = repository.findPreviousSnapShotDate(iso8601(endDate));
+ 
+ 		checkNotNull(startDateInDb);
+@@ -230,12 +230,11 @@ public class ContributorsApi {
+ 	private Map<String, Long> orgs(String organizations) {
+ 		if (isNullOrEmpty(organizations)) {
+ 			organizations = env.getProperty(CONFIG_ORGANIZATION_LIST);
+ 		}
+ 		return stream(organizations.trim().split("\\s*,\\s*")).collect(toMap(identity(), orgName -> {
+-			Long abc = repository.findOrganizationId(orgName);
+-			return abc;
++			return repository.findOrganizationId(orgName);
+ 		}));
+ 	}
+ 
+ 	private int offset(Integer offset) {
+ 		return offset == null ? 0 : offset;
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/LanguagesApi.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/LanguagesApi.java
+index e08743a..21906aa 100644
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/LanguagesApi.java
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/LanguagesApi.java
+@@ -61,11 +61,11 @@ public class LanguagesApi {
+             @ApiParam(value = "Offset the list of returned results by this amount. Default is zero.")
+             @RequestParam(value = Constants.API_REQUEST_PARAM_OFFSET, required = false)
+             final Integer offset,
+             @ApiParam(value = "query paramater for search query (this can be language name prefix)")
+             @RequestParam(value = Constants.API_REQUEST_PARAM_Q, required = false)
+-            final String q) throws NotFoundException {
++            final String q) {
+ 
+         List<Language> languages = DataAggregator.getMainLanguages(organizations, new LanguagePercentComparator(), repository, Optional.ofNullable(q));
+         
+         Integer limitVal = Optional.ofNullable(limit).orElse(DEFAULT_LIMIT);
+         Integer offsetVal = Optional.ofNullable(offset).orElse(DEFAULT_OFFSET);
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/NotFoundException.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/NotFoundException.java
+deleted file mode 100644
+index 36c1dd5..0000000
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/NotFoundException.java
++++ /dev/null
+@@ -1,9 +0,0 @@
+-package org.zalando.catwatch.backend.web;
+-
+-public class NotFoundException extends ApiException {
+-	private int code;
+-	public NotFoundException (int code, String msg) {
+-		super(code, msg);
+-		this.code = code;
+-	}
+-}
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ProjectsApi.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ProjectsApi.java
+index 900e47d..fe79e45 100644
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ProjectsApi.java
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ProjectsApi.java
+@@ -80,11 +80,11 @@ public class ProjectsApi {
+             @RequestParam(value = Constants.API_REQUEST_PARAM_Q, required = false)
+             final String q,
+             @ApiParam(value = "query paramater for filtering by primary programming language")
+             @RequestParam(value = Constants.API_REQUEST_PARAM_LANGUAGE, required = false)
+             final String language
+-            ) throws NotFoundException {
++            ) {
+ 
+         Optional<Date> optionalStartDate = startDate != null ? Optional.ofNullable(startDate)
+                                                              : Optional.ofNullable(null);
+         Optional<Date> optionalEndDate = endDate != null ? Optional.ofNullable(endDate) : Optional.ofNullable(null);
+ 
+diff --git a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java
+index ee80391..b728238 100644
+--- a/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java
++++ b/catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/StatisticsApi.java
+@@ -59,11 +59,11 @@ public class StatisticsApi {
+ 			
+ 			@ApiParam(value = "Date till which statistics records will be fetched from database(default = current date)") 
+ 			@RequestParam(value = Constants.API_REQUEST_PARAM_ENDDATE, required = false) 
+ 			String endDate
+ 
+-	) throws NotFoundException {
++	) {
+ 		
+ 		String organisationList = organizations;
+ 		
+ 		if(organisationList==null){
+ 			organisationList = getOrganizationConfig();

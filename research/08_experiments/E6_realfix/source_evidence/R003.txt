@@ -1,0 +1,160 @@
+[parent contract] f43c6be9b9cb3017dc77c38e50211aaa32fd33c4:api-docs.json:19
+16:     }
+17:   ],
+18:   "paths":{
+19:     "/version/v1/registrationToken":{
+20:       "post":{
+21:         "tags":[
+22:           "verification-controller"
+23:         ],
+24:         "summary":"Get registration Token",
+25:         "description":"Get a registration token by providing a SHA-256 hashed GUID or a TeleTAN",
+26:         "operationId":"generateRegistrationToken",
+27:         "requestBody":{
+28:           "content":{
+29:             "application/json":{
+30:               "schema":{
+31:                 "$ref":"#/components/schemas/RegistrationTokenRequest"
+32:               }
+33:             }
+34:           },
+35:           "required":true
+36:         },
+37:         "responses":{
+38:           "500":{
+39:             "description":"Internal Server Error",
+40:             "content":{
+41:               "application/json":{
+42:                 "schema":{
+43:                   "$ref":"#/components/schemas/RegistrationToken"
+44:                 }
+45:               }
+46:             }
+47:           },
+48:           "400":{
+49:             "description":"GUID/TeleTAN already exists.",
+50:             "content":{
+51:               "application/json":{
+52:                 "schema":{
+53:                   "$ref":"#/components/schemas/RegistrationToken"
+54:                 }
+55:               }
+56:             }
+57:           },
+58:           "200":{
+59:             "description":"GUID/TeleTAN found",
+60:             "content":{
+61:               "application/json":{
+62:                 "schema":{
+63:                   "$ref":"#/components/schemas/RegistrationToken"
+64:                 }
+65:               }
+66:             }
+67:           }
+68:         }
+69:       }
+
+[parent implementation] f43c6be9b9cb3017dc77c38e50211aaa32fd33c4:src/main/java/app/coronawarn/verification/service/AppSessionService.java:97
+94:       appSession.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
+95:       saveAppSession(appSession);
+96:       log.info("Returning the successfully created registration token.");
+97:       return ResponseEntity.status(HttpStatus.CREATED).body(new RegistrationToken(registrationToken,
+98:         RandomStringUtils.randomAlphanumeric(TOKEN_PADDING_LENGTH)));
+99:     }
+100:   }
+101: 
+102:   /**
+
+[parent route] f43c6be9b9cb3017dc77c38e50211aaa32fd33c4:src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:47
+44:   /**
+45:    * The route to the token registration endpoint.
+46:    */
+47:   public static final String REGISTRATION_TOKEN_ROUTE = "/registrationToken";
+48: 
+49:   @NonNull
+50:   private final FakeRequestService fakeRequestController;
+51: 
+52:   @NonNull
+
+[parent route] f43c6be9b9cb3017dc77c38e50211aaa32fd33c4:src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91
+88:     switch (keyType) {
+89:       case GUID:
+90:         log.info("Returning the successfully generated tan.");
+91:         ResponseEntity<RegistrationToken> responseEntity = appSessionService.generateRegistrationTokenByGuid(key);
+92:         stopWatch.stop();
+93:         fakeDelayService.updateFakeTokenRequestDelay(stopWatch.getTotalTimeMillis());
+94:         deferredResult.setResult(responseEntity);
+95:         return deferredResult;
+96:       case TELETAN:
+
+[fix contract] 6bdac24efe5fd734628a94ff6ce423ee0c0be925:api-docs.json:114
+111:         }
+112:       }
+113:     },
+114:     "/version/v1/registrationToken": {
+115:       "post": {
+116:         "tags": [
+117:           "external-token-controller"
+118:         ],
+119:         "summary": "Get registration Token",
+120:         "description": "Get a registration token by providing a SHA-256 hasehd GUID or a teleTAN",
+121:         "operationId": "generateRegistrationToken",
+122:         "parameters": [
+123:           {
+124:             "name": "cwa-fake",
+125:             "in": "header",
+126:             "required": false,
+127:             "schema": {
+128:               "type": "string"
+129:             }
+130:           }
+131:         ],
+132:         "requestBody": {
+133:           "content": {
+134:             "application/json": {
+135:               "schema": {
+136:                 "$ref": "#/components/schemas/RegistrationTokenRequest"
+137:               }
+138:             }
+139:           },
+140:           "required": true
+141:         },
+142:         "responses": {
+143:           "201": {
+144:             "description": "registration token generated.",
+145:             "content": {
+146:               "application/json": {
+147:                 "schema": {
+148:                   "$ref": "#/components/schemas/DeferredResultResponseEntityRegistrationToken"
+149:                 }
+150:               }
+151:             }
+152:           },
+153:           "400": {
+154:             "description": "GUID/TeleTAN already exists."
+155:           },
+156:           "500": {
+157:             "description": "Internal Server Error"
+158:           }
+159:         }
+160:       }
+161:     },
+162:     "/version/v1/tan/teletan": {
+163:       "post": {
+164:         "tags": [
+165:           "internal-tan-controller"
+166:         ],
+167:         "summary": "Request generation of a teleTAN",
+168:         "description": "A teleTAN is a human readable TAN with 7 characters which is supposed to be issued via call line",
+169:         "operationId": "createTeleTan",
+
+[fix implementation] 6bdac24efe5fd734628a94ff6ce423ee0c0be925:src/main/java/app/coronawarn/verification/service/AppSessionService.java:97
+94:       appSession.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
+95:       saveAppSession(appSession);
+96:       log.info("Returning the successfully created registration token.");
+97:       return ResponseEntity.status(HttpStatus.CREATED).body(new RegistrationToken(registrationToken,
+98:         RandomStringUtils.randomAlphanumeric(TOKEN_PADDING_LENGTH)));
+99:     }
+100:   }
+101: 
+102:   /**

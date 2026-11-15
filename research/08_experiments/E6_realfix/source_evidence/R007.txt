@@ -1,0 +1,80 @@
+[parent contract] 1a258e15336cf3f621b17c4e892267ee41cfc260:api/microcks-openapi-v1.10.yaml:403
+391:       operationId: GetSecret
+392:       summary: Get Secret
+393:       description: Retrieve a Secret
+394:     put:
+395:       tags:
+396:       - config
+397:       responses:
+398:         "200":
+399:           description: Updated Secret
+400:       security:
+401:       - jwt-bearer:
+402:         - admin
+403:       operationId: UpdateSecret
+404:       summary: Update Secret
+405:       description: Update a Secret
+406:     delete:
+
+[parent implementation] 1a258e15336cf3f621b17c4e892267ee41cfc260:webapp/src/main/java/io/github/microcks/web/SecretController.java:85
+82:    }
+83: 
+84:    @PutMapping(value = "/secrets/{id}")
+85:    public ResponseEntity<Secret> saveSecret(@RequestBody Secret secret) {
+86:       log.debug("Saving existing secret: {}", secret);
+87:       return new ResponseEntity<>(secretRepository.save(secret), HttpStatus.OK);
+88:    }
+89: 
+90:    @DeleteMapping(value = "/secrets/{id}")
+
+[parent route] 1a258e15336cf3f621b17c4e892267ee41cfc260:webapp/src/main/java/io/github/microcks/web/SecretController.java:47
+44: [REDACTED personal attribution]
+45:  */
+46: @RestController
+47: @RequestMapping("/api")
+48: public class SecretController {
+49: 
+50:    /** A simple logger for diagnostic messages. */
+51:    private static Logger log = LoggerFactory.getLogger(SecretController.class);
+52: 
+
+[fix contract] a49685b551916c91f6d7fe768764fc869563f2f8:api/microcks-openapi-v1.10.yaml:414
+390:         - admin
+391:       operationId: GetSecret
+392:       summary: Get Secret
+393:       description: Retrieve a Secret
+394:     put:
+395:       requestBody:
+396:         description: The Secret to update
+397:         content:
+398:           application/json:
+399:             schema:
+400:               $ref: '#/components/schemas/Secret'
+401:         required: true
+402:       tags:
+403:       - config
+404:       responses:
+405:         "200":
+406:           content:
+407:             application/json:
+408:               schema:
+409:                 $ref: '#/components/schemas/Secret'
+410:           description: Updated Secret
+411:       security:
+412:       - jwt-bearer:
+413:         - admin
+414:       operationId: UpdateSecret
+415:       summary: Update Secret
+416:       description: Update a Secret
+417:     delete:
+
+[fix implementation] a49685b551916c91f6d7fe768764fc869563f2f8:webapp/src/main/java/io/github/microcks/web/SecretController.java:85
+82:    }
+83: 
+84:    @PutMapping(value = "/secrets/{id}")
+85:    public ResponseEntity<Secret> saveSecret(@RequestBody Secret secret) {
+86:       log.debug("Saving existing secret: {}", secret);
+87:       return new ResponseEntity<>(secretRepository.save(secret), HttpStatus.OK);
+88:    }
+89: 
+90:    @DeleteMapping(value = "/secrets/{id}")

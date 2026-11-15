@@ -1,0 +1,54 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+index 64ad316a..6592c5d1 100644
+--- a/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
++++ b/src/main/java/uk/gov/pay/api/model/search/directdebit/DirectDebitSearchPaymentsParams.java
+@@ -22,13 +22,13 @@ public class DirectDebitSearchPaymentsParams {
+     @Size(min = 1, max = REFERENCE_MAX_LENGTH, message = "Must be less than or equal to {max} characters length")
+     private String reference;
+     
+     @QueryParam("state")
+     @ApiParam(value = "State of payments to be searched. Example=success")
+-    @Pattern(regexp = "pending|success|failed|cancelled|expired",
++    @Pattern(regexp = "created|pending|success|failed|cancelled|paidout|indemnityclaim|error",
+             flags = Pattern.Flag.CASE_INSENSITIVE,
+-            message = "Must be one of pending, success, failed, cancelled or expired")
++            message = "Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+     private String state;
+     
+     @QueryParam("mandate_id")
+     @ApiParam(value = "The GOV.UK Pay identifier for the mandate")
+     @Size(min = 1, max = MANDATE_ID_MAX_LENGTH, message = "Must be less than or equal to {max} characters length")
+diff --git a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
+index 9287a32f..96905fca 100644
+--- a/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
++++ b/src/test/java/uk/gov/pay/api/resources/directdebit/DirectDebitPaymentsResourceGetIT.java
+@@ -169,11 +169,11 @@ public class DirectDebitPaymentsResourceGetIT extends DirectDebitResourceITBase
+                         .withErrorMessage("Invalid attribute value: reference. Must be less than or equal to 255 characters length")
+                         .build(),
+                 someParameters()
+                         .withQueryString("?state=fake_state")
+                         .withErrorField("state")
+-                        .withErrorMessage("Invalid attribute value: state. Must be one of pending, success, failed, cancelled or expired")
++                        .withErrorMessage("Invalid attribute value: state. Must be one of created, pending, success, failed, cancelled, paidout, indemnityclaim or error")
+                         .build(),
+                 someParameters()
+                         .withQueryString("?from_date=not_a_date")
+                         .withErrorField("from_date")
+                         .withErrorMessage("Invalid attribute value: from_date. Must be a valid date")
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index cc6ee6eb..652117fe 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -227,11 +227,11 @@
+           "name" : "state",
+           "in" : "query",
+           "description" : "State of payments to be searched. Example=success",
+           "required" : false,
+           "type" : "string",
+-          "pattern" : "pending|success|failed|cancelled|expired"
++          "pattern" : "created|pending|success|failed|cancelled|paidout|indemnityclaim|error"
+         }, {
+           "name" : "mandate_id",
+           "in" : "query",
+           "description" : "The GOV.UK Pay identifier for the mandate",
+           "required" : false,

@@ -1,0 +1,379 @@
+diff --git a/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java b/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
+index a73a1c62..b70e55dd 100644
+--- a/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
++++ b/commons/util/src/main/java/io/github/microcks/util/openapi/OpenAPISchemaValidator.java
+@@ -30,10 +30,11 @@ import java.io.IOException;
+ import java.io.StringReader;
+ import java.util.ArrayList;
+ import java.util.Iterator;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Optional;
+ 
+ import static io.github.microcks.util.JsonSchemaValidator.*;
+ 
+ /**
+  * Helper class for validating Json objects against their OpenAPI schema. Supported version of OpenAPI schema is
+@@ -44,10 +45,12 @@ public class OpenAPISchemaValidator {
+ 
+    /** A simple logger for diagnostic messages. */
+    private static final Logger log = LoggerFactory.getLogger(OpenAPISchemaValidator.class);
+ 
+    private static final String[] STRUCTURES = { "allOf", "anyOf", "oneOf", "not", "items", "additionalProperties" };
++   private static final String[] COMPOSITION_STRUCTURES = { "allOf", "anyOf", "oneOf" };
++
+    private static final String[] NOT_SUPPORTED_ATTRIBUTES = { "nullable", "discriminator", "readOnly", "writeOnly",
+          "xml", "externalDocs", "example", "deprecated" };
+ 
+ 
+    /** Private constructor to hide the implicit one. */
+@@ -330,10 +333,30 @@ public class OpenAPISchemaValidator {
+          JsonNode property = properties.next();
+          property = convertOpenAPISchemaToJsonSchema(property);
+       }
+    }
+ 
++   private static Optional<String> getCompositionStructureType(JsonNode node) {
++      for (var current : COMPOSITION_STRUCTURES) {
++         if (node.has(current)) {
++            return Optional.of(current);
++         }
++      }
++      return Optional.empty();
++   }
++
++   private static boolean isOneOfNullable(ArrayNode oneOf) {
++      for (Iterator<JsonNode> it = oneOf.iterator(); it.hasNext();) {
++         JsonNode current = it.next();
++         if (current.isObject() && ((ObjectNode) current).has("type")
++               && ((ObjectNode) current).get("type").asText().equals("null")) {
++            return true;
++         }
++      }
++      return false;
++   }
++
+    /** Deal with converting type of a Json node object. */
+    private static void convertType(JsonNode node) {
+       if (node.has("type") && !node.path("type").asText().equals("object")) {
+ 
+          // Convert nullable in additional type and remove node.
+@@ -341,7 +364,38 @@ public class OpenAPISchemaValidator {
+             String type = node.path("type").asText();
+             ArrayNode typeArray = ((ObjectNode) node).putArray("type");
+             typeArray.add(type).add("null");
+          }
+       }
++
++      //Handle OneOf, AnyOf & AllOf
++      if (node.path("nullable").asBoolean()) {
++         Optional<String> maybeStructure = getCompositionStructureType(node);
++         if (maybeStructure.isPresent()) {
++            String structure = maybeStructure.get();
++            if (structure.equals("oneOf")) {
++               //Append null type to oneOf if it's not already there
++               var oneOf = ((ArrayNode) node.path("oneOf"));
++               if (!isOneOfNullable(oneOf)) {
++                  ObjectNode nullNode = new ObjectMapper().createObjectNode();
++                  nullNode.put("type", "null");
++                  ((ArrayNode) node.path("oneOf")).add(nullNode);
++               }
++            } else {
++               //Nesting current structure inside a OneOf
++               ObjectNode allOfChildObject = new ObjectMapper().createObjectNode();
++               allOfChildObject.put(structure, node.path(structure));
++               ((ObjectNode) node).remove(structure);
++
++               ((ObjectNode) node).putArray("oneOf");
++               ((ArrayNode) node.path("oneOf")).add(allOfChildObject);
++
++               //Adding null type to oneOf structure
++               ObjectNode nullNode = new ObjectMapper().createObjectNode();
++               nullNode.put("type", "null");
++               ((ArrayNode) node.path("oneOf")).add(nullNode);
++            }
++         }
++      }
++
+    }
+ }
+diff --git a/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java b/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
+index 87cf406b..10155f54 100644
+--- a/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
++++ b/commons/util/src/test/java/io/github/microcks/util/openapi/OpenAPISchemaValidatorTest.java
+@@ -16,10 +16,13 @@
+ package io.github.microcks.util.openapi;
+ 
+ import com.fasterxml.jackson.databind.JsonNode;
+ import org.apache.commons.io.FileUtils;
+ import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.junit.jupiter.params.provider.ValueSource;
+ 
+ import java.io.File;
+ import java.util.List;
+ 
+ import static org.junit.jupiter.api.Assertions.*;
+@@ -479,10 +482,96 @@ class OpenAPISchemaValidatorTest {
+             "/paths/~1boards~1{slug}/get/responses/200", "application/json");
+ 
+       assertTrue(errors.isEmpty());
+    }
+ 
++   @ParameterizedTest()
++   @CsvSource(value = { "null | {\"seasonData\":null} | true",
++         "notNull | {\"seasonData\": {\"seasonType\": \"BratSummer\", \"isTooHot\": false, \"isTooCold\": true}} | true",
++         "notNullInvalid | {\"seasonData\": {\"seasonType\": \"365PartyGirl\", \"isTooHot\": false, \"isTooCold\": true}} | false" }, delimiter = '|')
++   void testNullableAllOf(String testType, String jsonText, boolean expected) {
++      String openAPIText = null;
++
++      JsonNode openAPISpec = null;
++      JsonNode contentNode = null;
++      try {
++         // Load full specification from file.
++         openAPIText = FileUtils.readFileToString(
++               new File("target/test-classes/io/github/microcks/util/openapi/season-nullable-all-of.yaml"));
++         // Extract JSON nodes using OpenAPISchemaValidator methods.
++         openAPISpec = OpenAPISchemaValidator.getJsonNodeForSchema(openAPIText);
++         contentNode = OpenAPISchemaValidator.getJsonNode(jsonText);
++      } catch (Exception e) {
++         fail("Exception should not be thrown");
++      }
++
++      // Validate the content for Get /accounts response message.
++      List<String> errors = OpenAPISchemaValidator.validateJsonMessage(openAPISpec, contentNode,
++            "/paths/~1seasonAllOf/post/responses/201", "application/json");
++
++      assertEquals(expected, errors.isEmpty());
++   }
++
++
++   @ParameterizedTest()
++   @CsvSource(value = { "null | {\"seasonData\":null} | true",
++         "notNullOne | {\"seasonData\": {\"seasonType\": \"BratSummer\", \"isTooHot\": false, \"isTooCold\": true}} | true",
++         "notNullTwo | {\"seasonData\": {\"isUmami\": true, \"isSalty\": true}} | true",
++         "notNullInvalidAllMatching | {\"seasonData\": {\"seasonType\": \"BratSummer\", \"isTooHot\": false, \"isTooCold\": true, \"isUmami\": true,  \"isSalty\": true}} | false",
++         "notNullInvalidNoneMatching | {\"seasonData\": {\"seasonType\": \"365PartyGirl\", \"isTooHot\": false, \"isTooCold\": true, \"isUmami\": true}} | false", }, delimiter = '|')
++   void testNullableOneOf(String testType, String jsonText, boolean expected) {
++      String openAPIText = null;
++
++      JsonNode openAPISpec = null;
++      JsonNode contentNode = null;
++      try {
++         // Load full specification from file.
++         openAPIText = FileUtils.readFileToString(
++               new File("target/test-classes/io/github/microcks/util/openapi/season-nullable-all-of.yaml"));
++         // Extract JSON nodes using OpenAPISchemaValidator methods.
++         openAPISpec = OpenAPISchemaValidator.getJsonNodeForSchema(openAPIText);
++         contentNode = OpenAPISchemaValidator.getJsonNode(jsonText);
++      } catch (Exception e) {
++         fail("Exception should not be thrown");
++      }
++
++      // Validate the content for Get /accounts response message.
++      List<String> errors = OpenAPISchemaValidator.validateJsonMessage(openAPISpec, contentNode,
++            "/paths/~1seasonOneOf/post/responses/201", "application/json");
++
++      assertEquals(expected, errors.isEmpty());
++   }
++
++   @ParameterizedTest()
++   @CsvSource(value = { "null | {\"seasonData\":null} | true",
++         "notNullOne | {\"seasonData\": {\"seasonType\": \"BratSummer\", \"isTooHot\": false, \"isTooCold\": true}} | true",
++         "notNullTwo | {\"seasonData\": {\"isUmami\": true, \"isSalty\": true}} | true",
++         "notNullAllMatch | {\"seasonData\": {\"seasonType\": \"BratSummer\", \"isTooHot\": false, \"isTooCold\": true, \"isUmami\": true, \"isSalty\": true}} | true",
++         "notNullInvalid | {\"seasonData\": {\"seasonType\": \"365PartyGirl\", \"isTooHot\": false, \"isTooCold\": true, \"isUmami\": true}} | false", }, delimiter = '|')
++   void testNullableAnyOf(String testType, String jsonText, boolean expected) {
++      String openAPIText = null;
++
++      JsonNode openAPISpec = null;
++      JsonNode contentNode = null;
++      try {
++         // Load full specification from file.
++         openAPIText = FileUtils.readFileToString(
++               new File("target/test-classes/io/github/microcks/util/openapi/season-nullable-all-of.yaml"));
++         // Extract JSON nodes using OpenAPISchemaValidator methods.
++         openAPISpec = OpenAPISchemaValidator.getJsonNodeForSchema(openAPIText);
++         contentNode = OpenAPISchemaValidator.getJsonNode(jsonText);
++      } catch (Exception e) {
++         fail("Exception should not be thrown");
++      }
++
++      // Validate the content for Get /accounts response message.
++      List<String> errors = OpenAPISchemaValidator.validateJsonMessage(openAPISpec, contentNode,
++            "/paths/~1seasonAnyOf/post/responses/201", "application/json");
++
++      assertEquals(expected, errors.isEmpty());
++   }
++
+    @Test
+    void testNullableFieldInComponentRef() {
+       String openAPIText = null;
+       String jsonText = """
+              [
+diff --git a/commons/util/src/test/resources/io/github/microcks/util/openapi/season-nullable-all-of.yaml b/commons/util/src/test/resources/io/github/microcks/util/openapi/season-nullable-all-of.yaml
+new file mode 100644
+index 00000000..4d22a62c
+--- /dev/null
++++ b/commons/util/src/test/resources/io/github/microcks/util/openapi/season-nullable-all-of.yaml
+@@ -0,0 +1,159 @@
++openapi: 3.0.1
++info:
++  title: Season API
++  description: useless API
++  version: v1
++servers:
++- url: /
++tags:
++- name: season-controller
++paths:
++  /seasonAllOf:
++    post:
++      tags:
++      - season-controller
++      operationId: createSeason
++      requestBody:
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/CreatableSeason'
++            examples:
++              bumpinThat:
++                description: a Season
++                value:
++                  seasonType: "BratSummer"
++        required: true
++      responses:
++        "201":
++          description: season data
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SeasonAllOf'
++              examples:
++                bumpinThat:
++                  value: '{"seasonData":null}'
++  /seasonOneOf:
++    post:
++      tags:
++        - season-controller
++      operationId: createSeason
++      requestBody:
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/CreatableSeason'
++            examples:
++              bumpinThat:
++                description: a Season
++                value:
++                  seasonType: "BratSummer"
++        required: true
++      responses:
++        "201":
++          description: season data
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SeasonOneOf'
++              examples:
++                bumpinThat:
++                  value: '{"seasonData":null}'
++  /seasonAnyOf:
++    post:
++      tags:
++        - season-controller
++      operationId: createSeason
++      requestBody:
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/CreatableSeason'
++            examples:
++              bumpinThat:
++                description: a Season
++                value:
++                  seasonType: "BratSummer"
++        required: true
++      responses:
++        "201":
++          description: season data
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SeasonAnyOf'
++              examples:
++                bumpinThat:
++                  value: '{"seasonData":null}'
++components:
++  schemas:
++    SeasonType:
++      type: string
++      enum:
++        - BratSummer
++        - SpookySeason
++        - RustySpring
++        - ColdHeartWinter
++
++    CreatableSeason:
++      title: CreatableSeason
++      type: object
++      properties:
++        seasonType:
++          $ref: '#/components/schemas/SeasonType'
++
++    SeasonData:
++      nullable: true
++      title: SeasonData
++      required:
++      - isTooHot
++      - isTooCold
++      type: object
++      properties:
++        seasonType:
++          $ref: '#/components/schemas/SeasonType'
++        isTooHot:
++          type: boolean
++        isTooCold:
++          type: boolean
++
++    SeasoningData:
++      nullable: true
++      title: SeasoningData
++      required:
++        - isSalty
++        - isUmami
++      type: object
++      properties:
++        isSalty:
++          type: boolean
++        isUmami:
++          type: boolean
++
++    SeasonAllOf:
++      type: object
++      properties:
++        seasonData:
++          nullable: true
++          allOf:
++            - $ref: '#/components/schemas/SeasonData'
++
++    SeasonOneOf:
++      type: object
++      properties:
++        seasonData:
++          nullable: true
++          oneOf:
++            - $ref: '#/components/schemas/SeasonData'
++            - $ref: '#/components/schemas/SeasoningData'
++
++    SeasonAnyOf:
++      type: object
++      properties:
++        seasonData:
++          nullable: true
++          anyOf:
++            - $ref: '#/components/schemas/SeasonData'
++            - $ref: '#/components/schemas/SeasoningData'
++

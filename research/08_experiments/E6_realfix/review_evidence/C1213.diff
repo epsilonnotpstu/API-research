@@ -1,0 +1,58 @@
+diff --git a/pom.xml b/pom.xml
+index aa7b48b4..55c6bd93 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -75,20 +75,10 @@
+         </dependency>
+         <dependency>
+             <groupId>org.apache.commons</groupId>
+             <artifactId>commons-lang3</artifactId>
+         </dependency>
+-        <dependency>
+-            <groupId>io.springfox</groupId>
+-            <artifactId>springfox-swagger2</artifactId>
+-            <version>2.9.2</version>
+-        </dependency>
+-        <dependency>
+-            <groupId>io.springfox</groupId>
+-            <artifactId>springfox-swagger-ui</artifactId>
+-            <version>2.9.2</version>
+-        </dependency>
+     </dependencies>
+ 
+     <build>
+         <plugins>
+             <plugin>
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java
+deleted file mode 100644
+index 0601502e..00000000
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/SwaggerConfig.java
++++ /dev/null
+@@ -1,27 +0,0 @@
+-package no.nav.tag.tiltaksgjennomforing;
+-
+-import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.Configuration;
+-
+-import org.springframework.context.annotation.Profile;
+-import springfox.documentation.builders.PathSelectors;
+-import springfox.documentation.builders.RequestHandlerSelectors;
+-import springfox.documentation.spi.DocumentationType;
+-import springfox.documentation.spring.web.plugins.Docket;
+-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+-
+-@Configuration
+-@EnableSwagger2
+-@Profile("dev")
+-public class SwaggerConfig {
+-
+-    @Bean
+-    public Docket api() {
+-        return new Docket(DocumentationType.SWAGGER_2)
+-                .select()
+-                .apis(RequestHandlerSelectors.any())
+-                .paths(PathSelectors.any())
+-                .build();
+-    }
+-}
+-

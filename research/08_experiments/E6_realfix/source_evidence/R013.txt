@@ -1,0 +1,74 @@
+[parent contract] 0f0761b71b849c96b0425ea3796b8fb3aaa129e6:src/main/resources/openapi.yaml:128
+125:       description: Multiple status values can be provided with comma separated strings.
+126:       operationId: findPetsByStatus
+127:       parameters:
+128:         - name: status
+129:           in: query
+130:           description: Status values that need to be considered for filter
+131:           required: false
+132:           explode: true
+133:           schema:
+134:             type: string
+135:             default: available
+136:             enum:
+137:               - available
+138:               - pending
+139:               - sold
+
+[parent implementation] 0f0761b71b849c96b0425ea3796b8fb3aaa129e6:src/main/java/io/swagger/petstore/controller/PetController.java:50
+47:         }
+48:     }
+49: 
+50:     public ResponseContext findPetsByStatus(final RequestContext request, final String status) {
+51:         if (status == null) {
+52:             notifier.notify(new RuntimeException("No status provided"));
+53:             return new ResponseContext()
+54:                     .status(Response.Status.BAD_REQUEST)
+55:                     .entity("No status provided. Try again?");
+56:         }
+57: 
+58:         final List<Pet> petByStatus = petData.findPetByStatus(status);
+59: 
+
+[fix contract] 9fb97b14d3c9d15d99aa8e3dbe323284cceb6bee:src/main/resources/openapi.yaml:128
+125:       description: Multiple status values can be provided with comma separated strings.
+126:       operationId: findPetsByStatus
+127:       parameters:
+128:         - name: status
+129:           in: query
+130:           description: Status values that need to be considered for filter
+131:           required: true
+132:           explode: true
+133:           schema:
+134:             type: string
+135:             default: available
+136:             enum:
+137:               - available
+138:               - pending
+139:               - sold
+
+[fix implementation] 9fb97b14d3c9d15d99aa8e3dbe323284cceb6bee:src/main/java/io/swagger/petstore/controller/PetController.java:50
+47:         }
+48:     }
+49: 
+50:     public ResponseContext findPetsByStatus(final RequestContext request, final String status) {
+51:         if (status == null) {
+52:             notifier.notify(new RuntimeException("No status provided"));
+53:             return new ResponseContext()
+54:                     .status(Response.Status.BAD_REQUEST)
+55:                     .entity("No status provided. Try again?");
+56:         }
+57: 
+58:         final List<Pet> petByStatus = petData.findPetByStatus(status);
+59: 
+
+[parent route] 0f0761b71b849c96b0425ea3796b8fb3aaa129e6:src/main/resources/openapi.yaml:120
+117:         - petstore_auth:
+118:             - write:pets
+119:             - read:pets
+120:   /pet/findByStatus:
+121:     get:
+122:       tags:
+123:         - pet
+124:       summary: Finds Pets by status.
+125:       description: Multiple status values can be provided with comma separated strings.

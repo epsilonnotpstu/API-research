@@ -1,0 +1,260 @@
+diff --git a/.gitignore b/.gitignore
+index 8fffe72..3f62df1 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,5 +4,6 @@ pom.xml.releaseBackup
+ pom.xml.versionsBackup
+ pom.xml.next
+ release.properties
+ dependency-reduced-pom.xml
+ buildNumber.properties
++application.properties
+diff --git a/annotation/pom.xml b/annotation/pom.xml
+index ad7a3df..8b6ac95 100644
+--- a/annotation/pom.xml
++++ b/annotation/pom.xml
+@@ -89,9 +89,17 @@
+             </goals>
+           </execution>
+         </executions>
+       </plugin>
+     </plugins>
++    <resources>
++      <resource>
++        <directory>src/main/resources</directory>
++        <excludes>
++          <exclude>*.EXAMPLE</exclude>
++        </excludes>
++      </resource>
++    </resources>
+   </build>
+ 
+ </project>
+ 
+diff --git a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/domain/internal/IsoformOverrideRepoFactoryImpl.java b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/domain/internal/IsoformOverrideRepoFactoryImpl.java
+index d89161e..e4a0ea3 100644
+--- a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/domain/internal/IsoformOverrideRepoFactoryImpl.java
++++ b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/domain/internal/IsoformOverrideRepoFactoryImpl.java
+@@ -12,41 +12,44 @@ import java.util.*;
+[REDACTED personal attribution]
+  */
+ @Component("defaultIsoformOverrideRepoFactory")
+ public class IsoformOverrideRepoFactoryImpl implements IsoformOverrideRepoFactory
+ {
+-    private final String overrideURIs;
++    // comma separated list of isoform overrides
++    private final String isoformOverrides;
+ 
+     private Map<String, IsoformOverrideRepository> overrideRepositories;
+ 
+     @Autowired
+-    public IsoformOverrideRepoFactoryImpl(@Value("${vep.overrides_uris}") String overrideURIs)
++    public IsoformOverrideRepoFactoryImpl(@Value("${vep.isoform.overrides}") String isoformOverrides)
+     {
+-        this.overrideURIs = overrideURIs;
++        this.isoformOverrides = isoformOverrides;
+ 
+-        Map<String, String> resources = parseOverrideURIsString(overrideURIs);
++        Map<String, String> resources = parseIsoformOverrides(isoformOverrides);
+         this.overrideRepositories = new HashMap<>();
+ 
+-        // Create a repository for each resource URI
++        // Create a repository for each override resource
+         for (String key: resources.keySet())
+         {
+             this.overrideRepositories.put(key, new IsoformOverrideRepositoryImpl(resources.get(key)));
+         }
+     }
+ 
+     /**
+-     * Parses the isoform override URIs string.
++     * Parses the isoform overrides string.
+      *
+-     * @param overrideURIs  override URI list as a string
++     * @param isoformOverrides  comma separated list of isoform overrides
+      * @return  map
+      */
+-    private Map<String, String> parseOverrideURIsString(String overrideURIs)
++    private Map<String, String> parseIsoformOverrides(String isoformOverrides)
+     {
+         Map<String, String> overrideResources = new HashMap<>();
+ 
+-        for (String pair: overrideURIs.split(","))
++        // list is comma separated
++        for (String pair: isoformOverrides.split(","))
+         {
++            // key-value pairs are semicolon separated
+             String parts[] = pair.split(":");
+ 
+             if (parts.length > 1)
+             {
+                 String key = parts[0];
+@@ -79,10 +82,10 @@ public class IsoformOverrideRepoFactoryImpl implements IsoformOverrideRepoFactor
+     public Map<String, IsoformOverrideRepository> getOverrideRepositories()
+     {
+         return overrideRepositories;
+     }
+ 
+-    public String getOverrideURIs()
++    public String getIsoformOverrides()
+     {
+-        return overrideURIs;
++        return isoformOverrides;
+     }
+ }
+diff --git a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
+index ee7e7b1..42e615d 100644
+--- a/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
++++ b/annotation/src/main/java/org/cbioportal/genome_nexus/annotation/web/AnnotationController.java
+@@ -73,11 +73,11 @@ public class AnnotationController
+         this.isoformOverrideService = isoformOverrideService;
+         this.hotspotService = hotspotService;
+         this.hotspotRepository = hotspotRepository;
+     }
+ 
+-    @ApiOperation(value = "getVariantAnnotation",
++    @ApiOperation(value = "Retrieves VEP annotation for the provided list of variants",
+         nickname = "getVariantAnnotation")
+     @ApiResponses(value = {
+         @ApiResponse(code = 200, message = "Success",
+             response = VariantAnnotation.class,
+             responseContainer = "List"),
+@@ -126,11 +126,11 @@ public class AnnotationController
+ 		}
+ 
+ 		return variantAnnotations;
+ 	}
+ 
+-    @ApiOperation(value = "postVariantAnnotation",
++    @ApiOperation(value = "Retrieves VEP annotation for the provided list of variants",
+         nickname = "postVariantAnnotation")
+     @RequestMapping(value = "/hgvs",
+         method = RequestMethod.POST,
+         produces = "application/json")
+     public List<VariantAnnotation> postVariantAnnotation(
+@@ -145,11 +145,11 @@ public class AnnotationController
+         String isoformOverrideSource)
+     {
+        return getVariantAnnotation(variants, isoformOverrideSource);
+     }
+ 
+-    @ApiOperation(value = "getHotspotAnnotation",
++    @ApiOperation(value = "Retrieves hotspot annotation for the provided list of variants",
+         nickname = "getHotspotAnnotation")
+     @ApiResponses(value = {
+         @ApiResponse(code = 200, message = "Success",
+             response = Hotspot.class,
+             responseContainer = "List"),
+@@ -180,11 +180,11 @@ public class AnnotationController
+         }
+ 
+         return hotspots;
+     }
+ 
+-    @ApiOperation(value = "postHotspotAnnotation",
++    @ApiOperation(value = "Retrieves hotspot annotation for the provided list of variants",
+         nickname = "postHotspotAnnotation")
+     @RequestMapping(value = "/cancer_hotspots",
+         method = RequestMethod.POST,
+         produces = "application/json")
+     public List<Hotspot> postHotspotAnnotation(
+@@ -195,11 +195,12 @@ public class AnnotationController
+         List<String> variants)
+     {
+         return getHotspotAnnotation(variants);
+     }
+ 
+-    @ApiOperation(value = "getIsoformOverride",
++    @ApiOperation(value = "Gets the isoform override information for the specified source " +
++                          "and the list of transcript ids",
+         nickname = "getIsoformOverride")
+     @ApiResponses(value = {
+         @ApiResponse(code = 200, message = "Success",
+             response = IsoformOverride.class,
+             responseContainer = "List"),
+@@ -232,11 +233,12 @@ public class AnnotationController
+         }
+ 
+         return isoformOverrides;
+     }
+ 
+-    @ApiOperation(value = "postIsoformOverride",
++    @ApiOperation(value = "Gets the isoform override information for the specified source " +
++                          "and the list of transcript ids",
+         nickname = "postIsoformOverride")
+     @RequestMapping(value = "/isoform_override",
+         method = RequestMethod.POST,
+         produces = "application/json")
+     public List<IsoformOverride> postIsoformOverride(
+@@ -259,11 +261,11 @@ public class AnnotationController
+         {
+             return getIsoformOverride(source);
+         }
+     }
+ 
+-    @ApiOperation(value = "getAllIsoformOverrides",
++    @ApiOperation(value = "Gets the isoform override information for the specified source",
+         nickname = "getAllIsoformOverrides")
+     @ApiResponses(value = {
+         @ApiResponse(code = 200, message = "Success",
+             response = IsoformOverride.class,
+             responseContainer = "List"),
+@@ -279,11 +281,11 @@ public class AnnotationController
+         String source)
+     {
+         return isoformOverrideService.getIsoformOverrides(source);
+     }
+ 
+-    @ApiOperation(value = "getIsoformOverrideSources",
++    @ApiOperation(value = "Gets a list of available isoform override data sources",
+         nickname = "getIsoformOverrideSources")
+     @ApiResponses(value = {
+         @ApiResponse(code = 200, message = "Success",
+             response = IsoformOverride.class,
+             responseContainer = "List"),
+@@ -295,11 +297,11 @@ public class AnnotationController
+     public List<String> getIsoformOverrideSources()
+     {
+         return isoformOverrideService.getOverrideSources();
+     }
+ 
+-    @ApiOperation(value = "postIsoformOverrideSources",
++    @ApiOperation(value = "Gets a list of available isoform override data sources",
+         nickname = "postIsoformOverrideSources")
+     @RequestMapping(value = "/isoform_override/sources",
+         method = RequestMethod.POST,
+         produces = "application/json")
+     public List<String> postIsoformOverrideSources()
+diff --git a/annotation/src/main/resources/application.properties b/annotation/src/main/resources/application.properties
+deleted file mode 100644
+index ece0030..0000000
+--- a/annotation/src/main/resources/application.properties
++++ /dev/null
+@@ -1,5 +0,0 @@
+-vep.url=http://grch37.rest.ensembl.org/vep/human/hgvs/VARIANT?content-type=application/json&xref_refseq=1&ccds=1&canonical=1&domains=1&hgvs=1&numbers=1&protein=1
+-hotspots.url=http://cancerhotspots.org/api/hotspots/single/
+-vep.overrides_uris=uniprot=isoform_overrides_uniprot.txt,mskcc=isoform_overrides_at_mskcc.txt
+-
+-spring.data.mongodb.uri=
+diff --git a/annotation/src/main/resources/application.properties.EXAMPLE b/annotation/src/main/resources/application.properties.EXAMPLE
+new file mode 100644
+index 0000000..721c2fa
+--- /dev/null
++++ b/annotation/src/main/resources/application.properties.EXAMPLE
+@@ -0,0 +1,16 @@
++# VEP web API URL with additional parameters. Note that "VARIANT" field will be replaced with
++# the actual variant value before each VEP request.
++vep.url=http://grch37.rest.ensembl.org/vep/human/hgvs/VARIANT?content-type=application/json&xref_refseq=1&ccds=1&canonical=1&domains=1&hgvs=1&numbers=1&protein=1
++
++# Cancer Hotspots web API URL
++hotspots.url=http://cancerhotspots.org/api/hotspots/single/
++
++# Comma separated list of isoform_overrides_resource:overrides_filename pairs.
++vep.isoform.overrides=uniprot:isoform_overrides_uniprot.txt,mskcc:isoform_overrides_at_mskcc.txt
++
+[REDACTED credential-related line]
++spring.data.mongodb.uri=mongodb://127.0.0.1:27017/annotator
++
++# Server port number for the embedded tomcat. This property is required only when building
++# a jar file, and ignored when building a war file.
++server.port=38080

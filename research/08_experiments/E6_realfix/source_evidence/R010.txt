@@ -1,0 +1,79 @@
+[parent contract] 062a60b440799dc52537c9cceeda5a8f0ba747ff:swagger/swagger.json:746
+743:           "example" : "en",
+744:           "enum" : [ "ENGLISH", "WELSH" ]
+745:         },
+746:         "paymentId" : {
+747:           "type" : "string",
+748:           "example" : "hu20sqlact5260q2nanm0q8u93"
+749:         },
+750:         "payment_provider" : {
+751:           "type" : "string",
+
+[parent implementation] 062a60b440799dc52537c9cceeda5a8f0ba747ff:src/main/java/uk/gov/pay/api/model/Payment.java:18
+15: public abstract class Payment {
+16:     public static final String LINKS_JSON_ATTRIBUTE = "_links";
+17: 
+18:     @JsonProperty("payment_id")
+19:     protected final String paymentId;
+20: 
+21:     @JsonProperty("payment_provider")
+22:     protected final String paymentProvider;
+23: 
+
+[parent implementation] 062a60b440799dc52537c9cceeda5a8f0ba747ff:src/main/java/uk/gov/pay/api/model/links/PaymentWithAllLinks.java:27
+24: @ApiModel
+25: public class PaymentWithAllLinks {
+26: 
+27:     @JsonUnwrapped
+28:     private Payment payment;
+29: 
+30:     @JsonProperty(LINKS_JSON_ATTRIBUTE)
+31:     private PaymentLinks links = new PaymentLinks();
+32: 
+
+[parent route] 062a60b440799dc52537c9cceeda5a8f0ba747ff:src/main/java/uk/gov/pay/api/resources/PaymentsResource.java:247
+232: [REDACTED credential-related line]
+233:             code = 201,
+234:             nickname = "newPayment",
+235:             authorizations = {@Authorization("Authorization")})
+236:     @ApiResponses(value = {
+237:             @ApiResponse(code = 201, message = "Created", response = CreatePaymentResult.class),
+238:             @ApiResponse(code = 400, message = "Bad request", response = PaymentError.class),
+239:             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+240:             @ApiResponse(code = 422, message = "Invalid attribute value: description. Must be less than or equal to 255 characters length", response = PaymentError.class),
+241:             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+242:             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+243:     public Response createNewPayment(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+244:                                      @ApiParam(value = "requestPayload", required = true) ValidCreatePaymentRequest validCreatePaymentRequest) {
+245:         logger.info("Payment create request passed validation and parsed to {}", validCreatePaymentRequest);
+246: 
+247:         PaymentWithAllLinks createdPayment = createPaymentService.create(account, validCreatePaymentRequest);
+248: 
+249:         Response response = Response
+250:                 .created(publicApiUriGenerator.getPaymentURI(createdPayment.getPayment().getPaymentId()))
+251:                 .entity(createdPayment)
+252:                 .build();
+253: 
+254:         logger.info("Payment returned (created): [ {} ]", createdPayment);
+
+[fix contract] 4ae5f8a8c139b1bbd38f9636b284a64eeb9b8c13:swagger/swagger.json:746
+743:           "example" : "en",
+744:           "enum" : [ "ENGLISH", "WELSH" ]
+745:         },
+746:         "payment_id" : {
+747:           "type" : "string",
+748:           "example" : "hu20sqlact5260q2nanm0q8u93"
+749:         },
+750:         "payment_provider" : {
+751:           "type" : "string",
+
+[fix implementation] 4ae5f8a8c139b1bbd38f9636b284a64eeb9b8c13:src/main/java/uk/gov/pay/api/model/Payment.java:18
+15: public abstract class Payment {
+16:     public static final String LINKS_JSON_ATTRIBUTE = "_links";
+17: 
+18:     @JsonProperty("payment_id")
+19:     protected final String paymentId;
+20: 
+21:     @JsonProperty("payment_provider")
+22:     protected final String paymentProvider;
+23: 

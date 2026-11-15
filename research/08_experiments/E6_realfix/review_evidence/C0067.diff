@@ -1,0 +1,432 @@
+diff --git a/pom.xml b/pom.xml
+index c06e21b..3810dcf 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -39,10 +39,11 @@
+     <spring.cloud.version>Hoxton.SR4</spring.cloud.version>
+     <lombok.version>1.18.12</lombok.version>
+     <liquibase.version>3.9.0</liquibase.version>
+     <springdoc.version>1.3.9</springdoc.version>
+     <jsonwebtoken.version>0.9.1</jsonwebtoken.version>
++    <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
+     <!-- plugins -->
+     <plugin.checkstyle.version>3.1.1</plugin.checkstyle.version>
+     <plugin.sonar.version>3.6.1.1688</plugin.sonar.version>
+     <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
+     <guava.version>29.0-jre</guava.version>
+@@ -196,10 +197,16 @@
+       <groupId>org.springframework.security</groupId>
+       <artifactId>spring-security-core</artifactId>
+       <version>${spring-security.version}</version>
+       <type>jar</type>
+     </dependency>
++    <dependency>
++      <groupId>org.hibernate</groupId>
++      <artifactId>hibernate-validator</artifactId>
++      <version>${hibernate-validator.version}</version>
++    </dependency>
++
+   </dependencies>
+ 
+   <build>
+     <pluginManagement>
+       <plugins>
+diff --git a/src/main/java/app/coronawarn/verification/controller/VerificationController.java b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+index 4ccf7ac..580de27 100644
+--- a/src/main/java/app/coronawarn/verification/controller/VerificationController.java
++++ b/src/main/java/app/coronawarn/verification/controller/VerificationController.java
+@@ -125,29 +125,24 @@ public class VerificationController {
+   @PostMapping(value = REGISTRATION_TOKEN_ROUTE,
+     consumes = MediaType.APPLICATION_JSON_VALUE,
+     produces = MediaType.APPLICATION_JSON_VALUE
+   )
+   public ResponseEntity<RegistrationToken> generateRegistrationToken(
+-    @Valid @RequestBody RegistrationTokenRequest request) {
++    @RequestBody @Valid RegistrationTokenRequest request) {
+     String key = request.getKey();
+     RegistrationTokenKeyType keyType = request.getKeyType();
+     switch (keyType) {
+       case GUID:
+-        if (appSessionService.verifyHashedGuid(key)) {
+-          return appSessionService.generateRegistrationToken(key, keyType);
+-        }
+-        throw new VerificationServerException(HttpStatus.BAD_REQUEST, "The hashed guid has no valid pattern");
++        return appSessionService.generateRegistrationTokenByGuid(key);
+       case TELETAN:
+-        if (tanService.verifyTeleTan(key)) {
+-          ResponseEntity<RegistrationToken> response = appSessionService.generateRegistrationToken(key, keyType);
+-          Optional<VerificationTan> optional = tanService.getEntityByTan(key);
+-          if (optional.isPresent()) {
+-            VerificationTan teleTan = optional.get();
+-            teleTan.setRedeemed(true);
+-            tanService.saveTan(teleTan);
+-            return response;
+-          }
++        ResponseEntity<RegistrationToken> response = appSessionService.generateRegistrationTokenByTeleTan(key);
++        Optional<VerificationTan> optional = tanService.getEntityByTan(key);
++        if (optional.isPresent()) {
++          VerificationTan teleTan = optional.get();
++          teleTan.setRedeemed(true);
++          tanService.saveTan(teleTan);
++          return response;
+         }
+         throw new VerificationServerException(HttpStatus.BAD_REQUEST, "The teleTAN verification failed");
+       default:
+         throw new VerificationServerException(HttpStatus.BAD_REQUEST,
+           "Unknown registration key type for registration token");
+diff --git a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+index 989c08a..33e6d96 100644
+--- a/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
++++ b/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java
+@@ -19,12 +19,12 @@
+  * under the License.
+  */
+ 
+ package app.coronawarn.verification.model;
+ 
++import app.coronawarn.verification.validator.RegistrationTokenKeyConstraint;
+ import io.swagger.v3.oas.annotations.media.Schema;
+-import javax.validation.constraints.NotNull;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+ 
+ /**
+@@ -34,19 +34,18 @@ import lombok.NoArgsConstructor;
+   description = "The registration token request model."
+ )
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
++@RegistrationTokenKeyConstraint
+ public class RegistrationTokenRequest {
+ 
+   /**
+    * The key which can be a teletan or a hashed guid.
+    */
+-  @NotNull
+   private String key;
+ 
+   /**
+    * The type of key, which can be "GUID" or "TELETAN".
+    */
+-  @NotNull
+   private RegistrationTokenKeyType keyType;
+ }
+diff --git a/src/main/java/app/coronawarn/verification/service/AppSessionService.java b/src/main/java/app/coronawarn/verification/service/AppSessionService.java
+index c13d6cf..cc02cdf 100644
+--- a/src/main/java/app/coronawarn/verification/service/AppSessionService.java
++++ b/src/main/java/app/coronawarn/verification/service/AppSessionService.java
+@@ -22,11 +22,10 @@
+ package app.coronawarn.verification.service;
+ 
+ import app.coronawarn.verification.domain.VerificationAppSession;
+ import app.coronawarn.verification.model.AppSessionSourceOfTrust;
+ import app.coronawarn.verification.model.RegistrationToken;
+-import app.coronawarn.verification.model.RegistrationTokenKeyType;
+ import app.coronawarn.verification.repository.VerificationAppSessionRepository;
+ import java.time.LocalDateTime;
+ import java.util.Optional;
+ import java.util.UUID;
+ import lombok.NonNull;
+@@ -69,115 +68,95 @@ public class AppSessionService {
+     appSession.setUpdatedAt(LocalDateTime.now());
+     appSession.setRegistrationTokenHash(hashingService.hash(registrationToken));
+     return appSession;
+   }
+ 
+-
+   private String generateRegistrationToken() {
+     return UUID.randomUUID().toString();
+   }
+ 
+   /**
+-   * This method generates a registration Token by a guid or a teletan.
++   * This method generates a registration Token by a guid .
+    *
+-   * @param key     the guid or teletan
+-   * @param keyType the key type {@link RegistrationTokenKeyType}
++   * @param hashedGuid the hashed guid
+    * @return an {@link ResponseEntity}
+    */
+-  public ResponseEntity<RegistrationToken> generateRegistrationToken(String key, RegistrationTokenKeyType keyType) {
+-    String registrationToken;
+-    VerificationAppSession appSession;
++  public ResponseEntity<RegistrationToken> generateRegistrationTokenByGuid(String hashedGuid) {
++    if (checkRegistrationTokenAlreadyExistsForGuid(hashedGuid)) {
++      log.warn("The registration token already exists for the hashed guid.");
++      return ResponseEntity.badRequest().build();
++    } else {
++      log.info("Start generating a new registration token for the given hashed guid.");
++      String registrationToken = generateRegistrationToken();
++      VerificationAppSession appSession = generateAppSession(registrationToken);
++      appSession.setHashedGuid(hashedGuid);
++      appSession.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
++      saveAppSession(appSession);
++      return ResponseEntity.status(HttpStatus.CREATED).body(new RegistrationToken(registrationToken));
++    }
++  }
+ 
+-    switch (keyType) {
+-      case GUID:
+-        if (checkRegistrationTokenAlreadyExistsForGuid(key)) {
+-          log.warn("The registration token already exists for the hashed guid.");
+-        } else {
+-          log.info("Start generating a new registration token for the given hashed guid.");
+-          registrationToken = generateRegistrationToken();
+-          appSession = generateAppSession(registrationToken);
+-          appSession.setHashedGuid(key);
+-          appSession.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
+-          saveAppSession(appSession);
+-          return ResponseEntity
+-            .status(HttpStatus.CREATED)
+-            .body(new RegistrationToken(registrationToken));
+-        }
+-        break;
+-      case TELETAN:
+-        if (checkRegistrationTokenAlreadyExistForTeleTan(key)) {
+-          log.warn("The registration token already exists for this TeleTAN.");
+-        } else {
+-          log.info("Start generating a new registration token for the given tele TAN.");
+-          registrationToken = generateRegistrationToken();
+-          appSession = generateAppSession(registrationToken);
+-          appSession.setTeleTanHash(hashingService.hash(key));
+-          appSession.setSourceOfTrust(AppSessionSourceOfTrust.TELETAN);
+-          saveAppSession(appSession);
+-          return ResponseEntity
+-            .status(HttpStatus.CREATED)
+-            .body(new RegistrationToken(registrationToken));
+-        }
+-        break;
+-      default:
+-        break;
++  /**
++   * This method generates a registration Token by a TeleTAN.
++   *
++   * @param teleTan the TeleTan
++   * @return an {@link ResponseEntity}
++   */
++  public ResponseEntity<RegistrationToken> generateRegistrationTokenByTeleTan(String teleTan) {
++    if (checkRegistrationTokenAlreadyExistForTeleTan(teleTan)) {
++      log.warn("The registration token already exists for this TeleTAN.");
++      return ResponseEntity.badRequest().build();
++    } else {
++      log.info("Start generating a new registration token for the given TeleTAN.");
++      String registrationToken = generateRegistrationToken();
++      VerificationAppSession appSession = generateAppSession(registrationToken);
++      appSession.setTeleTanHash(hashingService.hash(teleTan));
++      appSession.setSourceOfTrust(AppSessionSourceOfTrust.TELETAN);
++      saveAppSession(appSession);
++      return ResponseEntity.status(HttpStatus.CREATED).body(new RegistrationToken(registrationToken));
+     }
+-    return ResponseEntity.badRequest().build();
+   }
+ 
+   /**
+-   * Persists the specified entity of {@link VerificationAppSession}
+-   * instances.
++   * Persists the specified entity of {@link VerificationAppSession} instances.
+    *
+    * @param appSession the verification app session entity
+    */
+   public void saveAppSession(VerificationAppSession appSession) {
+     log.info("Start saveAppSession.");
+     appSessionRepository.save(appSession);
+   }
+ 
+   /**
+-   * Get existing VerificationAppSession for Reg Token from
+-   * {@link VerificationAppSessionRepository}.
++   * Get existing VerificationAppSession for Reg Token from {@link VerificationAppSessionRepository}.
+    *
+    * @param registrationToken the registrationToken
+    * @return Optional VerificationAppSession
+    */
+   public Optional<VerificationAppSession> getAppSessionByToken(String registrationToken) {
+     log.info("Start getAppSessionByToken.");
+     return appSessionRepository.findByRegistrationTokenHash(hashingService.hash(registrationToken));
+   }
+ 
+   /**
+-   * Check for existing hashed GUID Token in the
+-   * {@link VerificationAppSessionRepository}.
++   * Check for existing hashed GUID Token in the {@link VerificationAppSessionRepository}.
+    *
+    * @param hashedGuid the hashed guid
+    * @return flag for existing guid
+    */
+   public boolean checkRegistrationTokenAlreadyExistsForGuid(String hashedGuid) {
+     log.info("Start checkRegistrationTokenAlreadyExistsForGuid.");
+     return appSessionRepository.findByHashedGuid(hashedGuid).isPresent();
+   }
+ 
+   /**
+-   * Check for existing hashed TeleTAN in the
+-   * {@link VerificationAppSessionRepository}.
++   * Check for existing hashed TeleTAN in the {@link VerificationAppSessionRepository}.
+    *
+    * @param teleTan the teleTAN
+    * @return flag for existing teleTAN
+    */
+   public boolean checkRegistrationTokenAlreadyExistForTeleTan(String teleTan) {
+     log.info("Start checkTeleTanAlreadyExistForTeleTan.");
+     return appSessionRepository.findByTeleTanHash(hashingService.hash(teleTan)).isPresent();
+   }
+ 
+-  /**
+-   * Verifies the hashed guid.
+-   *
+-   * @param hashedGuid the hashed Guid
+-   * @return flag for verification
+-   */
+-  public boolean verifyHashedGuid(String hashedGuid) {
+-    return hashingService.isHashValid(hashedGuid);
+-  }
+ }
+diff --git a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java
+new file mode 100644
+index 0000000..dd1fd0e
+--- /dev/null
++++ b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenKeyConstraint.java
+@@ -0,0 +1,63 @@
++/*
++ * Corona-Warn-App / cwa-verification
++ *
++ * (C) 2020, T-Systems International GmbH
++ *
++ * Deutsche Telekom AG, SAP AG and all other contributors /
++ * copyright owners license this file to you under the Apache 
++ * License, Version 2.0 (the "License"); you may not use this 
++ * file except in compliance with the License. 
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package app.coronawarn.verification.validator;
++
++import static java.lang.annotation.ElementType.TYPE;
++
++import java.lang.annotation.Documented;
++import java.lang.annotation.Retention;
++import java.lang.annotation.RetentionPolicy;
++import java.lang.annotation.Target;
++import javax.validation.Constraint;
++import javax.validation.Payload;
++
++/**
++ * The validation-annotation for a registration token request.
++ */
++@Documented
++@Constraint(validatedBy = RegistrationTokenRequestValidator.class)
++@Target({TYPE})
++@Retention(RetentionPolicy.RUNTIME)
++public @interface RegistrationTokenKeyConstraint {
++
++  /**
++   * The default key for creating error messages in case the constraint is violated.
++   *
++   * @return
++   */
++  String message() default "The key is not valid";
++
++  /**
++   * Allows the specification of validation groups, to which this constraint belongs.
++   *
++   * @return
++   */
++  Class<?>[] groups() default {};
++
++  /**
++   * Assigns custom payload objects to a constraint.
++   *
++   * @return
++   */
++  Class<? extends Payload>[] payload() default {};
++
++}
+diff --git a/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java
+new file mode 100644
+index 0000000..58adf76
+--- /dev/null
++++ b/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java
+@@ -0,0 +1,72 @@
++/*
++ * Corona-Warn-App / cwa-verification
++ *
++ * (C) 2020, T-Systems International GmbH
++ *
++ * Deutsche Telekom AG, SAP AG and all other contributors /
++ * copyright owners license this file to you under the Apache 
++ * License, Version 2.0 (the "License"); you may not use this 
++ * file except in compliance with the License. 
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package app.coronawarn.verification.validator;
++
++import app.coronawarn.verification.model.RegistrationTokenKeyType;
++import app.coronawarn.verification.model.RegistrationTokenRequest;
++import app.coronawarn.verification.service.HashingService;
++import app.coronawarn.verification.service.TanService;
++import javax.validation.ConstraintValidator;
++import javax.validation.ConstraintValidatorContext;
++import lombok.NonNull;
++import lombok.RequiredArgsConstructor;
++import lombok.extern.slf4j.Slf4j;
++import org.springframework.stereotype.Component;
++
++/**
++ * The registration token request validator.
++ */
++@Slf4j
++@RequiredArgsConstructor
++@Component
++public class RegistrationTokenRequestValidator
++  implements ConstraintValidator<RegistrationTokenKeyConstraint, RegistrationTokenRequest> {
++  /**
++   * The {@link HashingService}.
++   */
++  @NonNull
++  private final HashingService hashingService;
++
++  /**
++   * The {@link TanService}.
++   */
++  @NonNull
++  private final TanService tanService;
++
++  @Override
++  public boolean isValid(RegistrationTokenRequest request, ConstraintValidatorContext arg1) {
++
++    String key = request.getKey();
++    RegistrationTokenKeyType keyType = request.getKeyType();
++    if (key == null || keyType == null) {
++      return false;
++    }
++    switch (keyType) {
++      case GUID:
++        return hashingService.isHashValid(key);
++      case TELETAN: 
++        return tanService.verifyTeleTan(key);
++      default: 
++        return false;
++    }
++  }
++}

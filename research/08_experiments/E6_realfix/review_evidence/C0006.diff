@@ -1,0 +1,34 @@
+diff --git a/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java b/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
+index 53f5d6f..277cd81 100644
+--- a/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
++++ b/src/main/java/io/papermc/bibliothek/controller/api/v2/ProjectsController.java
+@@ -231,13 +231,10 @@ public class ProjectsController extends AbstractProjectsController {
+     );
+   }
+ 
+   @ApiResponse(
+     responseCode = "200",
+-    content = @Content(
+-      mediaType = HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
+-    ),
+     headers = {
+       @Header(
+         name = "Content-Disposition",
+         description = "A header indicating that the content is expected to be displayed as an attachment, that is downloaded and saved locally.",
+         schema = @Schema(type = "string")
+@@ -254,11 +251,14 @@ public class ProjectsController extends AbstractProjectsController {
+       )
+     }
+   )
+   @GetMapping(
+     value = "/v2/projects/{project:[a-z]+}/versions/{version:[0-9pre.-]+}/builds/{build:\\d+}/downloads/{download:[a-z0-9._-]+}",
+-    produces = HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
++    produces = {
++      MediaType.APPLICATION_JSON_VALUE,
++      HTTP.APPLICATION_JAVA_ARCHIVE_VALUE
++    }
+   )
+   @Operation(summary = "Downloads the given file from a build's data.")
+   @SuppressWarnings("checkstyle:Indentation")
+   public ResponseEntity<?> projectBuildDownload(
+     final @Parameter(description = "The ID of the project.", example = "paper") @PathVariable("project") @Pattern(regexp = "[a-z]+") String projectName,

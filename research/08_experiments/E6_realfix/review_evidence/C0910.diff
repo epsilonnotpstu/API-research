@@ -1,0 +1,154 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/Link.java b/src/main/java/uk/gov/pay/api/model/Link.java
+index 761aa90a..f2a3f83b 100644
+--- a/src/main/java/uk/gov/pay/api/model/Link.java
++++ b/src/main/java/uk/gov/pay/api/model/Link.java
+@@ -1,9 +1,10 @@
+ package uk.gov.pay.api.model;
+ 
+ import io.dropwizard.jackson.JsonSnakeCase;
+ import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
+ 
+ @ApiModel(value = "paymentLinks", description = "Resource links of a Payment")
+ @JsonSnakeCase
+ public class Link {
+     private String href;
+@@ -16,14 +17,16 @@ public class Link {
+ 
+     public static Link get(String url) {
+         return new Link(url, "GET");
+     }
+ 
++    @ApiModelProperty(example = "https://publicapi-integration-1.pymnt.uk/v1/payments/12345")
+     public String getHref() {
+         return href;
+     }
+ 
++    @ApiModelProperty(example = "GET")
+     public String getMethod() {
+         return method;
+     }
+ 
+     @Override
+diff --git a/src/main/java/uk/gov/pay/api/model/Links.java b/src/main/java/uk/gov/pay/api/model/Links.java
+index 7af574f1..188ccb0e 100644
+--- a/src/main/java/uk/gov/pay/api/model/Links.java
++++ b/src/main/java/uk/gov/pay/api/model/Links.java
+@@ -1,9 +1,10 @@
+ package uk.gov.pay.api.model;
+ 
+ import io.dropwizard.jackson.JsonSnakeCase;
+ import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
+ 
+ @ApiModel(value="paymentLinks", description = "Resource links of a Payment")
+ @JsonSnakeCase
+ public class Links {
+ 
+@@ -16,14 +17,16 @@ public class Links {
+ 
+     public void setNext(String url) {
+         this.nextUrl = Link.get(url);
+     }
+ 
++    @ApiModelProperty(example = "https://publicapi-integration-1.pymnt.uk/v1/payments/12345")
+     public Link getSelf() {
+         return self;
+     }
+ 
++    @ApiModelProperty(example = "https://www-integration-1.pymnt.uk/charge/12345?chargeTokenId=[REDACTED]")
+     public Link getNextUrl() {
+         return nextUrl;
+     }
+ 
+     @Override
+diff --git a/src/main/java/uk/gov/pay/api/model/Payment.java b/src/main/java/uk/gov/pay/api/model/Payment.java
+index a24af99a..b0ca1cb4 100644
+--- a/src/main/java/uk/gov/pay/api/model/Payment.java
++++ b/src/main/java/uk/gov/pay/api/model/Payment.java
+@@ -51,11 +51,11 @@ public class Payment {
+ 
+     public String getCreatedDate() {
+         return createdDate;
+     }
+ 
+-    @ApiModelProperty(example = "1122335")
++    @ApiModelProperty(example = "12345")
+     public String getPaymentId() {
+         return paymentId;
+     }
+ 
+     @ApiModelProperty(example = "1200")
+@@ -66,21 +66,21 @@ public class Payment {
+     @ApiModelProperty(example = "CREATED")
+     public String getStatus() {
+         return status;
+     }
+ 
+-    @ApiModelProperty(example = "http://government.service.domain/transaction/1")
++    @ApiModelProperty(example = "http://your.service.domain/your-reference")
+     public String getReturnUrl() {
+         return returnUrl;
+     }
+ 
+-    @ApiModelProperty(example = "New Passport Application")
++    @ApiModelProperty(example = "Your Service Description")
+     public String getDescription() {
+         return description;
+     }
+ 
+-    @ApiModelProperty(example = "12345")
++    @ApiModelProperty(example = "your-reference")
+     public String getReference() {
+         return reference;
+     }
+ 
+     public String getPaymentProvider() {
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index ebffdf32..6c7230da 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -173,23 +173,23 @@
+           "type" : "string",
+           "example" : "CREATED"
+         },
+         "description" : {
+           "type" : "string",
+-          "example" : "New Passport Application"
++          "example" : "Your Service Description"
+         },
+         "returnUrl" : {
+           "type" : "string",
+-          "example" : "http://government.service.domain/transaction/1"
++          "example" : "http://your.service.domain/your-reference"
+         },
+         "reference" : {
+           "type" : "string",
+-          "example" : "12345"
++          "example" : "your-reference"
+         },
+         "payment_id" : {
+           "type" : "string",
+-          "example" : "1122335",
++          "example" : "12345",
+           "readOnly" : true
+         },
+         "payment_provider" : {
+           "type" : "string",
+           "readOnly" : true
+@@ -206,13 +206,15 @@
+     },
+     "paymentLinks" : {
+       "type" : "object",
+       "properties" : {
+         "self" : {
++          "example" : "https://publicapi-integration-1.pymnt.uk/v1/payments/12345",
+           "$ref" : "#/definitions/paymentLinks"
+         },
+         "nextUrl" : {
++          "example" : "https://www-integration-1.pymnt.uk/charge/12345?chargeTokenId=[REDACTED]",
+           "$ref" : "#/definitions/paymentLinks"
+         }
+       },
+       "description" : "Resource links of a Payment"
+     }

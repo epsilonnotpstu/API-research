@@ -1,0 +1,724 @@
+diff --git a/src/main/java/uk/gov/pay/api/model/Address.java b/src/main/java/uk/gov/pay/api/model/Address.java
+index b5c4b615..23aee6ba 100644
+--- a/src/main/java/uk/gov/pay/api/model/Address.java
++++ b/src/main/java/uk/gov/pay/api/model/Address.java
+@@ -49,10 +49,10 @@ public class Address {
+     @ApiModelProperty(example = "address city")
+     public String getCity() {
+         return city;
+     }
+ 
+-    @ApiModelProperty(example = "UK")
++    @ApiModelProperty(example = "GB")
+     public String getCountry() {
+         return country;
+     }
+ }
+diff --git a/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+new file mode 100644
+index 00000000..bd1cd6b5
+--- /dev/null
++++ b/src/main/java/uk/gov/pay/api/model/CreatePaymentResult.java
+@@ -0,0 +1,67 @@
++package uk.gov.pay.api.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
++import uk.gov.pay.api.model.links.PaymentLinks;
++import uk.gov.pay.commons.model.SupportedLanguage;
++
++import static uk.gov.pay.api.model.Payment.LINKS_JSON_ATTRIBUTE;
++
++/**
++ * Defines swagger specs for create payment
++ */
++@ApiModel
++public class CreatePaymentResult {
++
++    @JsonProperty
++    @ApiModelProperty(name = "amount", example = "1200")
++    private long amount;
++
++    @JsonProperty
++    @ApiModelProperty(dataType = "uk.gov.pay.api.model.PaymentState")
++    private PaymentState state;
++
++    @JsonProperty
++    @ApiModelProperty(example = "Your Service Description")
++    private String description;
++
++    @JsonProperty
++    @ApiModelProperty(example = "your-reference")
++    private String reference;
++
++    @JsonProperty
++    @ApiModelProperty(name = "language", access = "language", example = "en")
++    private SupportedLanguage language;
++
++    @JsonProperty
++    @ApiModelProperty(example = "hu20sqlact5260q2nanm0q8u93")
++    private String paymentId;
++
++    @JsonProperty
++    @ApiModelProperty(name = "payment_provider", example = "worldpay")
++    private String paymentProvider;
++
++    @JsonProperty
++    @ApiModelProperty(name = "return_url", example = "http://your.service.domain/your-reference")
++    private String returnUrl;
++
++    @JsonProperty
++    @ApiModelProperty(name = "created_date", example = "2016-01-21T17:15:00Z")
++    private String createdDate;
++
++    @JsonProperty
++    @ApiModelProperty(name = "delayed_capture", access = "delayed_capture")
++    private boolean delayedCapture;
++
++    @JsonProperty("refund_summary")
++    private RefundSummary refundSummary;
++
++    @JsonProperty("settlement_summary")
++    private SettlementSummary settlementSummary;
++
++    @JsonProperty
++    @ApiModelProperty(name = LINKS_JSON_ATTRIBUTE)
++    private PaymentLinks links;
++
++}
+diff --git a/src/main/java/uk/gov/pay/api/model/Payment.java b/src/main/java/uk/gov/pay/api/model/Payment.java
+index 7ac926d9..9dbb2933 100644
+--- a/src/main/java/uk/gov/pay/api/model/Payment.java
++++ b/src/main/java/uk/gov/pay/api/model/Payment.java
+@@ -48,11 +48,11 @@ public abstract class Payment {
+         this.email = email;
+         this.paymentProvider = paymentProvider;
+         this.createdDate = createdDate;
+     }
+ 
+-    @ApiModelProperty(example = "2016-01-21T17:15:00Z")
++    @ApiModelProperty(example = "2016-01-21T17:15:000Z")
+     public String getCreatedDate() {
+         return createdDate;
+     }
+ 
+     @ApiModelProperty(example = "hu20sqlact5260q2nanm0q8u93")
+diff --git a/src/main/java/uk/gov/pay/api/model/RefundSummary.java b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+index b3e3e09e..c2b08edf 100644
+--- a/src/main/java/uk/gov/pay/api/model/RefundSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/RefundSummary.java
+@@ -28,11 +28,11 @@ public class RefundSummary {
+     @ApiModelProperty(value = "Availability status of the refund", example = "available")
+     public String getStatus() {
+         return status;
+     }
+ 
+-    @ApiModelProperty(value = "Amount available for refund in pence")
++    @ApiModelProperty(value = "Amount available for refund in pence", example = "100")
+     public long getAmountAvailable() {
+         return amountAvailable;
+     }
+ 
+     @ApiModelProperty(value = "Amount submitted for refunds on this Payment in pence")
+diff --git a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+index 4ee3aaf3..acd2c5f1 100644
+--- a/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
++++ b/src/main/java/uk/gov/pay/api/model/SettlementSummary.java
+@@ -20,11 +20,11 @@ public class SettlementSummary {
+     public SettlementSummary(String captureSubmitTime, String capturedDate) {
+         this.captureSubmitTime = captureSubmitTime;
+         this.capturedDate = capturedDate;
+     }
+ 
+-    @ApiModelProperty(value = "Date and time capture request has been submitted (may be null if capture request was not immediately acknowledged by payment gateway)", example = "2016-01-21T17:15:00Z")
++    @ApiModelProperty(value = "Date and time capture request has been submitted (may be null if capture request was not immediately acknowledged by payment gateway)", example = "2016-01-21T17:15:000Z")
+     public String getCaptureSubmitTime() {
+         return captureSubmitTime;
+     }
+ 
+     @ApiModelProperty(value = "Date of the capture event", example = "2016-01-21")
+diff --git a/src/main/java/uk/gov/pay/api/model/search/card/GetPaymentResult.java b/src/main/java/uk/gov/pay/api/model/search/card/GetPaymentResult.java
+new file mode 100644
+index 00000000..6a7ff4a9
+--- /dev/null
++++ b/src/main/java/uk/gov/pay/api/model/search/card/GetPaymentResult.java
+@@ -0,0 +1,27 @@
++package uk.gov.pay.api.model.search.card;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import io.swagger.annotations.ApiModel;
++import io.swagger.annotations.ApiModelProperty;
++import uk.gov.pay.api.model.CardDetails;
++import uk.gov.pay.api.model.CardPayment;
++import uk.gov.pay.api.model.PaymentState;
++import uk.gov.pay.api.model.RefundSummary;
++import uk.gov.pay.api.model.SettlementSummary;
++import uk.gov.pay.api.model.links.PaymentLinks;
++import uk.gov.pay.commons.model.SupportedLanguage;
++
++/**
++ * Defines swagger specs for Get payment
++ */
++@ApiModel
++public class GetPaymentResult extends CardPayment {
++
++    @JsonProperty(LINKS_JSON_ATTRIBUTE)
++    @ApiModelProperty(name = LINKS_JSON_ATTRIBUTE, dataType = "uk.gov.pay.api.model.links.PaymentLinks")
++    private PaymentLinks links;
++
++    public GetPaymentResult(String chargeId, long amount, PaymentState state, String returnUrl, String description, String reference, String email, String paymentProvider, String createdDate, RefundSummary refundSummary, SettlementSummary settlementSummary, CardDetails cardDetails, SupportedLanguage language, boolean delayedCapture, Long corporateCardSurcharge, Long totalAmount) {
++        super(chargeId, amount, state, returnUrl, description, reference, email, paymentProvider, createdDate, refundSummary, settlementSummary, cardDetails, language, delayedCapture, corporateCardSurcharge, totalAmount);
++    }
++}
+diff --git a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+index c564bd3f..e58320a1 100644
+--- a/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
++++ b/src/main/java/uk/gov/pay/api/resources/PaymentsResource.java
+@@ -13,15 +13,16 @@ import org.apache.http.HttpStatus;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import uk.gov.pay.api.auth.Account;
+ import uk.gov.pay.api.exception.CaptureChargeException;
+ import uk.gov.pay.api.exception.GetEventsException;
++import uk.gov.pay.api.model.CreatePaymentResult;
+ import uk.gov.pay.api.model.PaymentError;
+ import uk.gov.pay.api.model.PaymentEvents;
+ import uk.gov.pay.api.model.ValidCreatePaymentRequest;
+ import uk.gov.pay.api.model.links.PaymentWithAllLinks;
+-import uk.gov.pay.api.model.search.card.PaymentForSearchResult;
++import uk.gov.pay.api.model.search.card.GetPaymentResult;
+ import uk.gov.pay.api.model.search.card.PaymentSearchResults;
+ import uk.gov.pay.api.resources.error.ApiErrorResponse;
+ import uk.gov.pay.api.service.CancelPaymentService;
+ import uk.gov.pay.api.service.CapturePaymentService;
+ import uk.gov.pay.api.service.ConnectorUriGenerator;
+@@ -93,17 +94,19 @@ public class PaymentsResource {
+                     "The Authorisation token needs to be specified in the 'authorization' header " +
+[REDACTED credential-related line]
+             code = 200,
+             authorizations = {@Authorization("Authorization")})
+     @ApiResponses(value = {
+-            @ApiResponse(code = 200, message = "OK", response = PaymentForSearchResult.class),
++            @ApiResponse(code = 200, message = "OK", response = GetPaymentResult.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 404, message = "Not found", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+     public Response getPayment(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+-                               @PathParam("paymentId") String paymentId) {
++                               @PathParam("paymentId")
++                               @ApiParam(name = "paymentId", value = "Payment identifier", example = "hu20sqlact5260q2nanm0q8u93")
++                                       String paymentId) {
+ 
+         logger.info("Payment request - paymentId={}", paymentId);
+ 
+         PaymentWithAllLinks payment = getPaymentService.getPayment(account, paymentId);
+ 
+@@ -128,11 +131,13 @@ public class PaymentsResource {
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 404, message = "Not found", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+     public Response getPaymentEvents(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+-                                     @PathParam("paymentId") String paymentId) {
++                                     @PathParam("paymentId")
++                                     @ApiParam(name = "paymentId", value = "Payment identifier", example = "hu20sqlact5260q2nanm0q8u93")
++                                             String paymentId) {
+ 
+         logger.info("Payment events request - payment_id={}", paymentId);
+ 
+         Response connectorResponse = client
+                 .target(connectorUriGenerator.chargeEventsURI(account, paymentId))
+@@ -227,11 +232,11 @@ public class PaymentsResource {
+[REDACTED credential-related line]
+             code = 201,
+             nickname = "newPayment",
+             authorizations = {@Authorization("Authorization")})
+     @ApiResponses(value = {
+-            @ApiResponse(code = 201, message = "Created", response = PaymentWithAllLinks.class),
++            @ApiResponse(code = 201, message = "Created", response = CreatePaymentResult.class),
+             @ApiResponse(code = 400, message = "Bad request", response = PaymentError.class),
+             @ApiResponse(code = 401, message = "Credentials are required to access this resource"),
+             @ApiResponse(code = 422, message = "Invalid attribute value: description. Must be less than or equal to 255 characters length", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)})
+@@ -270,11 +275,13 @@ public class PaymentsResource {
+             @ApiResponse(code = 409, message = "Conflict", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)
+     })
+     public Response cancelPayment(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+-                                  @PathParam("paymentId") String paymentId) {
++                                  @PathParam("paymentId")
++                                  @ApiParam(name = "paymentId", value = "Payment identifier", example = "hu20sqlact5260q2nanm0q8u93")
++                                          String paymentId) {
+ 
+         logger.info("Payment cancel request - payment_id=[{}]", paymentId);
+ 
+         return cancelPaymentService.cancel(account, paymentId);
+     }
+@@ -299,11 +306,13 @@ public class PaymentsResource {
+             @ApiResponse(code = 409, message = "Conflict", response = PaymentError.class),
+             @ApiResponse(code = 429, message = "Too many requests", response = ApiErrorResponse.class),
+             @ApiResponse(code = 500, message = "Downstream system error", response = PaymentError.class)
+     })
+     public Response capturePayment(@ApiParam(value = "accountId", hidden = true) @Auth Account account,
+-                                   @PathParam("paymentId") String paymentId) {
++                                   @PathParam("paymentId")
++                                   @ApiParam(name = "paymentId", value = "Payment identifier", example = "hu20sqlact5260q2nanm0q8u93")
++                                           String paymentId) {
+         logger.info("Payment capture request - payment_id=[{}]", paymentId);
+ 
+         Response connectorResponse = capturePaymentService.capture(account, paymentId);
+ 
+         if (connectorResponse.getStatus() == HttpStatus.SC_NO_CONTENT) {
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index efcc5989..acdeef51 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -135,11 +135,11 @@
+         } ],
+         "responses" : {
+           "201" : {
+             "description" : "Created",
+             "schema" : {
+-              "$ref" : "#/definitions/PaymentWithAllLinks"
++              "$ref" : "#/definitions/CreatePaymentResult"
+             }
+           },
+           "400" : {
+             "description" : "Bad request",
+             "schema" : {
+@@ -180,18 +180,20 @@
+         "operationId" : "getPayment",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+           "in" : "path",
++          "description" : "Payment identifier",
+           "required" : true,
+-          "type" : "string"
++          "type" : "string",
++          "x-example" : "hu20sqlact5260q2nanm0q8u93"
+         } ],
+         "responses" : {
+           "200" : {
+             "description" : "OK",
+             "schema" : {
+-              "$ref" : "#/definitions/PaymentDetailForSearch"
++              "$ref" : "#/definitions/GetPaymentResult"
+             }
+           },
+           "401" : {
+             "description" : "Credentials are required to access this resource"
+           },
+@@ -226,12 +228,14 @@
+         "operationId" : "cancelPayment",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+           "in" : "path",
++          "description" : "Payment identifier",
+           "required" : true,
+-          "type" : "string"
++          "type" : "string",
++          "x-example" : "hu20sqlact5260q2nanm0q8u93"
+         } ],
+         "responses" : {
+           "204" : {
+             "description" : "No Content"
+           },
+@@ -281,12 +285,14 @@
+         "operationId" : "capturePayment",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+           "in" : "path",
++          "description" : "Payment identifier",
+           "required" : true,
+-          "type" : "string"
++          "type" : "string",
++          "x-example" : "hu20sqlact5260q2nanm0q8u93"
+         } ],
+         "responses" : {
+           "204" : {
+             "description" : "No Content"
+           },
+@@ -336,12 +342,14 @@
+         "operationId" : "getPaymentEvents",
+         "produces" : [ "application/json" ],
+         "parameters" : [ {
+           "name" : "paymentId",
+           "in" : "path",
++          "description" : "Payment identifier",
+           "required" : true,
+-          "type" : "string"
++          "type" : "string",
++          "x-example" : "hu20sqlact5260q2nanm0q8u93"
+         } ],
+         "responses" : {
+           "200" : {
+             "description" : "OK",
+             "schema" : {
+@@ -627,11 +635,11 @@
+           "example" : "address city",
+           "readOnly" : true
+         },
+         "country" : {
+           "type" : "string",
+-          "example" : "UK",
++          "example" : "GB",
+           "readOnly" : true
+         }
+       },
+       "description" : "A structure representing the billing address of a card"
+     },
+@@ -668,60 +676,10 @@
+           "readOnly" : true
+         }
+       },
+       "description" : "A structure representing the payment card"
+     },
+-    "CardPayment" : {
+-      "allOf" : [ {
+-        "$ref" : "#/definitions/Payment"
+-      }, {
+-        "type" : "object",
+-        "properties" : {
+-          "language" : {
+-            "type" : "string",
+-            "example" : "en",
+-            "enum" : [ "en", "cy" ]
+-          },
+-          "refund_summary" : {
+-            "readOnly" : true,
+-            "$ref" : "#/definitions/RefundSummary"
+-          },
+-          "settlement_summary" : {
+-            "readOnly" : true,
+-            "$ref" : "#/definitions/SettlementSummary"
+-          },
+-          "card_details" : {
+-            "readOnly" : true,
+-            "$ref" : "#/definitions/CardDetails"
+-          },
+-          "delayed_capture" : {
+-            "type" : "boolean",
+-            "example" : false,
+-            "description" : "delayed capture flag",
+-            "readOnly" : true
+-          },
+-          "corporate_card_surcharge" : {
+-            "type" : "integer",
+-            "format" : "int64",
+-            "example" : 250,
+-            "readOnly" : true
+-          },
+-          "total_amount" : {
+-            "type" : "integer",
+-            "format" : "int64",
+-            "example" : 1450,
+-            "readOnly" : true
+-          },
+-          "card_brand" : {
+-            "type" : "string",
+-            "example" : "Visa",
+-            "description" : "Card Brand",
+-            "readOnly" : true
+-          }
+-        }
+-      } ]
+-    },
+     "CreatePaymentRequest" : {
+       "type" : "object",
+       "required" : [ "amount", "description", "reference", "return_url" ],
+       "properties" : {
+         "amount" : {
+@@ -759,16 +717,63 @@
+           "description" : "delayed capture flag",
+           "readOnly" : true
+         }
+       }
+     },
+-    "DirectDebitPayment" : {
+-      "allOf" : [ {
+-        "$ref" : "#/definitions/Payment"
+-      }, {
+-        "type" : "object"
+-      } ]
++    "CreatePaymentResult" : {
++      "type" : "object",
++      "properties" : {
++        "amount" : {
++          "type" : "integer",
++          "format" : "int64",
++          "example" : 1200
++        },
++        "state" : {
++          "$ref" : "#/definitions/PaymentState"
++        },
++        "description" : {
++          "type" : "string",
++          "example" : "Your Service Description"
++        },
++        "reference" : {
++          "type" : "string",
++          "example" : "your-reference"
++        },
++        "language" : {
++          "type" : "string",
++          "example" : "en",
++          "enum" : [ "ENGLISH", "WELSH" ]
++        },
++        "paymentId" : {
++          "type" : "string",
++          "example" : "hu20sqlact5260q2nanm0q8u93"
++        },
++        "payment_provider" : {
++          "type" : "string",
++          "example" : "worldpay"
++        },
++        "return_url" : {
++          "type" : "string",
++          "example" : "http://your.service.domain/your-reference"
++        },
++        "created_date" : {
++          "type" : "string",
++          "example" : "2016-01-21T17:15:00Z"
++        },
++        "delayed_capture" : {
++          "type" : "boolean"
++        },
++        "_links" : {
++          "$ref" : "#/definitions/PaymentLinks"
++        },
++        "refund_summary" : {
++          "$ref" : "#/definitions/RefundSummary"
++        },
++        "settlement_summary" : {
++          "$ref" : "#/definitions/SettlementSummary"
++        }
++      }
+     },
+     "EmbeddedRefunds" : {
+       "type" : "object",
+       "properties" : {
+         "refunds" : {
+@@ -791,29 +796,12 @@
+           "example" : "Too many requests"
+         }
+       },
+       "description" : "An error response"
+     },
+-    "Link" : {
++    "GetPaymentResult" : {
+       "type" : "object",
+-      "properties" : {
+-        "href" : {
+-          "type" : "string",
+-          "example" : "https://an.example.link/from/payment/platform",
+-          "readOnly" : true
+-        },
+-        "method" : {
+-          "type" : "string",
+-          "example" : "GET",
+-          "readOnly" : true
+-        }
+-      },
+-      "description" : "A link related to a payment"
+-    },
+-    "Payment" : {
+-      "type" : "object",
+-      "discriminator" : "paymentType",
+       "properties" : {
+         "amount" : {
+           "type" : "integer",
+           "format" : "int64",
+           "example" : 1200
+@@ -831,10 +819,15 @@
+         },
+         "email" : {
+           "type" : "string",
+           "example" : "your email"
+         },
++        "language" : {
++          "type" : "string",
++          "example" : "en",
++          "enum" : [ "en", "cy" ]
++        },
+         "payment_id" : {
+           "type" : "string",
+           "example" : "hu20sqlact5260q2nanm0q8u93",
+           "readOnly" : true
+         },
+@@ -848,15 +841,70 @@
+           "example" : "http://your.service.domain/your-reference",
+           "readOnly" : true
+         },
+         "created_date" : {
+           "type" : "string",
+-          "example" : "2016-01-21T17:15:00Z",
++          "example" : "2016-01-21T17:15:000Z",
++          "readOnly" : true
++        },
++        "refund_summary" : {
++          "readOnly" : true,
++          "$ref" : "#/definitions/RefundSummary"
++        },
++        "settlement_summary" : {
++          "readOnly" : true,
++          "$ref" : "#/definitions/SettlementSummary"
++        },
++        "card_details" : {
++          "readOnly" : true,
++          "$ref" : "#/definitions/CardDetails"
++        },
++        "delayed_capture" : {
++          "type" : "boolean",
++          "example" : false,
++          "description" : "delayed capture flag",
++          "readOnly" : true
++        },
++        "corporate_card_surcharge" : {
++          "type" : "integer",
++          "format" : "int64",
++          "example" : 250,
++          "readOnly" : true
++        },
++        "total_amount" : {
++          "type" : "integer",
++          "format" : "int64",
++          "example" : 1450,
++          "readOnly" : true
++        },
++        "_links" : {
++          "$ref" : "#/definitions/PaymentLinks"
++        },
++        "card_brand" : {
++          "type" : "string",
++          "example" : "Visa",
++          "description" : "Card Brand",
+           "readOnly" : true
+         }
+       }
+     },
++    "Link" : {
++      "type" : "object",
++      "properties" : {
++        "href" : {
++          "type" : "string",
++          "example" : "https://an.example.link/from/payment/platform",
++          "readOnly" : true
++        },
++        "method" : {
++          "type" : "string",
++          "example" : "GET",
++          "readOnly" : true
++        }
++      },
++      "description" : "A link related to a payment"
++    },
+     "PaymentDetailForSearch" : {
+       "type" : "object",
+       "properties" : {
+         "amount" : {
+           "type" : "integer",
+@@ -898,11 +946,11 @@
+           "example" : "http://your.service.domain/your-reference",
+           "readOnly" : true
+         },
+         "created_date" : {
+           "type" : "string",
+-          "example" : "2016-01-21T17:15:00Z",
++          "example" : "2016-01-21T17:15:000Z",
+           "readOnly" : true
+         },
+         "refund_summary" : {
+           "readOnly" : true,
+           "$ref" : "#/definitions/RefundSummary"
+@@ -1183,59 +1231,10 @@
+           "readOnly" : true
+         }
+       },
+       "description" : "A structure representing the current state of the payment in its lifecycle."
+     },
+-    "PaymentWithAllLinks" : {
+-      "type" : "object",
+-      "properties" : {
+-        "amount" : {
+-          "type" : "integer",
+-          "format" : "int64",
+-          "example" : 1200
+-        },
+-        "state" : {
+-          "$ref" : "#/definitions/PaymentState"
+-        },
+-        "description" : {
+-          "type" : "string",
+-          "example" : "Your Service Description"
+-        },
+-        "reference" : {
+-          "type" : "string",
+-          "example" : "your-reference"
+-        },
+-        "email" : {
+-          "type" : "string",
+-          "example" : "your email"
+-        },
+-        "payment_id" : {
+-          "type" : "string",
+-          "example" : "hu20sqlact5260q2nanm0q8u93",
+-          "readOnly" : true
+-        },
+-        "payment_provider" : {
+-          "type" : "string",
+-          "example" : "worldpay",
+-          "readOnly" : true
+-        },
+-        "return_url" : {
+-          "type" : "string",
+-          "example" : "http://your.service.domain/your-reference",
+-          "readOnly" : true
+-        },
+-        "created_date" : {
+-          "type" : "string",
+-          "example" : "2016-01-21T17:15:00Z",
+-          "readOnly" : true
+-        },
+-        "_links" : {
+-          "readOnly" : true,
+-          "$ref" : "#/definitions/PaymentLinks"
+-        }
+-      }
+-    },
+     "PostLink" : {
+       "type" : "object",
+       "properties" : {
+         "type" : {
+           "type" : "string",
+@@ -1410,10 +1409,11 @@
+           "description" : "Availability status of the refund"
+         },
+         "amount_available" : {
+           "type" : "integer",
+           "format" : "int64",
++          "example" : 100,
+           "description" : "Amount available for refund in pence",
+           "readOnly" : true
+         },
+         "amount_submitted" : {
+           "type" : "integer",
+@@ -1453,11 +1453,11 @@
+     "SettlementSummary" : {
+       "type" : "object",
+       "properties" : {
+         "capture_submit_time" : {
+           "type" : "string",
+-          "example" : "2016-01-21T17:15:00Z",
++          "example" : "2016-01-21T17:15:000Z",
+           "description" : "Date and time capture request has been submitted (may be null if capture request was not immediately acknowledged by payment gateway)",
+           "readOnly" : true
+         },
+         "captured_date" : {
+           "type" : "string",

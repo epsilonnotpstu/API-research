@@ -1,0 +1,76 @@
+[parent contract] e4276258e535897431f070af6b9a5bf0d85f63c6:catwatch-api/catwatch_rest_api.yaml:398
+395:       contributors_count:
+396:         type: number
+397:         description: Count of contributors of project.
+398:       score:
+399:         type: string
+400:         description: Score of project.
+401:       last_pushed:
+402:         type: string
+403:         description: Last pushed data of project.
+
+[parent route] e4276258e535897431f070af6b9a5bf0d85f63c6:catwatch-api/catwatch_rest_api.yaml:188
+185:           description: Unexpected error
+186:           schema:
+187:             $ref: '#/definitions/Error'
+188:   /projects:
+189:     get:
+190:       summary: Project
+191:       description: 'The Projects endpoint returns all information like name,description, url, stars count, commits count, forks count, contributors count, score, languages used, last pushed of all the projects for the selected filter. If start date and end date is not present, all projects from most recent snapshot is returned. If start date and end is present, project performance data between start date and end date is returned. If only start date is present, project performance data of project list between start date and  most recent snapshot is returned. If only end date is present, project statistics of end date is returned'
+192:       parameters:
+193:         - name: organizations
+
+[parent implementation] e4276258e535897431f070af6b9a5bf0d85f63c6:catwatch-backend/src/main/java/org/zalando/catwatch/backend/model/Project.java:231
+228:     }
+229: 
+230:     @ApiModelProperty(value = "Score of project.")
+231:     public Integer getScore() {
+232:         return score;
+233:     }
+234: 
+235:     public void setScore(final Integer score) {
+236:         this.score = score;
+
+[parent route] e4276258e535897431f070af6b9a5bf0d85f63c6:catwatch-backend/src/main/java/org/zalando/catwatch/backend/web/ProjectsApi.java:52
+49:         }
+50:     )
+51:     @RequestMapping(value = "", method = RequestMethod.GET)
+52:     public ResponseEntity<Collection<Project>> projectsGet(
+53:             @ApiParam(value = "List of github.com organizations to scan(comma seperated)", required = false)
+54:             @RequestParam(value = Constants.API_REQUEST_PARAM_ORGANIZATIONS, required = false)
+55:             final String organizations,
+56:             @ApiParam(value = "Number of items to retrieve. Default is 5.")
+57:             @RequestParam(value = Constants.API_REQUEST_PARAM_LIMIT, required = false)
+
+[parent route] e4276258e535897431f070af6b9a5bf0d85f63c6:catwatch-backend/src/main/java/org/zalando/catwatch/backend/util/Constants.java:8
+5: 	public static final String 
+6: 		API_RESOURCE_CONTRIBUTORS = "/contributors",
+7: 		API_RESOURCE_STATISTICS = "/statistics",
+8: 		API_RESOURCE_PROJECTS = "/projects",
+9: 		API_RESOURCE_LANGUAGES = "/languages",
+10: 		
+11: 		API_REQUEST_PARAM_ENDDATE = "end_date",
+12: 		API_REQUEST_PARAM_STARTDATE = "start_date",
+13: 		API_REQUEST_PARAM_SORTBY = "sort_by",
+
+[fix contract] 3fb0e7073e82413cd06a6007a610e92d6c8eb14f:catwatch-api/catwatch_rest_api.yaml:398
+395:       contributors_count:
+396:         type: number
+397:         description: Count of contributors of the project.
+398:       score:
+399:         type: number
+400:         description: Score of the project.
+401:       last_pushed:
+402:         type: string
+403:         description: Last pushed date of the project.
+
+[fix implementation] 3fb0e7073e82413cd06a6007a610e92d6c8eb14f:catwatch-backend/src/main/java/org/zalando/catwatch/backend/model/Project.java:231
+228:     }
+229: 
+230:     @ApiModelProperty(value = "Score of project.")
+231:     public Integer getScore() {
+232:         return score;
+233:     }
+234: 
+235:     public void setScore(final Integer score) {
+236:         this.score = score;

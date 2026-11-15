@@ -1,0 +1,86 @@
+[parent contract] e85715bcab86a6c5fc7824679bc009537bdd3a14:api/microcks-openapi-v1.10.yaml:21
+21: paths:
+22:   /services:
+23:     summary: This path operations deal with Services
+24:     get:
+25:       tags:
+26:       - mock
+
+[parent contract] e85715bcab86a6c5fc7824679bc009537bdd3a14:api/microcks-openapi-v1.10.yaml:1107
+1095:         "400":
+1096:           content:
+1097:             text/plain:
+1098:               schema:
+1099:                 type: string
+1100:           description: Artifact content is invalid and not understood
+1101:       security:
+1102:       - jwt-bearer:
+1103:         - manager
+1104:       operationId: downloadArtifact
+1105:       summary: Download an artifact
+1106:       description: Ask Microcks to download an artifact and import it
+1107: components:
+1108:   schemas:
+
+[parent implementation] e85715bcab86a6c5fc7824679bc009537bdd3a14:webapp/src/main/java/io/github/microcks/web/SecretController.java:64
+61:       return secretRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"))).getContent();
+62:    }
+63: 
+64:    @GetMapping(value = "/secrets/search")
+65:    public List<Secret> searchSecrets(@RequestParam(value = "name") String name) {
+66:       log.debug("Searching secrets corresponding to {}", name);
+67:       return secretRepository.findByNameLike(name);
+68:    }
+69: 
+
+[parent route] e85715bcab86a6c5fc7824679bc009537bdd3a14:webapp/src/main/java/io/github/microcks/web/SecretController.java:47
+44: [REDACTED personal attribution]
+45:  */
+46: @RestController
+47: @RequestMapping("/api")
+48: public class SecretController {
+49: 
+50:    /** A simple logger for diagnostic messages. */
+51:    private static Logger log = LoggerFactory.getLogger(SecretController.class);
+52: 
+
+[fix contract] 1a258e15336cf3f621b17c4e892267ee41cfc260:api/microcks-openapi-v1.10.yaml:1107
+1104:       operationId: downloadArtifact
+1105:       summary: Download an artifact
+1106:       description: Ask Microcks to download an artifact and import it
+1107:   /secrets/search:
+1108:     get:
+1109:       tags:
+1110:       - config
+1111:       parameters:
+1112:       - name: name
+1113:         description: Search using this name-like criterion
+1114:         schema:
+1115:           type: string
+1116:         in: query
+1117:         required: true
+1118:       responses:
+1119:         "200":
+1120:           content:
+1121:             application/json:
+1122:               schema:
+1123:                 type: array
+1124:                 items:
+1125:                   $ref: '#/components/schemas/Secret'
+1126:           description: List of found Secrets (filtered according search criteria)
+1127:       security:
+1128:       - jwt-bearer:
+1129:         - admin
+1130:       operationId: SearchSecrets
+1131:       summary: Search for Secrets
+
+[fix implementation] 1a258e15336cf3f621b17c4e892267ee41cfc260:webapp/src/main/java/io/github/microcks/web/SecretController.java:64
+61:       return secretRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"))).getContent();
+62:    }
+63: 
+64:    @GetMapping(value = "/secrets/search")
+65:    public List<Secret> searchSecrets(@RequestParam(value = "name") String name) {
+66:       log.debug("Searching secrets corresponding to {}", name);
+67:       return secretRepository.findByNameLike(name);
+68:    }
+69: 

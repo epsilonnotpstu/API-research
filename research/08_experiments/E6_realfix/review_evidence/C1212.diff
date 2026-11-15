@@ -1,0 +1,119 @@
+diff --git a/pom.xml b/pom.xml
+index 883d6ff6..e10d988c 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -128,16 +128,10 @@
+             <groupId>no.nav.security</groupId>
+             <artifactId>token-client-spring</artifactId>
+             <version>5.0.27</version>
+         </dependency>
+ 
+-        <!-- Swagger -->
+-        <dependency>
+-            <groupId>org.springdoc</groupId>
+-            <artifactId>springdoc-openapi-ui</artifactId>
+-            <version>1.8.0</version>
+-        </dependency>
+ 
+         <!-- Unleash -->
+         <dependency>
+             <groupId>io.getunleash</groupId>
+             <artifactId>unleash-client-java</artifactId>
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
+index 9ffcb562..823ed1e6 100644
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
++++ b/src/main/java/no/nav/tag/tiltaksgjennomforing/TiltaksgjennomforingApplication.java
+@@ -1,8 +1,7 @@
+ package no.nav.tag.tiltaksgjennomforing;
+ 
+-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
+ import no.nav.security.token.support.spring.api.EnableJwtTokenValidation;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.boot.builder.SpringApplicationBuilder;
+ import org.springframework.boot.context.properties.EnableConfigurationProperties;
+@@ -12,22 +11,19 @@ import org.springframework.retry.annotation.EnableRetry;
+ import org.springframework.scheduling.annotation.EnableAsync;
+ import org.springframework.scheduling.annotation.EnableScheduling;
+ 
+ @SpringBootApplication
+ @EnableJwtTokenValidation(ignore = {
+-        "org.springdoc",
+-        "springfox.documentation.swagger.web.ApiResourceController",
+         "no.nav.tag.tiltaksgjennomforing.featuretoggles.FeatureToggleController",
+         "org.springframework"
+ })
+ @EnableConfigurationProperties
+ @EnableJpaRepositories
+ @EnableCaching
+ @EnableAsync
+ @EnableScheduling
+ @EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
+-@OpenAPIDefinition
+ @EnableRetry
+ public class TiltaksgjennomforingApplication {
+     public static void main(String[] args) {
+         String clusterName = System.getenv("MILJO");
+         if (clusterName == null) {
+diff --git a/src/main/java/no/nav/tag/tiltaksgjennomforing/infrastruktur/OpenAPIConfig.java b/src/main/java/no/nav/tag/tiltaksgjennomforing/infrastruktur/OpenAPIConfig.java
+deleted file mode 100644
+index a648066d..00000000
+--- a/src/main/java/no/nav/tag/tiltaksgjennomforing/infrastruktur/OpenAPIConfig.java
++++ /dev/null
+@@ -1,56 +0,0 @@
+-package no.nav.tag.tiltaksgjennomforing.infrastruktur;
+-
+-import io.swagger.v3.oas.models.Components;
+-import io.swagger.v3.oas.models.ExternalDocumentation;
+-import io.swagger.v3.oas.models.OpenAPI;
+-import io.swagger.v3.oas.models.info.Info;
+-import io.swagger.v3.oas.models.info.License;
+-import io.swagger.v3.oas.models.security.SecurityRequirement;
+-import io.swagger.v3.oas.models.security.SecurityScheme;
+-import org.springdoc.core.GroupedOpenApi;
+-import org.springframework.context.annotation.Bean;
+-import org.springframework.context.annotation.Configuration;
+-
+-@Configuration
+-public class OpenAPIConfig {
+-
+-    private OpenAPI getInfo(OpenAPI openAPI) {
+-        return openAPI
+-                .info(new Info().title("Tiltaksgjennomføring API")
+-                        .license(new License()
+-                                        .name("MIT License")
+-                                        .url("https://github.com/navikt/tiltaksgjennomforing-api/blob/master/LICENSE.md"))
+-                ).externalDocs(
+-                        new ExternalDocumentation()
+-                                .description("Avtaleløsning for arbeidstiltak.")
+-                                .url("https://github.com/navikt/tiltaksgjennomforing-api"));
+-    }
+-
+-    @Bean
+-    public OpenAPI TiltakOpenAPI() {
+-        final String securitySchemeName = "bearerAuth";
+-        OpenAPI openAPI = new OpenAPI()
+-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+-                .components(
+-                        new Components()
+-                                .addSecuritySchemes(
+-                                        securitySchemeName, new SecurityScheme()
+-                                                .name(securitySchemeName)
+-                                                .type(SecurityScheme.Type.HTTP)
+-                                                .scheme("bearer")
+-                                                .bearerFormat("JWT")));
+-                return getInfo(openAPI);
+-    }
+-
+-    @Bean
+-    public GroupedOpenApi publicApi() {
+-        return GroupedOpenApi.builder()
+-                .group("tiltaksgjennomforing-api")
+-                .pathsToMatch("/**")
+-                .addOperationCustomizer((operation, handlerMethod) -> {
+-                    operation.addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+-                    return operation;
+-                })
+-                .addOpenApiCustomiser(this::getInfo).build();
+-    }
+-}
