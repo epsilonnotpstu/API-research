@@ -150,6 +150,10 @@
      - ⚠️ Hypothesis (T34 F1): fresh-mode noise reference fault class অনুযায়ী বাছা উচিত হতে পারে। এখন দুটো reference-ই পাশাপাশি দেওয়া হচ্ছে।
      - Schemathesis-এর same-seed replicate একে অপরের থেকে অনেক সরে যায় (median 0.26–0.72)।
    - Scout-এ EvoMaster-এর জন্য derecursed input লেগেছে (recursive schema inline হওয়ায় stall; T31)।
+   - **STRICT keyword ablation (market; `STRICT_ABLATION.md`):**
+     - Required edit EvoMaster-এর সংকেত দমায়: required ছাড়া 2/3 INVALID_ACCEPTED, শুধু required 0/3।
+     - Schemathesis-এর required-only 3/3 "সংকেত" সবই collateral 500। এর উৎস SUT-এর আগে থেকে থাকা defect, generator সেই পথে traffic ঠেলে দিয়েছে।
+     - ⇒ Fresh-mode সংকেত fault class-এর প্রত্যাশিত kind দিয়ে আলাদা করতে হবে। STRICT-কে keyword family অনুযায়ী চালাতে হবে।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**
