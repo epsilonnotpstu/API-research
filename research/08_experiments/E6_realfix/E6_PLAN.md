@@ -1,6 +1,10 @@
 # E6 — আসল defect-এ triage মূল্যায়ন (truth = developer-এর fix-এর দিক): pre-registration খসড়া (Claude, 2026-11-15)
 
-**অবস্থা:** খসড়া। Package তৈরির পরে, labelling-এর আগে FROZEN হবে (hash সহ)।
+**অবস্থা: FROZEN, 2026-11-15, labelling শুরুর আগে।** Hash আছে `e6_package_freeze.sha256`-এ। Scorer `score_e6.py` আগে লেখা, আর dry-run দিয়ে যাচাই করা।
+- **চূড়ান্ত item: 18টি,** IMPL 10, SPEC 8। Combined 25 থেকে 7টি বাদ গেছে cross-item leakage-এর কারণে (T44): একই repo-র আগের item-এর fix পরের item-এর parent-এ ঢুকে ছিল।
+- **Package যাচাই (Claude):** 21টি contract file parent version-এর সঙ্গে হুবহু এক, পার্থক্য শুধু email redaction-এ। items.csv-তে নিষিদ্ধ শব্দ নেই।
+- **Labeller:** M1 Y1, Y2 (high); M2 G1, G2 (xhigh)। সবাই নতুন Codex session।
+- **Popularity:** ≥500 star-এর item মাত্র 2টি, তাই popularity অনুযায়ী ভাগ কার্যত অর্থহীন। এটা সীমা।
 
 ## প্রশ্ন
 E4-এ কৃত্রিম fault-এ zero-shot LLM (M1) codebook-v0.6 procedure-কে (M2) ছাড়িয়েছে। macro-F1 ছিল 0.94 বনাম 0.66–0.70। **আসল spec↔code অমিলেও কি তাই হয়?**
