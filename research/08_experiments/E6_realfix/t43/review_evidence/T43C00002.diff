@@ -1,0 +1,586 @@
+diff --git a/src/main/java/com/zufar/icedlatte/product/api/ProductReviewProductApi.java b/src/main/java/com/zufar/icedlatte/product/api/ProductReviewProductApi.java
+index 2c748075..891c5348 100644
+--- a/src/main/java/com/zufar/icedlatte/product/api/ProductReviewProductApi.java
++++ b/src/main/java/com/zufar/icedlatte/product/api/ProductReviewProductApi.java
+@@ -10,5 +10,5 @@ public interface ProductReviewProductApi {
+ 
+     void refreshAllReviewAggregates();
+ 
+-    void updateAiSummary(UUID productId, String summary);
++    void updateAiSummary(UUID productId, @org.jspecify.annotations.Nullable String summary);
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java b/src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java
+index a606a9fd..25763b09 100644
+--- a/src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java
++++ b/src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java
+@@ -1,9 +1,11 @@
+ package com.zufar.icedlatte.product.repository;
+ 
+ import java.util.List;
++import java.util.Optional;
+ import java.util.Set;
+ import java.util.UUID;
+ 
++import org.jspecify.annotations.Nullable;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+ import org.springframework.data.jpa.repository.Modifying;
+@@ -14,6 +16,14 @@ import com.zufar.icedlatte.product.entity.ProductInfo;
+ 
+ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>, JpaSpecificationExecutor<ProductInfo> {
+ 
++    // A separate statement ensures aggregate queries see the preceding writer's commit.
++    // NO KEY UPDATE remains compatible with foreign-key checks on new reviews.
++    @Query(value = "SELECT id FROM product WHERE id = :productId FOR NO KEY UPDATE", nativeQuery = true)
++    Optional<UUID> lockReviewAggregates(@Param("productId") UUID productId);
++
++    @Query(value = "SELECT id FROM product ORDER BY id FOR NO KEY UPDATE", nativeQuery = true)
++    List<UUID> lockAllReviewAggregates();
++
+     @Query("SELECT DISTINCT p.sellerName FROM ProductInfo p ORDER BY p.sellerName")
+     List<String> findDistinctSellerNames();
+ 
+@@ -67,5 +77,5 @@ public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID>,
+ 
+     @Modifying
+     @Query("UPDATE ProductInfo p SET p.aiSummary = :summary WHERE p.id = :productId")
+-    int updateAiSummary(@Param("productId") UUID productId, @Param("summary") String summary);
++    int updateAiSummary(@Param("productId") UUID productId, @Param("summary") @Nullable String summary);
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/product/service/ProductReviewProductGateway.java b/src/main/java/com/zufar/icedlatte/product/service/ProductReviewProductGateway.java
+index 3d69a069..bc7d1d71 100644
+--- a/src/main/java/com/zufar/icedlatte/product/service/ProductReviewProductGateway.java
++++ b/src/main/java/com/zufar/icedlatte/product/service/ProductReviewProductGateway.java
+@@ -28,6 +28,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
+     @Override
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void refreshReviewAggregates(final UUID productId) {
++        productInfoRepository.lockReviewAggregates(productId);
+         productInfoRepository.updateAverageRating(productId);
+         productInfoRepository.updateReviewsCount(productId);
+         productCacheEvictor.evictProductByIdAfterCommit(productId);
+@@ -36,6 +37,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
+     @Override
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void refreshAllReviewAggregates() {
++        productInfoRepository.lockAllReviewAggregates();
+         productInfoRepository.updateAllAverageRatings();
+         productInfoRepository.updateAllReviewsCounts();
+         productCacheEvictor.clearProductByIdAfterCommit();
+@@ -43,7 +45,7 @@ public class ProductReviewProductGateway implements ProductReviewProductApi {
+ 
+     @Override
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+-    public void updateAiSummary(final UUID productId, final String summary) {
++    public void updateAiSummary(final UUID productId, final @org.jspecify.annotations.Nullable String summary) {
+         int updatedRows = productInfoRepository.updateAiSummary(productId, summary);
+         if (updatedRows > 0) {
+             productCacheEvictor.evictProductByIdAfterCommit(productId);
+diff --git a/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewLikeRepository.java b/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewLikeRepository.java
+index b421adf7..743c0401 100644
+--- a/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewLikeRepository.java
++++ b/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewLikeRepository.java
+@@ -10,4 +10,8 @@ import com.zufar.icedlatte.review.entity.ProductReviewLike;
+ public interface ProductReviewLikeRepository extends JpaRepository<ProductReviewLike, UUID> {
+ 
+     Optional<ProductReviewLike> findByUserIdAndProductReviewId(UUID userId, UUID reviewId);
++
++    java.util.List<ProductReviewLike> findAllByUserId(UUID userId);
++
++    void deleteAllByUserId(UUID userId);
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewRepository.java b/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewRepository.java
+index 5f5bd565..ca1287be 100644
+--- a/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewRepository.java
++++ b/src/main/java/com/zufar/icedlatte/review/repository/ProductReviewRepository.java
+@@ -18,6 +18,11 @@ import com.zufar.icedlatte.review.entity.ProductReview;
+ @Repository
+ public interface ProductReviewRepository extends JpaRepository<ProductReview, UUID> {
+ 
++    @Query(value = "SELECT id FROM product_reviews WHERE id = :reviewId FOR NO KEY UPDATE", nativeQuery = true)
++    Optional<UUID> lockVotes(@Param("reviewId") UUID reviewId);
++
++    List<ProductReview> findAllByUserId(UUID userId);
++
+     Optional<ProductReview> findByUserIdAndProductId(UUID userId, UUID productId);
+ 
+     Page<ProductReview> findAllByUserId(UUID userId, Pageable pageable);
+diff --git a/src/main/java/com/zufar/icedlatte/review/service/ProductReviewManager.java b/src/main/java/com/zufar/icedlatte/review/service/ProductReviewManager.java
+index 62fc8f10..bf1a8e52 100644
+--- a/src/main/java/com/zufar/icedlatte/review/service/ProductReviewManager.java
++++ b/src/main/java/com/zufar/icedlatte/review/service/ProductReviewManager.java
+@@ -114,6 +114,7 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
+         }
+         productReviewValidator.validateProductIdIsValid(productId, productReviewId);
+ 
++        reviewRepository.lockVotes(productReviewId);
+         upsertProductReviewLike(userId, productId, productReviewId, newProductReviewLike);
+ 
+         reviewRepository.updateLikesCount(productReviewId);
+@@ -133,6 +134,27 @@ public class ProductReviewManager implements ReviewMaintenanceApi {
+         reviewRepository.updateAllDislikesCounts();
+     }
+ 
++    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
++    public void removeUserReviewsAndVotes(UUID userId) {
++        var reviews = reviewRepository.findAllByUserId(userId);
++        var votes = productReviewLikeRepository.findAllByUserId(userId);
++        var affectedReviews = votes.stream()
++                .map(ProductReviewLike::getProductReviewId)
++                .distinct()
++                .sorted()
++                .toList();
++        affectedReviews.forEach(reviewRepository::lockVotes);
++        productReviewLikeRepository.deleteAllByUserId(userId);
++        productReviewLikeRepository.flush();
++        reviewRepository.deleteAll(reviews);
++        reviewRepository.flush();
++        for (UUID reviewId : affectedReviews) {
++            reviewRepository.updateLikesCount(reviewId);
++            reviewRepository.updateDislikesCount(reviewId);
++        }
++        reviews.stream().map(ProductReview::getProductId).distinct().sorted().forEach(this::refreshReviewState);
++    }
++
+     private ProductReview buildProductReview(UUID productId, UUID userId, ProductReviewRequest reviewRequest) {
+         return ProductReview.builder()
+                 .userId(userId)
+diff --git a/src/main/java/com/zufar/icedlatte/review/service/UserReviewCleanup.java b/src/main/java/com/zufar/icedlatte/review/service/UserReviewCleanup.java
+new file mode 100644
+index 00000000..e73d3217
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/review/service/UserReviewCleanup.java
+@@ -0,0 +1,19 @@
++package com.zufar.icedlatte.review.service;
++
++import org.springframework.context.event.EventListener;
++import org.springframework.stereotype.Component;
++
++import com.zufar.icedlatte.user.api.UserDeletionRequestedEvent;
++
++import lombok.RequiredArgsConstructor;
++
++@Component
++@RequiredArgsConstructor
++public class UserReviewCleanup {
++    private final ProductReviewManager reviewManager;
++
++    @EventListener
++    public void beforeUserDeletion(UserDeletionRequestedEvent event) {
++        reviewManager.removeUserReviewsAndVotes(event.userId());
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiService.java b/src/main/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiService.java
+index d59235ee..d588e1ff 100644
+--- a/src/main/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiService.java
++++ b/src/main/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiService.java
+@@ -66,7 +66,7 @@ class LangChain4jReviewAiService implements ReviewModerationService, ProductSumm
+                     PageRequest.of(0, MAX_REVIEWS_FOR_SUMMARY, Sort.by(Sort.Direction.DESC, "createdAt"));
+             var reviews = reviewRepository.findAllByProductId(productId, pageRequest);
+             if (reviews.isEmpty()) {
+-                return null;
++                return "";
+             }
+             var combined = reviews.stream().map(r -> "- " + r.getText()).collect(Collectors.joining("\n"));
+             var input = combined.substring(0, Math.min(combined.length(), usageProperties.maxInputChars()));
+diff --git a/src/main/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncer.java b/src/main/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncer.java
+index 6ba20155..53bfc718 100644
+--- a/src/main/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncer.java
++++ b/src/main/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncer.java
+@@ -117,11 +117,11 @@ public class ProductReviewSummaryDebouncer {
+         firstTriggerTime.remove(productId);
+         try {
+             var summary = productSummaryService.summarize(productId);
+-            if (summary == null || summary.isBlank()) {
++            if (summary == null) {
+                 log.info("product.ai_summary.skipped: productId={}, reason=EMPTY_SUMMARY", productId);
+                 return;
+             }
+-            productReviewProductApi.updateAiSummary(productId, summary);
++            productReviewProductApi.updateAiSummary(productId, summary.isBlank() ? null : summary);
+             retryCounts.remove(productId);
+             log.info("product.ai_summary.updated: productId={}", productId);
+         } catch (org.springframework.web.server.ResponseStatusException e) {
+diff --git a/src/main/java/com/zufar/icedlatte/user/api/UserDeletionRequestedEvent.java b/src/main/java/com/zufar/icedlatte/user/api/UserDeletionRequestedEvent.java
+new file mode 100644
+index 00000000..3fecd6b1
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/user/api/UserDeletionRequestedEvent.java
+@@ -0,0 +1,6 @@
++package com.zufar.icedlatte.user.api;
++
++import java.util.UUID;
++
++/** Published synchronously before deleting the user's dependent data. */
++public record UserDeletionRequestedEvent(UUID userId) {}
+diff --git a/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java b/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
+index 39baad37..8ca3312d 100644
+--- a/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
++++ b/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
+@@ -16,6 +16,9 @@ import com.zufar.icedlatte.user.entity.UserEntity;
+ 
+ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+ 
++    @Query(value = "SELECT id FROM user_details WHERE id = :userId FOR UPDATE", nativeQuery = true)
++    Optional<UUID> lockForDeletion(@Param("userId") UUID userId);
++
+     /**
+      * Finds a user entity by its email.
+      *
+diff --git a/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java b/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
+index 0446d835..5f16e03f 100644
+--- a/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
++++ b/src/main/java/com/zufar/icedlatte/user/service/UserProfileService.java
+@@ -23,6 +23,7 @@ import com.zufar.icedlatte.openapi.dto.ChangeUserPasswordRequest;
+ import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
+ import com.zufar.icedlatte.openapi.dto.UserDto;
+ import com.zufar.icedlatte.user.api.UserAccessControlApi;
++import com.zufar.icedlatte.user.api.UserDeletionRequestedEvent;
+ import com.zufar.icedlatte.user.api.UserSessionsRevocationRequestedEvent;
+ import com.zufar.icedlatte.user.converter.UserDtoConverter;
+ import com.zufar.icedlatte.user.entity.UserEntity;
+@@ -67,7 +68,9 @@ public class UserProfileService implements UserAccessControlApi {
+ 
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void deleteProfile(UUID userId) {
++        userRepository.lockForDeletion(userId);
+         UserEntity userEntity = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
++        eventPublisher.publishEvent(new UserDeletionRequestedEvent(userId));
+         userRepository.delete(userEntity);
+         cleanUpDeletedProfileAfterCommit(userId);
+     }
+diff --git a/src/test/java/com/zufar/icedlatte/product/service/ProductReviewProductGatewayTest.java b/src/test/java/com/zufar/icedlatte/product/service/ProductReviewProductGatewayTest.java
+index 6204fd55..90d11709 100644
+--- a/src/test/java/com/zufar/icedlatte/product/service/ProductReviewProductGatewayTest.java
++++ b/src/test/java/com/zufar/icedlatte/product/service/ProductReviewProductGatewayTest.java
+@@ -45,6 +45,9 @@ class ProductReviewProductGatewayTest {
+         gateway.refreshReviewAggregates(productId);
+ 
+         verify(productInfoRepository).updateAverageRating(productId);
++        var order = inOrder(productInfoRepository);
++        order.verify(productInfoRepository).lockReviewAggregates(productId);
++        order.verify(productInfoRepository).updateAverageRating(productId);
+         verify(productInfoRepository).updateReviewsCount(productId);
+         verify(productCacheEvictor).evictProductByIdAfterCommit(productId);
+     }
+diff --git a/src/test/java/com/zufar/icedlatte/review/endpoint/UserReviewLifecycleIntegrationTest.java b/src/test/java/com/zufar/icedlatte/review/endpoint/UserReviewLifecycleIntegrationTest.java
+index 06dd582f..963be493 100644
+--- a/src/test/java/com/zufar/icedlatte/review/endpoint/UserReviewLifecycleIntegrationTest.java
++++ b/src/test/java/com/zufar/icedlatte/review/endpoint/UserReviewLifecycleIntegrationTest.java
+@@ -13,6 +13,43 @@ import com.zufar.icedlatte.test.config.AuthenticatedUserIntegrationSupport;
+ @DisplayName("User review lifecycle integration tests")
+ class UserReviewLifecycleIntegrationTest extends AuthenticatedUserIntegrationSupport {
+ 
++    @org.springframework.beans.factory.annotation.Autowired
++    private org.springframework.jdbc.core.JdbcTemplate jdbc;
++
++    @Test
++    void deletingAnAccountRefreshesItsReviewsAndVotesOnOtherReviews() {
++        AuthenticatedUser author = registerAndAuthenticateUser();
++        AuthenticatedUser other = registerAndAuthenticateUser();
++        createReview(author);
++        String otherReview = createReview(other);
++        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, author.accessToken()))
++                .body("{\"isLike\":true}")
++                .post("/{productId}/reviews/{reviewId}/likes", PRODUCT_ID, otherReview)
++                .then()
++                .statusCode(200)
++                .body("likesCount", equalTo(1));
++        given(authenticatedJsonSpec(USER_REVIEWS_BASE_PATH, author.accessToken()))
++                .delete()
++                .then()
++                .statusCode(200);
++        given(authenticatedJsonSpec(ProductReviewsEndpoint.PRODUCT_REVIEWS_URL, other.accessToken()))
++                .get("/{productId}/review", PRODUCT_ID)
++                .then()
++                .statusCode(200)
++                .body("likesCount", equalTo(0));
++        var product = java.util.UUID.fromString(PRODUCT_ID);
++        Long actualCount =
++                jdbc.queryForObject("SELECT count(*) FROM product_reviews WHERE product_id=?", Long.class, product);
++        Long storedCount = jdbc.queryForObject("SELECT reviews_count FROM product WHERE id=?", Long.class, product);
++        Double actualAverage = jdbc.queryForObject(
++                "SELECT avg(rating) FROM product_reviews WHERE product_id=?", Double.class, product);
++        Double storedAverage =
++                jdbc.queryForObject("SELECT average_rating FROM product WHERE id=?", Double.class, product);
++        org.assertj.core.api.Assertions.assertThat(storedCount).isEqualTo(actualCount);
++        org.assertj.core.api.Assertions.assertThat(storedAverage)
++                .isCloseTo(actualAverage, org.assertj.core.data.Offset.offset(0.051));
++    }
++
+     private static final String USER_REVIEWS_BASE_PATH = "/api/v1/users";
+     private static final String PRODUCT_ID = "d1a2b3c4-0001-4000-8000-000000000007";
+     private static final String REVIEW_TEXT = "Fresh review from integration test user";
+diff --git a/src/test/java/com/zufar/icedlatte/review/service/ProductReviewManagerTest.java b/src/test/java/com/zufar/icedlatte/review/service/ProductReviewManagerTest.java
+index c44fb5cc..bd3405f8 100644
+--- a/src/test/java/com/zufar/icedlatte/review/service/ProductReviewManagerTest.java
++++ b/src/test/java/com/zufar/icedlatte/review/service/ProductReviewManagerTest.java
+@@ -90,6 +90,34 @@ class ProductReviewManagerTest {
+                 turnstileProperties);
+     }
+ 
++    @Test
++    void userDeletionRemovesRatingsAndVotesAndRefreshesAffectedTotals() {
++        UUID userId = UUID.randomUUID(), productId = UUID.randomUUID(), reviewId = UUID.randomUUID();
++        var ownReview = ProductReview.builder()
++                .id(UUID.randomUUID())
++                .userId(userId)
++                .productId(productId)
++                .build();
++        var vote = ProductReviewLike.builder()
++                .productReviewId(reviewId)
++                .userId(userId)
++                .productId(productId)
++                .build();
++        when(reviewRepository.findAllByUserId(userId)).thenReturn(java.util.List.of(ownReview));
++        when(productReviewLikeRepository.findAllByUserId(userId)).thenReturn(java.util.List.of(vote));
++        service.removeUserReviewsAndVotes(userId);
++        var order = inOrder(reviewRepository, productReviewLikeRepository, productReviewProductGateway);
++        order.verify(reviewRepository).lockVotes(reviewId);
++        order.verify(productReviewLikeRepository).deleteAllByUserId(userId);
++        order.verify(productReviewLikeRepository).flush();
++        order.verify(reviewRepository).deleteAll(java.util.List.of(ownReview));
++        order.verify(reviewRepository).flush();
++        order.verify(reviewRepository).updateLikesCount(reviewId);
++        order.verify(reviewRepository).updateDislikesCount(reviewId);
++        order.verify(productReviewProductGateway).refreshReviewAggregates(productId);
++        verify(summaryDebouncer).schedule(productId);
++    }
++
+     @Nested
+     @DisplayName("create")
+     class Create {
+diff --git a/src/test/java/com/zufar/icedlatte/review/service/ReviewAggregateConcurrencyTest.java b/src/test/java/com/zufar/icedlatte/review/service/ReviewAggregateConcurrencyTest.java
+new file mode 100644
+index 00000000..e7f5071d
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/review/service/ReviewAggregateConcurrencyTest.java
+@@ -0,0 +1,163 @@
++package com.zufar.icedlatte.review.service;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.sql.Connection;
++import java.sql.DriverManager;
++import java.util.UUID;
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.Executors;
++import java.util.concurrent.TimeUnit;
++
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.data.jpa.repository.Query;
++import org.testcontainers.junit.jupiter.Container;
++import org.testcontainers.junit.jupiter.Testcontainers;
++import org.testcontainers.postgresql.PostgreSQLContainer;
++
++import com.zufar.icedlatte.product.repository.ProductInfoRepository;
++import com.zufar.icedlatte.review.repository.ProductReviewRepository;
++
++/** Exercises the actual repository SQL in two independent READ COMMITTED transactions. */
++@Testcontainers
++class ReviewAggregateConcurrencyTest {
++    @Container
++    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:17-alpine");
++
++    private final UUID productId = UUID.randomUUID();
++    private final UUID reviewId = UUID.randomUUID();
++
++    @BeforeEach
++    void schema() throws Exception {
++        try (var c = connection();
++                var s = c.createStatement()) {
++            s.execute("DROP TABLE IF EXISTS product_reviews_likes, product_reviews, product");
++            s.execute("CREATE TABLE product(id uuid primary key, average_rating numeric, reviews_count int)");
++            s.execute(
++                    "CREATE TABLE product_reviews(id uuid primary key, product_id uuid references product(id), rating int, likes_count int, dislikes_count int)");
++            s.execute(
++                    "CREATE TABLE product_reviews_likes(id uuid primary key, review_id uuid references product_reviews(id), is_like boolean)");
++            s.execute("INSERT INTO product VALUES ('" + productId + "',0,0)");
++            s.execute("INSERT INTO product_reviews VALUES ('" + reviewId + "','" + productId + "',1,0,0)");
++            c.commit();
++        }
++    }
++
++    @Test
++    void simultaneousReviewsKeepTheCorrectAverage() throws Exception {
++        race(
++                () -> {
++                    try (var c = connection()) {
++                        sql(
++                                c,
++                                "INSERT INTO product_reviews VALUES ('" + UUID.randomUUID() + "','" + productId
++                                        + "',5,0,0)");
++                        query(c, ProductInfoRepository.class, "lockReviewAggregates", productId);
++                        query(c, ProductInfoRepository.class, "updateAverageRating", productId);
++                        c.commit();
++                    }
++                },
++                ProductInfoRepository.class,
++                "lockReviewAggregates",
++                "updateAverageRating",
++                productId);
++        assertThat(number("SELECT average_rating FROM product")).isEqualTo(3.0);
++    }
++
++    @Test
++    void simultaneousVotesAreBothCounted() throws Exception {
++        race(
++                () -> {
++                    try (var c = connection()) {
++                        query(c, ProductReviewRepository.class, "lockVotes", reviewId);
++                        vote(c);
++                        query(c, ProductReviewRepository.class, "updateLikesCount", reviewId);
++                        c.commit();
++                    }
++                },
++                ProductReviewRepository.class,
++                "lockVotes",
++                "updateLikesCount",
++                reviewId);
++        assertThat(number("SELECT likes_count FROM product_reviews")).isEqualTo(2.0);
++    }
++
++    private void race(CheckedTask second, Class<?> repo, String lock, String update, UUID id) throws Exception {
++        try (var first = connection();
++                var executor = Executors.newVirtualThreadPerTaskExecutor()) {
++            query(first, repo, lock, id);
++            if (repo == ProductReviewRepository.class) vote(first);
++            query(first, repo, update, id);
++            var started = new CountDownLatch(1);
++            var future = executor.submit(() -> {
++                started.countDown();
++                second.run();
++                return null;
++            });
++            assertThat(started.await(5, TimeUnit.SECONDS)).isTrue();
++            try (var monitor = connection()) {
++                monitor.setAutoCommit(true);
++                boolean blocked = false;
++                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
++                while (!blocked && System.nanoTime() < deadline) {
++                    try (var s = monitor.createStatement();
++                            var r = s.executeQuery(
++                                    "SELECT EXISTS (SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock')")) {
++                        r.next();
++                        blocked = r.getBoolean(1);
++                    }
++                    if (!blocked) Thread.sleep(10);
++                }
++                assertThat(blocked)
++                        .as("second writer reached the contested row")
++                        .isTrue();
++            }
++            // Release the first transaction; the second statement must see its committed writes.
++            first.commit();
++            future.get(15, TimeUnit.SECONDS);
++        }
++    }
++
++    private Connection connection() throws Exception {
+[REDACTED credential-related line]
++        c.setAutoCommit(false);
++        c.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
++        return c;
++    }
++
++    private void vote(Connection c) throws Exception {
++        sql(c, "INSERT INTO product_reviews_likes VALUES ('" + UUID.randomUUID() + "','" + reviewId + "',true)");
++    }
++
++    private void sql(Connection c, String sql) throws Exception {
++        try (var s = c.createStatement()) {
++            s.execute(sql);
++        }
++    }
++
++    private void query(Connection c, Class<?> repo, String method, UUID id) throws Exception {
++        String sql = repo.getMethod(method, UUID.class)
++                .getAnnotation(Query.class)
++                .value()
++                .replaceAll(":\\w+", "?");
++        try (var s = c.prepareStatement(sql)) {
++            for (int i = 1; i <= s.getParameterMetaData().getParameterCount(); i++) s.setObject(i, id);
++            s.execute();
++        }
++    }
++
++    private double number(String sql) throws Exception {
++        try (var c = connection();
++                var s = c.createStatement();
++                var r = s.executeQuery(sql)) {
++            r.next();
++            return r.getDouble(1);
++        }
++    }
++
++    @FunctionalInterface
++    interface CheckedTask {
++        void run() throws Exception;
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiServiceTest.java b/src/test/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiServiceTest.java
+index b5f635d9..c9a32568 100644
+--- a/src/test/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/review/service/ai/moderation/LangChain4jReviewAiServiceTest.java
+@@ -116,15 +116,15 @@ class LangChain4jReviewAiServiceTest {
+     }
+ 
+     @Test
+-    @DisplayName("summarize: returns null when product has no reviews")
+-    void summarize_noReviews_returnsNull() {
++    @DisplayName("summarize: requests summary removal when product has no reviews")
++    void summarize_noReviews_returnsEmpty() {
+         UUID productId = UUID.randomUUID();
+         when(reviewRepository.findAllByProductId(eq(productId), any(Pageable.class)))
+                 .thenReturn(List.of());
+ 
+         var result = service.summarize(productId);
+ 
+-        assertThat(result).isNull();
++        assertThat(result).isEmpty();
+     }
+ 
+     @Test
+diff --git a/src/test/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncerTest.java b/src/test/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncerTest.java
+index e2ec7a75..d433a12e 100644
+--- a/src/test/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncerTest.java
++++ b/src/test/java/com/zufar/icedlatte/review/service/ai/summary/ProductReviewSummaryDebouncerTest.java
+@@ -51,6 +51,14 @@ class ProductReviewSummaryDebouncerTest {
+ 
+     private ProductReviewSummaryDebouncer debouncer;
+ 
++    @Test
++    void clearsSummaryWhenThereAreNoRemainingReviews() {
++        UUID productId = UUID.randomUUID();
++        when(productSummaryService.summarize(productId)).thenReturn("");
++        debouncer.runSummary(productId);
++        verify(productReviewProductGateway).updateAiSummary(productId, null);
++    }
++
+     @Test
+     void quotaRefusalDoesNotScheduleRepeatedRetries() {
+         UUID productId = UUID.randomUUID();
+diff --git a/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java b/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
+index 17af7d12..e15485e2 100644
+--- a/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/user/service/UserProfileServiceTest.java
+@@ -160,6 +160,7 @@ class UserProfileServiceTest {
+         userProfileService.deleteProfile(userId);
+ 
+         verify(userRepository).delete(userEntity);
++        verify(eventPublisher).publishEvent(new com.zufar.icedlatte.user.api.UserDeletionRequestedEvent(userId));
+         verify(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
+         verify(fileStorageWriterApi).deleteFile(userId);
+     }
+@@ -173,6 +174,9 @@ class UserProfileServiceTest {
+         RuntimeException avatarFailure = new IllegalStateException("s3 unavailable");
+         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
+         doThrow(revocationFailure).when(eventPublisher).publishEvent(new UserSessionsRevocationRequestedEvent(userId));
++        doNothing()
++                .when(eventPublisher)
++                .publishEvent(new com.zufar.icedlatte.user.api.UserDeletionRequestedEvent(userId));
+         doThrow(avatarFailure).when(fileStorageWriterApi).deleteFile(userId);
+ 
+         userProfileService.deleteProfile(userId);
+

@@ -1,0 +1,756 @@
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidator.java b/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidator.java
+new file mode 100644
+index 00000000..bec8e664
+--- /dev/null
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidator.java
+@@ -0,0 +1,19 @@
++package com.zufar.icedlatte.security.jwt.provider;
++
++import org.springframework.security.core.userdetails.UserDetails;
++import org.springframework.stereotype.Component;
++
++import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
++
++@Component
++public class JwtAccountStatusValidator {
++
++    public void requireActive(UserDetails userDetails) {
++        if (!userDetails.isEnabled()
++                || !userDetails.isAccountNonLocked()
++                || !userDetails.isAccountNonExpired()
++                || !userDetails.isCredentialsNonExpired()) {
++            throw new JwtTokenBlacklistedException("User account is not active");
++        }
++    }
++}
+diff --git a/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProvider.java b/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProvider.java
+index d1c3c34c..500f367b 100644
+--- a/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProvider.java
++++ b/src/main/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProvider.java
+@@ -25,6 +25,7 @@ public class JwtAuthenticationProvider {
+     private final JwtTokenClaims jwtTokenClaims;
+     private final UserDetailsService userDetailsService;
+     private final JwtTokenBlacklist jwtTokenBlacklist;
++    private final JwtAccountStatusValidator jwtAccountStatusValidator;
+ 
+     public Authentication get(final HttpServletRequest httpRequest) {
+         String jwtToken = jwtBearerTokenResolver.extract(httpRequest);
+@@ -33,6 +34,7 @@ public class JwtAuthenticationProvider {
+ 
+[REDACTED credential-related line]
+         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
++        jwtAccountStatusValidator.requireActive(userDetails);
+ 
+[REDACTED credential-related line]
+                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+diff --git a/src/main/java/com/zufar/icedlatte/security/session/token/RefreshTokenService.java b/src/main/java/com/zufar/icedlatte/security/session/token/RefreshTokenService.java
+index 90025f66..ea9ed236 100644
+--- a/src/main/java/com/zufar/icedlatte/security/session/token/RefreshTokenService.java
++++ b/src/main/java/com/zufar/icedlatte/security/session/token/RefreshTokenService.java
+@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
+ 
+ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+ import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
++import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+ import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+@@ -30,6 +31,7 @@ public class RefreshTokenService {
+     private final UserDetailsService userDetailsService;
+     private final AuthSessionService authSessionService;
+     private final SessionTokenService sessionTokenService;
++    private final JwtAccountStatusValidator jwtAccountStatusValidator;
+ 
+     @Transactional
+     public ResponseEntity<com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse> refresh(
+@@ -51,6 +53,7 @@ public class RefreshTokenService {
+             log.warn("auth.token.refresh_legacy_migrate: reason=token_invalidated");
+[REDACTED credential-related line]
+             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
++            jwtAccountStatusValidator.requireActive(userDetails);
+[REDACTED credential-related line]
+             log.info("auth.token.refresh_legacy_migrated");
+             return ResponseEntity.status(HttpStatus.CREATED).body(response);
+@@ -58,6 +61,7 @@ public class RefreshTokenService {
+ 
+[REDACTED credential-related line]
+         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
++        jwtAccountStatusValidator.requireActive(userDetails);
+         var response = sessionTokenService.rotateSessionTokens(session, hash, userDetails);
+         log.debug("auth.token.refreshed");
+         return ResponseEntity.ok(response);
+diff --git a/src/main/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptService.java b/src/main/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptService.java
+index dc744d2b..5008f454 100644
+--- a/src/main/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptService.java
++++ b/src/main/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptService.java
+@@ -54,12 +54,13 @@ public class LoginAttemptService {
+         });
+     }
+ 
++    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public void unlockExpiredAccounts() {
+         log.debug("scheduler.unlock.start");
+ 
++        userAccessControlApi.unlockExpiredAccounts();
+         int released = loginAttemptRepository.resetLockedAccounts();
+         log.debug("scheduler.unlock.released: count={}", released);
+-        userAccessControlApi.unlockExpiredAccounts();
+ 
+         log.debug("scheduler.unlock.finish");
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/security/signin/turnstile/TurnstileVerifier.java b/src/main/java/com/zufar/icedlatte/security/signin/turnstile/TurnstileVerifier.java
+index 4242329e..573a289b 100644
+--- a/src/main/java/com/zufar/icedlatte/security/signin/turnstile/TurnstileVerifier.java
++++ b/src/main/java/com/zufar/icedlatte/security/signin/turnstile/TurnstileVerifier.java
+@@ -1,10 +1,9 @@
+ package com.zufar.icedlatte.security.signin.turnstile;
+ 
+-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+-import com.fasterxml.jackson.annotation.JsonProperty;
+-import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
++import java.time.Duration;
++
+ import jakarta.annotation.Nullable;
+-import lombok.extern.slf4j.Slf4j;
++
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.http.MediaType;
+@@ -13,7 +12,11 @@ import org.springframework.stereotype.Component;
+ import org.springframework.util.LinkedMultiValueMap;
+ import org.springframework.web.client.RestClient;
+ 
+-import java.time.Duration;
++import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
++import com.fasterxml.jackson.annotation.JsonProperty;
++import com.zufar.icedlatte.security.signin.exception.TurnstileVerificationException;
++
++import lombok.extern.slf4j.Slf4j;
+ 
+ /**
+  * Verifies Cloudflare Turnstile tokens via the siteverify API. Disabled (no-op) when {@code turnstile.secret-key} is
+diff --git a/src/main/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationService.java b/src/main/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationService.java
+index 053f18ff..2ec33987 100644
+--- a/src/main/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationService.java
++++ b/src/main/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationService.java
+@@ -3,6 +3,7 @@ package com.zufar.icedlatte.security.signup.verification;
+ import java.security.SecureRandom;
+ import java.time.Duration;
+ import java.time.OffsetDateTime;
++import java.util.Base64;
+ import java.util.Locale;
+ 
+ import jakarta.servlet.http.HttpServletRequest;
+@@ -33,6 +34,7 @@ public class EmailVerificationService {
+     private static final String TOKEN_KEY_PREFIX = "email:token:";
+     private static final String COOLDOWN_KEY_PREFIX = "email:rate:";
+     private static final int MAX_TOKEN_GENERATION_ATTEMPTS = 5;
++    private static final int MIN_TOKEN_LENGTH = 32;
+     private static final SecureRandom RANDOM = new SecureRandom();
+ 
+     private final ExpiringKeyValueStore temporaryStore;
+@@ -134,15 +136,31 @@ public class EmailVerificationService {
+     }
+ 
+     private String nextToken() {
+-        return String.format("%0" + tokenLength + "d", RANDOM.nextInt((int) Math.pow(10, tokenLength)));
++        validateConfiguredTokenLength();
++        byte[] randomBytes = new byte[(int) Math.ceil(tokenLength * 6 / 8.0)];
++        RANDOM.nextBytes(randomBytes);
++        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
++        return token.length() > tokenLength ? token.substring(0, tokenLength) : token;
+     }
+ 
+     private void validateTokenFormat(String token) {
+-        if (token == null || token.length() != tokenLength || !token.chars().allMatch(Character::isDigit)) {
+-            throw new BadRequestException("Incorrect token format, token must be " + "#".repeat(tokenLength));
++        validateConfiguredTokenLength();
++        if (token == null || token.length() != tokenLength || !token.chars().allMatch(this::isUrlSafeTokenChar)) {
++            throw new BadRequestException("Incorrect token format");
+         }
+     }
+ 
++    private void validateConfiguredTokenLength() {
++        if (tokenLength < MIN_TOKEN_LENGTH) {
++            throw new IllegalStateException(
++                    "email.verification-token-length must be at least " + MIN_TOKEN_LENGTH + ", got: " + tokenLength);
++        }
++    }
++
++    private boolean isUrlSafeTokenChar(int value) {
++        return Character.isLetterOrDigit(value) || value == '-' || value == '_';
++    }
++
+     private Duration tokenTtl() {
+         return Duration.ofMinutes(expireTimeMinutes);
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java b/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
+index 6012d573..e8124104 100644
+--- a/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
++++ b/src/main/java/com/zufar/icedlatte/user/converter/UserDtoConverter.java
+@@ -2,8 +2,10 @@ package com.zufar.icedlatte.user.converter;
+ 
+ import org.mapstruct.*;
+ 
++import com.zufar.icedlatte.openapi.dto.AddressDto;
+ import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
+ import com.zufar.icedlatte.openapi.dto.UserDto;
++import com.zufar.icedlatte.user.entity.Address;
+ import com.zufar.icedlatte.user.entity.UserEntity;
+ 
+ @SuppressWarnings("NullableProblems")
+@@ -18,7 +20,7 @@ public interface UserDtoConverter {
+     @Mapping(target = "oauthUser", source = "oauthUser")
+     UserDto toDto(final UserEntity entity);
+ 
+-    @Mapping(target = "address", source = "address", qualifiedByName = "toAddress")
++    @Mapping(target = "address", ignore = true)
+     @Mapping(target = "id", ignore = true)
+     @Mapping(target = "email", ignore = true)
+[REDACTED credential-related line]
+@@ -34,4 +36,36 @@ public interface UserDtoConverter {
+     @Mapping(target = "createdBy", ignore = true)
+     @Mapping(target = "updatedBy", ignore = true)
+     void updateEntity(@MappingTarget UserEntity entity, UpdateUserAccountRequest request);
++
++    @AfterMapping
++    default void updateAddress(@MappingTarget UserEntity entity, UpdateUserAccountRequest request) {
++        AddressDto dto = request.getAddress();
++        if (dto == null || isBlankAddress(dto)) {
++            entity.setAddress(null);
++            return;
++        }
++
++        if (entity.getAddress() == null) {
++            entity.setAddress(Address.builder()
++                    .country(dto.getCountry())
++                    .city(dto.getCity())
++                    .line(dto.getLine())
++                    .postcode(dto.getPostcode())
++                    .build());
++            return;
++        }
++
++        entity.getAddress().update(dto.getCountry(), dto.getCity(), dto.getLine(), dto.getPostcode());
++    }
++
++    private static boolean isBlankAddress(AddressDto dto) {
++        return isBlank(dto.getCountry())
++                && isBlank(dto.getCity())
++                && isBlank(dto.getLine())
++                && isBlank(dto.getPostcode());
++    }
++
++    private static boolean isBlank(String value) {
++        return value == null || value.isBlank();
++    }
+ }
+diff --git a/src/main/java/com/zufar/icedlatte/user/entity/Address.java b/src/main/java/com/zufar/icedlatte/user/entity/Address.java
+index 4f8b57b6..010a9a3a 100644
+--- a/src/main/java/com/zufar/icedlatte/user/entity/Address.java
++++ b/src/main/java/com/zufar/icedlatte/user/entity/Address.java
+@@ -34,6 +34,13 @@ public class Address implements Serializable {
+     @Column(name = "postcode", nullable = false, length = 128)
+     private String postcode;
+ 
++    public void update(String country, String city, String line, String postcode) {
++        this.country = country;
++        this.city = city;
++        this.line = line;
++        this.postcode = postcode;
++    }
++
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) return true;
+diff --git a/src/main/java/com/zufar/icedlatte/user/entity/UserEntity.java b/src/main/java/com/zufar/icedlatte/user/entity/UserEntity.java
+index 05b00f30..eb8c151f 100644
+--- a/src/main/java/com/zufar/icedlatte/user/entity/UserEntity.java
++++ b/src/main/java/com/zufar/icedlatte/user/entity/UserEntity.java
+@@ -49,7 +49,7 @@ public class UserEntity extends AuditableEntity implements UserDetails, Identifi
+[REDACTED credential-related line]
+     private String password;
+ 
+-    @OneToOne(cascade = CascadeType.ALL)
++    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+     @JoinColumn(name = "address_id", referencedColumnName = "id")
+     private Address address;
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java b/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
+index 0d7c4628..a080cbdc 100644
+--- a/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
++++ b/src/main/java/com/zufar/icedlatte/user/repository/UserRepository.java
+@@ -59,7 +59,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+     @Transactional
+     @Query(
+             value =
+-                    "UPDATE UserEntity u " + "SET u.accountNonLocked = true "
+-                            + "WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = false AND la.expirationDatetime IS NOT NULL)")
++                    "UPDATE UserEntity u SET u.accountNonLocked = true WHERE u.email IN (SELECT la.userEmail FROM LoginAttemptEntity la WHERE la.isUserLocked = true AND la.expirationDatetime IS NOT NULL AND la.expirationDatetime <= CURRENT_TIMESTAMP)")
+     void unlockUsers();
+ }
+diff --git a/src/main/resources/api-specs/security-openapi.yaml b/src/main/resources/api-specs/security-openapi.yaml
+index 152796f3..160876b1 100644
+--- a/src/main/resources/api-specs/security-openapi.yaml
++++ b/src/main/resources/api-specs/security-openapi.yaml
+@@ -522,9 +522,9 @@ components:
+       properties:
+         token:
+           type: "string"
+-          minLength: 9
+-          maxLength: 9
+-          pattern: "^\\d{9}$"
++          minLength: 43
++          maxLength: 43
++          pattern: "^[A-Za-z0-9_-]{43}$"
+           description: "Token for confirming the email address."
+ 
+[REDACTED credential-related line]
+@@ -546,10 +546,10 @@ components:
+       properties:
+         code:
+           type: "string"
+-          minLength: 9
+-          maxLength: 9
+-          pattern: "^\\d{9}$"
+-          description: "Verification code sent to the user's email."
++          minLength: 43
++          maxLength: 43
++          pattern: "^[A-Za-z0-9_-]{43}$"
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+ 
+diff --git a/src/main/resources/application.yaml b/src/main/resources/application.yaml
+index fca5d5ab..030fd538 100644
+--- a/src/main/resources/application.yaml
++++ b/src/main/resources/application.yaml
+@@ -213,8 +213,8 @@ spring:
+ # Email feature flag & verification settings (SMTP config is above under spring.mail).
+ email:
+   enabled: ${EMAIL_ENABLED:false}
+-  # Length of the numeric code sent to the user's email for verification.
+-  verification-token-length: 9
++  # Length of the URL-safe opaque token sent to the user's email for verification.
++  verification-token-length: 43
+ 
+ # Short-lived in-memory store for email verification tokens.
+ temporary-cache:
+diff --git a/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml b/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
+index 88dba530..f4992f15 100644
+--- a/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
++++ b/src/main/resources/db/changelog/version-2.0/changelog-master-version-2.0.yaml
+@@ -37,6 +37,8 @@ databaseChangeLog:
+       file: db/changelog/version-2.0/add-file-metadata-related-object-id-index.sql
+   - include:
+       file: db/changelog/version-2.0/expand-profile-address-columns.sql
++  - include:
++      file: db/changelog/version-2.0/remove-user-address-delete-cascade.sql
+ 
+   # ========== ORDER MODULE ENHANCEMENTS ==========
+   - include:
+diff --git a/src/main/resources/db/changelog/version-2.0/remove-user-address-delete-cascade.sql b/src/main/resources/db/changelog/version-2.0/remove-user-address-delete-cascade.sql
+new file mode 100644
+index 00000000..c765ee21
+--- /dev/null
++++ b/src/main/resources/db/changelog/version-2.0/remove-user-address-delete-cascade.sql
+@@ -0,0 +1,7 @@
++ALTER TABLE public.user_details
++    DROP CONSTRAINT IF EXISTS fk_address;
++
++ALTER TABLE public.user_details
++    ADD CONSTRAINT fk_user_details_address
++        FOREIGN KEY (address_id)
++            REFERENCES public.address (id);
+diff --git a/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidatorTest.java b/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidatorTest.java
+new file mode 100644
+index 00000000..9bbf72c1
+--- /dev/null
++++ b/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAccountStatusValidatorTest.java
+@@ -0,0 +1,69 @@
++package com.zufar.icedlatte.security.jwt.provider;
++
++import static org.assertj.core.api.Assertions.assertThatCode;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
++
++import org.junit.jupiter.api.DisplayName;
++import org.junit.jupiter.api.Test;
++import org.springframework.security.core.userdetails.User;
++import org.springframework.security.core.userdetails.UserDetails;
++
++import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
++
++@DisplayName("JwtAccountStatusValidator unit tests")
++class JwtAccountStatusValidatorTest {
++
++    private final JwtAccountStatusValidator validator = new JwtAccountStatusValidator();
++
++    @Test
++    @DisplayName("allows active account")
++    void allowsActiveAccount() {
++        assertThatCode(() -> validator.requireActive(activeUser())).doesNotThrowAnyException();
++    }
++
++    @Test
++    @DisplayName("rejects disabled account")
++    void rejectsDisabledAccount() {
++        UserDetails user = User.withUserDetails(activeUser()).disabled(true).build();
++
++        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
++    }
++
++    @Test
++    @DisplayName("rejects locked account")
++    void rejectsLockedAccount() {
++        UserDetails user =
++                User.withUserDetails(activeUser()).accountLocked(true).build();
++
++        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
++    }
++
++    @Test
++    @DisplayName("rejects expired account")
++    void rejectsExpiredAccount() {
++        UserDetails user =
++                User.withUserDetails(activeUser()).accountExpired(true).build();
++
++        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
++    }
++
++    @Test
++    @DisplayName("rejects expired credentials")
++    void rejectsExpiredCredentials() {
++        UserDetails user =
++                User.withUserDetails(activeUser()).credentialsExpired(true).build();
++
++        assertThatThrownBy(() -> validator.requireActive(user)).isInstanceOf(JwtTokenBlacklistedException.class);
++    }
++
++    private static UserDetails activeUser() {
++        return User.withUsername("[REDACTED email]")
+[REDACTED credential-related line]
++                .authorities("ROLE_USER")
++                .accountExpired(false)
++                .accountLocked(false)
++                .credentialsExpired(false)
++                .disabled(false)
++                .build();
++    }
++}
+diff --git a/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProviderTest.java b/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProviderTest.java
+index a0aaff5a..45bb4392 100644
+--- a/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProviderTest.java
++++ b/src/test/java/com/zufar/icedlatte/security/jwt/provider/JwtAuthenticationProviderTest.java
+@@ -1,6 +1,7 @@
+ package com.zufar.icedlatte.security.jwt.provider;
+ 
+ import static org.assertj.core.api.Assertions.assertThat;
++import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.Mockito.*;
+ 
+ import java.util.Collections;
+@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
+ import org.springframework.security.web.authentication.WebAuthenticationDetails;
+ 
+ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
++import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+ 
+@@ -36,11 +38,18 @@ class JwtAuthenticationProviderTest {
+     @Mock
+     private JwtTokenBlacklist jwtTokenBlacklist;
+ 
++    @Mock
++    private JwtAccountStatusValidator jwtAccountStatusValidator;
++
+     @Test
+     @DisplayName("successfully authenticates user and attaches request details")
+     void successfullyAuthenticatesUserAndAttachesRequestDetails() {
+         JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
+-                jwtBearerTokenResolver, jwtTokenClaims, userDetailsService, jwtTokenBlacklist);
++                jwtBearerTokenResolver,
++                jwtTokenClaims,
++                userDetailsService,
++                jwtTokenBlacklist,
++                jwtAccountStatusValidator);
+         MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+         httpRequest.setRemoteAddr("203.0.113.10");
+[REDACTED credential-related line]
+@@ -60,6 +69,37 @@ class JwtAuthenticationProviderTest {
+         verify(jwtTokenBlacklist).validateNotBlacklisted(jwtToken);
+         verify(jwtTokenClaims).extractAccessTokenEmail(jwtToken);
+         verify(userDetailsService).loadUserByUsername(userEmail);
+-        verifyNoMoreInteractions(jwtBearerTokenResolver, jwtTokenBlacklist, jwtTokenClaims, userDetailsService);
++        verify(jwtAccountStatusValidator).requireActive(userDetails);
++        verifyNoMoreInteractions(
++                jwtBearerTokenResolver,
++                jwtTokenBlacklist,
++                jwtTokenClaims,
++                userDetailsService,
++                jwtAccountStatusValidator);
++    }
++
++    @Test
+[REDACTED credential-related line]
++    void rejectsAccessTokenWhenLoadedUserAccountIsInactive() {
++        JwtAuthenticationProvider jwtAuthenticationProvider = new JwtAuthenticationProvider(
++                jwtBearerTokenResolver,
++                jwtTokenClaims,
++                userDetailsService,
++                jwtTokenBlacklist,
++                jwtAccountStatusValidator);
++        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+[REDACTED credential-related line]
+[REDACTED credential-related line]
++        String userEmail = "[REDACTED email]";
++        JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("User account is not active");
++
++        when(jwtBearerTokenResolver.extract(httpRequest)).thenReturn(jwtToken);
++        when(jwtTokenClaims.extractAccessTokenEmail(jwtToken)).thenReturn(userEmail);
++        when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
++        doThrow(failure).when(jwtAccountStatusValidator).requireActive(userDetails);
++
++        assertThatThrownBy(() -> jwtAuthenticationProvider.get(httpRequest)).isSameAs(failure);
++
++        verify(jwtAccountStatusValidator).requireActive(userDetails);
+     }
+ }
+diff --git a/src/test/java/com/zufar/icedlatte/security/session/token/RefreshTokenServiceTest.java b/src/test/java/com/zufar/icedlatte/security/session/token/RefreshTokenServiceTest.java
+index f2a3d87c..b5bdedd3 100644
+--- a/src/test/java/com/zufar/icedlatte/security/session/token/RefreshTokenServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/security/session/token/RefreshTokenServiceTest.java
+@@ -23,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
+ import com.zufar.icedlatte.openapi.dto.UserAuthenticationResponse;
+ import com.zufar.icedlatte.security.jwt.blacklist.JwtTokenBlacklist;
+ import com.zufar.icedlatte.security.jwt.exception.JwtTokenBlacklistedException;
++import com.zufar.icedlatte.security.jwt.provider.JwtAccountStatusValidator;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtBearerTokenResolver;
+ import com.zufar.icedlatte.security.jwt.resolver.JwtTokenClaims;
+ import com.zufar.icedlatte.security.session.entity.AuthSessionEntity;
+@@ -50,6 +51,9 @@ class RefreshTokenServiceTest {
+     @Mock
+     private SessionTokenService sessionTokenService;
+ 
++    @Mock
++    private JwtAccountStatusValidator jwtAccountStatusValidator;
++
+     @Mock
+     private HttpServletRequest request;
+ 
+@@ -85,6 +89,7 @@ class RefreshTokenServiceTest {
+ 
+             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+             assertThat(response.getBody()).isSameAs(responseBody);
++            verify(jwtAccountStatusValidator).requireActive(user);
+             verify(sessionTokenService).rotateSessionTokens(session, oldHash, user);
+         }
+ 
+@@ -111,9 +116,35 @@ class RefreshTokenServiceTest {
+ 
+             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+             assertThat(response.getBody()).isSameAs(responseBody);
++            verify(jwtAccountStatusValidator).requireActive(user);
+             verify(sessionTokenService).migrateLegacyRefreshToken(user, rawToken, request);
+         }
+ 
++        @Test
++        @DisplayName("rejects managed refresh when loaded user account is inactive")
++        void rejectsManagedRefreshWhenLoadedUserAccountIsInactive() {
+[REDACTED credential-related line]
++            String oldHash = "old-hash";
++            String email = "[REDACTED email]";
++            var user = user(email);
++            AuthSessionEntity session = AuthSessionEntity.builder()
++                    .id(UUID.randomUUID())
++                    .userId(UUID.randomUUID())
++                    .build();
++            JwtTokenBlacklistedException failure = new JwtTokenBlacklistedException("User account is not active");
++
++            when(jwtBearerTokenResolver.extract(request)).thenReturn(rawToken);
++            when(jwtTokenBlacklist.hash(rawToken)).thenReturn(oldHash);
++            when(authSessionService.findActiveByHash(oldHash)).thenReturn(session);
++            when(jwtTokenClaims.extractRefreshTokenEmail(rawToken)).thenReturn(email);
++            when(userDetailsService.loadUserByUsername(email)).thenReturn(user);
++            doThrow(failure).when(jwtAccountStatusValidator).requireActive(user);
++
++            assertThatThrownBy(() -> service.refresh(request)).isSameAs(failure);
++
++            verifyNoInteractions(sessionTokenService);
++        }
++
+         @Test
+         @DisplayName("revokes all sessions when a managed replayed token is detected")
+         void revokesAllSessionsWhenManagedReplayedTokenIsDetected() {
+@@ -140,6 +171,10 @@ class RefreshTokenServiceTest {
+                 .id(java.util.UUID.randomUUID())
+                 .email(email)
+[REDACTED credential-related line]
++                .accountNonExpired(true)
++                .accountNonLocked(true)
++                .credentialsNonExpired(true)
++                .enabled(true)
+                 .build();
+     }
+ 
+diff --git a/src/test/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptServiceTest.java b/src/test/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptServiceTest.java
+index cd2c7aa5..e37a054a 100644
+--- a/src/test/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/security/signin/lockout/LoginAttemptServiceTest.java
+@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Nested;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.ArgumentCaptor;
++import org.mockito.InOrder;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.junit.jupiter.MockitoExtension;
+@@ -170,8 +171,9 @@ class LoginAttemptServiceTest {
+ 
+         service.unlockExpiredAccounts();
+ 
+-        verify(loginAttemptRepository).resetLockedAccounts();
+-        verify(userAccessControlApi).unlockExpiredAccounts();
++        InOrder inOrder = inOrder(userAccessControlApi, loginAttemptRepository);
++        inOrder.verify(userAccessControlApi).unlockExpiredAccounts();
++        inOrder.verify(loginAttemptRepository).resetLockedAccounts();
+         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
+     }
+ 
+@@ -183,6 +185,7 @@ class LoginAttemptServiceTest {
+ 
+         assertThatThrownBy(service::unlockExpiredAccounts).isSameAs(exception);
+ 
++        verify(userAccessControlApi).unlockExpiredAccounts();
+         verify(loginAttemptRepository).resetLockedAccounts();
+         verifyNoMoreInteractions(loginAttemptRepository, userAccessControlApi);
+     }
+diff --git a/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceContractTest.java b/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceContractTest.java
+index ee42519f..63a785da 100644
+--- a/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceContractTest.java
++++ b/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceContractTest.java
+@@ -35,7 +35,7 @@ class EmailVerificationServiceContractTest {
+                 mock(UserLookupApi.class),
+                 mock(UserAccessControlApi.class));
+         ReflectionTestUtils.setField(service, "expireTimeMinutes", 5);
+-        ReflectionTestUtils.setField(service, "tokenLength", 9);
++        ReflectionTestUtils.setField(service, "tokenLength", 43);
+     }
+ 
+     @Test
+diff --git a/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceTest.java b/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceTest.java
+index 31272a00..6c0817d8 100644
+--- a/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceTest.java
++++ b/src/test/java/com/zufar/icedlatte/security/signup/verification/EmailVerificationServiceTest.java
+@@ -67,7 +67,7 @@ class EmailVerificationServiceTest {
+                 userLookupApi,
+                 userAccessControlApi);
+         ReflectionTestUtils.setField(service, "expireTimeMinutes", 15);
+-        ReflectionTestUtils.setField(service, "tokenLength", 9);
++        ReflectionTestUtils.setField(service, "tokenLength", 43);
+     }
+ 
+     @Nested
+@@ -84,7 +84,7 @@ class EmailVerificationServiceTest {
+ 
+             verify(userRegistrationService).ensureEmailAvailable(request);
+             verify(emailConfirmation)
+-                    .sendTemporaryCode(eq("[REDACTED email]"), argThat(token -> token.matches("\\d{9}")));
++                    .sendTemporaryCode(eq("[REDACTED email]"), argThat(EmailVerificationServiceTest::isOpaqueToken));
+         }
+ 
+         @Test
+@@ -113,7 +113,7 @@ class EmailVerificationServiceTest {
+[REDACTED credential-related line]
+ 
+             verify(emailConfirmation)
+-                    .sendTemporaryCode(eq("[REDACTED email]"), argThat(token -> token.matches("\\d{9}")));
++                    .sendTemporaryCode(eq("[REDACTED email]"), argThat(EmailVerificationServiceTest::isOpaqueToken));
+         }
+     }
+ 
+@@ -160,14 +160,14 @@ class EmailVerificationServiceTest {
+     }
+ 
+     @Test
+-    @DisplayName("generateToken returns a 9 digit token")
+-    void generateTokenReturnsNineDigitToken() {
++    @DisplayName("generateToken returns an opaque URL-safe token")
++    void generateTokenReturnsOpaqueUrlSafeToken() {
+         UserRegistrationRequest request =
+[REDACTED credential-related line]
+ 
+         String token = service.generateToken(request, TokenPurpose.EMAIL_VERIFICATION);
+ 
+-        assertThat(token).hasSize(9).matches("\\d{9}");
++        assertThat(token).hasSize(43).matches("[A-Za-z0-9_-]{43}");
+     }
+ 
+     @Test
+@@ -233,7 +233,11 @@ class EmailVerificationServiceTest {
+                 userLookupApi,
+                 userAccessControlApi);
+         ReflectionTestUtils.setField(serviceWithMockStore, "expireTimeMinutes", 15);
+-        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 9);
++        ReflectionTestUtils.setField(serviceWithMockStore, "tokenLength", 43);
+         return serviceWithMockStore;
+     }
++
++    private static boolean isOpaqueToken(String token) {
++        return token != null && token.matches("[A-Za-z0-9_-]{43}");
++    }
+ }
+diff --git a/src/test/java/com/zufar/icedlatte/user/converter/UserDtoConverterTest.java b/src/test/java/com/zufar/icedlatte/user/converter/UserDtoConverterTest.java
+index f932b8da..879431b0 100644
+--- a/src/test/java/com/zufar/icedlatte/user/converter/UserDtoConverterTest.java
++++ b/src/test/java/com/zufar/icedlatte/user/converter/UserDtoConverterTest.java
+@@ -13,7 +13,10 @@ import org.springframework.context.annotation.Configuration;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit.jupiter.SpringExtension;
+ 
++import com.zufar.icedlatte.openapi.dto.AddressDto;
++import com.zufar.icedlatte.openapi.dto.UpdateUserAccountRequest;
+ import com.zufar.icedlatte.openapi.dto.UserDto;
++import com.zufar.icedlatte.user.entity.Address;
+ import com.zufar.icedlatte.user.entity.UserEntity;
+ import com.zufar.icedlatte.user.stub.UserDtoTestStub;
+ 
+@@ -55,4 +58,37 @@ class UserDtoConverterTest {
+         assertEquals(entity.getAddress().getCity(), dto.getAddress().getCity());
+         assertEquals(entity.getAddress().getCountry(), dto.getAddress().getCountry());
+     }
++
++    @Test
++    @DisplayName("updateEntity should update existing address instead of replacing it")
++    void updateEntityShouldUpdateExistingAddressInsteadOfReplacingIt() {
++        Address existingAddress = Address.builder()
++                .country("United Kingdom")
++                .city("London")
++                .line("221B Baker Street")
++                .postcode("NW1 6XE")
++                .build();
++        UserEntity entity = UserEntity.builder()
++                .firstName("Old")
++                .lastName("Name")
++                .address(existingAddress)
++                .build();
++        AddressDto newAddress = new AddressDto();
++        newAddress.setCountry("France");
++        newAddress.setCity("Paris");
++        newAddress.setLine("10 Rue de Rivoli");
++        newAddress.setPostcode("75001");
++        UpdateUserAccountRequest request = new UpdateUserAccountRequest();
++        request.setFirstName("New");
++        request.setLastName("Name");
++        request.setAddress(newAddress);
++
++        userDtoConverter.updateEntity(entity, request);
++
++        assertEquals(existingAddress, entity.getAddress());
++        assertEquals("France", existingAddress.getCountry());
++        assertEquals("Paris", existingAddress.getCity());
++        assertEquals("10 Rue de Rivoli", existingAddress.getLine());
++        assertEquals("75001", existingAddress.getPostcode());
++    }
+ }
+

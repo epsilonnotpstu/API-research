@@ -1,0 +1,225 @@
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
+index 160849f9..996f192d 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesController.java
+@@ -96,6 +96,7 @@ public class TimeSeriesController implements CrudHandler {
+     public static final String CURSOR = "cursor";
+     public static final String PAGE_SIZE = "page-size";
+     public static final String TIMESERIES = "timeseries";
++    public static final String TAG = "TimeSeries";
+ 
+     private final MetricRegistry metrics;
+ 
+@@ -144,7 +145,7 @@ public class TimeSeriesController implements CrudHandler {
+             },
+             method = HttpMethod.POST,
+             path = "/timeseries",
+-            tags = {"TimeSeries"}
++            tags = {TAG}
+     )
+     @Override
+     public void create(@NotNull Context ctx) {
+@@ -207,7 +208,7 @@ public class TimeSeriesController implements CrudHandler {
+             },
+             method = HttpMethod.DELETE,
+             path = "/timeseries/{timeseries}",
+-            tags = {"TimeSeries"}
++            tags = {TAG}
+     )
+     @Override
+     public void delete(Context ctx, @NotNull String timeseries) {
+@@ -240,7 +241,7 @@ public class TimeSeriesController implements CrudHandler {
+                 boolean opArg = ctx.queryParamAsClass(OVERRIDE_PROTECTION, Boolean.class).getOrDefault(false);
+ 
+                 TimeSeriesDaoImpl.OverrideProtection op;
+-                if(opArg){
++                if (opArg) {
+                     op = TimeSeriesDaoImpl.OverrideProtection.True;
+                 } else {
+                     op = TimeSeriesDaoImpl.OverrideProtection.False;
+@@ -363,7 +364,7 @@ public class TimeSeriesController implements CrudHandler {
+             },
+             method = HttpMethod.GET,
+             path = "/timeseries",
+-            tags = {"TimeSeries"}
++            tags = {TAG}
+     )
+     @Override
+     public void getAll(Context ctx) {
+@@ -489,7 +490,7 @@ public class TimeSeriesController implements CrudHandler {
+             },
+             method = HttpMethod.PATCH,
+             path = "/timeseries/{timeseries}",
+-            tags = {"TimeSeries"}
++            tags = {TAG}
+     )
+     @Override
+     public void update(@NotNull Context ctx, @NotNull String id) {
+@@ -640,7 +641,7 @@ public class TimeSeriesController implements CrudHandler {
+             },
+             path = "/timeseries/recent",
+             description = "Returns CWMS Timeseries Groups Data",
+-            tags = {"TimeSeries-Beta"},
++            tags = {TAG},
+             method = HttpMethod.GET
+     )
+     public void getRecent(Context ctx) {
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesIdentifierDescriptorController.java b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesIdentifierDescriptorController.java
+index 87f42aa9..4ac9f1be 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesIdentifierDescriptorController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/TimeSeriesIdentifierDescriptorController.java
+@@ -256,7 +256,7 @@ public class TimeSeriesIdentifierDescriptorController implements CrudHandler {
+                     @OpenApiParam(name = SNAP_FORWARD, description = "The new snap forward tolerance in minutes. This specifies how many minutes before the expected data time that data will be considered to be on time."),
+                     @OpenApiParam(name = SNAP_BACKWARD, description = "The new snap backward tolerance in minutes. This specifies how many minutes after the expected data time that data will be considered to be on time."),
+                     @OpenApiParam(name = ACTIVE, description = "'True' or 'true' if the time series is active")
+-            }
++            }, tags = {TAG}
+     )
+     @Override
+     public void update(Context ctx, @NotNull String timeseriesId) {
+@@ -309,7 +309,7 @@ public class TimeSeriesIdentifierDescriptorController implements CrudHandler {
+                             type = TimeSeriesIdentifierDescriptorDao.DeleteMethod.class)
+             },
+             description = "Deletes requested timeseries identifier",
+-            method = HttpMethod.DELETE
++            method = HttpMethod.DELETE, tags = {TAG}
+            )
+     @Override
+     public void delete(@NotNull Context ctx, @NotNull String timeseriesId) {
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptor.java b/cwms_radar_api/src/main/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptor.java
+index 08405e3b..409aa800 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptor.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptor.java
+@@ -16,14 +16,14 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+ 
+     private final String officeId;
+     private final String timeSeriesId;
+-    private final ZoneId zoneId;
++    private final String timezoneName;
+     private final Long intervalOffsetMinutes;
+     private final boolean active;
+ 
+     private TimeSeriesIdentifierDescriptor(Builder builder) {
+         this.officeId = builder.officeId;
+         this.timeSeriesId = builder.timeSeriesId;
+-        this.zoneId = builder.zoneId;
++        this.timezoneName = builder.timezoneName;
+         this.intervalOffsetMinutes = builder.intervalOffsetMinutes;
+         this.active = builder.active;
+     }
+@@ -36,8 +36,8 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+         return timeSeriesId;
+     }
+ 
+-    public ZoneId getZoneId() {
+-        return zoneId;
++    public String getTimezoneName() {
++        return timezoneName;
+     }
+ 
+     public Long getIntervalOffsetMinutes() {
+@@ -58,7 +58,7 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+     public static class Builder {
+         private String officeId;
+         private String timeSeriesId;
+-        private ZoneId zoneId;
++        private String timezoneName;
+         private Long intervalOffsetMinutes;
+         private boolean active;
+ 
+@@ -73,7 +73,16 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+         }
+ 
+         public Builder withZoneId(ZoneId zoneId) {
+-            this.zoneId = zoneId;
++            String tzName = null;
++
++            if (zoneId != null) {
++                tzName = zoneId.getId();
++            }
++            return withTimezoneName(tzName);
++        }
++
++        public Builder withTimezoneName(String timezoneName) {
++            this.timezoneName = timezoneName;
+             return this;
+         }
+ 
+@@ -90,7 +99,7 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+         public Builder withTimeSeriesIdentifierDescriptor(TimeSeriesIdentifierDescriptor tsid) {
+             this.officeId = tsid.getOfficeId();
+             this.timeSeriesId = tsid.getTimeSeriesId();
+-            this.zoneId = tsid.getZoneId();
++            this.timezoneName = tsid.getTimezoneName();
+             this.intervalOffsetMinutes = tsid.getIntervalOffsetMinutes();
+             this.active = tsid.isActive();
+             return this;
+@@ -101,5 +110,4 @@ public class TimeSeriesIdentifierDescriptor implements CwmsDTO {
+         }
+     }
+ 
+-
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/json/JsonV2.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/json/JsonV2.java
+index 232e247c..48fc547e 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/json/JsonV2.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/json/JsonV2.java
+@@ -18,6 +18,7 @@ import cwms.radar.data.dto.Pool;
+ import cwms.radar.data.dto.Pools;
+ import cwms.radar.data.dto.SpecifiedLevel;
+ import cwms.radar.data.dto.TimeSeries;
++import cwms.radar.data.dto.TimeSeriesIdentifierDescriptor;
+ import cwms.radar.data.dto.rating.ExpressionRating;
+ import cwms.radar.data.dto.rating.RatingMetadata;
+ import cwms.radar.data.dto.rating.RatingMetadataList;
+@@ -53,7 +54,8 @@ import service.annotations.FormatService;
+         TableRating.class, TransitionalRating.class, VirtualRating.class,
+         ExpressionRating.class, UsgsStreamRating.class,
+         RatingSpec.class, RatingSpecs.class,
+-        LocationLevel.class, LocationLevels.class
++        LocationLevel.class, LocationLevels.class,
++        TimeSeriesIdentifierDescriptor.class
+ })
+ /**
+  * Formatter for RADAR generated JSON.
+diff --git a/cwms_radar_api/src/test/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptorTest.java b/cwms_radar_api/src/test/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptorTest.java
+index f51da7b7..15c565e1 100644
+--- a/cwms_radar_api/src/test/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptorTest.java
++++ b/cwms_radar_api/src/test/java/cwms/radar/data/dto/TimeSeriesIdentifierDescriptorTest.java
+@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
+ import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.ObjectWriter;
++import cwms.radar.formatters.ContentType;
++import cwms.radar.formatters.Formats;
+ import cwms.radar.formatters.json.JsonV2;
+ import java.time.ZoneId;
+ import org.junit.jupiter.api.Test;
+@@ -78,9 +80,24 @@ class TimeSeriesIdentifierDescriptorTest {
+ 
+         assertEquals(tsID.getTimeSeriesId(), tsID2.getTimeSeriesId());
+         assertEquals(tsID.getOfficeId(), tsID2.getOfficeId());
+-        assertEquals(tsID.getZoneId(), tsID2.getZoneId());
++        assertEquals(tsID.getTimezoneName(), tsID2.getTimezoneName());
+         assertEquals(tsID.getIntervalOffsetMinutes(), tsID2.getIntervalOffsetMinutes());
+         assertEquals(tsID.isActive(), tsID2.isActive());
+     }
+ 
++
++    @Test
++    void test_serialization_with_formats()
++    {
++        // This test verifies that the TimeSeriesIdentifierDescriptor can be serialized by the Formats class.
++        // It will fail like:
++        //  No Format for this content-type and data-type : (application/json;version=2, cwms.radar.data.dto.TimeSeriesIdentifierDescriptor)
++        // If JsonV2 does not contain TimeSeriesIdentifierDescriptor in its list of classes
++        TimeSeriesIdentifierDescriptor tsID = buildTsId();
++
++        ContentType contentType = Formats.parseHeader(Formats.JSONV2);
++        String jsonStr = Formats.format(contentType, tsID);
++        assertNotNull(jsonStr);
++    }
++
+ }
+\ No newline at end of file
+

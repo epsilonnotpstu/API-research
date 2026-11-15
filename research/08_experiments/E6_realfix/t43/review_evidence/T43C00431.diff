@@ -1,0 +1,146 @@
+diff --git a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/client/EventEmitter.java b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/client/EventEmitter.java
+index 1ad889b6f..97f16ee12 100644
+--- a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/client/EventEmitter.java
++++ b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/client/EventEmitter.java
+@@ -12,6 +12,7 @@ import io.openlineage.client.OpenLineage.RunEvent;
+ import io.openlineage.client.OpenLineageClient;
+ import io.openlineage.client.OpenLineageClientException;
+ import io.openlineage.client.OpenLineageClientUtils;
++import io.openlineage.client.utils.UUIDUtils;
+ import io.openlineage.hive.api.OpenLineageContext;
+ import java.time.Instant;
+ import java.util.UUID;
+@@ -19,6 +20,8 @@ import lombok.Getter;
+ import lombok.extern.slf4j.Slf4j;
+ import org.apache.hadoop.conf.Configuration;
+ import org.apache.hadoop.hive.ql.QueryInfo;
++import org.apache.hadoop.hive.ql.QueryPlan;
++import org.apache.hadoop.hive.ql.hooks.HookContext;
+ 
+ @Getter
+ @Slf4j
+@@ -54,11 +57,27 @@ public class EventEmitter implements AutoCloseable {
+    * Get the same runId for START and STOP events
+    */
+   public static UUID getRunId(OpenLineageContext olContext) {
++    HookContext hookContext = olContext.getHookContext();
++    // QueryInfo is populated only by HiveServer2, it is null when running via Hive CLI
+     // https://github.com/apache/hive/blob/rel/release-3.1.3/ql/src/java/org/apache/hadoop/hive/ql/QueryInfo.java
+-    QueryInfo query = olContext.getHookContext().getQueryInfo();
+-    Instant beginTime = Instant.ofEpochMilli(query.getBeginTime());
+-    String operationId = query.getOperationId();
+-    return generateStaticUUID(beginTime, operationId.getBytes(UTF_8));
++    QueryInfo queryInfo = hookContext.getQueryInfo();
++    if (queryInfo != null && queryInfo.getOperationId() != null) {
++      return generateStaticUUID(
++          Instant.ofEpochMilli(queryInfo.getBeginTime()),
++          queryInfo.getOperationId().getBytes(UTF_8));
++    }
++
++    QueryPlan queryPlan = hookContext.getQueryPlan();
++    if (queryPlan != null
++        && queryPlan.getQueryId() != null
++        && queryPlan.getQueryStartTime() != null) {
++      return generateStaticUUID(
++          Instant.ofEpochMilli(queryPlan.getQueryStartTime()),
++          queryPlan.getQueryId().getBytes(UTF_8));
++    }
++
++    log.warn("Unable to determine query id and start time, generating random runId");
++    return UUIDUtils.generateNewUUID();
+   }
+ 
+   @Override
+diff --git a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/hooks/HiveOpenLineageHook.java b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/hooks/HiveOpenLineageHook.java
+index f20d9302b..48e99f9b8 100644
+--- a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/hooks/HiveOpenLineageHook.java
++++ b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/hooks/HiveOpenLineageHook.java
+@@ -140,9 +140,6 @@ public class HiveOpenLineageHook implements ExecuteWithHookContext, HiveSessionH
+             validOutputs.stream().map(Entity::getName).collect(Collectors.joining(",")));
+         return;
+       }
+-      if (hookContext.getQueryPlan().getOperation() == HiveOperation.IMPORT) {
+-        log.debug("aaaaaa");
+-      }
+       OpenLineage.RunEvent.EventType eventType = getEventType(hookContext);
+       OpenLineageContext olContext =
+           OpenLineageContext.builder()
+diff --git a/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/client/EventEmitterTest.java b/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/client/EventEmitterTest.java
+new file mode 100644
+index 000000000..65d308b0e
+--- /dev/null
++++ b/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/client/EventEmitterTest.java
+@@ -0,0 +1,72 @@
++/*
+[REDACTED attribution]
++/* SPDX-License-Identifier: Apache-2.0
++*/
++package io.openlineage.hive.client;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import io.openlineage.client.OpenLineage;
++import io.openlineage.hive.api.OpenLineageContext;
++import java.net.URI;
++import java.time.ZonedDateTime;
++import java.util.Collections;
++import java.util.UUID;
++import org.apache.hadoop.hive.ql.QueryInfo;
++import org.apache.hadoop.hive.ql.QueryPlan;
++import org.apache.hadoop.hive.ql.hooks.HookContext;
++import org.junit.jupiter.api.Test;
++
++class EventEmitterTest {
++
++  @Test
++  void testRunIdFromQueryInfo() {
++    HookContext hookContext = mock(HookContext.class);
++    QueryInfo queryInfo = mock(QueryInfo.class);
++    when(queryInfo.getBeginTime()).thenReturn(1_700_000_000_000L);
++    when(queryInfo.getOperationId()).thenReturn("operation-id");
++    when(hookContext.getQueryInfo()).thenReturn(queryInfo);
++
++    UUID runId = EventEmitter.getRunId(context(hookContext));
++
++    assertThat(runId).isEqualTo(EventEmitter.getRunId(context(hookContext)));
++    assertThat(runId.version()).isEqualTo(7);
++  }
++
++  @Test
++  void testRunIdFromQueryPlanWhenQueryInfoIsMissing() {
++    // Hive CLI does not populate QueryInfo
++    HookContext hookContext = mock(HookContext.class);
++    QueryPlan queryPlan = mock(QueryPlan.class);
++    when(queryPlan.getQueryId()).thenReturn("hive_20260101000000_query-id");
++    when(queryPlan.getQueryStartTime()).thenReturn(1_700_000_000_000L);
++    when(hookContext.getQueryInfo()).thenReturn(null);
++    when(hookContext.getQueryPlan()).thenReturn(queryPlan);
++
++    UUID runId = EventEmitter.getRunId(context(hookContext));
++
++    assertThat(runId).isEqualTo(EventEmitter.getRunId(context(hookContext)));
++    assertThat(runId.version()).isEqualTo(7);
++  }
++
++  @Test
++  void testRandomRunIdWhenNoQueryDataAvailable() {
++    HookContext hookContext = mock(HookContext.class);
++
++    assertThat(EventEmitter.getRunId(context(hookContext))).isNotNull();
++  }
++
++  private OpenLineageContext context(HookContext hookContext) {
++    return OpenLineageContext.builder()
++        .openLineage(new OpenLineage(URI.create("http://test-producer")))
++        .openLineageConfig(new HiveOpenLineageConfig())
++        .hookContext(hookContext)
++        .readEntities(Collections.emptySet())
++        .writeEntities(Collections.emptySet())
++        .eventTime(ZonedDateTime.now())
++        .eventType(OpenLineage.RunEvent.EventType.START)
++        .build();
++  }
++}
+

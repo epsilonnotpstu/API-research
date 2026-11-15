@@ -1,0 +1,48 @@
+diff --git a/src/main/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverter.java b/src/main/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverter.java
+index cf6e68b6..75afaed3 100644
+--- a/src/main/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverter.java
++++ b/src/main/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverter.java
+@@ -5,6 +5,7 @@ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
+ import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+ import org.mapstruct.InjectionStrategy;
+ import org.mapstruct.Mapper;
++import org.mapstruct.Mapping;
+ import org.mapstruct.MappingConstants;
+ import org.mapstruct.ReportingPolicy;
+ 
+@@ -12,6 +13,7 @@ import org.mapstruct.ReportingPolicy;
+         unmappedTargetPolicy = ReportingPolicy.IGNORE,  injectionStrategy = InjectionStrategy.FIELD)
+ public interface FavoriteItemDtoConverter {
+ 
++    @Mapping(target = "productInfo.dateAdded", source = "productInfo.dateAdded", qualifiedByName = "localToOffsetDate")
+     FavoriteItemDto toDto(final FavoriteItemEntity favoriteItemEntity);
+ 
+ }
+\ No newline at end of file
+diff --git a/src/test/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverterTest.java b/src/test/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverterTest.java
+index f670ee22..8b193c8a 100644
+--- a/src/test/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverterTest.java
++++ b/src/test/java/com/zufar/icedlatte/favorite/converter/FavoriteItemDtoConverterTest.java
+@@ -1,11 +1,13 @@
+ package com.zufar.icedlatte.favorite.converter;
+ 
+ import com.zufar.icedlatte.favorite.entity.FavoriteItemEntity;
++import com.zufar.icedlatte.product.converter.ProductInfoDtoConverter;
+ import com.zufar.icedlatte.product.entity.ProductInfo;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.mapstruct.factory.Mappers;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.DisplayName;
++import org.springframework.test.util.ReflectionTestUtils;
+ 
+ import java.util.UUID;
+ 
+@@ -16,6 +18,7 @@ public class FavoriteItemDtoConverterTest {
+     @BeforeEach
+     void setup() {
+         converter = Mappers.getMapper(FavoriteItemDtoConverter.class);
++        ReflectionTestUtils.setField(converter, "productInfoDtoConverter", Mappers.getMapper(ProductInfoDtoConverter.class));
+     }
+ 
+     @Test
+

@@ -1,0 +1,127 @@
+[parent contract] 11f6447b07194c01ac434dafdbef798724070324:src/main/resources/api-specs/payment-openapi.yaml:35
+31:       tags:
+32:         - "Payment"
+33:       summary: "Creates Stripe Session for an authorized user"
+34: [REDACTED credential-related line]
+35:       operationId: "processPayment"
+36:       responses:
+37:         "200":
+38:           description: "Session created successfully"
+39:           content:
+40:             application/json:
+41:               schema:
+42: [REDACTED credential-related line]
+43:         "400":
+44:           description: "Cannot create session"
+
+[fix contract] a456fc9b4b94a1961325ca818cadbc1dc6808c15:src/main/resources/api-specs/payment-openapi.yaml:35
+31:       tags:
+32:         - "Payment"
+33:       summary: "Creates Stripe Session for an authorized user"
+34: [REDACTED credential-related line]
+35:       operationId: "processPayment"
+36:       responses:
+37:         "200":
+38:           description: "Session created successfully"
+39:           content:
+40:             application/json:
+41:               schema:
+42: [REDACTED credential-related line]
+43:         "400":
+44:           description: "Cannot create session"
+
+[parent route] 11f6447b07194c01ac434dafdbef798724070324:src/main/resources/api-specs/payment-openapi.yaml:29
+29:   /api/v1/payment:
+30:     post:
+31:       tags:
+32:         - "Payment"
+33:       summary: "Creates Stripe Session for an authorized user"
+34: [REDACTED credential-related line]
+35:       operationId: "processPayment"
+36:       responses:
+37:         "200":
+38:           description: "Session created successfully"
+39:           content:
+
+[parent route] 11f6447b07194c01ac434dafdbef798724070324:src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:22
+18: @RestController
+19: @RequestMapping(PaymentEndpoint.PAYMENT_URL)
+20: public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.PaymentApi {
+21: 
+22:     public static final String PAYMENT_URL = "/api/v1/payment";
+23: 
+24:     private final PaymentProcessor paymentProcessor;
+25:     private final WebhookEventProcessor webhookEventProcessor;
+26:     private final RedirectEventProcessor redirectEventProcessor;
+27: 
+28:     @Override
+29:     @PostMapping
+30:     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
+31:         var response = paymentProcessor.processPayment(null);
+32:         log.info("payment.session.created: sessionId={}", response.getSessionId());
+33:         return ResponseEntity.ok(response);
+34:     }
+
+[parent implementation] 11f6447b07194c01ac434dafdbef798724070324:src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:31
+27: 
+28:     @Override
+29:     @PostMapping
+30:     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
+31:         var response = paymentProcessor.processPayment(null);
+32:         log.info("payment.session.created: sessionId={}", response.getSessionId());
+33:         return ResponseEntity.ok(response);
+34:     }
+35: 
+
+[parent implementation] 11f6447b07194c01ac434dafdbef798724070324:src/main/java/com/zufar/icedlatte/payment/api/PaymentProcessor.java:28
+28:     public SessionWithClientSecretDto processPayment(final HttpServletRequest request) {
+29:         log.info("payment.session.initiating");
+30:         Session stripeSession = stripeSessionCreator.createSession(request);
+31: 
+32: [REDACTED credential-related line]
+33:         sessionDto.setSessionId(stripeSession.getId());
+34:         sessionDto.setClientSecret(stripeSession.getClientSecret());
+35: 
+36:         return sessionDto;
+
+[parent implementation] 11f6447b07194c01ac434dafdbef798724070324:src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:43
+38:         SessionCreateParams stripeSessionCreateParams =
+39:                 SessionCreateParams.builder()
+40:                         .setMode(SessionCreateParams.Mode.PAYMENT)
+41:                         .setUiMode(SessionCreateParams.UiMode.EMBEDDED)
+42:                         .setCustomerEmail(userDto.getEmail())
+43:                         .setReturnUrl(getReturnUrl(request))
+44:                         .addAllLineItem(stripeSessionLineItemListConverter.toLineItems(shoppingCartDto.getItems()))
+45:                         .addAllShippingOption(stripeShippingOptionsProvider.getShippingOptions())
+46:                         .putMetadata("userId", String.valueOf(userId))
+47:                         .setAutomaticTax(SessionCreateParams.AutomaticTax.builder().setEnabled(true).build())
+48:                         .build();
+49:         try {
+50:             return Session.create(stripeSessionCreateParams);
+51:         } catch (StripeException exception) {
+52:             throw new StripeSessionCreationException(exception.getMessage(), exception);
+
+[parent implementation] 11f6447b07194c01ac434dafdbef798724070324:src/main/java/com/zufar/icedlatte/payment/api/StripeSessionCreator.java:56
+56:     private String getReturnUrl(final HttpServletRequest request) {
+57:         var url = UriComponentsBuilder.newInstance()
+58:                 .scheme(request.getScheme())
+59:                 .host(request.getHeader(HttpHeaders.HOST))
+60:                 .path(RETURN_URI)
+61:                 .build();
+62:         return url.toUriString();
+63:     }
+64: }
+
+[fix implementation] a456fc9b4b94a1961325ca818cadbc1dc6808c15:src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java:33
+26:     private final WebhookEventProcessor webhookEventProcessor;
+27:     private final RedirectEventProcessor redirectEventProcessor;
+28:     private final HttpServletRequest httpRequest;
+29: 
+30:     @Override
+31:     @PostMapping
+32:     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
+33:         var response = paymentProcessor.processPayment(httpRequest);
+34:         log.info("payment.session.created: sessionId={}", response.getSessionId());
+35:         return ResponseEntity.ok(response);
+36:     }
+37: 

@@ -1,0 +1,138 @@
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/data/dao/TimeSeriesDaoImpl.java b/cwms_radar_api/src/main/java/cwms/radar/data/dao/TimeSeriesDaoImpl.java
+index 5aa1f955..0fe29ea5 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/data/dao/TimeSeriesDaoImpl.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/data/dao/TimeSeriesDaoImpl.java
+@@ -53,6 +53,7 @@ import org.jooq.CommonTableExpression;
+ import org.jooq.Condition;
+ import org.jooq.DSLContext;
+ import org.jooq.Field;
++import org.jooq.Operator;
+ import org.jooq.Record;
+ import org.jooq.Record1;
+ import org.jooq.Record10;
+@@ -512,12 +513,17 @@ public class TimeSeriesDaoImpl extends JooqDao<TimeSeries> implements TimeSeries
+ 		if(tsGroupLike != null){
+ 			primaryDataQuery.addConditions(AV_CWMS_TS_ID2.TS_ALIAS_GROUP.upper().likeRegex(tsGroupLike.toUpperCase()));
+ 		}
+-
++				
+ 		if(curOffice != null ){
+-			primaryDataQuery.addConditions(AV_CWMS_TS_ID2.DB_OFFICE_ID.upper().ge(curOffice));
++			Condition officeEqualCur = AV_CWMS_TS_ID2.DB_OFFICE_ID.upper().eq(curOffice.toUpperCase());
++			Condition curOfficeTsIdGreater = AV_CWMS_TS_ID2.CWMS_TS_ID.upper().gt(tsCursor);
++			Condition officeGreaterThanCur = AV_CWMS_TS_ID2.DB_OFFICE_ID.upper().gt(curOffice.toUpperCase());			
++			primaryDataQuery.addConditions(Operator.AND,officeEqualCur.and(curOfficeTsIdGreater).or(officeGreaterThanCur));						
++		} else {
++			primaryDataQuery.addConditions(AV_CWMS_TS_ID2.CWMS_TS_ID.upper().gt(tsCursor));
+ 		}
+ 		
+-		primaryDataQuery.addConditions(AV_CWMS_TS_ID2.CWMS_TS_ID.upper().gt(tsCursor));
++		
+ 
+ 
+ 		primaryDataQuery.addOrderBy(AV_CWMS_TS_ID2.DB_OFFICE_ID,AV_CWMS_TS_ID2.CWMS_TS_ID);
+diff --git a/cwms_radar_api/src/test/java/cwms/radar/api/CatalogControllerTestIT.java b/cwms_radar_api/src/test/java/cwms/radar/api/CatalogControllerTestIT.java
+index 4c3b6d3a..455fcb80 100644
+--- a/cwms_radar_api/src/test/java/cwms/radar/api/CatalogControllerTestIT.java
++++ b/cwms_radar_api/src/test/java/cwms/radar/api/CatalogControllerTestIT.java
+@@ -1,8 +1,10 @@
+ package cwms.radar.api;
+ 
+-import static org.junit.jupiter.api.Assertions.fail;
++import static org.junit.jupiter.api.Assertions.*;
+ import static org.mockito.ArgumentMatchers.isNotNull;
+ 
++import java.time.Duration;
++
+ import org.junit.jupiter.api.BeforeAll;
+ import org.junit.jupiter.api.Tag;
+ import org.junit.jupiter.api.Test;
+@@ -56,36 +58,58 @@ public class CatalogControllerTestIT {
+ 
+     @Test
+     public void test_all_office_pagination_works() {
+-        final int pageSize = 2;
+-        Response initialResponse = 
+-            given().accept(Formats.JSONV2)
+-            .queryParam("page-size",pageSize)
+-            .get("/catalog/TIMESERIES")
+-            .then()
+-                .assertThat()
+-                .statusCode(is(200))
+-                .body("$",hasKey("total"))
+-                .body("$",hasKey("next-page"))
+-                .body("page-size",is(pageSize))
+-                .body("entries.size()",is(pageSize))
+-                .extract()
+-                    .response();
+-        String nextPage = initialResponse.path("next-page");
+         
+-        String firstRowFirstPage = initialResponse.path("entries[0].name");
++        assertTimeout(Duration.ofMinutes(5), () -> {
++            final int pageSize = 500;
++            Response initialResponse = 
++                given()
++                    .accept(Formats.JSONV2)
++                    .queryParam("page-size",pageSize)
++                    .get("/catalog/TIMESERIES")
++                .then()
++                    .assertThat()
++                    .statusCode(is(200))
++                    .body("$",hasKey("total"))
++                    .body("$",hasKey("next-page"))
++                    .body("page-size",is(pageSize))
++                    .body("entries.size()",is(pageSize))
++                    .extract()
++                        .response();
++            
++            String nextPage = initialResponse.path("next-page");
++            
++            final int total = initialResponse.path("total");
++            int totalRetrieved = initialResponse.path("entries.size()");
+ 
+-        given().accept(Formats.JSONV2)
+-            .queryParam("page",nextPage)
+-            .get("/catalog/TIMESERIES")
+-            .then()
+-                .assertThat()
+-                .statusCode(is(200))
+-                .body("$",hasKey("total"))
+-                .body("$",hasKey("next-page"))
+-                .body("page",equalTo(nextPage))
+-                .body("page-size",is(pageSize))
+-                .body("next-page",not(equalTo(nextPage)))
+-                .body("entries[0].name",not(equalTo(firstRowFirstPage)));
+-                ;
++            String lastRowPreviousPage = initialResponse.path("entries.last().name");
++            do {
++                Response pageN = given().accept(Formats.JSONV2)
++                .queryParam("page",nextPage)
++                .get("/catalog/TIMESERIES")
++                .then()
++                    .assertThat()
++                    .statusCode(is(200))
++                    .body("$",hasKey("total"))
++                    //.body("$",hasKey("next-page"))                    
++                    .body("page-size",is(pageSize))
++                    .body("page",equalTo(nextPage))
++                    //.body("next-page",not(equalTo(nextPage)))
++                    .body("entries[0].name",not(equalTo(lastRowPreviousPage)))
++                    .extract().response();
++                    ;
++
++                nextPage = pageN.path("next-page");
++                
++                lastRowPreviousPage = pageN.path("entries.last().name");
++                int pageTotal = pageN.path("entries.size()");
++                totalRetrieved += pageTotal;
++                /*if( nextPage == null && totalRetrieved < total) {
++                    fail("Pagination not complete, system returned 'last page' before all values retrieved.");
++                }*/
++            } while( nextPage != null );
++            assertEquals(total,totalRetrieved, "Initial count and retrieval do not match");
++        }, "Catalog retrieval got stuck; possibly in endless loop");
++        
++        
+     }
+ }
+

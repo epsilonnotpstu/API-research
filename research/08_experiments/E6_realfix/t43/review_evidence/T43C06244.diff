@@ -1,0 +1,81 @@
+diff --git a/documentation/book/api/definitions.adoc b/documentation/book/api/definitions.adoc
+index 3b6a7a1..77feda4 100644
+--- a/documentation/book/api/definitions.adoc
++++ b/documentation/book/api/definitions.adoc
+@@ -37,6 +37,8 @@ __Type__ : < <<_consumerrecordlist_inline,ConsumerRecordList>> > array
+ |Name|Schema
+ |**key** +
+ __optional__|string
++|**offset** +
++__optional__|integer (int64)
+ |**partition** +
+ __optional__|integer (int32)
+ |**topic** +
+@@ -79,11 +81,11 @@ __optional__|string
+ |===
+ |Name|Schema
+ |**offset** +
+-__optional__|integer (int64)
++__required__|integer (int64)
+ |**partition** +
+-__optional__|integer (int32)
++__required__|integer (int32)
+ |**topic** +
+-__optional__|string
++__required__|string
+ |===
+ 
+ 
+diff --git a/src/main/resources/openapi.json b/src/main/resources/openapi.json
+index 3b08612..6ea5173 100644
+--- a/src/main/resources/openapi.json
++++ b/src/main/resources/openapi.json
+@@ -1047,7 +1047,7 @@
+                         },
+                         "offset": {
+                             "format": "int64",
+-                            "type": "long"
++                            "type": "integer"
+                         }
+                     }
+                 },
+@@ -1183,7 +1183,11 @@
+             },
+             "OffsetCommitSeek": {
+                 "title": "OffsetCommitSeek",
+-                "required": [],
++                "required": [
++                    "partition",
++                    "offset",
++                    "topic"
++                ],
+                 "type": "object",
+                 "properties": {
+                     "partition": {
+diff --git a/src/main/resources/openapiv2.json b/src/main/resources/openapiv2.json
+index 6411dbb..87c1194 100644
+--- a/src/main/resources/openapiv2.json
++++ b/src/main/resources/openapiv2.json
+@@ -878,7 +878,7 @@
+           },
+           "offset": {
+             "format": "int64",
+-            "type": "long"
++            "type": "integer"
+           }
+         }
+       },
+@@ -1014,7 +1014,11 @@
+     },
+     "OffsetCommitSeek": {
+       "title": "OffsetCommitSeek",
+-      "required": [],
++      "required": [
++        "partition",
++        "offset",
++        "topic"
++      ],
+       "type": "object",
+       "properties": {
+         "partition": {
+

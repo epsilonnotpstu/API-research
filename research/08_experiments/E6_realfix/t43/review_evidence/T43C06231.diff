@@ -1,0 +1,188 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/quarkus/CompletionExceptionMapper.java b/src/main/java/io/strimzi/kafka/bridge/quarkus/CompletionExceptionMapper.java
+new file mode 100644
+index 0000000..d3e9588
+--- /dev/null
++++ b/src/main/java/io/strimzi/kafka/bridge/quarkus/CompletionExceptionMapper.java
+@@ -0,0 +1,25 @@
++package io.strimzi.kafka.bridge.quarkus;
++
++import javax.ws.rs.core.Response;
++import javax.ws.rs.ext.ExceptionMapper;
++import javax.ws.rs.ext.Provider;
++import java.util.concurrent.CompletionException;
++
++/**
++ * Exception mapper providing a proper {@link Response} whenever a {@link CompletionException} is raised during
++ * the HTTP request handling in any of the {@link java.util.concurrent.CompletionStage}(s).
++ * The exception brings a {@link RestBridgeException} instance as cause which contains the corresponding
++ * {@link io.strimzi.kafka.bridge.http.model.HttpBridgeError} with the HTTP code and error message to use in the response.
++ */
++@Provider
++public class CompletionExceptionMapper implements ExceptionMapper<CompletionException>  {
++    @Override
++    public Response toResponse(CompletionException exception) {
++        if (exception.getCause() instanceof RestBridgeException) {
++            return RestUtils.buildResponseFromError(((RestBridgeException) exception.getCause()).getHttpBridgeError());
++        } else {
++            // re-throwing the CompletionException just allows the framework to handle the default way
++            throw exception;
++        }
++    }
++}
+diff --git a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestAdminBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestAdminBridgeEndpoint.java
+index 04d3a9e..f501885 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestAdminBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestAdminBridgeEndpoint.java
+@@ -79,8 +79,7 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     }
+                 });
+     }
+@@ -138,15 +137,13 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                                 HttpResponseStatus.NOT_FOUND.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     } else {
+                         HttpBridgeError error = new HttpBridgeError(
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     }
+                 });
+     }
+@@ -173,15 +170,13 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                                 HttpResponseStatus.NOT_FOUND.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     } else {
+                         HttpBridgeError error = new HttpBridgeError(
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     }
+                 });
+     }
+@@ -216,23 +211,20 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                                     HttpResponseStatus.NOT_FOUND.code(),
+                                     "Specified partition does not exist."
+                             );
+-                            // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                            return RestUtils.buildResponseFromError(error);
++                            throw new RestBridgeException(error);
+                         }
+                     } else if (ex.getCause() instanceof UnknownTopicOrPartitionException) {
+                         HttpBridgeError error = new HttpBridgeError(
+                                 HttpResponseStatus.NOT_FOUND.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     } else {
+                         HttpBridgeError error = new HttpBridgeError(
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                 ex.getMessage()
+                         );
+-                        // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                        return RestUtils.buildResponseFromError(error);
++                        throw new RestBridgeException(error);
+                     }
+                 });
+     }
+@@ -269,8 +261,7 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                         HttpResponseStatus.NOT_FOUND.code(),
+                         e.getMessage()
+                 );
+-                // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                return RestUtils.buildResponseFromError(error);
++                throw new RestBridgeException(error);
+             } else {
+                 Map<TopicPartition, OffsetSpec> topicPartitionBeginOffsets = Map.of(topicPartition, OffsetSpec.earliest());
+                 CompletionStage<Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo>> getBeginningOffsetsPromise = this.kafkaBridgeAdmin.listOffsets(topicPartitionBeginOffsets);
+@@ -297,8 +288,7 @@ public class RestAdminBridgeEndpoint extends RestBridgeEndpoint {
+                                         HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                         ex.getMessage()
+                                 );
+-                                // TODO: throwing a RestBridgeException that could be handled by the corresponding mapper instead
+-                                return RestUtils.buildResponseFromError(error);
++                                throw new RestBridgeException(error);
+                             }
+                         })
+                         .join();
+diff --git a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridge.java b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridge.java
+index f470822..1c71e03 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridge.java
+@@ -114,6 +114,16 @@ public class RestBridge {
+         return adminBridgeEndpoint.getOffsets(topicName, partitionId);
+     }
+ 
++    /**
++     * Retrieves the source endpoint based on the HTTP connection, provided by the {@link RoutingContext}.
++     * It returns an already existing source endpoint, if the HTTP request comes from an alive HTTP connection.
++     * It creates and returns a new source endpoint, if the HTTP request comes from a new HTTP connection.
++     *
++     * @param routingContext RoutingContext instance used for getting the HTTP connection and attaching a close handler to it
++     * @param contentType Content-Type header from the HTTP request to be mapped to the corresponding embedded content type
++     * @return a source endpoint instance
++     * @throws RestBridgeException
++     */
+     private RestSourceBridgeEndpoint<byte[], byte[]> getRestSourceBridgeEndpoint(RoutingContext routingContext, String contentType) throws RestBridgeException {
+         if (!this.configRetriever.config().getHttpConfig().isProducerEnabled()) {
+             HttpBridgeError error = new HttpBridgeError(
+@@ -123,6 +133,8 @@ public class RestBridge {
+             throw new RestBridgeException(error);
+         }
+ 
++        // The RoutingContext is really needed just only for getting the HTTP connection and attaching a close handler.
++        // This is needed in order to close the Kafka Producer when the HTTP client disconnects from the bridge.
+         HttpConnection httpConnection = routingContext.request().connection();
+         RestSourceBridgeEndpoint<byte[], byte[]> source = this.httpBridgeContext.getHttpSourceEndpoints().get(httpConnection);
+ 
+@@ -153,8 +165,15 @@ public class RestBridge {
+         }
+     }
+ 
++    /**
++     * Retrieves the admin client endpoint
++     *
++     * @return the admin client endpoint instance
++     * @throws RestBridgeException
++     */
+     private RestAdminBridgeEndpoint getAdminClientEndpoint() throws RestBridgeException {
+         RestAdminBridgeEndpoint adminClientEndpoint = this.httpBridgeContext.getHttpAdminEndpoint();
++        // TODO: can this be really true? The admin client endpoint is created in the init() so maybe failures happen there?
+         if (adminClientEndpoint == null) {
+             HttpBridgeError error = new HttpBridgeError(
+                     HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+diff --git a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridgeException.java b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridgeException.java
+index f49a115..e734370 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridgeException.java
++++ b/src/main/java/io/strimzi/kafka/bridge/quarkus/RestBridgeException.java
+@@ -10,7 +10,7 @@ import io.strimzi.kafka.bridge.http.model.HttpBridgeError;
+ /**
+  * A bridge exception bringing and HTTP bridge error
+  */
+-public class RestBridgeException extends Throwable {
++public class RestBridgeException extends RuntimeException {
+ 
+     private final HttpBridgeError httpBridgeError;
+ 
+

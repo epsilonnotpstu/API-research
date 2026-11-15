@@ -1,0 +1,1001 @@
+diff --git a/README.md b/README.md
+index 8e60503..1253ff9 100644
+--- a/README.md
++++ b/README.md
+@@ -684,6 +684,10 @@ Possible values: Any `Algorithm Name` of an IANA registered asymmetric signature
+ https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms
+ Default value: `ES256`
+ 
++Variable: `VERIFIER_VALIDATION_SDJWTVC_STATUSCHECK_ENABLED`  
++Description: Enables status check validation for sd-jwt-vc attestations shared.  
++Default value: `true`  
++
+ Variable: `VERIFIER_TRANSACTIONDATA_HASHALGORITHM`  
+ Description: Hash algorithm to communicate in the `transaction_data_hashes_alg` claim of transaction data  
+ Default value: `sha-256`  
+diff --git a/build.gradle.kts b/build.gradle.kts
+index a776ce6..52fae34 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -60,6 +60,9 @@ dependencies {
+     implementation(libs.tink) {
+         because("Support OctetKeyPairs and extra EncryptionMethods")
+     }
++    implementation(libs.statium) {
++        because("Get value in a position of a status list token")
++    }
+ 
+     testImplementation(kotlin("test"))
+     testImplementation(libs.kotlinx.coroutines.test)
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index 9ee8504..0efd822 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -21,6 +21,7 @@ sdJwt = "0.12.0"
+ ktor = "3.1.1"
+ jsonpathkt = "2.0.1"
+ tink = "1.17.0"
++statium = "0.2.1"
+ 
+ [libraries]
+ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+@@ -36,6 +37,7 @@ sd-jwt = { module = "eu.europa.ec.eudi:eudi-lib-jvm-sdjwt-kt", version.ref = "sd
+ ktor-client-apache = { module = "io.ktor:ktor-client-apache", version.ref = "ktor" }
+ jsonpathkt = { module = "com.nfeld.jsonpathkt:jsonpathkt", version.ref = "jsonpathkt" }
+ tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
++statium = { module = "eu.europa.ec.eudi:eudi-lib-kmp-statium-jvm", version.ref = "statium" }
+ 
+ [plugins]
+ foojay-resolver-convention = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay" }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+index 0a86d88..098a74c 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+@@ -243,7 +243,16 @@ internal fun beans(clock: Clock) = beans {
+         )
+     }
+     bean { ValidateMsoMdocDeviceResponse(clock, ref()) }
+-    bean { ValidateSdJwtVc(ref(), ref<VerifierConfig>().verifierId.clientId) }
++    bean {
++        ValidateSdJwtVc(
++            ref(),
++            ref(),
++            ref<VerifierConfig>().verifierId.clientId,
++            ref(),
++            clock,
++            ref<VerifierConfig>().validation.sdJwtVc.statusCheckEnabled,
++        )
++    }
+     bean { ValidateSdJwtVcOrMsoMdocVerifiablePresentation(ref(), ref(), ref()) }
+ 
+     //
+@@ -449,6 +458,9 @@ private fun verifierConfig(environment: Environment, clock: Clock): VerifierConf
+             }
+         }
+ 
++    val validation = environment.getProperty("verifier.validation.sdJwtVc.statusCheck.enabled", true)
++        .let { configured -> Validation(sdJwtVc = Validation.SdJwtVc(configured)) }
++
+     return VerifierConfig(
+         verifierId = verifierId,
+         requestJarOption = requestJarOption,
+@@ -459,6 +471,7 @@ private fun verifierConfig(environment: Environment, clock: Clock): VerifierConf
+         maxAge = maxAge,
+         clientMetaData = environment.clientMetaData(),
+         transactionDataHashAlgorithm = transactionDataHashAlgorithm,
++        validation = validation,
+     )
+ }
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
+index 99c6876..6bd6e40 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
+@@ -15,15 +15,9 @@
+  */
+ package eu.europa.ec.eudi.verifier.endpoint.adapter.input.web
+ 
++import eu.europa.ec.eudi.sdjwt.NimbusSdJwtOps
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Nonce
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.DeviceResponseValidationResult
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.SdJwtVcValidationResult
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.ValidateMsoMdocDeviceResponse
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.ValidateSdJwtVc
+-import kotlinx.serialization.json.JsonArray
+-import kotlinx.serialization.json.addJsonObject
+-import kotlinx.serialization.json.buildJsonArray
+-import kotlinx.serialization.json.put
++import eu.europa.ec.eudi.verifier.endpoint.port.input.*
+ import org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED
+ import org.springframework.http.MediaType.APPLICATION_JSON
+ import org.springframework.web.reactive.function.server.*
+@@ -85,18 +79,13 @@ internal class UtilityApi(
+                 Nonce(it)
+             }
+ 
+-        fun SdJwtVcValidationResult.Invalid.toJson(): JsonArray = buildJsonArray {
+-            errors.forEach { error ->
+-                addJsonObject {
+-                    put("error", error.reason.name)
+-                    put("description", error.description)
+-                    error.cause?.message?.let { cause -> put("cause", cause) }
++        return when (val result = validateSdJwtVc(unverifiedSdJwtVc, nonce)) {
++            is SdJwtVcValidationResult.Valid -> {
++                val reCreated = with(NimbusSdJwtOps) {
++                    result.payload.sdJwt.recreateClaims(visitor = null)
+                 }
++                ok().json().bodyValueAndAwait(reCreated)
+             }
+-        }
+-
+-        return when (val result = validateSdJwtVc(unverifiedSdJwtVc, nonce)) {
+-            is SdJwtVcValidationResult.Valid -> ok().json().bodyValueAndAwait(result.payload)
+             is SdJwtVcValidationResult.Invalid -> badRequest().json().bodyValueAndAwait(result.toJson())
+         }
+     }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/json/JsonSupport.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/json/JsonSupport.kt
+index cb3e4d9..4d4eeeb 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/json/JsonSupport.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/json/JsonSupport.kt
+@@ -15,9 +15,11 @@
+  */
+ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.json
+ 
++import com.nimbusds.jose.util.JSONObjectUtils
+ import kotlinx.serialization.DeserializationStrategy
+ import kotlinx.serialization.json.Json
+ import kotlinx.serialization.json.JsonElement
++import kotlinx.serialization.json.JsonObject
+ import kotlinx.serialization.serializer
+ 
+ internal val jsonSupport = Json {
+@@ -29,3 +31,8 @@ internal inline fun <reified T> JsonElement.decodeAs(deserializer: Deserializati
+     runCatching {
+         jsonSupport.decodeFromJsonElement(deserializer, this)
+     }
++
++internal fun Map<String, Any?>.toJsonObject(): JsonObject {
++    val jsonString = JSONObjectUtils.toJSONString(this)
++    return jsonSupport.decodeFromString(jsonString)
++}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/persistence/PresentationInMemoryRepo.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/persistence/PresentationInMemoryRepo.kt
+index 5305cac..3d5b858 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/persistence/PresentationInMemoryRepo.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/persistence/PresentationInMemoryRepo.kt
+@@ -123,5 +123,7 @@ private fun log(e: PresentationEvent) {
+         is PresentationEvent.TransactionInitialized -> info("Verifier initialized transaction")
+         is PresentationEvent.VerifierGotWalletResponse -> info("Verifier retrieved wallet response")
+         is PresentationEvent.WalletResponsePosted -> info("Wallet posted response")
++        is PresentationEvent.AttestationStatusCheckSuccessful -> info("Attestation status check successful")
++        is PresentationEvent.AttestationStatusCheckFailed -> warn("Attestation status check failed")
+     }
+ }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
+index f44c1d8..29990da 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
+@@ -15,42 +15,44 @@
+  */
+ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.presentation
+ 
++import arrow.core.Either
+ import arrow.core.NonEmptyList
++import arrow.core.raise.either
++import arrow.core.raise.ensure
+ import com.nimbusds.jose.JWSAlgorithm
+ import com.nimbusds.jwt.SignedJWT
+-import eu.europa.ec.eudi.sdjwt.RFC7519
+ import eu.europa.ec.eudi.sdjwt.SdJwtAndKbJwt
+ import eu.europa.ec.eudi.sdjwt.SdJwtVcSpec
+-import eu.europa.ec.eudi.sdjwt.SdJwtVerificationException
+-import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerifier
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.digest.hash
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.encoding.base64UrlNoPadding
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseValidator
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.description
+ import eu.europa.ec.eudi.verifier.endpoint.domain.*
++import eu.europa.ec.eudi.verifier.endpoint.port.input.SdJwtVcValidationResult
++import eu.europa.ec.eudi.verifier.endpoint.port.input.ValidateSdJwtVc
++import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseValidationError
++import eu.europa.ec.eudi.verifier.endpoint.port.input.toJson
+ import eu.europa.ec.eudi.verifier.endpoint.port.out.presentation.ValidateVerifiablePresentation
+-import kotlinx.serialization.json.buildJsonObject
+-import kotlinx.serialization.json.put
+ import org.slf4j.LoggerFactory
+ 
+ private val log = LoggerFactory.getLogger(ValidateSdJwtVcOrMsoMdocVerifiablePresentation::class.java)
+ 
+ internal class ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+     private val config: VerifierConfig,
+-    private val sdJwtVcVerifier: SdJwtVcVerifier<SignedJWT>,
+     private val deviceResponseValidator: DeviceResponseValidator,
++    private val validateSdJwtVc: ValidateSdJwtVc,
+ ) : ValidateVerifiablePresentation {
+ 
+     override suspend fun invoke(
++        transactionId: TransactionId?,
+         verifiablePresentation: VerifiablePresentation,
+         vpFormat: VpFormat,
+         nonce: Nonce,
+         transactionData: NonEmptyList<TransactionData>?,
+-    ): Result<VerifiablePresentation> = runCatching {
++    ): Either<WalletResponseValidationError, VerifiablePresentation> = either {
+         when (verifiablePresentation.format) {
+             Format(SdJwtVcSpec.MEDIA_SUBTYPE_VC_SD_JWT), Format.SdJwtVc -> {
+                 require(vpFormat is VpFormat.SdJwtVc)
+-                validateSdJwtVcVerifiablePresentation(vpFormat, verifiablePresentation, nonce, transactionData)
++                validateSdJwtVcVerifiablePresentation(vpFormat, verifiablePresentation, nonce, transactionData, transactionId).bind()
+             }
+ 
+             Format.MsoMdoc -> {
+@@ -68,46 +70,46 @@ internal class ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+         verifiablePresentation: VerifiablePresentation,
+         nonce: Nonce,
+         transactionData: NonEmptyList<TransactionData>?,
+-    ): VerifiablePresentation {
+-        fun Result<SdJwtAndKbJwt<SignedJWT>>.get(): SdJwtAndKbJwt<SignedJWT> =
+-            getOrElse {
+-                val description = when (it) {
+-                    is SdJwtVerificationException -> it.description
+-                    else -> "an unexpected error occurred: ${it.message}"
++        transactionId: TransactionId?,
++    ): Either<WalletResponseValidationError, VerifiablePresentation> = either {
++        fun SdJwtVcValidationResult.get(): SdJwtAndKbJwt<SignedJWT> =
++            when (this) {
++                is SdJwtVcValidationResult.Valid -> this.payload
++                is SdJwtVcValidationResult.Invalid -> {
++                    val validationFailures = this.toJson().toString()
++                    log.warn("Failed to validate SD-JWT VC: $validationFailures")
++                    raise(WalletResponseValidationError.InvalidVpToken(validationFailures))
+                 }
+-                log.warn("Failed to validate SD-JWT VC: $description", it)
+-                throw IllegalArgumentException("Failed to validate SD-JWT VC: $description", it)
+             }
+ 
+-        val challenge = buildJsonObject {
+-            put(RFC7519.AUDIENCE, config.verifierId.clientId)
+-            put("nonce", nonce.value)
+-        }
+-
+         val (sdJwt, kbJwt) = when (verifiablePresentation) {
+-            is VerifiablePresentation.Str -> sdJwtVcVerifier.verify(
+-                unverifiedSdJwt = verifiablePresentation.value,
+-                challenge = challenge,
++            is VerifiablePresentation.Str -> validateSdJwtVc(
++                unverified = verifiablePresentation.value,
++                nonce = nonce,
++                transactionId = transactionId,
+             ).get()
+ 
+-            is VerifiablePresentation.Json -> sdJwtVcVerifier.verify(
+-                unverifiedSdJwt = verifiablePresentation.value,
+-                challenge = challenge,
++            is VerifiablePresentation.Json -> validateSdJwtVc(
++                unverified = verifiablePresentation.value,
++                nonce = nonce,
++                transactionId = transactionId,
+             ).get()
+         }
+ 
+-        require(sdJwt.jwt.header.algorithm in vpFormat.sdJwtAlgorithms) {
+-            "SD-JWT not signed with a supported algorithm"
++        // Validate that the signing algorithm of sd-jwt-vc matches the algorithm specified in the presentation query
++        ensure(sdJwt.jwt.header.algorithm in vpFormat.sdJwtAlgorithms) {
++            WalletResponseValidationError.InvalidVpToken("SD-JWT not signed with a supported algorithm")
+         }
+-        require(kbJwt.header.algorithm in vpFormat.kbJwtAlgorithms) {
+-            "Keybinding JWT not signed with a supported algorithm"
++        // Validate that the signing algorithm of key binding JWT matches the algorithm specified in the presentation query
++        ensure(kbJwt.header.algorithm in vpFormat.kbJwtAlgorithms) {
++            WalletResponseValidationError.InvalidVpToken("Keybinding JWT not signed with a supported algorithm")
+         }
+ 
+         transactionData?.let {
+             validateTransactionDataHashes(kbJwt, transactionData, config.transactionDataHashAlgorithm)
+         }
+ 
+-        return verifiablePresentation
++        verifiablePresentation
+     }
+ 
+     private fun validateMsoMdocVerifiablePresentation(
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
+index ba9a564..4b253e2 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
+@@ -256,8 +256,17 @@ data class VerifierConfig(
+     val maxAge: Duration,
+     val clientMetaData: ClientMetaData,
+     val transactionDataHashAlgorithm: HashAlgorithm,
++    val validation: Validation,
+ )
+ 
++data class Validation(
++    val sdJwtVc: SdJwtVc,
++) {
++    data class SdJwtVc(
++        val statusCheckEnabled: Boolean,
++    )
++}
++
+ /**
+  * Checks if [value] is a Subject Alternative Name of [type] in this [X509Certificate].
+  */
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
+index d2d325a..64738c2 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
+@@ -125,6 +125,15 @@ private fun toTransferObject(event: PresentationEvent) = buildJsonObject {
+ 
+         is PresentationEvent.PresentationExpired -> {
+         }
++
++        is PresentationEvent.AttestationStatusCheckSuccessful -> {
++            put("status_reference", event.statusReference.json())
++        }
++
++        is PresentationEvent.AttestationStatusCheckFailed -> {
++            put("status_reference", event.statusReference.json())
++            put("cause", event.cause)
++        }
+     }
+ }
+ 
+@@ -149,6 +158,8 @@ private fun JsonObjectBuilder.putEventNameAndActor(e: PresentationEvent) {
+         is PresentationEvent.VerifierGotWalletResponse -> "Verifier got wallet response" to Actor.Verifier
+         is PresentationEvent.VerifierFailedToGetWalletResponse -> "Verifier failed to get wallet" to Actor.Verifier
+         is PresentationEvent.PresentationExpired -> "Presentation expired" to Actor.VerifierEndPoint
++        is PresentationEvent.AttestationStatusCheckSuccessful -> "Attestation status check succeeded" to Actor.VerifierEndPoint
++        is PresentationEvent.AttestationStatusCheckFailed -> "Attestation status check failed" to Actor.VerifierEndPoint
+     }
+     put("event", eventName)
+     put("actor", actor.json())
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
+index 671f45e..c9edf55 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
+@@ -77,7 +77,7 @@ sealed interface WalletResponseValidationError {
+ 
+     data object IncorrectState : WalletResponseValidationError
+     data object MissingIdToken : WalletResponseValidationError
+-    data class InvalidVpToken(val message: String, val cause: Throwable?) : WalletResponseValidationError
++    data class InvalidVpToken(val message: String, val cause: Throwable? = null) : WalletResponseValidationError
+     data object MissingVpToken : WalletResponseValidationError
+     data object MissingPresentationSubmission : WalletResponseValidationError
+     data object PresentationSubmissionMustNotBePresent : WalletResponseValidationError
+@@ -98,6 +98,7 @@ private suspend fun AuthorisationResponseTO.toDomain(
+             is PresentationQuery.ByPresentationDefinition ->
+                 presentationExchangeVpContent(
+                     presentationQuery.presentationDefinition,
++                    presentation.id,
+                     presentation.nonce,
+                     presentation.type.transactionDataOrNull,
+                     validateVerifiablePresentation,
+@@ -106,6 +107,7 @@ private suspend fun AuthorisationResponseTO.toDomain(
+             is PresentationQuery.ByDigitalCredentialsQueryLanguage ->
+                 dcqlVpContent(
+                     presentationQuery.query,
++                    presentation.id,
+                     presentation.nonce,
+                     presentation.type.transactionDataOrNull,
+                     validateVerifiablePresentation,
+@@ -131,6 +133,7 @@ private val jsonPathPattern = Pattern.compile("(^\\$$|^\\$\\[\\d+\\]$)")
+ 
+ private suspend fun AuthorisationResponseTO.presentationExchangeVpContent(
+     presentationDefinition: PresentationDefinition,
++    transactionId: TransactionId,
+     nonce: Nonce,
+     transactionData: NonEmptyList<TransactionData>?,
+     validateVerifiablePresentation: ValidateVerifiablePresentation,
+@@ -171,8 +174,13 @@ private suspend fun AuthorisationResponseTO.presentationExchangeVpContent(
+             val vpFormat = inputDescriptorFormat?.vpFormat(format, WalletResponseValidationError.InvalidPresentationSubmission)?.bind()
+                 ?: vpFormats.vpFormat(format, WalletResponseValidationError.InvalidPresentationSubmission).bind()
+ 
+-            validateVerifiablePresentation(unvalidatedVerifiablePresentation, vpFormat, nonce, applicableTransactionData)
+-                .getOrElse { raise(WalletResponseValidationError.InvalidVpToken("Failed to validate Verifiable Presentation", it)) }
++            validateVerifiablePresentation(
++                transactionId,
++                unvalidatedVerifiablePresentation,
++                vpFormat,
++                nonce,
++                applicableTransactionData,
++            ).bind()
+         }.distinct()
+ 
+         VpContent.PresentationExchange(verifiablePresentations, presentationSubmission)
+@@ -180,6 +188,7 @@ private suspend fun AuthorisationResponseTO.presentationExchangeVpContent(
+ 
+ private suspend fun AuthorisationResponseTO.dcqlVpContent(
+     query: DCQL,
++    transactionId: TransactionId,
+     nonce: Nonce,
+     transactionData: NonEmptyList<TransactionData>?,
+     validateVerifiablePresentation: ValidateVerifiablePresentation,
+@@ -209,8 +218,13 @@ private suspend fun AuthorisationResponseTO.dcqlVpContent(
+                         null,
+                     ),
+                 ).bind()
+-                validateVerifiablePresentation(unvalidatedVerifiablePresentation, vpFormat, nonce, applicableTransactionData)
+-                    .getOrElse { raise(WalletResponseValidationError.InvalidVpToken("Failed to validate Verifiable Presentation", it)) }
++                validateVerifiablePresentation(
++                    transactionId,
++                    unvalidatedVerifiablePresentation,
++                    vpFormat,
++                    nonce,
++                    applicableTransactionData,
++                ).bind()
+             }
+         }
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+index 27c8dfa..efb5d39 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+@@ -27,16 +27,23 @@ import com.nimbusds.jwt.SignedJWT
+ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+ import eu.europa.ec.eudi.sdjwt.*
+ import eu.europa.ec.eudi.sdjwt.NimbusSdJwtOps.HolderPubKeyInConfirmationClaim
+-import eu.europa.ec.eudi.sdjwt.NimbusSdJwtOps.mustBePresentAndValid
++import eu.europa.ec.eudi.sdjwt.vc.KtorHttpClientFactory
+ import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError
+ import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.IssuerKeyVerificationError
+ import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerifier
++import eu.europa.ec.eudi.statium.*
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.json.decodeAs
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.json.toJsonObject
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.description
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Nonce
++import eu.europa.ec.eudi.verifier.endpoint.domain.TransactionId
++import eu.europa.ec.eudi.verifier.endpoint.port.out.persistence.PresentationEvent
++import eu.europa.ec.eudi.verifier.endpoint.port.out.persistence.PublishPresentationEvent
++import kotlinx.datetime.Clock
++import kotlinx.datetime.Instant
++import kotlinx.datetime.toKotlinInstant
+ import kotlinx.serialization.Serializable
+-import kotlinx.serialization.json.JsonObject
+-import kotlinx.serialization.json.buildJsonObject
+-import kotlinx.serialization.json.put
++import kotlinx.serialization.json.*
+ import org.slf4j.LoggerFactory
+ 
+ /**
+@@ -65,6 +72,8 @@ enum class SdJwtVcValidationErrorTO {
+     UnableToLookupDID,
+     UnableToDetermineVerificationMethod,
+ 
++    StatusCheckFailed,
++
+     UnexpectedError,
+ }
+ 
+@@ -74,11 +83,13 @@ data class SdJwtVcValidationError(
+     val cause: Throwable?,
+ )
+ 
++data class StatusCheckException(val reason: String, val causedBy: Throwable) : Exception(reason, causedBy)
++
+ sealed interface SdJwtVcValidationResult {
+     /**
+      * Successfully validated an SD-JWT Verifiable Credential.
+      */
+-    data class Valid(val payload: JsonObject) : SdJwtVcValidationResult
++    data class Valid(val payload: SdJwtAndKbJwt<SignedJWT>) : SdJwtVcValidationResult
+ 
+     /**
+      * SD-JWT Verifiable Credential validation failed.
+@@ -86,6 +97,16 @@ sealed interface SdJwtVcValidationResult {
+     data class Invalid(val errors: NonEmptyList<SdJwtVcValidationError>) : SdJwtVcValidationResult
+ }
+ 
++fun SdJwtVcValidationResult.Invalid.toJson(): JsonArray = buildJsonArray {
++    errors.forEach { error ->
++        addJsonObject {
++            put("error", error.reason.name)
++            put("description", error.description)
++            error.cause?.message?.let { cause -> put("cause", cause) }
++        }
++    }
++}
++
+ internal typealias SdJwt = String
+ internal typealias Audience = String
+ 
+@@ -103,9 +124,19 @@ private val log = LoggerFactory.getLogger(ValidateSdJwtVc::class.java)
+  * @param audience the Client Id of this Verifier, expected to be found in the KeyBinding JWT
+  */
+ internal class ValidateSdJwtVc(
++    private val publishPresentationEvent: PublishPresentationEvent,
+     private val sdJwtVcVerifier: SdJwtVcVerifier<SignedJWT>,
+     private val audience: Audience,
++    private val ktorHttpClientFactory: KtorHttpClientFactory,
++    private val clock: java.time.Clock,
++    private val shouldCheckStatus: Boolean,
+ ) {
++
++    private sealed interface SdJwtSerialization {
++        data class Compact(val value: SdJwt) : SdJwtSerialization
++        data class Flattened(val value: JsonObject) : SdJwtSerialization
++    }
++
+     private val sdJwtVcNoSignatureVerification: JwtSignatureVerifier<SignedJWT> by lazy {
+         val typeVerifier = DefaultJOSEObjectTypeVerifier<SecurityContext>(
+             JOSEObjectType(SdJwtVcSpec.MEDIA_SUBTYPE_VC_SD_JWT),
+@@ -126,13 +157,31 @@ internal class ValidateSdJwtVc(
+         }
+     }
+ 
+-    suspend operator fun invoke(unverified: SdJwt, nonce: Nonce): SdJwtVcValidationResult {
++    suspend operator fun invoke(unverified: JsonObject, nonce: Nonce, transactionId: TransactionId? = null): SdJwtVcValidationResult =
++        doInvoke(
++            unverified = SdJwtSerialization.Flattened(unverified),
++            nonce = nonce,
++            transactionId = transactionId,
++        )
++
++    suspend operator fun invoke(unverified: SdJwt, nonce: Nonce, transactionId: TransactionId? = null): SdJwtVcValidationResult =
++        doInvoke(
++            unverified = SdJwtSerialization.Compact(unverified),
++            nonce = nonce,
++            transactionId = transactionId,
++        )
++
++    private suspend fun doInvoke(
++        unverified: SdJwtSerialization,
++        nonce: Nonce,
++        transactionId: TransactionId? = null,
++    ): SdJwtVcValidationResult {
+         val challenge = buildJsonObject {
+             put(Claims.Audience, audience)
+             put(Claims.Nonce, nonce.value)
+         }
+ 
+-        return verifySdJwtVc(unverified, challenge)
++        return verifySdJwtVc(unverified, challenge, transactionId)
+             .fold(
+                 ifRight = { SdJwtVcValidationResult.Valid(it) },
+                 ifLeft = { sdJwtVcError ->
+@@ -140,7 +189,7 @@ internal class ValidateSdJwtVc(
+                     log.error("SD-JWT-VC validation failed: ${sdJwtVcValidationError.description}", sdJwtVcError)
+                     val errors =
+                         if (!sdJwtVcError.isSignatureVerificationFailure()) nonEmptyListOf(sdJwtVcValidationError)
+-                        else verifySdJwt(unverified, challenge)
++                        else verifySdJwtVcNoSig(unverified, challenge, transactionId)
+                             .fold(
+                                 ifRight = { nonEmptyListOf(sdJwtVcValidationError) },
+                                 ifLeft = { sdJwtError ->
+@@ -154,27 +203,106 @@ internal class ValidateSdJwtVc(
+             )
+     }
+ 
+-    private suspend fun verifySdJwtVc(unverified: SdJwt, challenge: JsonObject): Either<Throwable, JsonObject> =
+-        Either.catch {
+-            val (presentation, _) = sdJwtVcVerifier.verify(unverified, challenge).getOrThrow()
+-
+-            with(NimbusSdJwtOps) {
+-                presentation.recreateClaims(visitor = null)
+-            }
++    private suspend fun verifySdJwtVc(
++        unverified: SdJwtSerialization,
++        challenge: JsonObject,
++        transactionId: TransactionId?,
++    ): Either<Throwable, SdJwtAndKbJwt<SignedJWT>> = Either.catch {
++        val sdJwtAndKbJwt = when (unverified) {
++            is SdJwtSerialization.Compact -> sdJwtVcVerifier.verify(unverified.value, challenge).getOrThrow()
++            is SdJwtSerialization.Flattened -> sdJwtVcVerifier.verify(unverified.value, challenge).getOrThrow()
++        }
++        if (shouldCheckStatus) {
++            sdJwtAndKbJwt.sdJwt.jwt.verifyStatus(transactionId)
+         }
+ 
+-    private suspend fun verifySdJwt(unverified: SdJwt, challenge: JsonObject): Either<Throwable, JsonObject> =
+-        Either.catch {
+-            val (presentation, _) = NimbusSdJwtOps.verify(
+-                jwtSignatureVerifier = sdJwtVcNoSignatureVerification,
+-                unverifiedSdJwt = unverified,
+-                keyBindingVerifier = KeyBindingVerifier.mustBePresentAndValid(HolderPubKeyInConfirmationClaim, challenge),
++        sdJwtAndKbJwt
++    }
++
++    private suspend fun verifySdJwtVcNoSig(
++        unverified: SdJwtSerialization,
++        challenge: JsonObject,
++        transactionId: TransactionId?,
++    ): Either<Throwable, SdJwtAndKbJwt<SignedJWT>> = Either.catch {
++        val keyBindingVerifier = KeyBindingVerifier.mustBePresentAndValid(HolderPubKeyInConfirmationClaim, challenge)
++        val sdJwtAndKbJwt = when (unverified) {
++            is SdJwtSerialization.Compact -> NimbusSdJwtOps.verify(
++                sdJwtVcNoSignatureVerification,
++                keyBindingVerifier,
++                unverified.value,
+             ).getOrThrow()
+ 
+-            with(NimbusSdJwtOps) {
+-                presentation.recreateClaims(visitor = null)
+-            }
++            is SdJwtSerialization.Flattened -> NimbusSdJwtOps.verify(
++                sdJwtVcNoSignatureVerification,
++                keyBindingVerifier,
++                unverified.value,
++            ).getOrThrow()
+         }
++        if (shouldCheckStatus) {
++            sdJwtAndKbJwt.sdJwt.jwt.verifyStatus(transactionId)
++        }
++
++        sdJwtAndKbJwt
++    }
++
++    private suspend fun SignedJWT.verifyStatus(transactionId: TransactionId?) {
++        statusReference()?.let { statusReference ->
++            runCatching {
++                with(getStatus()) {
++                    statusReference.currentStatus().getOrThrow()
++                }.also {
++                    require(it == Status.Valid) { "Attestation status expected to be VALID but is $it" }
++                }
++            }.fold(
++                onSuccess = {
++                    transactionId?.let { logStatusCheckSuccess(transactionId, statusReference) }
++                },
++                onFailure = { error ->
++                    transactionId?.let { logStatusCheckFailed(transactionId, statusReference, error) }
++                    throw StatusCheckException("Attestation status check failed, ${error.message}", error)
++                },
++            )
++        }
++    }
++
++    private fun SignedJWT.statusReference(): StatusReference? {
++        val statusElement = jwtClaimsSet.getJSONObjectClaim(TokenStatusListSpec.STATUS) ?: return null
++        val statusJsonObject = statusElement.toJsonObject()
++        val statusListElement = statusJsonObject[TokenStatusListSpec.STATUS_LIST]
++        requireNotNull(statusListElement) {
++            "Expected status_list element but not found"
++        }
++        require(statusListElement is JsonObject) {
++            "Malformed status_list element"
++        }
++
++        val index = StatusIndex(statusListElement[TokenStatusListSpec.IDX]?.decodeAs<Int>()?.getOrThrow()!!)
++        val uri = statusListElement[TokenStatusListSpec.URI]?.decodeAs<String>()?.getOrThrow()!!
++
++        return StatusReference(index, uri)
++    }
++
++    private fun getStatus(): GetStatus {
++        val delegateClock = object : Clock {
++            override fun now(): Instant = clock.instant().toKotlinInstant()
++        }
++        val getStatusListToken: GetStatusListToken = GetStatusListToken.usingJwt(
++            clock = delegateClock,
++            httpClientFactory = ktorHttpClientFactory,
++            verifyStatusListTokenSignature = VerifyStatusListTokenSignature.Ignore, // TODO: control it via configuration
++        )
++        return GetStatus(getStatusListToken)
++    }
++
++    private suspend fun logStatusCheckSuccess(transactionId: TransactionId, statusReference: StatusReference) {
++        val event = PresentationEvent.AttestationStatusCheckSuccessful(transactionId, clock.instant(), statusReference)
++        publishPresentationEvent(event)
++    }
++
++    private suspend fun logStatusCheckFailed(transactionId: TransactionId, statusReference: StatusReference, error: Throwable) {
++        val event = PresentationEvent.AttestationStatusCheckFailed(transactionId, clock.instant(), statusReference, error.message)
++        publishPresentationEvent(event)
++    }
+ }
+ 
+ private fun Throwable.isSignatureVerificationFailure(): Boolean =
+@@ -182,16 +310,20 @@ private fun Throwable.isSignatureVerificationFailure(): Boolean =
+         is SdJwtVerificationException -> when (val reason = reason) {
+             is VerificationError.InvalidJwt ->
+                 reason.cause is BadJOSEException && (reason.cause?.message?.startsWith("Signed JWT rejected") ?: false)
++
+             is VerificationError.SdJwtVcError ->
+                 reason.error is IssuerKeyVerificationError
++
+             else -> false
+         }
++
+         else -> false
+     }
+ 
+ private fun Throwable.toSdJwtVcValidationError(): SdJwtVcValidationError {
+     val (reason, description) = when (this) {
+         is SdJwtVerificationException -> toSdJwtVcValidationErrorTO() to description
++        is StatusCheckException -> SdJwtVcValidationErrorTO.StatusCheckFailed to reason
+         else -> SdJwtVcValidationErrorTO.UnexpectedError to "an unexpected error occurred${message?.let { ": $it" } ?: ""}"
+     }
+     return SdJwtVcValidationError(reason, description, this)
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
+index ce8267e..0359ad2 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
+@@ -16,6 +16,7 @@
+ package eu.europa.ec.eudi.verifier.endpoint.port.out.persistence
+ 
+ import eu.europa.ec.eudi.prex.PresentationDefinition
++import eu.europa.ec.eudi.statium.StatusReference
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Jwt
+ import eu.europa.ec.eudi.verifier.endpoint.domain.TransactionId
+ import eu.europa.ec.eudi.verifier.endpoint.port.input.JwtSecuredAuthorizationRequestTO
+@@ -100,4 +101,17 @@ sealed interface PresentationEvent {
+         override val transactionId: TransactionId,
+         override val timestamp: Instant,
+     ) : PresentationEvent
++
++    data class AttestationStatusCheckSuccessful(
++        override val transactionId: TransactionId,
++        override val timestamp: Instant,
++        val statusReference: StatusReference,
++    ) : PresentationEvent
++
++    data class AttestationStatusCheckFailed(
++        override val transactionId: TransactionId,
++        override val timestamp: Instant,
++        val statusReference: StatusReference?,
++        val cause: String?,
++    ) : PresentationEvent
+ }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
+index ea14e5b..46acbe6 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
+@@ -15,11 +15,11 @@
+  */
+ package eu.europa.ec.eudi.verifier.endpoint.port.out.presentation
+ 
++import arrow.core.Either
+ import arrow.core.NonEmptyList
+-import eu.europa.ec.eudi.verifier.endpoint.domain.Nonce
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TransactionData
+-import eu.europa.ec.eudi.verifier.endpoint.domain.VerifiablePresentation
+-import eu.europa.ec.eudi.verifier.endpoint.domain.VpFormat
++import arrow.core.raise.either
++import eu.europa.ec.eudi.verifier.endpoint.domain.*
++import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseValidationError
+ 
+ /**
+  * Validates Verifiable Presentations.
+@@ -32,14 +32,15 @@ import eu.europa.ec.eudi.verifier.endpoint.domain.VpFormat
+ fun interface ValidateVerifiablePresentation {
+ 
+     suspend operator fun invoke(
++        transactionId: TransactionId?,
+         verifiablePresentation: VerifiablePresentation,
+         vpFormat: VpFormat,
+         nonce: Nonce,
+         transactionData: NonEmptyList<TransactionData>?,
+-    ): Result<VerifiablePresentation>
++    ): Either<WalletResponseValidationError, VerifiablePresentation>
+ 
+     companion object {
+         val NoOp: ValidateVerifiablePresentation =
+-            ValidateVerifiablePresentation { verifiablePresentation, _, _, _ -> Result.success(verifiablePresentation) }
++            ValidateVerifiablePresentation { _, verifiablePresentation, _, _, _ -> either { verifiablePresentation } }
+     }
+ }
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index 1fba430..4704ef0 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -38,6 +38,12 @@ verifier.clientMetadata.vpFormats.sdJwtVc.sdJwtAlgorithms=ES256
+ verifier.clientMetadata.vpFormats.sdJwtVc.kbJwtAlgorithms=ES256
+ verifier.clientMetadata.vpFormats.msoMdoc.algorithms=ES256
+ 
++#
++# Configuration parameters for validations applied by verifier
++# to wallet presentations or in utilities api
++#
++verifier.validation.sdJwtVc.statusCheck.enabled=true
++
+ # transaction data
+ verifier.transactionData.hashAlgorithm=sha-256
+ 
+diff --git a/src/main/resources/public/openapi.json b/src/main/resources/public/openapi.json
+index 8370342..e7933d0 100644
+--- a/src/main/resources/public/openapi.json
++++ b/src/main/resources/public/openapi.json
+@@ -1484,6 +1484,7 @@
+           "IssuerCertificateIsNotTrusted",
+           "UnableToLookupDID",
+           "UnableToDetermineVerificationMethod",
++          "StatusCheckFailed",
+           "UnexpectedError"
+         ]
+       }
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+index 87ffbf6..2bc6a67 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+@@ -269,4 +269,45 @@ internal class WalletResponseDirectPostJwtValidationsEnabledTest {
+         assertEquals(1, vpToken.size)
+         assertIs<JsonPrimitive>(vpToken.first())
+     }
++
++    @Test
++    fun `when wallet posts sd-jwt-vc with invalid status list details, post fails`() = runTest {
++        val initTransaction = VerifierApiClient.loadInitTransactionTO("07-ehicSdJwtVc-presentationDefinition.json")
++        val transactionDetails = VerifierApiClient.initTransaction(client, initTransaction)
++        val requestObject = WalletApiClient.getRequestObjectJsonResponse(client, transactionDetails.requestUri!!)
++
++        val jarmOption = assertIs<JarmOption.Encrypted>(requestObject.jarmOption())
++        assertEquals(JarmOption.Encrypted("ECDH-ES", "A256GCM"), jarmOption)
++        val ecKey = assertNotNull(requestObject.ecKey())
++
++        val requestId = RequestId(transactionDetails.requestUri?.removePrefix("http://localhost:0/wallet/request.jwt/")!!)
++        val encryptedJwt = run {
++            val presentationSubmission: JsonElement = Json.decodeFromString(
++                TestUtils.loadResource("07-ehicSdJwtVc-presentationSubmission.json"),
++            )
++            val jwtClaims: JWTClaimsSet = buildJsonObject {
++                put("state", requestId.value)
++                put("vp_token", Json.decodeFromString(TestUtils.loadResource("07-ehicSdJwtVc-vpToken.json")))
++                put("presentation_submission", presentationSubmission)
++            }.run { JWTClaimsSet.parse(Json.encodeToString(this)) }
++
++            val jweHeader = JWEHeader.Builder(jarmOption.nimbusJWSAlgorithm(), jarmOption.nimbusEnc())
++                .agreementPartyVInfo(Base64URL.encode(initTransaction.nonce!!))
++                .build()
++
++            EncryptedJWT(jweHeader, jwtClaims)
++        }.apply { encrypt(ECDHEncrypter(ecKey)) }
++
++        val walletResponse = LinkedMultiValueMap<String, Any>()
++            .apply {
++                add("response", encryptedJwt.serialize())
++            }
++
++        try {
++            WalletApiClient.directPostJwt(client, requestId, walletResponse)
++            fail("Expected to fail but didn't")
++        } catch (error: AssertionError) {
++            assertEquals("Status expected:<200 OK> but was:<400 BAD_REQUEST>", error.message)
++        }
++    }
+ }
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
+index ff97148..dd354de 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
+@@ -48,6 +48,9 @@ class InitTransactionTest {
+         clientMetaData = TestContext.clientMetaData,
+         transactionDataHashAlgorithm = HashAlgorithm.SHA_256,
+         requestUriMethod = RequestUriMethod.Get,
++        validation = Validation(
++            sdJwtVc = Validation.SdJwtVc(false),
++        ),
+     )
+ 
+     @Test
+@@ -89,6 +92,9 @@ class InitTransactionTest {
+                 clientMetaData = TestContext.clientMetaData,
+                 transactionDataHashAlgorithm = HashAlgorithm.SHA_256,
+                 requestUriMethod = RequestUriMethod.Get,
++                validation = Validation(
++                    sdJwtVc = Validation.SdJwtVc(false),
++                ),
+             )
+ 
+             val input = InitTransactionTO(
+diff --git a/src/test/resources/07-ehicSdJwtVc-presentationDefinition.json b/src/test/resources/07-ehicSdJwtVc-presentationDefinition.json
+new file mode 100644
+index 0000000..46d69db
+--- /dev/null
++++ b/src/test/resources/07-ehicSdJwtVc-presentationDefinition.json
+@@ -0,0 +1,87 @@
++{
++  "type": "vp_token",
++  "presentation_definition": {
++    "id": "33d06e84-91d6-4574-8d91-bea0d7d6ed23",
++    "input_descriptors": [
++      {
++        "id": "b7643d4c-3b2d-4072-a851-5e5c17ffd822",
++        "name": "European Health Insurance Card (EHIC)",
++        "purpose": "",
++        "format": {
++          "vc+sd-jwt": {
++            "sd-jwt_alg_values": [
++              "ES256",
++              "ES384",
++              "ES512"
++            ],
++            "kb-jwt_alg_values": [
++              "RS256",
++              "RS384",
++              "RS512",
++              "ES256",
++              "ES384",
++              "ES512"
++            ]
++          }
++        },
++        "constraints": {
++          "fields": [
++            {
++              "path": [
++                "$.vct"
++              ],
++              "filter": {
++                "type": "string",
++                "const": "urn:eu.europa.ec.eudi:ehic:1"
++              }
++            },
++            {
++              "path": [
++                "$.credential_holder"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.subject"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.social_security_pin"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.starting_date"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.ending_date"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.document_id"
++              ],
++              "intent_to_retain": false
++            },
++            {
++              "path": [
++                "$.competent_institution"
++              ],
++              "intent_to_retain": false
++            }
++          ]
++        }
++      }
++    ]
++  },
++  "nonce": "e25344b3-c078-46d2-a31b-49afcc62cf4d",
++  "request_uri_method": "get"
++}
+\ No newline at end of file
+diff --git a/src/test/resources/07-ehicSdJwtVc-presentationSubmission.json b/src/test/resources/07-ehicSdJwtVc-presentationSubmission.json
+new file mode 100644
+index 0000000..5017fff
+--- /dev/null
++++ b/src/test/resources/07-ehicSdJwtVc-presentationSubmission.json
+@@ -0,0 +1,11 @@
++{
++  "id": "028b39fd-33b6-46a1-8887-2ef654771d7f",
++  "definition_id": "33d06e84-91d6-4574-8d91-bea0d7d6ed23",
++  "descriptor_map": [
++    {
++      "id": "b7643d4c-3b2d-4072-a851-5e5c17ffd822",
++      "format": "vc+sd-jwt",
++      "path": "$"
++    }
++  ]
++}
+\ No newline at end of file
+diff --git a/src/test/resources/07-ehicSdJwtVc-vpToken.json b/src/test/resources/07-ehicSdJwtVc-vpToken.json
+new file mode 100644
+index 0000000..610e8a6
+--- /dev/null
++++ b/src/test/resources/07-ehicSdJwtVc-vpToken.json
+@@ -0,0 +1 @@
++"eyJ0eXAiOiJkYytzZC1qd3QiLCJhbGciOiJFUzI1NiJ9.eyJfc2QiOlsiU3NZUjQtVE0xQ3cyRXdwcy1mRTh3MlJjaFM0NmNjQWRtb0tJQzVMcDhaWSIsIm9vYTE5TkRQYVFFU3pscGxRSWdPcE1QOEpabmd5YXlpZTItR29tTWhjSkEiLCJ3N3FqSWdTZW1sSnY1aWp2Z0xfSFBZdGx5LW9uUWdKQklIZm1PTUh2aU5NIl0sInZjdCI6InVybjpjcmVkZW50aWFsOnNhbXBsZSIsIl9zZF9hbGciOiJzaGEtMjU2IiwiaXNzIjoiZGlkOmp3azpleUpyZEhraU9pSkZReUlzSW1OeWRpSTZJbEF0TWpVMklpd2lhMmxrSWpvaWFYTnpkV1Z5SWl3aWVDSTZJbU5DWTB4NVVYcE5NMko1UVZCd05sSmpWR05yVXprMVRuWllUa1JoWDNOc1ZIQjRXVUYwYjBWVlRIY2lMQ0o1SWpvaVUzRkVlamhHT0hVek5sQlFURkZZYzB0TllVOW9jWFpIT0VkRlMyWXdhM1JMUjFkWVowVnhOV2RRVlNKOSIsImNuZiI6eyJqd2siOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiJUQ0FFUjE5WnZ1M09IRjRqNFc0dmZTVm9ISVAxSUxpbERsczd2Q2VHZW1jIiwieSI6Ilp4amlXV2JaTVFHSFZXS1ZRNGhiU0lpcnNWZnVlY0NFNnQ0alQ5RjJIWlEifX0sImV4cCI6MTg4MzAwMDAwMCwiaWF0IjoxNjgzMDAwMDAwLCJzdGF0dXMiOnsic3RhdHVzX2xpc3QiOnsiaWR4Ijo1LCJ1cmkiOiJodHRwczovL2lzc3Vlci5ldWRpdy5kZXYvdG9rZW5fc3RhdHVzX2xpc3QvRkMvZXUuZXVyb3BhLmVjLmV1ZGkuZWhpYy4xL2NmOGI0OTNjLTQwYmUtNDViYi1iMTQ4LWUxNzdjNjY1YWExNiJ9fX0.I-CKK-0s7wiVnSrqNrFqSMGk1YPnQvYN1D_pBKCwbGGeaO-S0KwXw4yUYwxM3VcVLhdUHlKA6kd5RF3JLytsyg~WyJvTzZWVmpfV2lZV25KNWUxQ3V6Q0NRIiwiYmlydGhkYXRlIiwiMTk2My0wOC0xMiJd~WyJoNTNCcmttSm9xZHU5LTk2NTBSd2NnIiwiZ2l2ZW5fbmFtZSIsIkVyaWthIl0~WyJmMVpGNXVvYmlzeG9zNVVTUGFNamp3IiwiZmFtaWx5X25hbWUiLCJNdXN0ZXJtYW5uIl0~eyJraWQiOiJob2xkZXIiLCJ0eXAiOiJrYitqd3QiLCJhbGciOiJFUzI1NiJ9.eyJzZF9oYXNoIjoiRFQxdTM5NXZhSTk1Z0IyUkJEVFFBaTlGZXVrRkwwUW1hZWppcVphSktIRSIsImF1ZCI6IlNhbXBsZSBWZXJpZmllciBBY3RvciIsIm5vbmNlIjoiW0JAM2E0ZTUyNCIsImlhdCI6MTc0NDE4MDg5NX0.qXRZjEk-e6vcdZUSS5J-ZtZ-vTgScylq964aa8ln6c3CkUqWdevTgpSEd7NCExl0cM9tlStExqJaxdgv9ZoYZw"
+\ No newline at end of file
+

@@ -1,0 +1,61 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+index 4dec983..310e10a 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+@@ -223,11 +223,7 @@ public class HttpSinkBridgeEndpoint<V, K> extends SinkBridgeEndpoint<V, K> {
+     }
+ 
+     private void sendConsumerSubscriptionResponse(HttpServerResponse response) {
+-        JsonObject jsonResponse = new JsonObject();
+-        jsonResponse.put("subscription_status", "subscribed");
+-
+-        response.putHeader("Content-length", String.valueOf(jsonResponse.toBuffer().length()))
+-                .write(jsonResponse.toBuffer())
++        response.setStatusCode(204)
+                 .end();
+     }
+ 
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+index 9f576fa..981316d 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+@@ -488,11 +488,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(subJson, ar -> {
+                     context.assertTrue(ar.succeeded());
+-
+-                    HttpResponse<JsonObject> response = ar.result();
+-                    JsonObject bridgeResponse = response.body();
+-                    String status = bridgeResponse.getString("subscription_status");
+-                    context.assertEquals("subscribed", status);
++                    context.assertEquals(204, ar.result().statusCode());
+                     subscriberAsync.complete();
+                 });
+ 
+@@ -604,11 +600,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(subJson, ar -> {
+                     context.assertTrue(ar.succeeded());
+-
+-                    HttpResponse<JsonObject> response = ar.result();
+-                    JsonObject bridgeResponse = response.body();
+-                    String status = bridgeResponse.getString("subscription_status");
+-                    context.assertEquals("subscribed", status);
++                    context.assertEquals(204, ar.result().statusCode());
+                     subscriberAsync.complete();
+                 });
+ 
+@@ -720,11 +712,7 @@ public class HttpBridgeTest extends KafkaClusterTestBase {
+                 .as(BodyCodec.jsonObject())
+                 .sendJsonObject(subJson, ar -> {
+                     context.assertTrue(ar.succeeded());
+-
+-                    HttpResponse<JsonObject> response = ar.result();
+-                    JsonObject bridgeResponse = response.body();
+-                    String status = bridgeResponse.getString("subscription_status");
+-                    context.assertEquals("subscribed", status);
++                    context.assertEquals(204, ar.result().statusCode());
+                     subscriberAsync.complete();
+                 });
+ 
+

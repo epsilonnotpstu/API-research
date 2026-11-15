@@ -1,0 +1,409 @@
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromApiJsonDeserializer.java
+index 6ca9b9f02b..e24f8d78b1 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromApiJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromApiJsonDeserializer.java
+@@ -7,9 +7,10 @@ import java.util.Map;
+ import java.util.Set;
+ 
+ import org.mifosplatform.infrastructure.codes.command.CodeCommand;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
++import org.mifosplatform.infrastructure.core.serialization.CommandSerializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+-import org.mifosplatform.infrastructure.core.serialization.CommandSerializer;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Component;
+ 
+@@ -19,29 +20,22 @@ import com.google.gson.reflect.TypeToken;
+  * Implementation of {@link FromApiJsonDeserializer} for {@link CodeCommand}'s.
+  */
+ @Component
+-public final class CodeCommandFromApiJsonDeserializer implements FromApiJsonDeserializer<CodeCommand> {
++public final class CodeCommandFromApiJsonDeserializer extends AbstractFromApiJsonDeserializer<CodeCommand> {
+ 
+     /**
+      * The parameters supported for this command.
+      */
+     private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name"));
+-    
++
+     private final FromJsonHelper fromApiJsonHelper;
+     private final CodeCommandFromCommandJsonDeserializer fromCommandJsonDeserializer;
+-    private final CommandSerializer commandSerializerService;
+ 
+     @Autowired
+     public CodeCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper,
+-            final CodeCommandFromCommandJsonDeserializer fromCommandJsonDeserializer,
+-            final CommandSerializer commandSerializerService) {
++            final CodeCommandFromCommandJsonDeserializer fromCommandJsonDeserializer, final CommandSerializer commandSerializerService) {
++        super(commandSerializerService);
+         this.fromApiJsonHelper = fromApiJsonHelper;
+         this.fromCommandJsonDeserializer = fromCommandJsonDeserializer;
+-        this.commandSerializerService = commandSerializerService;
+-    }
+-
+-    @Override
+-    public CodeCommand commandFromApiJson(final String json) {
+-        return commandFromApiJson(null, json);
+     }
+ 
+     @Override
+@@ -53,16 +47,4 @@ public final class CodeCommandFromApiJsonDeserializer implements FromApiJsonDese
+ 
+         return this.fromCommandJsonDeserializer.commandFromCommandJson(codeId, json);
+     }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final String json) {
+-        final CodeCommand command = commandFromApiJson(json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final Long codeId, final String json) {
+-        final CodeCommand command = commandFromApiJson(codeId, json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromCommandJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromCommandJsonDeserializer.java
+index c70c7d5678..3a0f1d9c17 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromCommandJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/serialization/CodeCommandFromCommandJsonDeserializer.java
+@@ -6,7 +6,7 @@ import java.util.Set;
+ import org.apache.commons.lang.StringUtils;
+ import org.mifosplatform.infrastructure.codes.command.CodeCommand;
+ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
+-import org.mifosplatform.infrastructure.core.serialization.FromCommandJsonDeserializer;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromCommandJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Component;
+@@ -17,7 +17,7 @@ import com.google.gson.JsonElement;
+  *
+  */
+ @Component
+-public final class CodeCommandFromCommandJsonDeserializer implements FromCommandJsonDeserializer<CodeCommand> {
++public final class CodeCommandFromCommandJsonDeserializer extends AbstractFromCommandJsonDeserializer<CodeCommand> {
+ 
+     private final FromJsonHelper fromJsonHelper;
+ 
+@@ -26,16 +26,6 @@ public final class CodeCommandFromCommandJsonDeserializer implements FromCommand
+         this.fromJsonHelper = fromApiJsonHelper;
+     }
+ 
+-    @Override
+-    public CodeCommand commandFromCommandJson(final String commandAsJson) {
+-        return commandFromCommandJson(null, commandAsJson);
+-    }
+-
+-    @Override
+-    public CodeCommand commandFromCommandJson(final Long codeId, final String commandAsJson) {
+-        return commandFromCommandJson(codeId, commandAsJson, false);
+-    }
+-
+     @Override
+     public CodeCommand commandFromCommandJson(Long codeId, String commandAsJson, boolean makerCheckerApproval) {
+         if (StringUtils.isBlank(commandAsJson)) { throw new InvalidJsonException(); }
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/service/CodeWritePlatformServiceJpaRepositoryImpl.java b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/service/CodeWritePlatformServiceJpaRepositoryImpl.java
+index b6ebf00c42..ab65184d0f 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/service/CodeWritePlatformServiceJpaRepositoryImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/codes/service/CodeWritePlatformServiceJpaRepositoryImpl.java
+@@ -63,7 +63,7 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
+             context.authenticatedUser();
+             command.validateForUpdate();
+ 
+-            final Code code = retrieveCodeBy(command.getName());
++            final Code code = retrieveCodeBy(command.getId());
+             code.update(command);
+ 
+             this.codeRepository.save(code);
+@@ -109,12 +109,6 @@ public class CodeWritePlatformServiceJpaRepositoryImpl implements CodeWritePlatf
+         return new EntityIdentifier(code.getId());
+     }
+ 
+-    private Code retrieveCodeBy(final String name) {
+-        final Code code = this.codeRepository.findOneByName(name);
+-        if (code == null) { throw new CodeNotFoundException(name); }
+-        return code;
+-    }
+-    
+     private Code retrieveCodeBy(final Long codeId) {
+         final Code code = this.codeRepository.findOne(codeId);
+         if (code == null) { throw new CodeNotFoundException(codeId.toString()); }
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromApiJsonDeserializer.java
+new file mode 100644
+index 0000000000..9b7a96c076
+--- /dev/null
++++ b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromApiJsonDeserializer.java
+@@ -0,0 +1,34 @@
++package org.mifosplatform.infrastructure.core.serialization;
++
++/**
++ * Abstract implementation of {@link FromApiJsonDeserializer} that can be
++ * extended for specific commands.
++ */
++public abstract class AbstractFromApiJsonDeserializer<T> implements FromApiJsonDeserializer<T> {
++
++    private final CommandSerializer commandSerializerService;
++
++    public AbstractFromApiJsonDeserializer(final CommandSerializer commandSerializerService) {
++        this.commandSerializerService = commandSerializerService;
++    }
++
++    @Override
++    public T commandFromApiJson(final String json) {
++        return commandFromApiJson(null, json);
++    }
++
++    @Override
++    public abstract T commandFromApiJson(final Long resourceId, final String json);
++
++    @Override
++    public String serializedCommandJsonFromApiJson(final String json) {
++        final T command = commandFromApiJson(json);
++        return this.commandSerializerService.serializeCommandToJson(command);
++    }
++
++    @Override
++    public String serializedCommandJsonFromApiJson(final Long resourceId, final String json) {
++        final T command = commandFromApiJson(resourceId, json);
++        return this.commandSerializerService.serializeCommandToJson(command);
++    }
++}
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromCommandJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromCommandJsonDeserializer.java
+new file mode 100644
+index 0000000000..d12c4e9187
+--- /dev/null
++++ b/mifosng-provider/src/main/java/org/mifosplatform/infrastructure/core/serialization/AbstractFromCommandJsonDeserializer.java
+@@ -0,0 +1,18 @@
++package org.mifosplatform.infrastructure.core.serialization;
++
++/**
++ * Abstract implementation of {@link FromCommandJsonDeserializer} that can be
++ * extended for specific commands.
++ */
++public abstract class AbstractFromCommandJsonDeserializer<T> implements FromCommandJsonDeserializer<T> {
++
++    @Override
++    public T commandFromCommandJson(final String commandAsJson) {
++        return commandFromCommandJson(null, commandAsJson);
++    }
++
++    @Override
++    public T commandFromCommandJson(final Long codeId, final String commandAsJson) {
++        return commandFromCommandJson(codeId, commandAsJson, false);
++    }
++}
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromApiJsonDeserializer.java
+index 2e5f30cf98..69bf5bfbcf 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromApiJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromApiJsonDeserializer.java
+@@ -8,6 +8,7 @@ import java.util.Map;
+ import java.util.Set;
+ 
+ import org.joda.time.LocalDate;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.CommandSerializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+@@ -23,7 +24,7 @@ import com.google.gson.reflect.TypeToken;
+  * {@link BranchMoneyTransferCommand} 's.
+  */
+ @Component
+-public final class BranchMoneyTransferCommandFromApiJsonDeserializer implements FromApiJsonDeserializer<BranchMoneyTransferCommand> {
++public final class BranchMoneyTransferCommandFromApiJsonDeserializer extends AbstractFromApiJsonDeserializer<BranchMoneyTransferCommand> {
+ 
+     /**
+      * The parameters supported for this command.
+@@ -32,18 +33,12 @@ public final class BranchMoneyTransferCommandFromApiJsonDeserializer implements
+             "currencyCode", "transactionAmount", "description", "locale", "dateFormat"));
+ 
+     private final FromJsonHelper fromApiJsonHelper;
+-    private final CommandSerializer commandSerializerService;
+ 
+     @Autowired
+     public BranchMoneyTransferCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper,
+             final CommandSerializer commandSerializerService) {
++        super(commandSerializerService);
+         this.fromApiJsonHelper = fromApiJsonHelper;
+-        this.commandSerializerService = commandSerializerService;
+-    }
+-
+-    @Override
+-    public BranchMoneyTransferCommand commandFromApiJson(final String json) {
+-        return commandFromApiJson(null, json);
+     }
+ 
+     @Override
+@@ -69,16 +64,4 @@ public final class BranchMoneyTransferCommandFromApiJsonDeserializer implements
+         return new BranchMoneyTransferCommand(parametersPassedInRequest, false, fromOfficeId, toOfficeId, transactionLocalDate,
+                 currencyCode, transactionAmountValue, description);
+     }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final String json) {
+-        final BranchMoneyTransferCommand command = commandFromApiJson(json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final Long roleId, final String json) {
+-        final BranchMoneyTransferCommand command = commandFromApiJson(roleId, json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromCommandJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromCommandJsonDeserializer.java
+index 9aaf8ad452..5790e18ba8 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromCommandJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/BranchMoneyTransferCommandFromCommandJsonDeserializer.java
+@@ -7,7 +7,7 @@ import java.util.Set;
+ import org.apache.commons.lang.StringUtils;
+ import org.joda.time.LocalDate;
+ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
+-import org.mifosplatform.infrastructure.core.serialization.FromCommandJsonDeserializer;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromCommandJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+ import org.mifosplatform.organisation.office.command.BranchMoneyTransferCommand;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
+ import com.google.gson.JsonElement;
+ 
+ @Component
+-public final class BranchMoneyTransferCommandFromCommandJsonDeserializer implements FromCommandJsonDeserializer<BranchMoneyTransferCommand> {
++public final class BranchMoneyTransferCommandFromCommandJsonDeserializer extends
++        AbstractFromCommandJsonDeserializer<BranchMoneyTransferCommand> {
+ 
+     private final FromJsonHelper fromJsonHelper;
+ 
+@@ -25,16 +26,6 @@ public final class BranchMoneyTransferCommandFromCommandJsonDeserializer impleme
+         this.fromJsonHelper = fromApiJsonHelper;
+     }
+ 
+-    @Override
+-    public BranchMoneyTransferCommand commandFromCommandJson(final String commandAsJson) {
+-        return commandFromCommandJson(null, commandAsJson);
+-    }
+-
+-    @Override
+-    public BranchMoneyTransferCommand commandFromCommandJson(final Long resourceId, final String commandAsJson) {
+-        return commandFromCommandJson(resourceId, commandAsJson, false);
+-    }
+-
+     @Override
+     public BranchMoneyTransferCommand commandFromCommandJson(@SuppressWarnings("unused") final Long resourceId, final String commandAsJson,
+             final boolean makerCheckerApproval) {
+@@ -45,7 +36,8 @@ public final class BranchMoneyTransferCommandFromCommandJsonDeserializer impleme
+         final JsonElement element = fromJsonHelper.parse(commandAsJson);
+         final Long fromOfficeId = fromJsonHelper.extractLongNamed("fromOfficeId", element, parametersPassedInRequest);
+         final Long toOfficeId = fromJsonHelper.extractLongNamed("toOfficeId", element, parametersPassedInRequest);
+-        final LocalDate transactionLocalDate = fromJsonHelper.extractLocalDateAsArrayNamed("transactionDate", element, parametersPassedInRequest);
++        final LocalDate transactionLocalDate = fromJsonHelper.extractLocalDateAsArrayNamed("transactionDate", element,
++                parametersPassedInRequest);
+         final String currencyCode = fromJsonHelper.extractStringNamed("currencyCode", element, parametersPassedInRequest);
+         final BigDecimal transactionAmountValue = fromJsonHelper.extractBigDecimalNamed("transactionAmount", element,
+                 parametersPassedInRequest);
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromApiJsonDeserializer.java
+index 591e2b53cf..cb3a3cf8eb 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromApiJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromApiJsonDeserializer.java
+@@ -7,6 +7,7 @@ import java.util.Map;
+ import java.util.Set;
+ 
+ import org.joda.time.LocalDate;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromApiJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.CommandSerializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromApiJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+@@ -22,27 +23,19 @@ import com.google.gson.reflect.TypeToken;
+  * 's.
+  */
+ @Component
+-public final class OfficeCommandFromApiJsonDeserializer implements FromApiJsonDeserializer<OfficeCommand> {
++public final class OfficeCommandFromApiJsonDeserializer extends AbstractFromApiJsonDeserializer<OfficeCommand> {
+ 
+     /**
+      * The parameters supported for this command.
+      */
+-    private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("transactionDate", "fromOfficeId",
+-            "toOfficeId", "currencyCode", "transactionAmount", "description",
+-            "locale", "dateFormat"));
++    private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("name", "parentId", "openingDate", "externalId", "locale", "dateFormat"));
+ 
+     private final FromJsonHelper fromApiJsonHelper;
+-    private final CommandSerializer commandSerializerService;
+ 
+     @Autowired
+     public OfficeCommandFromApiJsonDeserializer(final FromJsonHelper fromApiJsonHelper, final CommandSerializer commandSerializerService) {
++        super(commandSerializerService);
+         this.fromApiJsonHelper = fromApiJsonHelper;
+-        this.commandSerializerService = commandSerializerService;
+-    }
+-
+-    @Override
+-    public OfficeCommand commandFromApiJson(final String json) {
+-        return commandFromApiJson(null, json);
+     }
+ 
+     @Override
+@@ -62,16 +55,4 @@ public final class OfficeCommandFromApiJsonDeserializer implements FromApiJsonDe
+ 
+         return new OfficeCommand(parametersPassedInRequest, false, officeId, name, externalId, parentId, openingLocalDate);
+     }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final String json) {
+-        final OfficeCommand command = commandFromApiJson(json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+-
+-    @Override
+-    public String serializedCommandJsonFromApiJson(final Long roleId, final String json) {
+-        final OfficeCommand command = commandFromApiJson(roleId, json);
+-        return this.commandSerializerService.serializeCommandToJson(command);
+-    }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromCommandJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromCommandJsonDeserializer.java
+index f50c1ed08e..7983f4cdb2 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromCommandJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/organisation/office/serialization/OfficeCommandFromCommandJsonDeserializer.java
+@@ -6,7 +6,7 @@ import java.util.Set;
+ import org.apache.commons.lang.StringUtils;
+ import org.joda.time.LocalDate;
+ import org.mifosplatform.infrastructure.core.exception.InvalidJsonException;
+-import org.mifosplatform.infrastructure.core.serialization.FromCommandJsonDeserializer;
++import org.mifosplatform.infrastructure.core.serialization.AbstractFromCommandJsonDeserializer;
+ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+ import org.mifosplatform.organisation.office.command.OfficeCommand;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
+ import com.google.gson.JsonElement;
+ 
+ @Component
+-public final class OfficeCommandFromCommandJsonDeserializer implements FromCommandJsonDeserializer<OfficeCommand> {
++public final class OfficeCommandFromCommandJsonDeserializer extends AbstractFromCommandJsonDeserializer<OfficeCommand> {
+ 
+     private final FromJsonHelper fromJsonHelper;
+ 
+@@ -24,16 +24,6 @@ public final class OfficeCommandFromCommandJsonDeserializer implements FromComma
+         this.fromJsonHelper = fromApiJsonHelper;
+     }
+ 
+-    @Override
+-    public OfficeCommand commandFromCommandJson(final String commandAsJson) {
+-        return commandFromCommandJson(null, commandAsJson);
+-    }
+-
+-    @Override
+-    public OfficeCommand commandFromCommandJson(final Long officeId, final String commandAsJson) {
+-        return commandFromCommandJson(officeId, commandAsJson, false);
+-    }
+-
+     @Override
+     public OfficeCommand commandFromCommandJson(final Long officeId, final String commandAsJson, final boolean makerCheckerApproval) {
+         if (StringUtils.isBlank(commandAsJson)) { throw new InvalidJsonException(); }
+

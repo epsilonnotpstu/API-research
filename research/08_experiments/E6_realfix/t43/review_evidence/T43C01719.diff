@@ -1,0 +1,334 @@
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierApplication.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierApplication.kt
+index 75bde00..6950297 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierApplication.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierApplication.kt
+@@ -4,7 +4,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
+ import org.springframework.boot.runApplication
+ import org.springframework.context.annotation.Import
+ 
+-@Import(VerifierContext::class)
+ @SpringBootApplication(proxyBeanMethods = false)
+ class VerifierApplication
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
+index 55b6440..d96449d 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
+@@ -20,6 +20,7 @@ import eu.europa.ec.euidw.verifier.application.port.out.persistence.LoadPresenta
+ import eu.europa.ec.euidw.verifier.application.port.out.persistence.StorePresentation
+ import eu.europa.ec.euidw.verifier.domain.EmbedOption
+ import eu.europa.ec.euidw.verifier.domain.VerifierConfig
++import org.springframework.boot.autoconfigure.jms.artemis.ArtemisProperties.Embedded
+ import org.springframework.context.annotation.Bean
+ import org.springframework.context.annotation.Configuration
+ import org.springframework.context.annotation.Lazy
+@@ -151,11 +152,12 @@ class VerifierContext(environment: Environment) {
+ 
+ private fun Environment.verifierConfig(): VerifierConfig {
+ 
++    val publicUrl = getProperty("verifier.publicUrl", "http://localhost:8080")
+     return VerifierConfig(
+-        clientId = getProperty("verifier.clientId") ?: "verifier",
+-        clientIdScheme = getProperty("verifier.clientIdScheme") ?: "pre-registered",
+-        requestJarOption = EmbedOption.byReference { _ -> URL("https://foo") },
+-        presentationDefinitionEmbedOption = EmbedOption.byReference { _ -> URL("https://foo") },
++        clientId = getProperty("verifier.clientId", "verifier"),
++        clientIdScheme = getProperty("verifier.clientIdScheme", "pre-registered"),
++        requestJarOption = EmbedOption.byReference(WalletApi.requestJwtUrlBuilder(publicUrl)),
++        presentationDefinitionEmbedOption = EmbedOption.byReference(WalletApi.presentationDefinitionUrlBuilder(publicUrl)),
+         responseUriBuilder = { _ -> URL("https://foo") },
+     )
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/UIApi.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/UIApi.kt
+index d9caee2..247da94 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/UIApi.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/UIApi.kt
+@@ -3,35 +3,37 @@ package eu.europa.ec.euidw.verifier.adapter.`in`.web
+ import eu.europa.ec.euidw.verifier.application.port.`in`.InitTransaction
+ import eu.europa.ec.euidw.verifier.application.port.`in`.InitTransactionTO
+ import eu.europa.ec.euidw.verifier.application.port.`in`.JwtSecuredAuthorizationRequestTO
+-import org.springframework.http.MediaType
++import eu.europa.ec.euidw.verifier.application.port.`in`.ValidationException
+ import org.springframework.http.MediaType.APPLICATION_JSON
+ import org.springframework.web.reactive.function.server.*
++import org.springframework.web.reactive.function.server.ServerResponse.badRequest
++import org.springframework.web.reactive.function.server.ServerResponse.ok
+ 
+ class UIApi(private val initTransaction: InitTransaction) {
+ 
+ 
+     val route = coRouter {
+         "/ui/presentations".nest {
+-            POST("", contentType(APPLICATION_JSON).and(accept(APPLICATION_JSON)), this@UIApi::handleInitTransaction)
++            POST("", contentType(APPLICATION_JSON) and accept(APPLICATION_JSON), this@UIApi::handleInitTransaction)
+         }
+     }
+-    suspend fun handleInitTransaction(req: ServerRequest): ServerResponse {
+ 
+-        suspend fun parseInput() = req.awaitBodyOrNull(InitTransactionTO::class)
++    private suspend fun handleInitTransaction(req: ServerRequest): ServerResponse {
+ 
+         suspend fun transactionInitiated(jar: JwtSecuredAuthorizationRequestTO) =
+-            ServerResponse.ok().contentType(APPLICATION_JSON).bodyValueAndAwait(jar)
++            ok().json().bodyValueAndAwait(jar)
+ 
+-        val input = parseInput()
+-
+-        return when (input) {
+-            null -> ServerResponse.badRequest().buildAndAwait()
+-            else -> initTransaction(input).fold(
+-                onSuccess = { transactionInitiated(it) },
+-                onFailure = { ServerResponse.badRequest().buildAndAwait() }
+-            )
++        suspend fun failed(t: Throwable) = when (t) {
++            is ValidationException -> badRequest().json().bodyValueAndAwait("error" to t.error)
++            else -> badRequest().buildAndAwait()
+         }
+ 
++        val input = req.awaitBody<InitTransactionTO>()
++
++        return initTransaction(input).fold(
++            onSuccess = { transactionInitiated(it) },
++            onFailure = { failed(it) }
++        )
+     }
+ 
+ }
+\ No newline at end of file
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
+index ebeab38..68abe2f 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
+@@ -4,9 +4,11 @@ import eu.europa.ec.euidw.verifier.application.port.`in`.GetPresentationDefiniti
+ import eu.europa.ec.euidw.verifier.application.port.`in`.GetRequestObject
+ import eu.europa.ec.euidw.verifier.application.port.`in`.QueryResponse.*
+ import eu.europa.ec.euidw.verifier.domain.RequestId
+-import org.springframework.http.MediaType.APPLICATION_JSON
++import org.springframework.http.MediaType
+ import org.springframework.web.reactive.function.server.*
+ import org.springframework.web.reactive.function.server.ServerResponse.*
++import org.springframework.web.util.DefaultUriBuilderFactory
++import java.net.URL
+ 
+ 
+ class WalletApi(
+@@ -16,26 +18,31 @@ class WalletApi(
+ 
+ 
+     val route = coRouter {
+-        "/wallet".nest {
+-            GET("/{requestId}/ro", this@WalletApi::handleGetRequestObject)
+-            GET("/{requestId}/pd", this@WalletApi::handleGetPresentationDefinition)
+-        }
++        GET(requestJwtPath, this@WalletApi::handleGetRequestObject)
++        GET(presentationDefinitionPath, this@WalletApi::handleGetPresentationDefinition)
+     }
+ 
+     suspend fun handleGetRequestObject(req: ServerRequest): ServerResponse {
+ 
+-        suspend fun requestObjectFound(jwt: String) = ok().contentType(APPLICATION_JSON).bodyValueAndAwait(jwt)
++
++        suspend fun requestObjectFound(jwt: String) =
++            ok()
++                .contentType(MediaType.TEXT_PLAIN)
++                //.contentType(MediaType.parseMediaType("application/oauth-authz-req+jwt"))
++                .bodyValueAndAwait(jwt)
++
+         val requestId = req.requestId()
++
+         return when (val result = getRequestObject(requestId)) {
++            is Found -> requestObjectFound(result.value)
+             is NotFound -> notFound().buildAndAwait()
+             is InvalidState -> badRequest().buildAndAwait()
+-            is Found -> requestObjectFound(result.value)
+         }
+     }
+ 
+ 
+     suspend fun handleGetPresentationDefinition(req: ServerRequest): ServerResponse {
+-        suspend fun pdFound(jwt: String) = ok().contentType(APPLICATION_JSON).bodyValueAndAwait(jwt)
++        suspend fun pdFound(json: String) = ok().json().bodyValueAndAwait(json)
+         val requestId = req.requestId()
+         return when (val result = getPresentationDefinition(requestId)) {
+             is NotFound -> notFound().buildAndAwait()
+@@ -47,4 +54,24 @@ class WalletApi(
+ 
+     private fun ServerRequest.requestId() = RequestId(pathVariable("requestId"))
+ 
++    companion object {
++        const val requestJwtPath = "/wallet/request.jwt/{requestId}"
++
++        fun requestJwtUrlBuilder(baseUrl: String): (RequestId) -> URL = { requestId ->
++            DefaultUriBuilderFactory(baseUrl)
++                .uriString(requestJwtPath)
++                .build(requestId.value).toURL()
++        }
++
++        const val presentationDefinitionPath = "/wallet/pd/{requestId}"
++
++        fun presentationDefinitionUrlBuilder(baseUrl: String): (RequestId) -> URL = { requestId ->
++            DefaultUriBuilderFactory(baseUrl)
++                .uriString(presentationDefinitionPath)
++                .build(requestId.value).toURL()
++        }
++    }
+ }
++
++
++
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
+index b370343..c652871 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
+@@ -1,13 +1,18 @@
+ package eu.europa.ec.euidw.verifier.application.port.`in`
+ 
++import com.fasterxml.jackson.annotation.JsonInclude
++import com.fasterxml.jackson.annotation.JsonInclude.Include
+ import com.fasterxml.jackson.annotation.JsonProperty
++import com.fasterxml.jackson.annotation.JsonValue
++import com.fasterxml.jackson.databind.ObjectMapper
+ import eu.europa.ec.euidw.prex.PresentationExchange
+ import eu.europa.ec.euidw.verifier.application.port.out.cfg.GeneratePresentationId
+ import eu.europa.ec.euidw.verifier.application.port.out.cfg.GenerateRequestId
+ import eu.europa.ec.euidw.verifier.application.port.out.jose.SignRequestObject
+ import eu.europa.ec.euidw.verifier.application.port.out.persistence.StorePresentation
+ import eu.europa.ec.euidw.verifier.domain.*
+-import java.net.URL
++import kotlinx.serialization.Serializable
++import java.net.URLEncoder
+ import java.time.Clock
+ 
+ /**
+@@ -16,25 +21,26 @@ import java.time.Clock
+  * It could be either a request (to the wallet) to present
+  * a id_token, a vp_token or both
+  */
+-enum class PresentationTypeTO {
+-    IdTokenRequest,
+-    VpTokenRequest,
+-    IdAndVpTokenRequest
++enum class PresentationTypeTO(@get:JsonValue val jsonValue: String) {
++    IdTokenRequest("id_token"),
++    VpTokenRequest("vp_token"),
++    IdAndVpTokenRequest("vp_token id_token")
+ }
+ 
+ /**
+  * Specifies what kind of id_token to request
+  */
+-enum class IdTokenTypeTO {
+-    SubjectSigned,
+-    AttesterSigned
++enum class IdTokenTypeTO(@get:JsonValue val jsonValue: String) {
++    SubjectSigned("subject_signed_id_token"),
++    AttesterSigned("attester_signed_id_token")
+ }
+ 
+ 
++@Serializable
+ data class InitTransactionTO(
+     @JsonProperty("type") val type: PresentationTypeTO = PresentationTypeTO.IdAndVpTokenRequest,
+-    @JsonProperty("id_token_type") val idTokenType:IdTokenTypeTO? = null,
+-    @JsonProperty("presentation_definition") val presentationDefinition: String?
++    @JsonProperty("id_token_type") val idTokenType: IdTokenTypeTO? = null,
++    @JsonProperty("presentation_definition") val presentationDefinition: Any?
+ )
+ 
+ /**
+@@ -54,10 +60,11 @@ data class ValidationException(val error: ValidationError) : RuntimeException()
+  * The return value of successfully [initializing][InitTransaction] a [Presentation]
+  *
+  */
++@JsonInclude(Include.NON_NULL)
+ data class JwtSecuredAuthorizationRequestTO(
+-    val clientId: String,
+-    val request: String? = null,
+-    val requestUri: URL?
++    @JsonProperty("client_id") val clientId: String,
++    @JsonProperty("request") val request: String? = null,
++    @JsonProperty("request_uri") val requestUri: String?
+ )
+ 
+ /**
+@@ -145,7 +152,8 @@ internal class InitTransactionLive(
+ 
+             is EmbedOption.ByReference -> {
+                 val requestUri = requestJarOption.buildUrl(requestedPresentation.requestId)
+-                requestedPresentation to JwtSecuredAuthorizationRequestTO(verifierConfig.clientId, null, requestUri)
++                val encoded = URLEncoder.encode(requestUri.toExternalForm(), "UTF-8")
++                requestedPresentation to JwtSecuredAuthorizationRequestTO(verifierConfig.clientId, null, encoded)
+             }
+         }
+ 
+@@ -155,11 +163,12 @@ internal class InitTransactionLive(
+ internal fun InitTransactionTO.toDomain(): Result<PresentationType> {
+ 
+     fun getIdTokenType() = Result.success(idTokenType?.toDomain()?.let { listOf(it) } ?: emptyList())
+-    fun getPd() = when {
+-        presentationDefinition.isNullOrEmpty() -> Result.failure(ValidationException(ValidationError.MissingPresentationDefinition))
++    fun getPd() = when (presentationDefinition) {
++        null -> Result.failure(ValidationException(ValidationError.MissingPresentationDefinition))
+         else -> runCatching {
+             try {
+-                PresentationExchange.jsonParser.decodePresentationDefinition(presentationDefinition!!).getOrThrow()
++                val str = ObjectMapper().writeValueAsString(presentationDefinition)
++                PresentationExchange.jsonParser.decodePresentationDefinition(str!!).getOrThrow()
+             } catch (t: Throwable) {
+                 throw ValidationException(ValidationError.InvalidPresentationDefinition)
+             }
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index b475da3..70484a2 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -4,7 +4,7 @@ logging.level.org.springframework.boot.actuate.endpoint.web=DEBUG
+ 
+ management.endpoints.enabled-by-default=true
+ server.error.includeStacktrace=ALWAYS
+-
++server.port=8080
+ verifier.clientId=Verifier
+ verifier.clientIdScheme=pre-registered
+ verifier.publicUrl=http://localhost:${server.port}
+\ No newline at end of file
+diff --git a/src/test/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransactionTest.kt b/src/test/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransactionTest.kt
+index a18f1db..2a4a0ed 100644
+--- a/src/test/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransactionTest.kt
++++ b/src/test/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransactionTest.kt
+@@ -26,7 +26,7 @@ class InitTransactionTest {
+ 
+             val input = InitTransactionTO(
+                 PresentationTypeTO.IdTokenRequest,
+-                listOf(IdTokenTypeTO.SubjectSigned),
++                IdTokenTypeTO.SubjectSigned,
+                 null
+             )
+ 
+@@ -51,7 +51,7 @@ class InitTransactionTest {
+ 
+             val input = InitTransactionTO(
+                 PresentationTypeTO.IdTokenRequest,
+-                listOf(IdTokenTypeTO.SubjectSigned),
++                IdTokenTypeTO.SubjectSigned,
+                 null
+             )
+ 
+@@ -72,7 +72,7 @@ class InitTransactionTest {
+         //  Misses presentation definition
+         val input = InitTransactionTO(
+             PresentationTypeTO.VpTokenRequest,
+-            listOf(),
++            null,
+             null
+         )
+         testWithInvalidInput(input, ValidationError.MissingPresentationDefinition)
+@@ -85,7 +85,7 @@ class InitTransactionTest {
+         //  Invalid presentation definition
+         val input = InitTransactionTO(
+             PresentationTypeTO.VpTokenRequest,
+-            listOf(),
++            null,
+             "invalid presentation definition json"
+         )
+         testWithInvalidInput(input, ValidationError.InvalidPresentationDefinition)
+

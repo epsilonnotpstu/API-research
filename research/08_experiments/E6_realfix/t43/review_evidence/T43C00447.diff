@@ -1,0 +1,39 @@
+diff --git a/integration/spark/vendor/snowflake/build.gradle b/integration/spark/vendor/snowflake/build.gradle
+index f1d66f267..a172e24a8 100644
+--- a/integration/spark/vendor/snowflake/build.gradle
++++ b/integration/spark/vendor/snowflake/build.gradle
+@@ -17,7 +17,7 @@ ext {
+             '3.1.3': '2.11.0',
+             '3.2.4': '2.11.0',
+             '3.3.4': '2.11.0',
+-            '3.4.2': '2.13.0'
++            '3.4.2': '2.15.0'
+     ]
+ 
+     sparkProp = project.findProperty('spark.version').toString()
+diff --git a/integration/spark/vendor/snowflake/src/main/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/SnowflakeRelationVisitor.java b/integration/spark/vendor/snowflake/src/main/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/SnowflakeRelationVisitor.java
+index a4cd73a92..5cf71c3d8 100644
+--- a/integration/spark/vendor/snowflake/src/main/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/SnowflakeRelationVisitor.java
++++ b/integration/spark/vendor/snowflake/src/main/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/SnowflakeRelationVisitor.java
+@@ -64,7 +64,7 @@ public class SnowflakeRelationVisitor<D extends OpenLineage.Dataset>
+     String sfSchema = params.sfSchema();
+     String sfFullURL = params.sfFullURL();
+     Optional<String> dbtable =
+-        Optional.<TableName>ofNullable(params.table().getOrElse(null)).map(TableName::toString);
++        ScalaConversionUtils.asJavaOptional(params.table()).map(TableName::toString);
+     Optional<String> query = ScalaConversionUtils.asJavaOptional(params.query());
+ 
+     return SnowflakeDataset.getDatasets(
+diff --git a/integration/spark/vendor/snowflake/src/test/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/plan/SnowflakeRelationVisitorTest.java b/integration/spark/vendor/snowflake/src/test/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/plan/SnowflakeRelationVisitorTest.java
+index 98140a631..0aae830b8 100644
+--- a/integration/spark/vendor/snowflake/src/test/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/plan/SnowflakeRelationVisitorTest.java
++++ b/integration/spark/vendor/snowflake/src/test/java/io/openlineage/spark/agent/vendor/snowflake/lifecycle/plan/SnowflakeRelationVisitorTest.java
+@@ -109,6 +109,7 @@ public class SnowflakeRelationVisitorTest {
+ 
+   @Test
+   void testApplyQuery() {
++    when(relation.params().table()).thenReturn(Option.empty());
+     when(relation.params().query()).thenReturn(Option.apply("select * from some_table"));
+ 
+     OpenLineageContext openLineageContext =
+

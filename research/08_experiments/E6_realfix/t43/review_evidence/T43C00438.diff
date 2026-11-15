@@ -1,0 +1,108 @@
+diff --git a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializer.java b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializer.java
+index 5a677d153..056a242a2 100644
+--- a/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializer.java
++++ b/integration/spark/src/main/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializer.java
+@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreType;
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
++import com.fasterxml.jackson.core.JsonProcessingException;
+ import com.fasterxml.jackson.databind.Module;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.introspect.ClassIntrospector;
+@@ -54,11 +55,22 @@ class LogicalPlanSerializer {
+     mapper.setMixInResolver(new LogicalPlanMixinResolver());
+   }
+ 
++  /**
++   * Returns valid JSON string
++   *
++   * @param x
++   * @return
++   */
+   public String serialize(LogicalPlan x) {
+     try {
+       return mapper.writeValueAsString(x);
+     } catch (Throwable e) {
+-      return "Unable to serialize: " + e.getMessage();
++      try {
++        return mapper.writeValueAsString(
++            "Unable to serialize logical plan due to: " + e.getMessage());
++      } catch (JsonProcessingException ex) {
++        return "\"Unable to serialize error message\"";
++      }
+     }
+   }
+ 
+diff --git a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
+index 40e1b8cba..4f4bcce8d 100644
+--- a/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
++++ b/integration/spark/src/test/common/java/io/openlineage/spark/agent/lifecycle/LogicalPlanSerializerTest.java
+@@ -37,6 +37,7 @@ import org.apache.spark.sql.catalyst.expressions.ExprId;
+ import org.apache.spark.sql.catalyst.expressions.Expression;
+ import org.apache.spark.sql.catalyst.expressions.NamedExpression;
+ import org.apache.spark.sql.catalyst.plans.logical.Aggregate;
++import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan;
+ import org.apache.spark.sql.execution.datasources.CatalogFileIndex;
+ import org.apache.spark.sql.execution.datasources.HadoopFsRelation;
+ import org.apache.spark.sql.execution.datasources.InsertIntoDataSourceCommand;
+@@ -50,10 +51,12 @@ import org.apache.spark.sql.types.Metadata;
+ import org.apache.spark.sql.types.StringType$;
+ import org.apache.spark.sql.types.StructField;
+ import org.apache.spark.sql.types.StructType;
++import org.junit.Assert;
+ import org.junit.jupiter.api.Test;
+ import org.postgresql.Driver;
+ import scala.Option;
+ import scala.Tuple2;
++import scala.collection.Seq;
+ import scala.collection.Seq$;
+ import scala.collection.immutable.HashMap;
+ import scala.collection.immutable.Map$;
+@@ -125,6 +128,45 @@ class LogicalPlanSerializerTest {
+         .satisfies(new MatchesMapRecursively(expectedLogicalRelationNode));
+   }
+ 
++  @Test
++  public void testSerializeLogicalPlanReturnsAlwaysValidJson() throws IOException {
++    LogicalPlan notSerializablePlan =
++        new LogicalPlan() {
++          @Override
++          public Seq<Attribute> output() {
++            return null;
++          }
++
++          @Override
++          public Seq<LogicalPlan> children() {
++            return null;
++          }
++
++          @Override
++          public Object productElement(int n) {
++            return null;
++          }
++
++          @Override
++          public int productArity() {
++            return 0;
++          }
++
++          @Override
++          public boolean canEqual(Object that) {
++            return false;
++          }
++        };
++    LogicalPlanSerializer logicalPlanSerializer = new LogicalPlanSerializer();
++
++    final ObjectMapper mapper = new ObjectMapper();
++    try {
++      mapper.readTree(logicalPlanSerializer.serialize(notSerializablePlan));
++    } catch (IOException e) {
++      Assert.fail();
++    }
++  }
++
+   @Test
+   public void testSerializeInsertIntoHadoopPlan()
+       throws IOException, InvocationTargetException, IllegalAccessException {
+

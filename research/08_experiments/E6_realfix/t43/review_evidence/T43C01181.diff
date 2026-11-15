@@ -1,0 +1,263 @@
+diff --git a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/OrganizationIT.java b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/OrganizationIT.java
+index 443788c50..5f1dee79b 100644
+--- a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/OrganizationIT.java
++++ b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/OrganizationIT.java
+@@ -2056,4 +2056,24 @@ public class OrganizationIT extends BaseIT {
+         assertEquals(io.dockstore.openapi.client.model.Organization.StatusEnum.APPROVED, organization.getStatus());
+         assertEquals("testname", organization.getName());
+     }
++
++    /**
++     * Test an admin user accessing a nonexistent organization.
++     */
++    @Test
++    public void testAdminViewNonexistentOrganization() {
++
++        // Setup admin
++        final io.dockstore.openapi.client.ApiClient webClientAdminUser = getOpenAPIWebClient(ADMIN_USERNAME, testingPostgres);
++        final io.dockstore.openapi.client.api.OrganizationsApi organizationsApiAdmin = new io.dockstore.openapi.client.api.OrganizationsApi(webClientAdminUser);
++        final Long nonexistentID = 11111111111111111L; // very unlikely an org is assigned this ID
++
++        // Access non-existent organization - this should fail with a 404
++        try {
++            organizationsApiAdmin.getOrganizationById(nonexistentID);
++            fail("An admin accessing a nonexistent organization should throw an exception");
++        } catch (io.dockstore.openapi.client.ApiException ex) {
++            assertEquals(HttpStatus.SC_NOT_FOUND, ex.getCode());
++        }
++    }
+ }
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/CollectionResource.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/CollectionResource.java
+index 9ef2843dc..e132336f4 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/CollectionResource.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/CollectionResource.java
+@@ -198,7 +198,7 @@ public class CollectionResource implements AuthenticatedResourceInterface, Alias
+             // User is given, check if the collections organization is either approved or the user has access
+             // Admins and curators should be able to see collections from unapproved organizations
+             Organization organization = organizationDAO.findByName(organizationName);
+-            if (organization == null || !OrganizationResource.doesOrganizationExistToUser(organization.getId(), user.get().getId(), organizationDAO)) {
++            if (organization == null || !OrganizationResource.doesOrganizationExistToUser(organization.getId(), user.get().getId(), organizationDAO, userDAO)) {
+                 String msg = "Organization " + Utilities.cleanForLogging(organizationName) + " not found.";
+                 LOG.info(msg);
+                 throw new CustomWebApplicationException(msg, HttpStatus.SC_NOT_FOUND);
+@@ -414,7 +414,7 @@ public class CollectionResource implements AuthenticatedResourceInterface, Alias
+             Organization organization = organizationDAO.findApprovedById(organizationId);
+             throwExceptionForNullOrganization(organization);
+         } else {
+-            boolean doesOrgExist = OrganizationResource.doesOrganizationExistToUser(organizationId, user.get().getId(), organizationDAO);
++            boolean doesOrgExist = OrganizationResource.doesOrganizationExistToUser(organizationId, user.get().getId(), organizationDAO, userDAO);
+             if (!doesOrgExist) {
+                 String msg = "Organization not found.";
+                 LOG.info(msg);
+@@ -618,7 +618,7 @@ public class CollectionResource implements AuthenticatedResourceInterface, Alias
+             throw new CustomWebApplicationException(msg, HttpStatus.SC_NOT_FOUND);
+         }
+ 
+-        return OrganizationResource.doesOrganizationExistToUser(collection.getOrganization().getId(), userId, organizationDAO);
++        return OrganizationResource.doesOrganizationExistToUser(collection.getOrganization().getId(), userId, organizationDAO, userDAO);
+     }
+ 
+     /**
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/OrganizationResource.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/OrganizationResource.java
+index e4d279013..d5e8c5d9d 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/OrganizationResource.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/OrganizationResource.java
+@@ -413,10 +413,8 @@ public class OrganizationResource implements AuthenticatedResourceInterface, Ali
+             throwExceptionForNullOrganization(organization);
+             return organization;
+         } else {
+-            // User is given, check if organization is either approved or the user has access
+-            // Admins and curators should be able to see unapproved organizations
+             boolean doesOrgExist =
+-                doesOrganizationExistToUserResourceDAO(orgId, user.get().getId()) || user.get().getIsAdmin() || user.get().isCurator();
++                doesOrganizationExistToUserResourceDAO(orgId, user.get().getId());
+             if (!doesOrgExist) {
+                 String msg = "Organization not found";
+                 LOG.info(msg);
+@@ -861,7 +859,7 @@ public class OrganizationResource implements AuthenticatedResourceInterface, Ali
+     }
+ 
+     private boolean doesOrganizationExistToUserResourceDAO(Long organizationId, Long userId) {
+-        return doesOrganizationExistToUser(organizationId, userId, organizationDAO);
++        return doesOrganizationExistToUser(organizationId, userId, organizationDAO, userDAO);
+     }
+ 
+     /**
+@@ -872,11 +870,16 @@ public class OrganizationResource implements AuthenticatedResourceInterface, Ali
+      * @param userId
+      * @return True if organization exists to user, false otherwise
+      */
+-    static boolean doesOrganizationExistToUser(Long organizationId, Long userId, OrganizationDAO organizationDAO) {
++    static boolean doesOrganizationExistToUser(Long organizationId, Long userId, OrganizationDAO organizationDAO, UserDAO userDAO) {
+         Organization organization = organizationDAO.findById(organizationId);
+         if (organization == null) {
+             return false;
+         }
++        // Admins and curators should be able to see unapproved organizations
++        User user = userDAO.findById(userId);
++        if (user != null && (user.getIsAdmin() || user.isCurator())) {
++            return true;
++        }
+         OrganizationUser organizationUser = getUserOrgRole(organization, userId);
+         return Objects.equals(organization.getStatus(), Organization.ApplicationState.APPROVED) || (organizationUser != null);
+     }
+diff --git a/dockstore-webservice/src/test/java/io/dockstore/webservice/resources/OrganizationResourceTest.java b/dockstore-webservice/src/test/java/io/dockstore/webservice/resources/OrganizationResourceTest.java
+new file mode 100644
+index 000000000..b4bc65cf5
+--- /dev/null
++++ b/dockstore-webservice/src/test/java/io/dockstore/webservice/resources/OrganizationResourceTest.java
+@@ -0,0 +1,153 @@
++package io.dockstore.webservice.resources;
++
++import static org.mockito.ArgumentMatchers.anyLong;
++import static org.mockito.Mockito.when;
++
++import io.dockstore.webservice.core.Organization;
++import io.dockstore.webservice.core.OrganizationUser;
++import io.dockstore.webservice.core.User;
++import io.dockstore.webservice.jdbi.OrganizationDAO;
++import io.dockstore.webservice.jdbi.UserDAO;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.Map;
++import java.util.Set;
++import org.junit.Assert;
++import org.junit.Before;
++import org.junit.Test;
++import org.mockito.Mockito;
++
++public class OrganizationResourceTest {
++
++    private User normalUser;
++    private User adminUser;
++    private User curatorUser;
++    private User memberUser;
++
++    private Organization approvedOrganization;
++    private Organization pendingOrganization;
++    private Organization rejectedOrganization;
++
++    private Map<Long, User> idToUser;
++    private Map<Long, Organization> idToOrganization;
++    
++    private UserDAO userDAO;
++    private OrganizationDAO organizationDAO;
++
++    private User mockUser(Long id, boolean isAdmin, boolean isCurator) {
++        User user = Mockito.mock(User.class);
++
++        when(user.getId()).thenReturn(id);
++        when(user.getIsAdmin()).thenReturn(isAdmin);
++        when(user.isCurator()).thenReturn(isCurator);
++
++        idToUser.put(user.getId(), user);
++
++        return (user);
++    }
++
++    private Organization mockOrganization(Long id, Organization.ApplicationState state, User member) {
++        Organization organization = Mockito.mock(Organization.class);
++
++        when(organization.getId()).thenReturn(id);
++        when(organization.getStatus()).thenReturn(state);
++
++        Set<OrganizationUser> organizationUsers = new HashSet<>();
++        organizationUsers.add(mockOrganizationUser(organization, member));
++        when(organization.getUsers()).thenReturn(organizationUsers);
++            
++        idToOrganization.put(organization.getId(), organization);
++
++        return (organization);
++    }
++
++    private OrganizationUser mockOrganizationUser(Organization organization, User user) {
++        OrganizationUser organizationUser = Mockito.mock(OrganizationUser.class);
++        OrganizationUser.OrganizationUserId id = new OrganizationUser.OrganizationUserId(user.getId(), organization.getId());
++        when(organizationUser.getId()).thenReturn(id);
++        when(organizationUser.getUser()).thenReturn(user);
++        when(organizationUser.isAccepted()).thenReturn(true);
++        when(organizationUser.getRole()).thenReturn(OrganizationUser.Role.MEMBER);
++
++        return (organizationUser);
++    }
++
++    private UserDAO mockUserDAO() {
++        UserDAO mockedUserDAO = Mockito.mock(UserDAO.class);
++        when(mockedUserDAO.findById(anyLong())).thenAnswer(invocation -> {
++            return (idToUser.get(invocation.getArgument(0)));
++        });
++        return (mockedUserDAO);
++    }
++
++    private OrganizationDAO mockOrganizationDAO() {
++        OrganizationDAO mockedOrganizationDAO = Mockito.mock(OrganizationDAO.class);
++        when(mockedOrganizationDAO.findById(anyLong())).thenAnswer(invocation -> {
++            return (idToOrganization.get(invocation.getArgument(0)));
++        });
++        return (mockedOrganizationDAO);
++    }
++
++    @Before
++    public void init() {
++        idToUser = new HashMap<>();
++        idToOrganization = new HashMap<>();
++
++        normalUser = mockUser(1L, false, false);
++        adminUser = mockUser(2L, true, false);
++        curatorUser = mockUser(3L, false, true);
++        memberUser = mockUser(4L, false, false);
++
++        approvedOrganization = mockOrganization(10L,
++            Organization.ApplicationState.APPROVED, memberUser);
++        pendingOrganization = mockOrganization(11L,
++            Organization.ApplicationState.PENDING, memberUser);
++        rejectedOrganization = mockOrganization(12L,
++            Organization.ApplicationState.REJECTED, memberUser);
++
++        userDAO = mockUserDAO();
++        organizationDAO = mockOrganizationDAO();
++    }
++
++    private void checkExists(Long organizationId, Long userId, boolean shouldExist) {
++        boolean exists = OrganizationResource.doesOrganizationExistToUser(
++            organizationId, userId, organizationDAO, userDAO);
++        Assert.assertEquals(shouldExist, exists);
++    }
++
++    /**
++     * Test that {@link OrganizationResource#doesOrganizationExistToUser} implements the correct organization visibility policy.
++     */
++    @Test
++    public void doesOrganizationExistToUserTest() {
++        final Long bogusUserID = -1L;
++        final Long bogusOrganizationID = -1L;
++
++        // To avoid duplicating the logic we're testing, we explicitly
++        // specify each of the test conditions and expected results below.
++
++        checkExists(approvedOrganization.getId(), normalUser.getId(), true);
++        checkExists(approvedOrganization.getId(), adminUser.getId(), true);
++        checkExists(approvedOrganization.getId(), curatorUser.getId(), true);
++        checkExists(approvedOrganization.getId(), memberUser.getId(), true);
++        checkExists(approvedOrganization.getId(), bogusUserID, true);
++
++        checkExists(pendingOrganization.getId(), normalUser.getId(), false);
++        checkExists(pendingOrganization.getId(), adminUser.getId(), true);
++        checkExists(pendingOrganization.getId(), curatorUser.getId(), true);
++        checkExists(pendingOrganization.getId(), memberUser.getId(), true);
++        checkExists(pendingOrganization.getId(), bogusUserID, false);
++
++        checkExists(rejectedOrganization.getId(), normalUser.getId(), false);
++        checkExists(rejectedOrganization.getId(), adminUser.getId(), true);
++        checkExists(rejectedOrganization.getId(), curatorUser.getId(), true);
++        checkExists(rejectedOrganization.getId(), memberUser.getId(), true);
++        checkExists(rejectedOrganization.getId(), bogusUserID, false);
++
++        checkExists(bogusOrganizationID, normalUser.getId(), false);
++        checkExists(bogusOrganizationID, adminUser.getId(), false);
++        checkExists(bogusOrganizationID, curatorUser.getId(), false);
++        checkExists(bogusOrganizationID, memberUser.getId(), false);
++        checkExists(bogusOrganizationID, bogusUserID, false);
++    }
++}
+

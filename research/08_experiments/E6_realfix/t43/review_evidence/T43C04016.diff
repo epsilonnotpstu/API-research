@@ -1,0 +1,437 @@
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeConsentAcquiredResult.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeConsentAcquiredResult.java
+new file mode 100644
+index 000000000..cae9906d4
+--- /dev/null
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeConsentAcquiredResult.java
+@@ -0,0 +1,26 @@
++package de.adorsys.opba.protocol.facade.dto.result.torest;
++
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.ConsentAcquiredResult;
++import lombok.Data;
++import org.mapstruct.Mapper;
++import org.mapstruct.factory.Mappers;
++
++import java.net.URI;
++import java.util.UUID;
++
++@Data
++public class FacadeConsentAcquiredResult<T> implements FacadeResult<T> {
++
++    public static final RedirectFromProtocol FROM_PROTOCOL = Mappers.getMapper(RedirectFromProtocol.class);
++
++    private String redirectCode;
++    private UUID xRequestId;
++    private String serviceSessionId;
++    private String authorizationSessionId;
++    private URI redirectionTo;
++
++    @Mapper
++    public interface RedirectFromProtocol {
++        FacadeConsentAcquiredResult map(ConsentAcquiredResult result);
++    }
++}
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeErrorResult.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeErrorResult.java
+index 197615ff1..a369bb377 100644
+--- a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeErrorResult.java
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeErrorResult.java
+@@ -1,6 +1,6 @@
+ package de.adorsys.opba.protocol.facade.dto.result.torest;
+ 
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.error.ErrorResult;
+ import lombok.Data;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.factory.Mappers;
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeRedirectResult.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeRedirectResult.java
+index a5e0ed26c..da5507571 100644
+--- a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeRedirectResult.java
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeRedirectResult.java
+@@ -1,6 +1,6 @@
+ package de.adorsys.opba.protocol.facade.dto.result.torest;
+ 
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.RedirectionResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.RedirectionResult;
+ import lombok.Data;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.factory.Mappers;
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeSuccessResult.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeSuccessResult.java
+index 3ae7bab1b..59a719c03 100644
+--- a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeSuccessResult.java
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/dto/result/torest/FacadeSuccessResult.java
+@@ -1,6 +1,6 @@
+ package de.adorsys.opba.protocol.facade.dto.result.torest;
+ 
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.SuccessResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.SuccessResult;
+ import lombok.Data;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.factory.Mappers;
+diff --git a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/ProtocolResultHandler.java b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/ProtocolResultHandler.java
+index 0e97e4454..3377bc919 100644
+--- a/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/ProtocolResultHandler.java
++++ b/opba-banking-protocol-facade/src/main/java/de/adorsys/opba/protocol/facade/services/ProtocolResultHandler.java
+@@ -6,9 +6,9 @@ import de.adorsys.opba.db.domain.entity.sessions.ServiceSession;
+ import de.adorsys.opba.db.repository.jpa.AuthenticationSessionRepository;
+ import de.adorsys.opba.db.repository.jpa.BankProtocolRepository;
+ import de.adorsys.opba.protocol.api.dto.context.ServiceContext;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.RedirectionResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.RedirectionResult;
+ import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.SuccessResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.SuccessResult;
+ import de.adorsys.opba.protocol.facade.dto.result.torest.FacadeRedirectResult;
+ import de.adorsys.opba.protocol.facade.dto.result.torest.FacadeResult;
+ import de.adorsys.opba.protocol.facade.dto.result.torest.FacadeSuccessResult;
+diff --git a/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListAccountsServiceTest.java b/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListAccountsServiceTest.java
+index 59f834f7d..1ab16e7ef 100644
+--- a/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListAccountsServiceTest.java
++++ b/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListAccountsServiceTest.java
+@@ -3,7 +3,7 @@ package de.adorsys.opba.protocol.facade.services.ais;
+ import de.adorsys.opba.db.config.EnableBankingPersistence;
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableRequest;
+ import de.adorsys.opba.protocol.api.dto.request.accounts.ListAccountsRequest;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ValidationErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.ValidationErrorResult;
+ import de.adorsys.opba.protocol.xs2a.EnableXs2aProtocol;
+ import lombok.SneakyThrows;
+ import org.junit.jupiter.api.Test;
+@@ -40,4 +40,4 @@ class ListAccountsServiceTest {
+     @SpringBootApplication(scanBasePackages = "de.adorsys.opba.protocol.facade")
+     public static class TestConfig {
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListTransactionsServiceTest.java b/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListTransactionsServiceTest.java
+index bebcf5ea7..aa1390ac6 100644
+--- a/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListTransactionsServiceTest.java
++++ b/opba-banking-protocol-facade/src/test/java/de/adorsys/opba/protocol/facade/services/ais/ListTransactionsServiceTest.java
+@@ -3,7 +3,7 @@ package de.adorsys.opba.protocol.facade.services.ais;
+ import de.adorsys.opba.db.config.EnableBankingPersistence;
+ import de.adorsys.opba.protocol.api.dto.request.FacadeServiceableRequest;
+ import de.adorsys.opba.protocol.api.dto.request.transactions.ListTransactionsRequest;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ValidationErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.ValidationErrorResult;
+ import de.adorsys.opba.protocol.xs2a.EnableXs2aProtocol;
+ import lombok.SneakyThrows;
+ import org.junit.jupiter.api.Test;
+@@ -40,4 +40,4 @@ class ListTransactionsServiceTest {
+     @SpringBootApplication(scanBasePackages = "de.adorsys.opba.protocol.facade")
+     public static class TestConfig {
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ErrorResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ErrorResult.java
+deleted file mode 100644
+index a50d04fcb..000000000
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ErrorResult.java
++++ /dev/null
+@@ -1,10 +0,0 @@
+-package de.adorsys.opba.protocol.api.dto.result.fromprotocol;
+-
+-import lombok.Data;
+-
+-@Data
+-public class ErrorResult<T> implements Result<T> {
+-
+-    private String message;
+-    private String code;
+-}
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/AuthorizationRequiredResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/AuthorizationRequiredResult.java
+similarity index 74%
+rename from opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/AuthorizationRequiredResult.java
+rename to opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/AuthorizationRequiredResult.java
+index 46398e0d6..e8467c415 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/AuthorizationRequiredResult.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/AuthorizationRequiredResult.java
+@@ -1,4 +1,4 @@
+-package de.adorsys.opba.protocol.api.dto.result.fromprotocol;
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog;
+ 
+ import java.net.URI;
+ 
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/RedirectionResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/RedirectionResult.java
+similarity index 59%
+rename from opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/RedirectionResult.java
+rename to opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/RedirectionResult.java
+index 944e56c3b..d06b567e3 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/RedirectionResult.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/RedirectionResult.java
+@@ -1,5 +1,6 @@
+-package de.adorsys.opba.protocol.api.dto.result.fromprotocol;
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog;
+ 
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ 
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ValidationErrorResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/ValidationErrorResult.java
+similarity index 72%
+rename from opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ValidationErrorResult.java
+rename to opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/ValidationErrorResult.java
+index fab631bd9..dc13fe2a8 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ValidationErrorResult.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/dialog/ValidationErrorResult.java
+@@ -1,4 +1,4 @@
+-package de.adorsys.opba.protocol.api.dto.result.fromprotocol;
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog;
+ 
+ import java.net.URI;
+ 
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/error/ErrorResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/error/ErrorResult.java
+new file mode 100644
+index 000000000..e1f353cc1
+--- /dev/null
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/error/ErrorResult.java
+@@ -0,0 +1,11 @@
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.error;
++
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
++import lombok.Data;
++
++@Data
++public class ErrorResult<T> implements Result<T> {
++
++    private String message;
++    private String code;
++}
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/ConsentAcquiredResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/ConsentAcquiredResult.java
+new file mode 100644
+index 000000000..3912922e3
+--- /dev/null
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/ConsentAcquiredResult.java
+@@ -0,0 +1,6 @@
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok;
++
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
++
++public class ConsentAcquiredResult<T> implements Result<T> {
++}
+diff --git a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/SuccessResult.java b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/SuccessResult.java
+similarity index 54%
+rename from opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/SuccessResult.java
+rename to opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/SuccessResult.java
+index 18746ed91..11d9c62ca 100644
+--- a/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/SuccessResult.java
++++ b/opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/fromprotocol/ok/SuccessResult.java
+@@ -1,5 +1,6 @@
+-package de.adorsys.opba.protocol.api.dto.result.fromprotocol;
++package de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok;
+ 
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ 
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/domain/dto/messages/ConsentAcquired.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/domain/dto/messages/ConsentAcquired.java
+new file mode 100644
+index 000000000..9381aa573
+--- /dev/null
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/domain/dto/messages/ConsentAcquired.java
+@@ -0,0 +1,15 @@
++package de.adorsys.opba.protocol.xs2a.domain.dto.messages;
++
++import lombok.Builder;
++import lombok.EqualsAndHashCode;
++import lombok.Getter;
++
++@Getter
++@EqualsAndHashCode(callSuper = true)
++public class ConsentAcquired extends InternalProcessResult {
++
++    @Builder
++    public ConsentAcquired(String processId, String executionId, Object result) {
++        super(processId, executionId, result);
++    }
++}
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/OutcomeMapper.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/OutcomeMapper.java
+index 7f26bb91c..92cfd4e06 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/OutcomeMapper.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/OutcomeMapper.java
+@@ -1,10 +1,12 @@
+ package de.adorsys.opba.protocol.xs2a.entrypoint;
+ 
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.AuthorizationRequiredResult;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ErrorResult;
+ import de.adorsys.opba.protocol.api.dto.result.fromprotocol.Result;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.SuccessResult;
+-import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ValidationErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.AuthorizationRequiredResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.dialog.ValidationErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.error.ErrorResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.ConsentAcquiredResult;
++import de.adorsys.opba.protocol.api.dto.result.fromprotocol.ok.SuccessResult;
++import de.adorsys.opba.protocol.xs2a.domain.dto.messages.ConsentAcquired;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.Redirect;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.Response;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.ValidationIssue;
+@@ -40,6 +42,12 @@ public class OutcomeMapper<T> {
+         );
+     }
+ 
++    public void onConsentAcquired(ConsentAcquired acquired) {
++        channel.complete(
++            new ConsentAcquiredResult<>()
++        );
++    }
++
+     public void onError() {
+         channel.complete(new ErrorResult<>());
+     }
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListAccountsEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListAccountsEntrypoint.java
+index c1eb4fdab..9377a0167 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListAccountsEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListAccountsEntrypoint.java
+@@ -41,6 +41,7 @@ public class Xs2aListAccountsEntrypoint implements ListAccounts {
+     public CompletableFuture<Result<AccountListBody>> execute(ServiceContext<ListAccountsRequest> serviceContext) {
+         Xs2aContext context = mapper.map(serviceContext.getRequest());
+         context.setAction(ProtocolAction.LIST_ACCOUNTS);
++        context.setServiceSessionId(serviceContext.getServiceSessionId());
+ 
+         ProcessInstance instance = runtimeService.startProcessInstanceByKey(
+                 REQUEST_SAGA,
+@@ -59,7 +60,6 @@ public class Xs2aListAccountsEntrypoint implements ListAccounts {
+     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = XS2A_MAPPERS_PACKAGE)
+     public interface FromRequest extends DtoMapper<ListAccountsRequest, Xs2aContext> {
+ 
+-        @Mapping(source = "facadeServiceable.serviceSessionId", target = "serviceSessionId")
+         @Mapping(source = "facadeServiceable.bankID", target = "aspspId")
+         @Mapping(source = "facadeServiceable.uaContext.psuIpAddress", target = "psuIpAddress")
+         @Mapping(source = "facadeServiceable.uaContext.psuAccept", target = "contentType", nullValuePropertyMappingStrategy = IGNORE)
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListTransactionsEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListTransactionsEntrypoint.java
+index 1981dc777..7460a9f5e 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListTransactionsEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/ais/Xs2aListTransactionsEntrypoint.java
+@@ -41,6 +41,7 @@ public class Xs2aListTransactionsEntrypoint implements ListTransactions {
+     public CompletableFuture<Result<TransactionListBody>> execute(ServiceContext<ListTransactionsRequest> serviceContext) {
+         TransactionListXs2aContext context = mapper.map(serviceContext.getRequest());
+         context.setAction(ProtocolAction.LIST_TRANSACTIONS);
++        context.setServiceSessionId(serviceContext.getServiceSessionId());
+ 
+         ProcessInstance instance = runtimeService.startProcessInstanceByKey(
+                 REQUEST_SAGA,
+@@ -60,7 +61,6 @@ public class Xs2aListTransactionsEntrypoint implements ListTransactions {
+     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = XS2A_MAPPERS_PACKAGE)
+     public interface FromRequest extends DtoMapper<ListTransactionsRequest, TransactionListXs2aContext> {
+ 
+-        @Mapping(source = "facadeServiceable.serviceSessionId", target = "serviceSessionId")
+         @Mapping(source = "facadeServiceable.bankID", target = "aspspId")
+         @Mapping(source = "facadeServiceable.uaContext.psuIpAddress", target = "psuIpAddress")
+         @Mapping(source = "facadeServiceable.uaContext.psuAccept", target = "contentType", nullValuePropertyMappingStrategy = IGNORE)
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/eventbus/ProcessEventHandlerRegistrar.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/eventbus/ProcessEventHandlerRegistrar.java
+index 7b35d9f32..25558a18b 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/eventbus/ProcessEventHandlerRegistrar.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/eventbus/ProcessEventHandlerRegistrar.java
+@@ -1,5 +1,6 @@
+ package de.adorsys.opba.protocol.xs2a.service.eventbus;
+ 
++import de.adorsys.opba.protocol.xs2a.domain.dto.messages.ConsentAcquired;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.Redirect;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.Response;
+ import de.adorsys.opba.protocol.xs2a.domain.dto.messages.ValidationIssue;
+@@ -48,7 +49,10 @@ public class ProcessEventHandlerRegistrar {
+                         mapper.onRedirect((Redirect) procResult);
+                     } else if (procResult instanceof ValidationIssue) {
+                         mapper.onValidationProblem((ValidationIssue) procResult);
+-                    } else {
++                    } else if (procResult instanceof ConsentAcquired) {
++                        mapper.onConsentAcquired((ConsentAcquired) procResult);
++                    }
++                    else {
+                         mapper.onError();
+                     }
+                 });
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/json/JsonPathBasedObjectUpdater.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/json/JsonPathBasedObjectUpdater.java
+index 032f5f932..cab75bbf2 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/json/JsonPathBasedObjectUpdater.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/json/JsonPathBasedObjectUpdater.java
+@@ -40,6 +40,7 @@ public class JsonPathBasedObjectUpdater {
+     private final ProtocolConfiguration configuration;
+ 
+     @SneakyThrows
++    // FIXME https://github.com/adorsys/open-banking-gateway/issues/251
+     public <T> T updateObjectUsingJsonPath(T object, Map<String, String> jsonPathToItsValue) {
+         TreeNode tree = mapper.valueToTree(object);
+         DocumentContext docCtx = JsonPath.parse(tree, jsonConfig);
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/consent/ReportConsentAuthorizationFinished.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/consent/ReportConsentAuthorizationFinished.java
+index e50d2f1ce..b1875482b 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/consent/ReportConsentAuthorizationFinished.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/consent/ReportConsentAuthorizationFinished.java
+@@ -1,16 +1,25 @@
+ package de.adorsys.opba.protocol.xs2a.service.xs2a.consent;
+ 
++import de.adorsys.opba.protocol.xs2a.domain.dto.messages.ConsentAcquired;
+ import lombok.RequiredArgsConstructor;
+ import org.flowable.engine.delegate.DelegateExecution;
+ import org.flowable.engine.delegate.JavaDelegate;
++import org.springframework.context.ApplicationEventPublisher;
+ import org.springframework.stereotype.Service;
+ 
+ @Service("xs2aReportToFintechConsentAuthorized")
+ @RequiredArgsConstructor
+ public class ReportConsentAuthorizationFinished implements JavaDelegate {
+ 
++    private final ApplicationEventPublisher applicationEventPublisher;
++
+     @Override
+     public void execute(DelegateExecution execution) {
+-
++        applicationEventPublisher.publishEvent(
++            ConsentAcquired.builder()
++                .executionId(execution.getId())
++                .processId(execution.getRootProcessInstanceId())
++                .build()
++        );
+     }
+ }
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/BaseContext.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/BaseContext.java
+index a1fd859fc..70a447b3a 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/BaseContext.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/BaseContext.java
+@@ -9,6 +9,7 @@ import java.util.Set;
+ import java.util.UUID;
+ 
+ @Data
++// FIXME Entire class must be protected https://github.com/adorsys/open-banking-gateway/issues/251
+ public class BaseContext {
+ 
+     private ContextMode mode;
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/Xs2aContext.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/Xs2aContext.java
+index ac6f72b53..067e13447 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/Xs2aContext.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/context/Xs2aContext.java
+@@ -20,7 +20,7 @@ public class Xs2aContext extends BaseContext {
+     private ConsentInitiateBody consent = new ConsentInitiateBody(); // to avoid initialization in more-parameters
+ 
+     // Mandatory dynamic
+-    private String psuIpAddress;
++    private String psuIpAddress; // FIXME https://github.com/adorsys/open-banking-gateway/issues/251
+ 
+     // Optional consent-specific
+     private Boolean withBalance;
+@@ -39,9 +39,9 @@ public class Xs2aContext extends BaseContext {
+     // sensitive - do not persist?
+     private String psuPassword;
+ 
+-    // TODO: protect from overriding using reflection
++    // TODO: protect from overriding using reflection https://github.com/adorsys/open-banking-gateway/issues/251
+     private String redirectUriOk;
+ 
+-    // TODO: protect from overriding reflection
++    // TODO: protect from overriding reflection https://github.com/adorsys/open-banking-gateway/issues/251
+     private String redirectUriNok;
+ }
+diff --git a/opba-rest-api-shared/src/main/java/de/adorsys/opba/restapi/shared/service/FacadeResponseMapper.java b/opba-rest-api-shared/src/main/java/de/adorsys/opba/restapi/shared/service/FacadeResponseMapper.java
+index 4404caf62..00d5e870b 100644
+--- a/opba-rest-api-shared/src/main/java/de/adorsys/opba/restapi/shared/service/FacadeResponseMapper.java
++++ b/opba-rest-api-shared/src/main/java/de/adorsys/opba/restapi/shared/service/FacadeResponseMapper.java
+@@ -45,7 +45,7 @@ public class FacadeResponseMapper {
+                 .header(REDIRECT_CODE, result.getRedirectCode())
+                 .header(PSU_CONSENT_SESSION, "BAR")
+                 .location(result.getRedirectionTo())
+-                .body("Please use redirect link in Location header");
++                .body("Please use redirect link in 'Location' header");
+     }
+ 
+     private <E> ResponseEntity<E> handleError(FacadeErrorResult result, ErrorResultMapper<FacadeErrorResult, E> toError) {
+

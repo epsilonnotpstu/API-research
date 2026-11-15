@@ -1,0 +1,193 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+index d0b0a7b..481ed2d 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java
+@@ -69,6 +69,10 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+     protected List<SinkTopicSubscription> topicSubscriptions;
+     protected Pattern topicSubscriptionsPattern;
+ 
++    protected boolean subscribed;
++    protected boolean assigned;
++
++
+     private int recordIndex;
+     private int batchSize;
+ 
+@@ -115,6 +119,8 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+         this.format = format;
+         this.keyDeserializer = keyDeserializer;
+         this.valueDeserializer = valueDeserializer;
++        this.subscribed = false;
++        this.assigned = false;
+     }
+ 
+     @Override
+@@ -191,6 +197,7 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+         this.shouldAttachSubscriberHandler = shouldAttachHandler;
+ 
+         log.info("Subscribe to topics {}", this.topicSubscriptions);
++        this.subscribed = true;
+         this.setPartitionsAssignmentHandlers();
+ 
+         Set<String> topics = this.topicSubscriptions.stream().map(ts -> ts.getTopic()).collect(Collectors.toSet());
+@@ -198,12 +205,14 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+     }
+ 
+     /**
+-     * Unubscribe all the topics which the consumer currently subscribes
++     * Unsubscribe all the topics which the consumer currently subscribes
+      */
+     protected void unsubscribe() {
+         log.info("Unsubscribe from topics {}", this.topicSubscriptions);
+         topicSubscriptions.clear();
+         topicSubscriptionsPattern = null;
++        this.subscribed = false;
++        this.assigned = false;
+         this.consumer.unsubscribe(this::unsubscribeHandler);
+     }
+ 
+@@ -228,6 +237,7 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+ 
+         log.info("Subscribe to topics with pattern {}", pattern);
+         this.setPartitionsAssignmentHandlers();
++        this.subscribed = true;
+         this.consumer.subscribe(pattern, this::subscribeHandler);
+     }
+ 
+@@ -276,6 +286,7 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+         this.shouldAttachSubscriberHandler = shouldAttachHandler;
+ 
+         log.info("Assigning to topics partitions {}", this.topicSubscriptions);
++        this.assigned = true;
+         this.partitionsAssignmentAndSeek();
+     }
+ 
+@@ -360,6 +371,7 @@ public abstract class SinkBridgeEndpoint<K, V> implements BridgeEndpoint {
+             Optional<PartitionInfo> requestedPartitionInfo =
+                     availablePartitions.stream()
+                             .filter(p -> p.getTopic().equals(topicSubscription.getTopic()) &&
++                                    topicSubscription.getPartition() != null &&
+                                     p.getPartition() == topicSubscription.getPartition())
+                             .findFirst();
+ 
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+index 1d7bf08..8d832b3 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java
+@@ -355,6 +355,14 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+     }
+ 
+     private void doAssign(RoutingContext routingContext, JsonObject bodyAsJson) {
++        if (subscribed) {
++            HttpBridgeError error = new HttpBridgeError(
++                    HttpResponseStatus.CONFLICT.code(), "Subscriptions to topics, partitions, and patterns are mutually exclusive."
++            );
++            HttpUtils.sendResponse(routingContext, HttpResponseStatus.CONFLICT.code(),
++                    BridgeContentType.KAFKA_JSON, error.toJson().toBuffer());
++            return;
++        }
+         JsonArray partitionsList = bodyAsJson.getJsonArray("partitions");
+         this.topicSubscriptions.addAll(
+                 partitionsList.stream()
+@@ -374,7 +382,7 @@ public class HttpSinkBridgeEndpoint<K, V> extends SinkBridgeEndpoint<K, V> {
+ 
+     private void doSubscribe(RoutingContext routingContext, JsonObject bodyAsJson) {
+         // cannot specify both topics list and topic pattern
+-        if (bodyAsJson.containsKey("topics") && bodyAsJson.containsKey("topic_pattern")) {
++        if ((bodyAsJson.containsKey("topics") && bodyAsJson.containsKey("topic_pattern")) || assigned) {
+             HttpBridgeError error = new HttpBridgeError(
+                     HttpResponseStatus.CONFLICT.code(),
+                     "Subscriptions to topics, partitions, and patterns are mutually exclusive."
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/ConsumerSubscriptionIT.java b/src/test/java/io/strimzi/kafka/bridge/http/ConsumerSubscriptionIT.java
+index 9623ea1..0bba689 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/ConsumerSubscriptionIT.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/ConsumerSubscriptionIT.java
+@@ -224,7 +224,7 @@ public class ConsumerSubscriptionIT extends HttpBridgeITAbstract {
+ 
+         consumerService()
+                 .createConsumer(context, groupId, json)
+-                .subscribeConsumer(context, groupId, name, topic, topic2);
++                .subscribeConsumer(context, groupId, name, topicsRoot);
+ 
+         // poll to subscribe
+         CompletableFuture<Boolean> consume = new CompletableFuture<>();
+@@ -292,6 +292,60 @@ public class ConsumerSubscriptionIT extends HttpBridgeITAbstract {
+                     consume.complete(true);
+                 });
+         consume.get(TEST_TIMEOUT, TimeUnit.SECONDS);
++        consumerService()
++            .deleteConsumer(context, groupId, name);
++        context.completeNow();
++    }
++
++    @Test
++    void assignAfterSubscriptionTest(VertxTestContext context) throws InterruptedException, ExecutionException, TimeoutException {
++        String topic = "subscribe-and-assign-topic";
++
++        adminClientFacade.createTopic(topic, 4, 1);
++
++        assertThat(adminClientFacade.listTopic().size(), is(1));
++
++        String name = "my-kafka-consumer-assign";
++
++        JsonObject json = new JsonObject();
++        json.put("name", name);
++        json.put("format", "json");
++
++        JsonObject partitionsRoot = new JsonObject();
++        JsonArray partitions = new JsonArray();
++        JsonObject part0 = new JsonObject();
++        part0.put("topic", topic);
++        part0.put("partition", 0);
++
++        JsonObject part1 = new JsonObject();
++        part1.put("topic", topic);
++        part1.put("partition", 1);
++        partitions.add(part0);
++        partitions.add(part1);
++
++        partitionsRoot.put("partitions", partitions);
++
++        consumerService()
++                .createConsumer(context, groupId, json)
++                .subscribeConsumer(context, groupId, name, topic);
++
++        CompletableFuture<Boolean> assignCF = new CompletableFuture<>();
++        consumerService()
++                .assignRequest(groupId, name, partitionsRoot)
++                .sendJsonObject(partitionsRoot, ar -> {
++                    context.verify(() -> {
++                        assertThat(ar.succeeded(), is(true));
++                        HttpResponse<JsonObject> response = ar.result();
++                        HttpBridgeError error = HttpBridgeError.fromJson(response.body());
++                        assertThat(response.statusCode(), is(HttpResponseStatus.CONFLICT.code()));
++                        assertThat(error.getCode(), is(HttpResponseStatus.CONFLICT.code()));
++                        assertThat(error.getMessage(), is("Subscriptions to topics, partitions, and patterns are mutually exclusive."));
++                    });
++                    assignCF.complete(true);
++                });
++
++        assignCF.get(TEST_TIMEOUT, TimeUnit.SECONDS);
++
+         consumerService()
+                 .deleteConsumer(context, groupId, name);
+         context.completeNow();
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/services/ConsumerService.java b/src/test/java/io/strimzi/kafka/bridge/http/services/ConsumerService.java
+index 681dd99..3e4800e 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/services/ConsumerService.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/services/ConsumerService.java
+@@ -93,6 +93,13 @@ public class ConsumerService extends BaseService {
+                 .as(BodyCodec.jsonObject());
+     }
+ 
++    public HttpRequest<JsonObject> assignRequest(String groupId, String name, JsonObject json) {
++        return postRequest(Urls.consumerInstanceAssignments(groupId, name))
++                .putHeader(CONTENT_LENGTH.toString(), String.valueOf(json.toBuffer().length()))
++                .putHeader(CONTENT_TYPE.toString(), BridgeContentType.KAFKA_JSON)
++                .as(BodyCodec.jsonObject());
++    }
++
+     public HttpRequest<JsonObject> offsetsRequest(String groupId, String name) {
+         return postRequest(Urls.consumerInstanceOffsets(groupId, name));
+     }
+

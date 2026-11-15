@@ -1,0 +1,42 @@
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/permissions/sam/SamPermissionsImpl.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/permissions/sam/SamPermissionsImpl.java
+index 196f5875e..e99aebce7 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/permissions/sam/SamPermissionsImpl.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/permissions/sam/SamPermissionsImpl.java
+@@ -430,6 +430,9 @@ public class SamPermissionsImpl implements PermissionsInterface {
+ 
+     @Override
+     public boolean canDoAction(User user, Workflow workflow, Role.Action action) {
++        if (user == null) {
++            return false;
++        }
+         if (hasGoogleToken(user)) {
+             try {
+                 final ResourcesApi resourcesApi = getResourcesApi(user);
+diff --git a/dockstore-webservice/src/test/java/io/dockstore/webservice/permissions/sam/SamPermissionsImplTest.java b/dockstore-webservice/src/test/java/io/dockstore/webservice/permissions/sam/SamPermissionsImplTest.java
+index 7cf7a7bdb..722c3e7a8 100644
+--- a/dockstore-webservice/src/test/java/io/dockstore/webservice/permissions/sam/SamPermissionsImplTest.java
++++ b/dockstore-webservice/src/test/java/io/dockstore/webservice/permissions/sam/SamPermissionsImplTest.java
+@@ -240,8 +240,10 @@ class SamPermissionsImplTest {
+         Workflow fooWorkflow = Mockito.mock(Workflow.class);
+         when(fooWorkflow.getWorkflowPath()).thenReturn(FOO_WORKFLOW_NAME, GOO_WORKFLOW_NAME);
+         assertTrue(samPermissionsImpl.canDoAction(janeDoeUserMock, fooWorkflow, Action.READ));
++        assertFalse(samPermissionsImpl.canDoAction(null, fooWorkflow, Action.READ));
+         Workflow gooWorkflow = Mockito.mock(Workflow.class);
+         assertFalse(samPermissionsImpl.canDoAction(janeDoeUserMock, gooWorkflow, Action.READ));
++        assertFalse(samPermissionsImpl.canDoAction(null, gooWorkflow, Action.READ));
+     }
+ 
+     @Test
+@@ -252,9 +254,11 @@ class SamPermissionsImplTest {
+ 
+         when(workflowInstance.getWorkflowPath()).thenReturn(FOO_WORKFLOW_NAME);
+         assertTrue(samPermissionsImpl.canDoAction(janeDoeUserMock, workflowInstance, Action.WRITE));
++        assertFalse(samPermissionsImpl.canDoAction(null, workflowInstance, Action.WRITE));
+         Workflow gooWorkflow = Mockito.mock(Workflow.class);
+         when(gooWorkflow.getWorkflowPath()).thenReturn(GOO_WORKFLOW_NAME);
+         assertFalse(samPermissionsImpl.canDoAction(janeDoeUserMock, gooWorkflow, Action.WRITE));
++        assertFalse(samPermissionsImpl.canDoAction(null, gooWorkflow, Action.WRITE));
+     }
+ 
+     @Test
+

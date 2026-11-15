@@ -1,0 +1,40 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1764364d6..00ca072cf 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,9 @@
+ # Changelog
+ 
+ ## [Unreleased](https://github.com/OpenLineage/OpenLineage/compare/0.25.0...HEAD)
++### Fixed
++* **Spark: fix logical plans' serialization issue on databricks platform** [`#1858`](https://github.com/OpenLineage/OpenLineage/pull/1858) [@pawel-big-lebowski](https://github.com/pawel-big-lebowski)   
++  *Disable by default `spark.logicalPlan` facet.*
+ 
+ ## [0.25.0](https://github.com/OpenLineage/OpenLineage/compare/0.24.0...0.25.0) - 2023-05-15
+ ### Added
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/util/FacetUtils.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/util/FacetUtils.java
+index ad0fb20dc..6f85b1c99 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/util/FacetUtils.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/util/FacetUtils.java
+@@ -19,6 +19,7 @@ public class FacetUtils {
+         .map(c -> c.getSparkContext())
+         .map(sparkContext -> sparkContext.getConf())
+         .flatMap(conf -> SparkConfUtils.findSparkConfigKey(conf, SPARK_CONF_FACETS_DISABLED))
++        .map(s -> s.replace("[", "").replace("]", ""))
+         .map(s -> s.split(disabledFacetsSeparator))
+         .map(facets -> Arrays.asList(facets).contains(facetName))
+         .orElse(false);
+diff --git a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/facets/builder/LogicalPlanRunFacetBuilderTest.java b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/facets/builder/LogicalPlanRunFacetBuilderTest.java
+index bbf6a5c38..6627cd88b 100644
+--- a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/facets/builder/LogicalPlanRunFacetBuilderTest.java
++++ b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/facets/builder/LogicalPlanRunFacetBuilderTest.java
+@@ -105,7 +105,7 @@ class LogicalPlanRunFacetBuilderTest {
+                 .queryExecution(queryExecution)
+                 .build());
+ 
+-    sparkContext.conf().set("spark.openlineage.facets.disabled", "spark.logicalPlan");
++    sparkContext.conf().set("spark.openlineage.facets.disabled", "[spark.logicalPlan]");
+     assertThat(
+             builder.isDefinedAt(
+                 new SparkListenerJobStart(1, 1L, Seq$.MODULE$.empty(), new Properties())))
+

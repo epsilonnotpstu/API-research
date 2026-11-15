@@ -1,0 +1,305 @@
+diff --git a/docs/developers/validation.md b/docs/developers/validation.md
+new file mode 100644
+index 0000000000..6b3de3e20f
+--- /dev/null
++++ b/docs/developers/validation.md
+@@ -0,0 +1,32 @@
++# Validation
++
++## Programmatic
++
++Use the [DataValidatorBuilder](https://github.com/apache/fineract/search?q=%22class+DataValidatorBuilder%22), e.g. like so:
++
++```java
++new DataValidatorBuilder().resource("fileUpload")
++    .reset().parameter("Content-Length").value(contentLength).notBlank().integerGreaterThanNumber(0)
++    .reset().parameter("FormDataContentDisposition").value(fileDetails).notNull()
++    .throwValidationErrors();
++```
++
++Such code is often encapsulated in [`*Validator`](https://github.com/apache/fineract/search?q=Validator)
++classes (if more than a few lines, and/or reused from several places; avoid copy/paste), like so:
++
++```java
++public class YourThingValidator {
++
++    public void validate(YourThing thing) {
++        new DataValidatorBuilder().resource("yourThing")
++        ...
++        .throwValidationErrors();
++    }
++}
++```
++
++
++## Declarative
++
++[FINERACT-1229](https://issues.apache.org/jira/browse/FINERACT-1229) is an open issue about adopting
++Bean Validation for _declarative_ instead of _programmatic_ (as above) validation.  Contributions welcome!
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
+index d35d724e2e..0cb77586f8 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
+@@ -22,6 +22,7 @@ import com.google.common.base.Splitter;
+ import com.google.gson.JsonArray;
+ import java.math.BigDecimal;
+ import java.text.ParseException;
++import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.List;
+ import java.util.regex.Matcher;
+@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
+ import net.fortuna.ical4j.model.property.RRule;
+ import net.fortuna.ical4j.validate.ValidationException;
+ import org.apache.commons.lang3.StringUtils;
++import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+ import org.joda.time.LocalDate;
+ import org.quartz.CronExpression;
+ import org.springframework.util.ObjectUtils;
+@@ -45,6 +47,20 @@ public class DataValidatorBuilder {
+     private Object value;
+     private boolean ignoreNullValue = false;
+ 
++    /**
++     * Default constructor used to start a new "validation chain".
++     */
++    public DataValidatorBuilder() {
++        this(new ArrayList<>());
++    }
++
++    /**
++     * Constructor used to "continue" an existing "validation chain".
++     *
++     * @param dataValidationErrors
++     *            an existing list of {@link ApiParameterError} to add new validation errors to
++     */
++
+     public DataValidatorBuilder(final List<ApiParameterError> dataValidationErrors) {
+         this.dataValidationErrors = dataValidationErrors;
+     }
+@@ -1103,4 +1119,15 @@ public class DataValidatorBuilder {
+         return this;
+     }
+ 
++    /**
++     * Throws Exception if validation errors.
++     *
++     * @throws PlatformApiDataValidationException
++     *             unchecked exception (RuntimeException) thrown if there are any validation error
++     */
++    public void throwValidationErrors() throws PlatformApiDataValidationException {
++        if (!dataValidationErrors.isEmpty()) {
++            throw new PlatformApiDataValidationException(dataValidationErrors);
++        }
++    }
+ }
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/exception/PlatformApiDataValidationException.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/exception/PlatformApiDataValidationException.java
+index a0d0fbd5c1..70d8aeeca6 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/exception/PlatformApiDataValidationException.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/exception/PlatformApiDataValidationException.java
+@@ -20,6 +20,7 @@ package org.apache.fineract.infrastructure.core.exception;
+ 
+ import java.util.List;
+ import org.apache.fineract.infrastructure.core.data.ApiParameterError;
++import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
+ 
+ /**
+  * Exception thrown when problem with an API request to the platform.
+@@ -28,6 +29,12 @@ public class PlatformApiDataValidationException extends AbstractPlatformExceptio
+ 
+     private final List<ApiParameterError> errors;
+ 
++    /**
++     * Constructor. Consider simply using {@link DataValidatorBuilder#throwValidationErrors()} directly.
++     *
++     * @param errors
++     *            list of {@link ApiParameterError} to throw
++     */
+     public PlatformApiDataValidationException(List<ApiParameterError> errors) {
+         super("validation.msg.validation.errors.exist", "Validation errors exist.");
+         this.errors = errors;
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/DocumentManagementApiResource.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/DocumentManagementApiResource.java
+index a64319d5ed..69811d0829 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/DocumentManagementApiResource.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/DocumentManagementApiResource.java
+@@ -62,9 +62,9 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.context.annotation.Scope;
+ import org.springframework.stereotype.Component;
+ 
+-@Path("{entityType}/{entityId}/documents")
+ @Component
+ @Scope("singleton")
++@Path("{entityType}/{entityId}/documents")
+ @Tag(name = "Documents", description = "Multiple Documents (a combination of a name, description and a file) may be attached to different Entities like Clients, Groups, Staff, Loans, Savings and Client Identifiers in the system\n"
+         + "\n" + "Note: The currently allowed Entities are\n" + "\n" + "Clients: URL Pattern as clients\n" + "Staff: URL Pattern as staff\n"
+         + "Loans: URL Pattern as loans\n" + "Savings: URL Pattern as savings\n" + "Client Identifiers: URL Pattern as client_identifiers\n"
+@@ -81,16 +81,19 @@ public class DocumentManagementApiResource {
+     private final DocumentWritePlatformService documentWritePlatformService;
+     private final ApiRequestParameterHelper apiRequestParameterHelper;
+     private final ToApiJsonSerializer<DocumentData> toApiJsonSerializer;
++    private final FileUploadValidator fileUploadValidator;
+ 
+     @Autowired
+     public DocumentManagementApiResource(final PlatformSecurityContext context,
+             final DocumentReadPlatformService documentReadPlatformService, final DocumentWritePlatformService documentWritePlatformService,
+-            final ApiRequestParameterHelper apiRequestParameterHelper, final ToApiJsonSerializer<DocumentData> toApiJsonSerializer) {
++            final ApiRequestParameterHelper apiRequestParameterHelper, final ToApiJsonSerializer<DocumentData> toApiJsonSerializer,
++            final FileUploadValidator fileUploadValidator) {
+         this.context = context;
+         this.documentReadPlatformService = documentReadPlatformService;
+         this.documentWritePlatformService = documentWritePlatformService;
+         this.apiRequestParameterHelper = apiRequestParameterHelper;
+         this.toApiJsonSerializer = toApiJsonSerializer;
++        this.fileUploadValidator = fileUploadValidator;
+     }
+ 
+     @GET
+@@ -125,19 +128,16 @@ public class DocumentManagementApiResource {
+             @PathParam("entityId") @Parameter(description = "entityId") final Long entityId,
+             @HeaderParam("Content-Length") @Parameter(description = "Content-Length") final Long fileSize,
+             @FormDataParam("file") @Parameter(description = "file") final InputStream inputStream,
+-            @FormDataParam("file") final @Parameter(description = "file") FormDataContentDisposition fileDetails,
++            @FormDataParam("file") @Parameter(description = "file") final FormDataContentDisposition fileDetails,
+             @FormDataParam("file") @Parameter(description = "file") final FormDataBodyPart bodyPart,
+             @FormDataParam("name") @Parameter(description = "name") final String name,
+             @FormDataParam("description") @Parameter(description = "description") final String description) {
+ 
+-        /**
+-         * TODO: also need to have a backup and stop reading from stream after max size is reached to protect against
+-         * malicious clients
+-         **/
++        // TODO: stop reading from stream after max size is reached to protect against malicious clients
++        // TODO: need to extract the actual file type and determine if they are permissible
++
++        fileUploadValidator.validate(fileSize, inputStream, fileDetails, bodyPart);
+ 
+-        /**
+-         * TODO: need to extract the actual file type and determine if they are permissable
+-         **/
+         final DocumentCommand documentCommand = new DocumentCommand(null, null, entityType, entityId, name, fileDetails.getFileName(),
+                 fileSize, bodyPart.getMediaType().toString(), description, null);
+ 
+@@ -174,6 +174,7 @@ public class DocumentManagementApiResource {
+          ***/
+         DocumentCommand documentCommand = null;
+         if (inputStream != null && fileDetails.getFileName() != null) {
++            fileUploadValidator.validate(fileSize, inputStream, fileDetails, bodyPart);
+             modifiedParams.add("fileName");
+             modifiedParams.add("size");
+             modifiedParams.add("type");
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/FileUploadValidator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/FileUploadValidator.java
+new file mode 100644
+index 0000000000..299c35c36f
+--- /dev/null
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/FileUploadValidator.java
+@@ -0,0 +1,41 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.documentmanagement.api;
++
++import com.sun.jersey.core.header.FormDataContentDisposition;
++import com.sun.jersey.multipart.FormDataBodyPart;
++import java.io.InputStream;
++import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
++import org.springframework.stereotype.Component;
++
++/**
++ * Validator for uploaded files.
++ *
+[REDACTED personal attribution]
++ */
++@Component
++public class FileUploadValidator {
++
++    public void validate(Long contentLength, InputStream inputStream, FormDataContentDisposition fileDetails, FormDataBodyPart bodyPart) {
++        new DataValidatorBuilder().resource("fileUpload").reset().parameter("Content-Length").value(contentLength).notBlank()
++                .integerGreaterThanNumber(0).reset().parameter("InputStream").value(inputStream).notNull().reset()
++                .parameter("FormDataContentDisposition").value(fileDetails).notNull().reset().parameter("FormDataBodyPart").value(bodyPart)
++                .notNull().throwValidationErrors();
++    }
++}
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/ImagesApiResource.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/ImagesApiResource.java
+index 1d681fcdf9..b90b566a8b 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/ImagesApiResource.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/documentmanagement/api/ImagesApiResource.java
+@@ -52,24 +52,26 @@ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.context.annotation.Scope;
+ import org.springframework.stereotype.Component;
+ 
+-@Path("{entity}/{entityId}/images")
+ @Component
+ @Scope("singleton")
+-
++@Path("{entity}/{entityId}/images")
+ public class ImagesApiResource {
+ 
+     private final PlatformSecurityContext context;
+     private final ImageReadPlatformService imageReadPlatformService;
+     private final ImageWritePlatformService imageWritePlatformService;
+     private final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer;
++    private final FileUploadValidator fileUploadValidator;
+ 
+     @Autowired
+     public ImagesApiResource(final PlatformSecurityContext context, final ImageReadPlatformService readPlatformService,
+-            final ImageWritePlatformService imageWritePlatformService, final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer) {
++            final ImageWritePlatformService imageWritePlatformService, final DefaultToApiJsonSerializer<ClientData> toApiJsonSerializer,
++            final FileUploadValidator fileUploadValidator) {
+         this.context = context;
+         this.imageReadPlatformService = readPlatformService;
+         this.imageWritePlatformService = imageWritePlatformService;
+         this.toApiJsonSerializer = toApiJsonSerializer;
++        this.fileUploadValidator = fileUploadValidator;
+     }
+ 
+     /**
+@@ -82,6 +84,7 @@ public class ImagesApiResource {
+             @HeaderParam("Content-Length") final Long fileSize, @FormDataParam("file") final InputStream inputStream,
+             @FormDataParam("file") final FormDataContentDisposition fileDetails, @FormDataParam("file") final FormDataBodyPart bodyPart) {
+         validateEntityTypeforImage(entityName);
++        fileUploadValidator.validate(fileSize, inputStream, fileDetails, bodyPart);
+         // TODO: vishwas might need more advances validation (like reading magic
+         // number) for handling malicious clients
+         // and clients not setting mime type
+@@ -103,6 +106,7 @@ public class ImagesApiResource {
+     public String addNewClientImage(@PathParam("entity") final String entityName, @PathParam("entityId") final Long entityId,
+             final String jsonRequestBody) {
+         validateEntityTypeforImage(entityName);
++
+         final Base64EncodedImage base64EncodedImage = ContentRepositoryUtils.extractImageFromDataURL(jsonRequestBody);
+ 
+         final CommandProcessingResult result = this.imageWritePlatformService.saveOrUpdateImage(entityName, entityId, base64EncodedImage);
+@@ -140,7 +144,7 @@ public class ImagesApiResource {
+             imageDataURISuffix = ContentRepositoryUtils.ImageDataURIsuffix.PNG.getValue();
+         }
+ 
+-        byte[] resizedImage = imageData.getContentOfSize(maxWidth, maxHeight);
++        final byte[] resizedImage = imageData.getContentOfSize(maxWidth, maxHeight);
+         final String clientImageAsBase64Text = imageDataURISuffix + Base64.getMimeEncoder().encodeToString(resizedImage);
+         return Response.ok(clientImageAsBase64Text).build();
+     }
+@@ -161,7 +165,7 @@ public class ImagesApiResource {
+         final ImageData imageData = this.imageReadPlatformService.retrieveImage(entityName, entityId);
+ 
+         final ResponseBuilder response = Response.ok(imageData.getContentOfSize(maxWidth, maxHeight));
+-        String dispositionType = "inline_octet".equals(output) ? "inline" : "attachment";
++        final String dispositionType = "inline_octet".equals(output) ? "inline" : "attachment";
+         response.header("Content-Disposition",
+                 dispositionType + "; filename=\"" + imageData.getEntityDisplayName() + ImageFileExtension.JPEG + "\"");
+ 
+

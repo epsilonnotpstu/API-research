@@ -1,0 +1,843 @@
+diff --git a/build.gradle b/build.gradle
+index 1d4bda01f..3f4a24e25 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -99,7 +99,7 @@ dependencies {
+         compile 'com.epam.reportportal:commons-model:4.0.0'
+         compile 'com.epam.reportportal:commons:3.1.0'
+     } else {
+-        compile 'com.github.reportportal:commons-dao:5f80b09'
++        compile 'com.github.reportportal:commons-dao:fcd2715'
+         compile 'com.github.reportportal:commons-rules:spb2-SNAPSHOT'
+         compile 'com.github.reportportal:commons-model:dc8a02a'
+         compile 'com.github.reportportal:commons-bugtracking:496a571'
+diff --git a/src/main/java/com/epam/ta/reportportal/core/configs/WidgetConfig.java b/src/main/java/com/epam/ta/reportportal/core/configs/WidgetConfig.java
+index 9d2727c72..54405f244 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/configs/WidgetConfig.java
++++ b/src/main/java/com/epam/ta/reportportal/core/configs/WidgetConfig.java
+@@ -28,6 +28,7 @@ import com.epam.ta.reportportal.core.widget.content.loader.*;
+ import com.epam.ta.reportportal.core.widget.content.loader.ProductStatusContentLoader;
+ import com.epam.ta.reportportal.core.widget.content.loader.ProductStatusFilterGroupedContentLoader;
+ import com.epam.ta.reportportal.core.widget.content.loader.ProductStatusLaunchGroupedContentLoader;
++import com.epam.ta.reportportal.core.widget.content.loader.util.ProductStatusContentLoaderManager;
+ import com.epam.ta.reportportal.entity.widget.WidgetType;
+ import org.springframework.beans.BeansException;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -75,6 +76,7 @@ public class WidgetConfig implements ApplicationContextAware {
+ 		mapping.put(WidgetType.LAUNCHES_TABLE, applicationContext.getBean(LaunchesTableContentLoader.class));
+ 		mapping.put(WidgetType.MOST_FAILED_TEST_CASES, applicationContext.getBean(MostFailedContentLoader.class));
+ 		mapping.put(WidgetType.PASSING_RATE_PER_LAUNCH, applicationContext.getBean(PassedRatePerLaunchContentLoader.class));
++		mapping.put(WidgetType.PRODUCT_STATUS, applicationContext.getBean(ProductStatusContentLoaderManager.class));
+ 		mapping.put(WidgetType.CUMULATIVE, applicationContext.getBean(CumulativeTrendChartLoader.class));
+ 		return mapping;
+ 	}
+@@ -93,7 +95,7 @@ public class WidgetConfig implements ApplicationContextAware {
+ 		mapping.put(WidgetType.LAUNCHES_TABLE, applicationContext.getBean(GeneralStatisticsFilterStrategy.class));
+ 		mapping.put(WidgetType.PASSING_RATE_SUMMARY, applicationContext.getBean(GeneralStatisticsFilterStrategy.class));
+ 		mapping.put(WidgetType.CUMULATIVE, applicationContext.getBean(GeneralStatisticsFilterStrategy.class));
+-
++		mapping.put(WidgetType.PRODUCT_STATUS, applicationContext.getBean(GeneralStatisticsFilterStrategy.class));
+ 		mapping.put(WidgetType.UNIQUE_BUG_TABLE, applicationContext.getBean(ProjectFilterStrategy.class));
+ 		mapping.put(WidgetType.ACTIVITY, applicationContext.getBean(ProjectFilterStrategy.class));
+ 		mapping.put(WidgetType.LAUNCHES_COMPARISON_CHART, applicationContext.getBean(GeneralStatisticsFilterStrategy.class));
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/LoadContentStrategy.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/LoadContentStrategy.java
+index 81e488021..b2e6f1129 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/LoadContentStrategy.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/LoadContentStrategy.java
+@@ -26,7 +26,6 @@ import org.springframework.data.domain.Sort;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ /**
+  * Strategy definition interface for loading widget content.
+@@ -42,6 +41,6 @@ public interface LoadContentStrategy {
+ 	String LOGIN = "login";
+ 	String PREFIX = "PREFIX";
+ 
+-	Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit);
++	Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMap, Map<String, String> widgetOptions, int limit);
+ 
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/AbstractStatisticsFilterStrategy.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/AbstractStatisticsFilterStrategy.java
+index cec0bbbf5..841b55961 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/AbstractStatisticsFilterStrategy.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/AbstractStatisticsFilterStrategy.java
+@@ -6,6 +6,7 @@ import com.epam.ta.reportportal.core.widget.content.BuildFilterStrategy;
+ import com.epam.ta.reportportal.core.widget.content.LoadContentStrategy;
+ import com.epam.ta.reportportal.entity.filter.UserFilter;
+ import com.epam.ta.reportportal.entity.widget.Widget;
++import com.google.common.collect.Maps;
+ import com.google.common.collect.Sets;
+ import org.springframework.data.domain.Sort;
+ 
+@@ -20,31 +21,30 @@ public abstract class AbstractStatisticsFilterStrategy implements BuildFilterStr
+ 			Widget widget) {
+ 		Set<UserFilter> filters = widget.getFilters();
+ 
+-		Sort sort = buildSort(filters);
++		Map<Filter, Sort> filterSortMap = buildFilterSortMap(filters, projectDetails.getProjectId());
+ 
+-		Set<Filter> queryFilters = buildQueryFilters(filters);
+-
+-		queryFilters = updateWithDefaultConditions(queryFilters, projectDetails.getProjectId());
+-
+-		return loadContentStrategy.loadContent(widget.getContentFields(),
+-				queryFilters,
+-				sort,
+-				widget.getWidgetOptions(),
+-				widget.getItemsCount()
+-		);
+-	}
+-
+-	private Sort buildSort(Set<UserFilter> filters) {
+-		return Sort.by(filters.stream()
+-				.flatMap(fs -> fs.getFilterSorts().stream().map(s -> new Sort.Order(s.getDirection(), s.getField())))
+-				.collect(Collectors.toList()));
++		return loadContentStrategy.loadContent(widget.getContentFields(), filterSortMap, widget.getWidgetOptions(), widget.getItemsCount());
+ 	}
+ 
+-	private Set<Filter> buildQueryFilters(Set<UserFilter> filters) {
+-		return filters.stream()
+-				.map(fs -> new Filter(fs.getTargetClass(), Sets.newHashSet(fs.getFilterCondition())))
+-				.collect(Collectors.toSet());
++	private Map<Filter, Sort> buildFilterSortMap(Set<UserFilter> filters, Long projectId) {
++		Map<Filter, Sort> filterSortMap = Maps.newLinkedHashMap();
++		//		Sort.by(filters.stream()
++		//				.flatMap(fs -> fs.getFilterSorts().stream().map(s -> new Sort.Order(s.getDirection(), s.getField())))
++		//				.collect(Collectors.toList()));
++		filters.forEach(fs -> {
++			Filter filter = updateWithDefaultConditions(new Filter(fs.getId(),
++					fs.getTargetClass(),
++					Sets.newLinkedHashSet(fs.getFilterCondition())
++			), projectId);
++			Sort sort = Sort.by(fs.getFilterSorts()
++					.stream()
++					.map(s -> new Sort.Order(s.getDirection(), s.getField()))
++					.collect(Collectors.toList()));
++			filterSortMap.put(filter, sort);
++		});
++
++		return filterSortMap;
+ 	}
+ 
+-	protected abstract Set<Filter> updateWithDefaultConditions(Set<Filter> filters, Long projectId);
++	protected abstract Filter updateWithDefaultConditions(Filter filter, Long projectId);
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/GeneralStatisticsFilterStrategy.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/GeneralStatisticsFilterStrategy.java
+index a329738de..54b13863c 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/GeneralStatisticsFilterStrategy.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/GeneralStatisticsFilterStrategy.java
+@@ -30,7 +30,6 @@ import com.google.common.collect.Sets;
+ import org.springframework.stereotype.Service;
+ 
+ import java.util.Set;
+-import java.util.stream.Collectors;
+ 
+ import static com.epam.ta.reportportal.commons.querygen.constant.GeneralCriteriaConstant.PROJECT_ID;
+ import static com.epam.ta.reportportal.commons.querygen.constant.LaunchCriteriaConstant.MODE;
+@@ -42,7 +41,7 @@ import static com.epam.ta.reportportal.commons.querygen.constant.LaunchCriteriaC
+ @Service
+ public class GeneralStatisticsFilterStrategy extends AbstractStatisticsFilterStrategy {
+ 
+-	protected Set<Filter> updateWithDefaultConditions(Set<Filter> filters, Long projectId) {
++	protected Filter updateWithDefaultConditions(Filter filter, Long projectId) {
+ 		Set<FilterCondition> defaultConditions = Sets.newHashSet(new FilterCondition(Condition.EQUALS,
+ 						false,
+ 						String.valueOf(projectId),
+@@ -51,6 +50,6 @@ public class GeneralStatisticsFilterStrategy extends AbstractStatisticsFilterStr
+ 				new FilterCondition(Condition.NOT_EQUALS, false, StatusEnum.IN_PROGRESS.name(), STATUS),
+ 				new FilterCondition(Condition.EQUALS, false, Mode.DEFAULT.toString(), MODE)
+ 		);
+-		return filters.stream().map(f -> f.withConditions(defaultConditions)).collect(Collectors.toSet());
++		return filter.withConditions(defaultConditions);
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/ProjectFilterStrategy.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/ProjectFilterStrategy.java
+index 34d8c8d49..502db17b3 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/ProjectFilterStrategy.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/filter/ProjectFilterStrategy.java
+@@ -28,7 +28,6 @@ import com.google.common.collect.Sets;
+ import org.springframework.stereotype.Service;
+ 
+ import java.util.Set;
+-import java.util.stream.Collectors;
+ 
+ import static com.epam.ta.reportportal.commons.querygen.constant.GeneralCriteriaConstant.PROJECT_ID;
+ 
+@@ -38,12 +37,12 @@ import static com.epam.ta.reportportal.commons.querygen.constant.GeneralCriteria
+ @Service
+ public class ProjectFilterStrategy extends AbstractStatisticsFilterStrategy {
+ 
+-	protected Set<Filter> updateWithDefaultConditions(Set<Filter> filters, Long projectId) {
++	protected Filter updateWithDefaultConditions(Filter filter, Long projectId) {
+ 		Set<FilterCondition> defaultConditions = Sets.newHashSet(new FilterCondition(Condition.EQUALS,
+ 				false,
+ 				String.valueOf(projectId),
+ 				PROJECT_ID
+ 		));
+-		return filters.stream().map(f -> f.withConditions(defaultConditions)).collect(Collectors.toSet());
++		return filter.withConditions(defaultConditions);
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ActivityContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ActivityContentLoader.java
+index 78f96ec81..c4525b446 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ActivityContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ActivityContentLoader.java
+@@ -41,10 +41,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -62,7 +62,8 @@ public class ActivityContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateWidgetOptions(widgetOptions);
+ 
+@@ -72,7 +73,9 @@ public class ActivityContentLoader implements LoadContentStrategy {
+ 		User user = userRepository.findByLogin(login)
+ 				.orElseThrow(() -> new ReportPortalException(ErrorType.USER_NOT_FOUND, "User with login " + login + " was not found"));
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		filter.withCondition(new FilterCondition(Condition.EQUALS, false, user.getLogin(), LOGIN))
+ 				.withCondition(new FilterCondition(Condition.IN, false, String.join(CONTENT_FIELDS_DELIMITER, contentFields), "action"));
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/BugTrendChartContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/BugTrendChartContentLoader.java
+index 0efd3393d..650ba04f3 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/BugTrendChartContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/BugTrendChartContentLoader.java
+@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -50,11 +50,14 @@ public class BugTrendChartContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		List<LaunchesStatisticsContent> result = widgetContentRepository.bugTrendStatistics(filter, contentFields, sort, limit);
+ 		return singletonMap(RESULT, result);
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CasesTrendContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CasesTrendContentLoader.java
+index 41335b28d..0544b2f28 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CasesTrendContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CasesTrendContentLoader.java
+@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -50,11 +50,14 @@ public class CasesTrendContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		List<CasesTrendContent> result = widgetContentRepository.casesTrendStatistics(filter, contentFields.get(0), sort, limit);
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ChartInvestigatedContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ChartInvestigatedContentLoader.java
+index a461dd1d9..e3f603d96 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ChartInvestigatedContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ChartInvestigatedContentLoader.java
+@@ -30,9 +30,9 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -45,9 +45,12 @@ public class ChartInvestigatedContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		return singletonMap(RESULT, widgetContentRepository.investigatedStatistics(filter, sort, limit));
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CumulativeTrendChartLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CumulativeTrendChartLoader.java
+index b098df03c..bcfe6c616 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CumulativeTrendChartLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/CumulativeTrendChartLoader.java
+@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ @Service
+@@ -26,11 +26,14 @@ public class CumulativeTrendChartLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		Map<String, List<LaunchesStatisticsContent>> result = widgetContentRepository.cumulativeTrendStatistics(filter,
+ 				contentFields,
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/FlakyCasesTableContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/FlakyCasesTableContentLoader.java
+index 8501cd78e..27e9d4e33 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/FlakyCasesTableContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/FlakyCasesTableContentLoader.java
+@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
+ import static java.util.Collections.singletonMap;
+@@ -24,9 +23,10 @@ public class FlakyCasesTableContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
+ 
+ 		return singletonMap(RESULT, widgetRepository.flakyCasesStatistics(filter, limit));
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchStatisticsChartContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchStatisticsChartContentLoader.java
+index c982e2fc5..07dab28d2 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchStatisticsChartContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchStatisticsChartContentLoader.java
+@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -50,11 +50,14 @@ public class LaunchStatisticsChartContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		List<LaunchesStatisticsContent> content = widgetContentRepository.launchStatistics(filter, contentFields, sort, limit);
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesComparisonContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesComparisonContentLoader.java
+index 2a5131b78..24b7c5ab2 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesComparisonContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesComparisonContentLoader.java
+@@ -39,10 +39,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static com.epam.ta.reportportal.dao.constant.WidgetContentRepositoryConstants.NAME;
+ import static java.util.Collections.singletonMap;
+ 
+@@ -59,13 +59,16 @@ public class LaunchesComparisonContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateWidgetOptions(widgetOptions);
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		filter.withCondition(new FilterCondition(Condition.EQUALS, false, widgetOptions.get(LAUNCH_NAME_FIELD), NAME));
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesDurationContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesDurationContentLoader.java
+index ca3582846..e6256f58f 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesDurationContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesDurationContentLoader.java
+@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -50,11 +50,14 @@ public class LaunchesDurationContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		List<LaunchesDurationContent> result = widgetContentRepository.launchesDurationStatistics(filter, sort, false, limit);
+ 		return singletonMap(RESULT, result);
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesTableContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesTableContentLoader.java
+index 7e8bbaf58..0bb63e811 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesTableContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LaunchesTableContentLoader.java
+@@ -33,10 +33,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -49,11 +49,14 @@ public class LaunchesTableContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		return singletonMap(RESULT, widgetContentRepository.launchesTableStatistics(filter, contentFields, sort, limit));
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LineChartContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LineChartContentLoader.java
+index e7c049a5e..b66a50313 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LineChartContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/LineChartContentLoader.java
+@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ /**
+[REDACTED personal attribution]
+@@ -37,7 +36,7 @@ import java.util.Set;
+ public class LineChartContentLoader implements LoadContentStrategy {
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions, int limit) {
+ 		return null;
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/MostFailedContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/MostFailedContentLoader.java
+index 8978d8550..8e3b3b291 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/MostFailedContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/MostFailedContentLoader.java
+@@ -36,7 +36,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ import java.util.function.Predicate;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+@@ -64,7 +63,7 @@ public class MostFailedContentLoader implements LoadContentStrategy {
+ 	}
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions, int limit) {
+ 
+ //		validateContentFields(contentFields);
+ //
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/NotPassedTestsContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/NotPassedTestsContentLoader.java
+index 069017785..950f14b90 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/NotPassedTestsContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/NotPassedTestsContentLoader.java
+@@ -34,10 +34,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -50,11 +50,14 @@ public class NotPassedTestsContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		List<NotPassedCasesContent> result = widgetContentRepository.notPassedCasesStatistics(filter, sort, limit);
+ 		return singletonMap(RESULT, result);
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/OverallStatisticsContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/OverallStatisticsContentLoader.java
+index b0ed0c4ad..1522fcdbd 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/OverallStatisticsContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/OverallStatisticsContentLoader.java
+@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
+@@ -50,12 +49,13 @@ public class OverallStatisticsContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 		boolean latestMode = widgetOptions.entrySet().stream().anyMatch(it -> it.getKey().equalsIgnoreCase(LATEST_OPTION));
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
+ 
+ 		List<StatisticsContent> content = widgetContentRepository.overallStatisticsContent(filter, contentFields, latestMode, limit);
+ 		return Collections.singletonMap(RESULT, content);
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassedRatePerLaunchContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassedRatePerLaunchContentLoader.java
+index a3c4703ae..a01db4d9c 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassedRatePerLaunchContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassedRatePerLaunchContentLoader.java
+@@ -19,10 +19,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static com.epam.ta.reportportal.dao.constant.WidgetContentRepositoryConstants.NAME;
+ import static java.util.Collections.singletonMap;
+ 
+@@ -39,7 +39,8 @@ public class PassedRatePerLaunchContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateWidgetOptions(widgetOptions);
+ 
+@@ -47,7 +48,9 @@ public class PassedRatePerLaunchContentLoader implements LoadContentStrategy {
+ 
+ 		String launchName = widgetOptions.get(LAUNCH_NAME_FIELD);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		filter.withCondition(new FilterCondition(
+ 				Condition.EQUALS,
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassingRateSummaryContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassingRateSummaryContentLoader.java
+index 9efa2a5e6..0b5fb8dfb 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassingRateSummaryContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/PassingRateSummaryContentLoader.java
+@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.commons.Predicates.equalTo;
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ /**
+@@ -29,11 +29,14 @@ public class PassingRateSummaryContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+ 		validateContentFields(contentFields);
+ 
+-		Filter filter = GROUP_FILTERS.apply(filters);
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
+ 
+ 		PassingRateStatisticsResult result = widgetContentRepository.passingRateStatistics(filter, sort, limit);
+ 		return singletonMap(RESULT, result);
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusFilterGroupedContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusFilterGroupedContentLoader.java
+index 67bb4a23a..d436079a4 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusFilterGroupedContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusFilterGroupedContentLoader.java
+@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
++import java.util.stream.Collectors;
+ 
+ import static java.util.Collections.singletonMap;
+ 
+@@ -19,12 +19,20 @@ public class ProductStatusFilterGroupedContentLoader implements ProductStatusCon
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions,
++	public Map<String, ?> loadContent(List<String> fields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
+ 			int limit) {
+ 		boolean latestMode = widgetOptions.entrySet().stream().anyMatch(entry -> LATEST_OPTION.equalsIgnoreCase(entry.getKey()));
+ 
+-		return singletonMap(RESULT,
+-				widgetContentRepository.productStatusGroupedByFilterStatistics(filters, contentFields, sort, latestMode, limit)
++		List<String> tags = fields.stream()
++				.filter(f -> f.startsWith("tag"))
++				.map(field -> field.split("\\$")[1])
++				.collect(Collectors.toList());
++
++		List<String> contentFields = fields.stream().filter(f -> !f.startsWith("tag")).collect(Collectors.toList());
++
++		return singletonMap(
++				RESULT,
++				widgetContentRepository.productStatusGroupedByFilterStatistics(filterSortMapping, contentFields, tags, latestMode, limit)
+ 		);
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusLaunchGroupedContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusLaunchGroupedContentLoader.java
+index 453f96abd..ff841ead0 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusLaunchGroupedContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/ProductStatusLaunchGroupedContentLoader.java
+@@ -8,9 +8,10 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
++import java.util.stream.Collectors;
+ 
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
++import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_SORTS;
+ import static java.util.Collections.singletonMap;
+ 
+ @Service
+@@ -20,18 +21,24 @@ public class ProductStatusLaunchGroupedContentLoader implements ProductStatusCon
+ 	private WidgetContentRepository widgetContentRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions,
++	public Map<String, ?> loadContent(List<String> fields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
+ 			int limit) {
+ 
+ 		boolean latestMode = widgetOptions.entrySet().stream().anyMatch(entry -> LATEST_OPTION.equalsIgnoreCase(entry.getKey()));
+ 
++		List<String> tags = fields.stream()
++				.filter(f -> f.startsWith("tag"))
++				.map(field -> field.split("\\$")[1])
++				.collect(Collectors.toList());
++
++		List<String> contentFields = fields.stream().filter(f -> !f.startsWith("tag")).collect(Collectors.toList());
++
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
++
++		Sort sort = GROUP_SORTS.apply(filterSortMapping.values());
++
+ 		return singletonMap(RESULT,
+-				widgetContentRepository.productStatusGroupedByLaunchesStatistics(GROUP_FILTERS.apply(filters),
+-						contentFields,
+-						sort,
+-						latestMode,
+-						limit
+-				)
++				widgetContentRepository.productStatusGroupedByLaunchesStatistics(filter, contentFields, tags, sort, latestMode, limit)
+ 		);
+ 	}
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/UniqueBugContentLoader.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/UniqueBugContentLoader.java
+index 56045931c..13822d153 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/UniqueBugContentLoader.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/UniqueBugContentLoader.java
+@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import static com.epam.ta.reportportal.core.widget.util.WidgetFilterUtil.GROUP_FILTERS;
+ import static java.util.Collections.singletonMap;
+@@ -45,8 +44,9 @@ public class UniqueBugContentLoader implements LoadContentStrategy {
+ 	private WidgetContentRepository widgetRepository;
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
+-		Filter filter = GROUP_FILTERS.apply(filters);
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
++		Filter filter = GROUP_FILTERS.apply(filterSortMapping.keySet());
+ 
+ 		return singletonMap(RESULT, widgetRepository.uniqueBugStatistics(filter, limit));
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/util/ProductStatusContentLoaderManager.java b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/util/ProductStatusContentLoaderManager.java
+index 47c81f552..1847288d4 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/util/ProductStatusContentLoaderManager.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/content/loader/util/ProductStatusContentLoaderManager.java
+@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ @Service
+ public class ProductStatusContentLoaderManager implements LoadContentStrategy {
+@@ -24,8 +23,10 @@ public class ProductStatusContentLoaderManager implements LoadContentStrategy {
+ 	}
+ 
+ 	@Override
+-	public Map<String, ?> loadContent(List<String> contentFields, Set<Filter> filters, Sort sort, Map<String, String> widgetOptions, int limit) {
++	public Map<String, ?> loadContent(List<String> contentFields, Map<Filter, Sort> filterSortMapping, Map<String, String> widgetOptions,
++			int limit) {
+ 
+-		return productStatusContentLoader.get(widgetOptions.get("strategy")).loadContent(contentFields, filters, sort, widgetOptions, limit);
++		return productStatusContentLoader.get(widgetOptions.get("strategy"))
++				.loadContent(contentFields, filterSortMapping, widgetOptions, limit);
+ 	}
+ }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/util/WidgetFilterUtil.java b/src/main/java/com/epam/ta/reportportal/core/widget/util/WidgetFilterUtil.java
+index 9877bf1f1..4085d5b1a 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/util/WidgetFilterUtil.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/util/WidgetFilterUtil.java
+@@ -24,9 +24,13 @@ package com.epam.ta.reportportal.core.widget.util;
+ import com.epam.ta.reportportal.commons.querygen.Filter;
+ import com.epam.ta.reportportal.exception.ReportPortalException;
+ import com.epam.ta.reportportal.ws.model.ErrorType;
++import com.google.common.collect.Lists;
++import org.springframework.data.domain.Sort;
+ 
++import java.util.Collection;
+ import java.util.Set;
+ import java.util.function.Function;
++import java.util.stream.Collectors;
+ 
+ /**
+[REDACTED personal attribution]
+@@ -42,4 +46,8 @@ public class WidgetFilterUtil {
+ 		return filter;
+ 	};
+ 
++	public static final Function<Collection<Sort>, Sort> GROUP_SORTS = sorts -> Sort.by(sorts.stream()
++			.flatMap(s -> Lists.newArrayList(s.iterator()).stream())
++			.collect(Collectors.toList()));
++
+ }
+

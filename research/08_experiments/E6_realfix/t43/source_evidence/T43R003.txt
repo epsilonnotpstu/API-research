@@ -1,0 +1,115 @@
+[parent contract] f52da1a8f39ebb33b104daad0d6703e284bd43ab:src/main/resources/openapi.json:78
+76:                     },
+77:                     "422": {
+78:                         "description": "One or more consumer configuration options have invalid values.",
+79:                         "content": {
+80:                             "application/vnd.kafka.v2+json": {
+81:                                 "schema": {
+82:                                     "$ref": "#/components/schemas/Error"
+83:                                 },
+84:                                 "examples": {
+85:                                     "response": {
+86:                                         "value": {
+87:                                             "error_code": 422,
+88:                                             "message": "One or more consumer configuration options have invalid values."
+89:                                         }
+90:                                     }
+
+[fix contract] 31209f2ff9231c87c5c37e123da4f6ed80419830:src/main/resources/openapi.json:78
+76:                     },
+77:                     "422": {
+78:                         "description": "One or more consumer configuration options have invalid values.",
+79:                         "content": {
+80:                             "application/vnd.kafka.v2+json": {
+81:                                 "schema": {
+82:                                     "$ref": "#/components/schemas/Error"
+83:                                 },
+84:                                 "examples": {
+85:                                     "response": {
+86:                                         "value": {
+87:                                             "error_code": 422,
+88:                                             "message": "One or more consumer configuration options have invalid values."
+89:                                         }
+90:                                     }
+
+[parent route] f52da1a8f39ebb33b104daad0d6703e284bd43ab:src/main/resources/openapi.json:22
+22:         "/consumers/{groupid}": {
+23:             "post": {
+24:                 "tags": [
+25:                     "Consumers"
+26:                 ],
+27:                 "description": "Creates a consumer instance in the given consumer group. You can optionally specify a consumer name and supported configuration options. It returns a base URI which must be used to construct URLs for subsequent requests against this consumer instance.",
+28:                 "operationId": "createConsumer",
+29:                 "requestBody": {
+30:                     "description": "Name and configuration of the consumer. The name is unique within the scope of the consumer group. If a name is not specified, a randomly generated name is assigned. All parameters are optional. The supported configuration options are shown in the following example.",
+31:                     "content": {
+32:                         "application/vnd.kafka.v2+json": {
+
+[parent implementation] f52da1a8f39ebb33b104daad0d6703e284bd43ab:src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:205
+205:     private void createConsumer(RoutingContext routingContext) {
+206:         this.httpBridgeContext.setOpenApiOperation(HttpOpenApiOperations.CREATE_CONSUMER);
+207: 
+208:         JsonObject body = routingContext.getBodyAsJson();
+209:         EmbeddedFormat format = EmbeddedFormat.from(body.getString("format", "binary"));
+210: 
+211:         final SinkBridgeEndpoint sink = new HttpSinkBridgeEndpoint<>(this.vertx, this.bridgeConfig, this.httpBridgeContext,
+212:                 format, new ByteArrayDeserializer(), new ByteArrayDeserializer());
+213: 
+214:         sink.closeHandler(s -> {
+215:             httpBridgeContext.getHttpSinkEndpoints().remove(sink.name());
+216:         });
+217: 
+218:         try {
+219:             sink.open();
+220: 
+221:             sink.handle(new HttpEndpoint(routingContext), consumerId -> {
+222:                 httpBridgeContext.getHttpSinkEndpoints().put(consumerId.toString(), sink);
+223:                 timestampMap.put(consumerId.toString(), System.currentTimeMillis());
+224:             });
+225:         } catch (Exception ex) {
+226:             sink.close();
+227:             HttpBridgeError error = new HttpBridgeError(
+228:                     HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+229:                     ex.getMessage()
+230:             );
+231:             HttpUtils.sendResponse(routingContext, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+232:                     BridgeContentType.KAFKA_JSON, error.toJson().toBuffer());
+233:         }
+234:     }
+235: 
+
+[parent implementation] f52da1a8f39ebb33b104daad0d6703e284bd43ab:src/main/java/io/strimzi/kafka/bridge/EmbeddedFormat.java:19
+10:     JSON;
+11: 
+12:     public static EmbeddedFormat from(String value) {
+13:         switch (value) {
+14:             case "json":
+15:                 return JSON;
+16:             case "binary":
+17:                 return BINARY;
+18:         }
+19:         throw new IllegalArgumentException(value);
+20:     }
+21: }
+
+[fix implementation] 31209f2ff9231c87c5c37e123da4f6ed80419830:src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:233
+228:             });
+229:         } catch (Exception ex) {
+230:             if (sink != null) {
+231:                 sink.close();
+232:             }
+233:             HttpResponseStatus responseStatus = (ex instanceof IllegalEmbeddedFormatException) || (ex instanceof ConfigException) ?
+234:                                                 HttpResponseStatus.UNPROCESSABLE_ENTITY : 
+235:                                                 HttpResponseStatus.INTERNAL_SERVER_ERROR;
+236:             
+237:             HttpBridgeError error = new HttpBridgeError(
+238:                 responseStatus.code(),
+239:                 ex.getMessage()
+240:             );
+241:             HttpUtils.sendResponse(routingContext, error.getCode(),
+242:                     BridgeContentType.KAFKA_JSON, error.toJson().toBuffer());
+243:         }
+244:     }
+245: 
+246:     private void deleteConsumer(RoutingContext routingContext) {
+247:         this.httpBridgeContext.setOpenApiOperation(HttpOpenApiOperations.DELETE_CONSUMER);

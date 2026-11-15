@@ -1,0 +1,1347 @@
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/commands/service/SynchronousCommandProcessingService.java b/mifosng-provider/src/main/java/org/mifosplatform/commands/service/SynchronousCommandProcessingService.java
+index 07052ad187..0fdf8d86fe 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/commands/service/SynchronousCommandProcessingService.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/commands/service/SynchronousCommandProcessingService.java
+@@ -213,13 +213,13 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
+         } else if (wrapper.isLoanResource()) {
+             
+             if (wrapper.isApproveLoanApplication()) {
+-                handler = applicationContext.getBean("approveLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationApprovalCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isUndoApprovalOfLoanApplication()) {
+-                handler = applicationContext.getBean("undoApprovalLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationApprovalUndoCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isApplicantWithdrawalFromLoanApplication()) {
+-                handler = applicationContext.getBean("applicantWithdrawsFromLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationWithdrawnByApplicantCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isRejectionOfLoanApplication()) {
+-                handler = applicationContext.getBean("rejectLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationRejectedCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isDisbursementOfLoan()) {
+                 handler = applicationContext.getBean("disburseLoanCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isUndoDisbursementOfLoan()) {
+@@ -249,11 +249,11 @@ public class SynchronousCommandProcessingService implements CommandProcessingSer
+             } else if (wrapper.isBulkUpdateLoanOfficer()) {
+                 handler = applicationContext.getBean("bulkUpdateLoanOfficerCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isCreate()) {
+-                handler = applicationContext.getBean("createLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationSubmittalCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isUpdate()) {
+-                handler = applicationContext.getBean("updateLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationModificationCommandHandler", NewCommandSourceHandler.class);
+             } else if (wrapper.isDelete()) {
+-                handler = applicationContext.getBean("deleteLoanApplicationCommandHandler", NewCommandSourceHandler.class);
++                handler = applicationContext.getBean("loanApplicationDeletionCommandHandler", NewCommandSourceHandler.class);
+             } else {
+                 throw new UnsupportedCommandException(wrapper.commandName());
+             }
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/command/LoanApplicationCommand.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/command/LoanApplicationCommand.java
+index c5de9925ff..cd284a9695 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/command/LoanApplicationCommand.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/command/LoanApplicationCommand.java
+@@ -3,7 +3,6 @@ package org.mifosplatform.portfolio.loanaccount.command;
+ import java.math.BigDecimal;
+ import java.util.ArrayList;
+ import java.util.List;
+-import java.util.Set;
+ 
+ import org.joda.time.LocalDate;
+ import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+@@ -16,17 +15,20 @@ import org.mifosplatform.portfolio.loanaccount.loanschedule.query.CalculateLoanS
+  */
+ public class LoanApplicationCommand {
+ 
+-    private final Long loanId;
+     private final Long clientId;
+     private final Long groupId;
+     private final Long productId;
++    @SuppressWarnings("unused")
+     private final String externalId;
+ 
++    @SuppressWarnings("unused")
+     private final Long fundId;
++    @SuppressWarnings("unused")
+     private final Long loanOfficerId;
+     private final Long transactionProcessingStrategyId;
+ 
+     private final BigDecimal principal;
++    @SuppressWarnings("unused")
+     private final BigDecimal inArrearsTolerance;
+ 
+     private final Integer loanTermFrequency;
+@@ -46,23 +48,19 @@ public class LoanApplicationCommand {
+     private final LocalDate repaymentsStartingFromDate;
+     private final LocalDate interestChargedFromDate;
+     private final LocalDate submittedOnDate;
++    @SuppressWarnings("unused")
+     private final String submittedOnNote;
+ 
+     private final LoanChargeCommand[] charges;
+ 
+-    private final Set<String> modifiedParameters;
+-
+-    public LoanApplicationCommand(final Set<String> modifiedParameters, final Long loanId, final Long clientId, final Long groupId,
+-            final Long productId, final String externalId, final Long fundId, final Long transactionProcessingStrategyId,
+-            final LocalDate submittedOnDate, final String submittedOnNote, final LocalDate expectedDisbursementDate,
+-            final LocalDate repaymentsStartingFromDate, final LocalDate interestChargedFromLocalDate, final BigDecimal principal,
+-            final BigDecimal interestRatePerPeriod, final Integer interestRateFrequencyMethod, final Integer interestMethod,
+-            final Integer interestCalculationPeriodMethod, final Integer repaymentEvery, final Integer repaymentFrequency,
+-            final Integer numberOfRepayments, Integer amortizationMethod, final Integer loanTermFrequency,
+-            final Integer loanTermFrequencyType, final BigDecimal toleranceAmount, final LoanChargeCommand[] charges,
+-            final Long loanOfficerId) {
+-        this.modifiedParameters = modifiedParameters;
+-        this.loanId = loanId;
++    public LoanApplicationCommand(final Long clientId, final Long groupId, final Long productId, final String externalId,
++            final Long fundId, final Long transactionProcessingStrategyId, final LocalDate submittedOnDate, final String submittedOnNote,
++            final LocalDate expectedDisbursementDate, final LocalDate repaymentsStartingFromDate,
++            final LocalDate interestChargedFromLocalDate, final BigDecimal principal, final BigDecimal interestRatePerPeriod,
++            final Integer interestRateFrequencyMethod, final Integer interestMethod, final Integer interestCalculationPeriodMethod,
++            final Integer repaymentEvery, final Integer repaymentFrequency, final Integer numberOfRepayments, Integer amortizationMethod,
++            final Integer loanTermFrequency, final Integer loanTermFrequencyType, final BigDecimal toleranceAmount,
++            final LoanChargeCommand[] charges, final Long loanOfficerId) {
+         this.clientId = clientId;
+         this.groupId = groupId;
+         this.productId = productId;
+@@ -101,160 +99,12 @@ public class LoanApplicationCommand {
+                 this.expectedDisbursementDate, this.repaymentsStartingFromDate, this.interestChargedFromDate, this.charges);
+     }
+ 
+-    public Long getLoanId() {
+-        return loanId;
+-    }
+-
+-    public Long getClientId() {
+-        return clientId;
+-    }
+-
+-    public Long getGroupId() {
+-        return groupId;
+-    }
+-
+-    public Long getProductId() {
+-        return productId;
+-    }
+-
+-    public String getExternalId() {
+-        return externalId;
+-    }
+-
+-    public Long getFundId() {
+-        return fundId;
+-    }
+-
+-    public Long getTransactionProcessingStrategyId() {
+-        return transactionProcessingStrategyId;
+-    }
+-
+-    public BigDecimal getPrincipal() {
+-        return principal;
+-    }
+-
+-    public BigDecimal getInArrearsTolerance() {
+-        return inArrearsTolerance;
+-    }
+-
+-    public Integer getNumberOfRepayments() {
+-        return numberOfRepayments;
+-    }
+-
+-    public Integer getRepaymentEvery() {
+-        return repaymentEvery;
+-    }
+-
+-    public Integer getLoanTermFrequency() {
+-        return loanTermFrequency;
+-    }
+-
+-    public Integer getLoanTermFrequencyType() {
+-        return loanTermFrequencyType;
+-    }
+-
+-    public BigDecimal getInterestRatePerPeriod() {
+-        return interestRatePerPeriod;
+-    }
+-
+-    public Integer getRepaymentFrequencyType() {
+-        return repaymentFrequencyType;
+-    }
+-
+-    public Integer getInterestRateFrequencyType() {
+-        return interestRateFrequencyType;
+-    }
+-
+-    public Integer getAmortizationType() {
+-        return amortizationType;
+-    }
+-
+-    public Integer getInterestType() {
+-        return interestType;
+-    }
+-
+-    public Integer getInterestCalculationPeriodType() {
+-        return interestCalculationPeriodType;
+-    }
+-
+-    public LocalDate getExpectedDisbursementDate() {
+-        return expectedDisbursementDate;
+-    }
+-
+-    public LocalDate getRepaymentsStartingFromDate() {
+-        return repaymentsStartingFromDate;
+-    }
+-
+-    public LocalDate getInterestChargedFromDate() {
+-        return interestChargedFromDate;
+-    }
+-
+-    public LocalDate getSubmittedOnDate() {
+-        return submittedOnDate;
+-    }
+-
+-    public String getSubmittedOnNote() {
+-        return submittedOnNote;
+-    }
+-
+     public LoanChargeCommand[] getCharges() {
+         return charges;
+     }
+ 
+-    public boolean isClientChanged() {
+-        return this.modifiedParameters.contains("clientId");
+-    }
+-
+-    public boolean isProductChanged() {
+-        return this.modifiedParameters.contains("productId");
+-    }
+-
+-    public boolean isFundChanged() {
+-        return this.modifiedParameters.contains("fundId");
+-    }
+-
+-    public boolean isLoanOfficerChanged() {
+-        return this.modifiedParameters.contains("loanOfficerId");
+-    }
+-
+-    public boolean isTransactionStrategyChanged() {
+-        return this.modifiedParameters.contains("transactionProcessingStrategyId");
+-    }
+-
+-    public boolean isTermFrequencyChanged() {
+-        return this.modifiedParameters.contains("loanTermFrequency");
+-    }
+-
+-    public boolean isTermFrequencyTypeChanged() {
+-        return this.modifiedParameters.contains("loanTermFrequencyType");
+-    }
+-
+-    public boolean isSubmittedOnDateChanged() {
+-        return this.modifiedParameters.contains("submittedOnDate");
+-    }
+-
+-    public boolean isExpectedDisbursementDatePassed() {
+-        return this.modifiedParameters.contains("expectedDisbursementDate");
+-    }
+-
+-    public boolean isRepaymentsStartingFromDateChanged() {
+-        return this.modifiedParameters.contains("repaymentsStartingFromDate");
+-    }
+-
+-    public boolean isInterestChargedFromDateChanged() {
+-        return this.modifiedParameters.contains("interestChargedFromDate");
+-    }
+-
+-    public boolean isChargesChanged() {
+-        return this.modifiedParameters.contains("charges");
+-    }
+-
+-    public Long getLoanOfficerId() {
+-        return loanOfficerId;
+-    }
+-
+-    public void validate() {
+-        List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
++    public List<ApiParameterError> validate() {
++        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+ 
+         DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+ 
+@@ -296,7 +146,6 @@ public class LoanApplicationCommand {
+             }
+         }
+ 
+-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+-                "Validation errors exist.", dataValidationErrors); }
++        return dataValidationErrors;
+     }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApproveLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalCommandHandler.java
+similarity index 66%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApproveLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalCommandHandler.java
+index bdd2f307b1..0aac7f19a8 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApproveLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class ApproveLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationApprovalCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public ApproveLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationApprovalCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UndoApprovalLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalUndoCommandHandler.java
+similarity index 68%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UndoApprovalLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalUndoCommandHandler.java
+index 096481a6b4..91b1804b67 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UndoApprovalLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationApprovalUndoCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class UndoApprovalLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationApprovalUndoCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public UndoApprovalLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationApprovalUndoCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/DeleteLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationDeletionCommandHandler.java
+similarity index 58%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/DeleteLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationDeletionCommandHandler.java
+index 8d529064cf..a7a0661730 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/DeleteLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationDeletionCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class DeleteLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationDeletionCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public DeleteLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationDeletionCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+@@ -22,6 +22,6 @@ public class DeleteLoanApplicationCommandHandler implements NewCommandSourceHand
+     @Override
+     public EntityIdentifier processCommand(final JsonCommand command) {
+ 
+-        return this.writePlatformService.deleteLoan(command.resourceId());
++        return this.writePlatformService.deleteLoanApplication(command.resourceId());
+     }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UpdateLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationModificationCommandHandler.java
+similarity index 65%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UpdateLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationModificationCommandHandler.java
+index 8bb78f8226..5bd26b953a 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/UpdateLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationModificationCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class UpdateLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationModificationCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public UpdateLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationModificationCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/RejectLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationRejectedCommandHandler.java
+similarity index 66%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/RejectLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationRejectedCommandHandler.java
+index 379806b1e6..8c67f8c085 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/RejectLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationRejectedCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class RejectLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationRejectedCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public RejectLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationRejectedCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/CreateLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationSubmittalCommandHandler.java
+similarity index 65%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/CreateLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationSubmittalCommandHandler.java
+index 7798eab7d8..8a141a05b8 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/CreateLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationSubmittalCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class CreateLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationSubmittalCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public CreateLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationSubmittalCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApplicantWithdrawsFromLoanApplicationCommandHandler.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationWithdrawnByApplicantCommandHandler.java
+similarity index 65%
+rename from mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApplicantWithdrawsFromLoanApplicationCommandHandler.java
+rename to mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationWithdrawnByApplicantCommandHandler.java
+index 37076f2705..29d07e03cc 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/ApplicantWithdrawsFromLoanApplicationCommandHandler.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/handler/LoanApplicationWithdrawnByApplicantCommandHandler.java
+@@ -3,18 +3,18 @@ package org.mifosplatform.portfolio.loanaccount.handler;
+ import org.mifosplatform.commands.handler.NewCommandSourceHandler;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.portfolio.loanaccount.service.LoanWritePlatformService;
++import org.mifosplatform.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ @Service
+-public class ApplicantWithdrawsFromLoanApplicationCommandHandler implements NewCommandSourceHandler {
++public class LoanApplicationWithdrawnByApplicantCommandHandler implements NewCommandSourceHandler {
+ 
+-    private final LoanWritePlatformService writePlatformService;
++    private final LoanApplicationWritePlatformService writePlatformService;
+ 
+     @Autowired
+-    public ApplicantWithdrawsFromLoanApplicationCommandHandler(final LoanWritePlatformService writePlatformService) {
++    public LoanApplicationWithdrawnByApplicantCommandHandler(final LoanApplicationWritePlatformService writePlatformService) {
+         this.writePlatformService = writePlatformService;
+     }
+ 
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/query/CalculateLoanScheduleQuery.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/query/CalculateLoanScheduleQuery.java
+index d59cb9a624..b696035320 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/query/CalculateLoanScheduleQuery.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/query/CalculateLoanScheduleQuery.java
+@@ -7,7 +7,6 @@ import java.util.List;
+ import org.joda.time.LocalDate;
+ import org.mifosplatform.infrastructure.core.data.ApiParameterError;
+ import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
+-import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+ import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
+ 
+ /**
+@@ -122,9 +121,9 @@ public class CalculateLoanScheduleQuery {
+         return charges;
+     }
+ 
+-    public void validate() {
++    public List<ApiParameterError> validate() {
+ 
+-        List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
++        final List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+ 
+         DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan");
+ 
+@@ -200,8 +199,7 @@ public class CalculateLoanScheduleQuery {
+             }
+         }
+ 
+-        if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+-                "Validation errors exist.", dataValidationErrors); }
++        return dataValidationErrors;
+ 
+     }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/service/LoanScheduleCalculationPlatformServiceImpl.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/service/LoanScheduleCalculationPlatformServiceImpl.java
+index 9a511d3b69..99a36b57d4 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/service/LoanScheduleCalculationPlatformServiceImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/loanschedule/service/LoanScheduleCalculationPlatformServiceImpl.java
+@@ -1,6 +1,10 @@
+ package org.mifosplatform.portfolio.loanaccount.loanschedule.service;
+ 
++import java.util.List;
++
+ import org.mifosplatform.infrastructure.core.api.JsonQuery;
++import org.mifosplatform.infrastructure.core.data.ApiParameterError;
++import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
+ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+ import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
+ import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.LoanSchedule;
+@@ -29,8 +33,12 @@ public class LoanScheduleCalculationPlatformServiceImpl implements LoanScheduleC
+     public LoanScheduleData calculateLoanSchedule(final JsonQuery query) {
+         context.authenticatedUser();
+ 
+-        CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.fromApiJsonDeserializer.commandFromApiJson(query.json());
+-        calculateLoanScheduleQuery.validate();
++        final CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.fromApiJsonDeserializer.commandFromApiJson(query.json());
++        final List<ApiParameterError> dataValidationErrors = calculateLoanScheduleQuery.validate();
++        
++        if (!dataValidationErrors.isEmpty()) {
++            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors); 
++        }
+ 
+         final LoanSchedule loanSchedule = this.loanScheduleAssembler.fromJson(query.parsedJson());
+         return loanSchedule.generate();
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/serialization/LoanApplicationCommandFromApiJsonDeserializer.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/serialization/LoanApplicationCommandFromApiJsonDeserializer.java
+index 87bd144a37..f5b88c4ea4 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/serialization/LoanApplicationCommandFromApiJsonDeserializer.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/serialization/LoanApplicationCommandFromApiJsonDeserializer.java
+@@ -132,10 +132,10 @@ public final class LoanApplicationCommandFromApiJsonDeserializer extends Abstrac
+             }
+         }
+ 
+-        return new LoanApplicationCommand(new HashSet<String>(), null, clientId, groupId, productId, externalId, fundId,
+-                transactionProcessingStrategyId, submittedOnDate, submittedOnNote, expectedDisbursementDate, repaymentsStartingFromDate,
+-                interestChargedFromDate, principal, interestRatePerPeriod, interestRateFrequencyType, interestType,
+-                interestCalculationPeriodType, repaymentEvery, repaymentFrequencyType, numberOfRepayments, amortizationType,
+-                loanTermFrequency, loanTermFrequencyType, inArrearsTolerance, charges, loanOfficerId);
++        return new LoanApplicationCommand(clientId, groupId, productId, externalId, fundId, transactionProcessingStrategyId,
++                submittedOnDate, submittedOnNote, expectedDisbursementDate, repaymentsStartingFromDate, interestChargedFromDate, principal,
++                interestRatePerPeriod, interestRateFrequencyType, interestType, interestCalculationPeriodType, repaymentEvery,
++                repaymentFrequencyType, numberOfRepayments, amortizationType, loanTermFrequency, loanTermFrequencyType, inArrearsTolerance,
++                charges, loanOfficerId);
+     }
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformService.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformService.java
+new file mode 100644
+index 0000000000..d641290f0d
+--- /dev/null
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformService.java
+@@ -0,0 +1,21 @@
++package org.mifosplatform.portfolio.loanaccount.service;
++
++import org.mifosplatform.infrastructure.core.api.JsonCommand;
++import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
++
++public interface LoanApplicationWritePlatformService {
++
++    EntityIdentifier submitLoanApplication(JsonCommand command);
++
++    EntityIdentifier modifyLoanApplication(Long loanId, JsonCommand command);
++
++    EntityIdentifier deleteLoanApplication(Long loanId);
++
++    EntityIdentifier approveLoanApplication(Long loanId, JsonCommand command);
++
++    EntityIdentifier undoLoanApplicationApproval(Long loanId, JsonCommand command);
++
++    EntityIdentifier rejectLoanApplication(Long loanId, JsonCommand command);
++
++    EntityIdentifier applicantWithdrawsFromLoanApplication(Long loanId, JsonCommand command);
++}
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformServiceJpaRepositoryImpl.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformServiceJpaRepositoryImpl.java
+new file mode 100644
+index 0000000000..3307e3b21b
+--- /dev/null
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanApplicationWritePlatformServiceJpaRepositoryImpl.java
+@@ -0,0 +1,349 @@
++package org.mifosplatform.portfolio.loanaccount.service;
++
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++
++import org.apache.commons.lang.StringUtils;
++import org.joda.time.LocalDate;
++import org.mifosplatform.infrastructure.core.api.JsonCommand;
++import org.mifosplatform.infrastructure.core.api.JsonQuery;
++import org.mifosplatform.infrastructure.core.data.ApiParameterError;
++import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
++import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
++import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
++import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
++import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
++import org.mifosplatform.portfolio.client.domain.Client;
++import org.mifosplatform.portfolio.client.domain.ClientRepository;
++import org.mifosplatform.portfolio.client.domain.Note;
++import org.mifosplatform.portfolio.client.domain.NoteRepository;
++import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
++import org.mifosplatform.portfolio.fund.domain.Fund;
++import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommand;
++import org.mifosplatform.portfolio.loanaccount.command.LoanStateTransitionCommand;
++import org.mifosplatform.portfolio.loanaccount.domain.DefaultLoanLifecycleStateMachine;
++import org.mifosplatform.portfolio.loanaccount.domain.Loan;
++import org.mifosplatform.portfolio.loanaccount.domain.LoanCharge;
++import org.mifosplatform.portfolio.loanaccount.domain.LoanLifecycleStateMachine;
++import org.mifosplatform.portfolio.loanaccount.domain.LoanRepository;
++import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
++import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
++import org.mifosplatform.portfolio.loanaccount.exception.LoanNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
++import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
++import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
++import org.mifosplatform.portfolio.loanaccount.loanschedule.query.CalculateLoanScheduleQuery;
++import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleCalculationPlatformService;
++import org.mifosplatform.portfolio.loanaccount.serialization.CalculateLoanScheduleQueryFromApiJsonDeserializer;
++import org.mifosplatform.portfolio.loanaccount.serialization.LoanApplicationCommandFromApiJsonDeserializer;
++import org.mifosplatform.portfolio.loanaccount.serialization.LoanStateTransitionCommandFromApiJsonDeserializer;
++import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
++import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
++import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
++import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
++import org.mifosplatform.useradministration.domain.AppUser;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
++
++import com.google.gson.JsonElement;
++
++@Service
++public class LoanApplicationWritePlatformServiceJpaRepositoryImpl implements LoanApplicationWritePlatformService {
++
++    private final PlatformSecurityContext context;
++    private final FromJsonHelper fromJsonHelper;
++    private final LoanApplicationCommandFromApiJsonDeserializer fromApiJsonDeserializer;
++    private final CalculateLoanScheduleQueryFromApiJsonDeserializer calculateLoanScheduleQueryFromApiJsonDeserializer;
++    private final LoanStateTransitionCommandFromApiJsonDeserializer loanStateTransitionCommandFromApiJsonDeserializer;
++    private final LoanRepository loanRepository;
++    private final NoteRepository noteRepository;
++    private final LoanScheduleCalculationPlatformService calculationPlatformService;
++    private final LoanAssembler loanAssembler;
++    private final ClientRepository clientRepository;
++    private final LoanProductRepository loanProductRepository;
++    private final LoanChargeAssembler loanChargeAssembler;
++    private final AprCalculator aprCalculator;
++
++    @Autowired
++    public LoanApplicationWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
++            final LoanApplicationCommandFromApiJsonDeserializer fromApiJsonDeserializer,
++            final LoanStateTransitionCommandFromApiJsonDeserializer loanStateTransitionCommandFromApiJsonDeserializer,
++            final CalculateLoanScheduleQueryFromApiJsonDeserializer calculateLoanScheduleQueryFromApiJsonDeserializer,
++            final AprCalculator aprCalculator, final LoanAssembler loanAssembler, final LoanChargeAssembler loanChargeAssembler,
++            final LoanRepository loanRepository, final NoteRepository noteRepository,
++            final LoanScheduleCalculationPlatformService calculationPlatformService, final ClientRepository clientRepository,
++            final LoanProductRepository loanProductRepository) {
++        this.context = context;
++        this.fromJsonHelper = fromJsonHelper;
++        this.fromApiJsonDeserializer = fromApiJsonDeserializer;
++        this.loanStateTransitionCommandFromApiJsonDeserializer = loanStateTransitionCommandFromApiJsonDeserializer;
++        this.calculateLoanScheduleQueryFromApiJsonDeserializer = calculateLoanScheduleQueryFromApiJsonDeserializer;
++        this.aprCalculator = aprCalculator;
++        this.loanAssembler = loanAssembler;
++        this.loanChargeAssembler = loanChargeAssembler;
++        this.loanRepository = loanRepository;
++        this.noteRepository = noteRepository;
++        this.calculationPlatformService = calculationPlatformService;
++        this.clientRepository = clientRepository;
++        this.loanProductRepository = loanProductRepository;
++    }
++
++    private boolean isBeforeToday(final LocalDate date) {
++        return date.isBefore(new LocalDate());
++    }
++
++    private LoanLifecycleStateMachine defaultLoanLifecycleStateMachine() {
++        List<LoanStatus> allowedLoanStatuses = Arrays.asList(LoanStatus.values());
++        return new DefaultLoanLifecycleStateMachine(allowedLoanStatuses);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier submitLoanApplication(final JsonCommand command) {
++
++        context.authenticatedUser();
++
++        final CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.calculateLoanScheduleQueryFromApiJsonDeserializer.commandFromApiJson(command.json());
++        final List<ApiParameterError> loanScheduleErrors = calculateLoanScheduleQuery.validate();
++        
++        final LoanApplicationCommand loanApplicationCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
++        final List<ApiParameterError> loanApplicationErrors = loanApplicationCommand.validate();
++        
++        final List<ApiParameterError> combinedErrors = new ArrayList<ApiParameterError>(loanScheduleErrors);
++        combinedErrors.addAll(loanApplicationErrors);
++        
++        if (!combinedErrors.isEmpty()) { 
++            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", combinedErrors); 
++        }
++
++        final Loan newLoanApplication = loanAssembler.assembleFrom(command);
++
++        this.loanRepository.save(newLoanApplication);
++
++        final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
++        if (StringUtils.isNotBlank(submittedOnNote)) {
++            Note note = Note.loanNote(newLoanApplication, submittedOnNote);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(newLoanApplication.getId(), command.commandId());
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier modifyLoanApplication(final Long loanId, final JsonCommand command) {
++
++        context.authenticatedUser();
++
++        final CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.calculateLoanScheduleQueryFromApiJsonDeserializer.commandFromApiJson(command.json());
++        final List<ApiParameterError> loanScheduleErrors = calculateLoanScheduleQuery.validate();
++        
++        final LoanApplicationCommand loanApplicationCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
++        final List<ApiParameterError> loanApplicationErrors = loanApplicationCommand.validate();
++        
++        final List<ApiParameterError> combinedErrors = new ArrayList<ApiParameterError>(loanScheduleErrors);
++        combinedErrors.addAll(loanApplicationErrors);
++        
++        if (!combinedErrors.isEmpty()) { 
++            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", combinedErrors); 
++        }
++
++        final Loan existingLoanApplication = retrieveLoanBy(loanId);
++
++        final Map<String, Object> changes = existingLoanApplication.modifyLoanApplication(command, loanApplicationCommand.getCharges(),
++                this.aprCalculator);
++
++        final String clientIdParamName = "clientId";
++        if (changes.containsKey(clientIdParamName)) {
++            final Long clientId = command.longValueOfParameterNamed(clientIdParamName);
++            final Client client = this.clientRepository.findOne(clientId);
++            if (client == null || client.isDeleted()) { throw new ClientNotFoundException(clientId); }
++
++            existingLoanApplication.updateClient(client);
++        }
++
++        final String productIdParamName = "productId";
++        if (changes.containsKey(productIdParamName)) {
++            final Long productId = command.longValueOfParameterNamed(productIdParamName);
++            final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
++            if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
++
++            existingLoanApplication.updateLoanProduct(loanProduct);
++        }
++
++        final String fundIdParamName = "fundId";
++        if (changes.containsKey(fundIdParamName)) {
++            final Long fundId = command.longValueOfParameterNamed(fundIdParamName);
++            final Fund fund = this.loanAssembler.findFundByIdIfProvided(fundId);
++
++            existingLoanApplication.updateFund(fund);
++        }
++
++        final String strategyIdParamName = "transactionProcessingStrategyId";
++        if (changes.containsKey(strategyIdParamName)) {
++            final Long strategyId = command.longValueOfParameterNamed(strategyIdParamName);
++            final LoanTransactionProcessingStrategy strategy = this.loanAssembler.findStrategyByIdIfProvided(strategyId);
++
++            existingLoanApplication.updateTransactionProcessingStrategy(strategy);
++        }
++
++        final String chargesParamName = "charges";
++        if (changes.containsKey(chargesParamName)) {
++            final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
++            existingLoanApplication.updateLoanCharges(loanCharges);
++        }
++
++        if (changes.containsKey("recalculateLoanSchedule")) {
++            changes.remove("recalculateLoanSchedule");
++
++            final JsonElement parsedQuery = this.fromJsonHelper.parse(command.json());
++            final JsonQuery query = JsonQuery.from(command.json(), parsedQuery, this.fromJsonHelper);
++
++            final LoanScheduleData loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query);
++            existingLoanApplication.updateLoanSchedule(loanSchedule);
++            existingLoanApplication.updateLoanScheduleDependentDerivedFields();
++        }
++
++        this.loanRepository.save(existingLoanApplication);
++
++        final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
++        if (StringUtils.isNotBlank(submittedOnNote)) {
++            Note note = Note.loanNote(existingLoanApplication, submittedOnNote);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier deleteLoanApplication(final Long loanId) {
++
++        context.authenticatedUser();
++
++        final Loan loan = retrieveLoanBy(loanId);
++
++        if (loan.isNotSubmittedAndPendingApproval()) { throw new LoanNotInSubmittedAndPendingApprovalStateCannotBeDeleted(loanId); }
++
++        List<Note> relatedNotes = this.noteRepository.findByLoanId(loan.getId());
++        this.noteRepository.deleteInBatch(relatedNotes);
++
++        this.loanRepository.delete(loanId);
++
++        return new EntityIdentifier(loanId);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier approveLoanApplication(final Long loanId, final JsonCommand command) {
++
++        AppUser currentUser = context.authenticatedUser();
++
++        final LoanStateTransitionCommand approveLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
++                .commandFromApiJson(command.json());
++        approveLoanApplication.validate();
++
++        final Loan loan = retrieveLoanBy(loanId);
++
++        final LocalDate approvedOnLocalDate = approveLoanApplication.getApprovedOnDate();
++        if (this.isBeforeToday(approvedOnLocalDate) && currentUser.canNotApproveLoanInPast()) { throw new NoAuthorizationException(
++                "User has no authority to approve loan with a date in the past."); }
++
++        final Map<String, Object> changes = loan.loanApplicationApproval(command, defaultLoanLifecycleStateMachine());
++        this.loanRepository.save(loan);
++
++        final String noteText = command.stringValueOfParameterNamed("note");
++        if (StringUtils.isNotBlank(noteText)) {
++            Note note = Note.loanNote(loan, noteText);
++            changes.put("note", noteText);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier undoLoanApplicationApproval(final Long loanId, final JsonCommand command) {
++
++        context.authenticatedUser();
++
++        final Loan loan = retrieveLoanBy(loanId);
++
++        final Map<String, Object> changes = loan.undoApproval(defaultLoanLifecycleStateMachine());
++        this.loanRepository.save(loan);
++
++        String noteText = command.stringValueOfParameterNamed("note");
++        if (StringUtils.isNotBlank(noteText)) {
++            Note note = Note.loanNote(loan, noteText);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier rejectLoanApplication(final Long loanId, final JsonCommand command) {
++
++        final AppUser currentUser = context.authenticatedUser();
++
++        final LoanStateTransitionCommand rejectLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
++                .commandFromApiJson(command.json());
++        rejectLoanApplication.validate();
++
++        final Loan loan = retrieveLoanBy(loanId);
++
++        final LocalDate eventDate = rejectLoanApplication.getRejectedOnDate();
++        if (this.isBeforeToday(eventDate) && currentUser.canNotRejectLoanInPast()) { throw new NoAuthorizationException(
++                "User has no authority to reject loan with a date in the past."); }
++
++        final Map<String, Object> changes = loan.loanApplicationRejection(command, defaultLoanLifecycleStateMachine());
++        this.loanRepository.save(loan);
++
++        String noteText = command.stringValueOfParameterNamed("note");
++        if (StringUtils.isNotBlank(noteText)) {
++            Note note = Note.loanNote(loan, noteText);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
++    }
++
++    @Transactional
++    @Override
++    public EntityIdentifier applicantWithdrawsFromLoanApplication(final Long loanId, final JsonCommand command) {
++
++        final AppUser currentUser = context.authenticatedUser();
++
++        final LoanStateTransitionCommand applicantWithdrawsFromLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
++                .commandFromApiJson(command.json());
++        applicantWithdrawsFromLoanApplication.validate();
++
++        final Loan loan = retrieveLoanBy(loanId);
++
++        final LocalDate eventDate = applicantWithdrawsFromLoanApplication.getWithdrawnOnDate();
++        if (this.isBeforeToday(eventDate) && currentUser.canNotWithdrawByClientLoanInPast()) { throw new NoAuthorizationException(
++                "User has no authority to mark loan as withdrawn by applicant with a date in the past."); }
++
++        final Map<String, Object> changes = loan.loanApplicationWithdrawnByApplicant(command, defaultLoanLifecycleStateMachine());
++        this.loanRepository.save(loan);
++
++        String noteText = command.stringValueOfParameterNamed("note");
++        if (StringUtils.isNotBlank(noteText)) {
++            Note note = Note.loanNote(loan, noteText);
++            this.noteRepository.save(note);
++        }
++
++        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
++    }
++
++    private Loan retrieveLoanBy(final Long loanId) {
++        final Loan loan = this.loanRepository.findOne(loanId);
++        if (loan == null) { throw new LoanNotFoundException(loanId); }
++        return loan;
++    }
++}
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformService.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformService.java
+index 2d772ed456..ebbbb7d2a2 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformService.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformService.java
+@@ -5,20 +5,6 @@ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+ 
+ public interface LoanWritePlatformService {
+ 
+-    EntityIdentifier submitLoanApplication(JsonCommand command);
+-
+-    EntityIdentifier modifyLoanApplication(Long loanId, JsonCommand command);
+-
+-    EntityIdentifier deleteLoan(Long loanId);
+-
+-    EntityIdentifier approveLoanApplication(Long loanId, JsonCommand command);
+-
+-    EntityIdentifier undoLoanApplicationApproval(Long loanId, JsonCommand command);
+-
+-    EntityIdentifier rejectLoanApplication(Long loanId, JsonCommand command);
+-
+-    EntityIdentifier applicantWithdrawsFromLoanApplication(Long loanId, JsonCommand command);
+-
+     EntityIdentifier disburseLoan(Long loanId, JsonCommand command);
+ 
+     EntityIdentifier undoLoanDisbursal(Long loanId, JsonCommand command);
+diff --git a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
+index 575bfa49fd..87c48fe882 100644
+--- a/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosplatform/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
+@@ -5,14 +5,11 @@ import java.util.Arrays;
+ import java.util.LinkedHashMap;
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Set;
+ 
+ import org.apache.commons.lang.StringUtils;
+ import org.joda.time.LocalDate;
+ import org.mifosplatform.infrastructure.core.api.JsonCommand;
+-import org.mifosplatform.infrastructure.core.api.JsonQuery;
+ import org.mifosplatform.infrastructure.core.data.EntityIdentifier;
+-import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+ import org.mifosplatform.infrastructure.security.exception.NoAuthorizationException;
+ import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+ import org.mifosplatform.organisation.monetary.domain.ApplicationCurrency;
+@@ -23,13 +20,8 @@ import org.mifosplatform.portfolio.charge.domain.ChargeRepository;
+ import org.mifosplatform.portfolio.charge.exception.ChargeIsNotActiveException;
+ import org.mifosplatform.portfolio.charge.exception.ChargeNotFoundException;
+ import org.mifosplatform.portfolio.charge.exception.LoanChargeNotFoundException;
+-import org.mifosplatform.portfolio.client.domain.Client;
+-import org.mifosplatform.portfolio.client.domain.ClientRepository;
+ import org.mifosplatform.portfolio.client.domain.Note;
+ import org.mifosplatform.portfolio.client.domain.NoteRepository;
+-import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
+-import org.mifosplatform.portfolio.fund.domain.Fund;
+-import org.mifosplatform.portfolio.loanaccount.command.LoanApplicationCommand;
+ import org.mifosplatform.portfolio.loanaccount.command.LoanChargeCommand;
+ import org.mifosplatform.portfolio.loanaccount.command.LoanStateTransitionCommand;
+ import org.mifosplatform.portfolio.loanaccount.command.LoanTransactionCommand;
+@@ -43,82 +35,48 @@ import org.mifosplatform.portfolio.loanaccount.domain.LoanStatus;
+ import org.mifosplatform.portfolio.loanaccount.domain.LoanTransaction;
+ import org.mifosplatform.portfolio.loanaccount.domain.LoanTransactionRepository;
+ import org.mifosplatform.portfolio.loanaccount.exception.LoanNotFoundException;
+-import org.mifosplatform.portfolio.loanaccount.exception.LoanNotInSubmittedAndPendingApprovalStateCannotBeDeleted;
+ import org.mifosplatform.portfolio.loanaccount.exception.LoanOfficerAssignmentException;
+ import org.mifosplatform.portfolio.loanaccount.exception.LoanTransactionNotFoundException;
+-import org.mifosplatform.portfolio.loanaccount.loanschedule.data.LoanScheduleData;
+-import org.mifosplatform.portfolio.loanaccount.loanschedule.domain.AprCalculator;
+-import org.mifosplatform.portfolio.loanaccount.loanschedule.query.CalculateLoanScheduleQuery;
+-import org.mifosplatform.portfolio.loanaccount.loanschedule.service.LoanScheduleCalculationPlatformService;
+-import org.mifosplatform.portfolio.loanaccount.serialization.CalculateLoanScheduleQueryFromApiJsonDeserializer;
+-import org.mifosplatform.portfolio.loanaccount.serialization.LoanApplicationCommandFromApiJsonDeserializer;
+ import org.mifosplatform.portfolio.loanaccount.serialization.LoanChargeCommandFromApiJsonDeserializer;
+ import org.mifosplatform.portfolio.loanaccount.serialization.LoanStateTransitionCommandFromApiJsonDeserializer;
+ import org.mifosplatform.portfolio.loanaccount.serialization.LoanTransactionCommandFromApiJsonDeserializer;
+-import org.mifosplatform.portfolio.loanproduct.domain.LoanProduct;
+-import org.mifosplatform.portfolio.loanproduct.domain.LoanProductRepository;
+-import org.mifosplatform.portfolio.loanproduct.domain.LoanTransactionProcessingStrategy;
+ import org.mifosplatform.portfolio.loanproduct.exception.InvalidCurrencyException;
+-import org.mifosplatform.portfolio.loanproduct.exception.LoanProductNotFoundException;
+ import org.mifosplatform.useradministration.domain.AppUser;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+-import com.google.gson.JsonElement;
+-
+ @Service
+ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatformService {
+ 
+     private final PlatformSecurityContext context;
+-    private final FromJsonHelper fromJsonHelper;
+-    private final LoanApplicationCommandFromApiJsonDeserializer fromApiJsonDeserializer;
+-    private final CalculateLoanScheduleQueryFromApiJsonDeserializer calculateLoanScheduleQueryFromApiJsonDeserializer;
+     private final LoanStateTransitionCommandFromApiJsonDeserializer loanStateTransitionCommandFromApiJsonDeserializer;
+     private final LoanTransactionCommandFromApiJsonDeserializer loanTransactionCommandFromApiJsonDeserializer;
+     private final LoanChargeCommandFromApiJsonDeserializer loanChargeCommandFromApiJsonDeserializer;
+     private final LoanRepository loanRepository;
+     private final NoteRepository noteRepository;
+-    private final LoanScheduleCalculationPlatformService calculationPlatformService;
+     private final LoanTransactionRepository loanTransactionRepository;
+     private final LoanAssembler loanAssembler;
+-    private final ClientRepository clientRepository;
+-    private final LoanProductRepository loanProductRepository;
+     private final ChargeRepository chargeRepository;
+     private final LoanChargeRepository loanChargeRepository;
+-    private final LoanChargeAssembler loanChargeAssembler;
+-    private final AprCalculator aprCalculator;
+     private final ApplicationCurrencyRepository applicationCurrencyRepository;
+ 
+     @Autowired
+-    public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context, final FromJsonHelper fromJsonHelper,
+-            final LoanApplicationCommandFromApiJsonDeserializer fromApiJsonDeserializer,
++    public LoanWritePlatformServiceJpaRepositoryImpl(final PlatformSecurityContext context,
+             final LoanStateTransitionCommandFromApiJsonDeserializer loanStateTransitionCommandFromApiJsonDeserializer,
+             final LoanTransactionCommandFromApiJsonDeserializer loanTransactionCommandFromApiJsonDeserializer,
+-            final LoanChargeCommandFromApiJsonDeserializer loanChargeCommandFromApiJsonDeserializer,
+-            final CalculateLoanScheduleQueryFromApiJsonDeserializer calculateLoanScheduleQueryFromApiJsonDeserializer,
+-            final AprCalculator aprCalculator, final LoanAssembler loanAssembler, final LoanChargeAssembler loanChargeAssembler,
++            final LoanChargeCommandFromApiJsonDeserializer loanChargeCommandFromApiJsonDeserializer, final LoanAssembler loanAssembler,
+             final LoanRepository loanRepository, final LoanTransactionRepository loanTransactionRepository,
+-            final NoteRepository noteRepository, final LoanScheduleCalculationPlatformService calculationPlatformService,
+-            final ClientRepository clientRepository, final LoanProductRepository loanProductRepository,
+-            final ChargeRepository chargeRepository, final LoanChargeRepository loanChargeRepository,
++            final NoteRepository noteRepository, final ChargeRepository chargeRepository, final LoanChargeRepository loanChargeRepository,
+             final ApplicationCurrencyRepository applicationCurrencyRepository) {
+         this.context = context;
+-        this.fromJsonHelper = fromJsonHelper;
+-        this.fromApiJsonDeserializer = fromApiJsonDeserializer;
+         this.loanStateTransitionCommandFromApiJsonDeserializer = loanStateTransitionCommandFromApiJsonDeserializer;
+         this.loanTransactionCommandFromApiJsonDeserializer = loanTransactionCommandFromApiJsonDeserializer;
+         this.loanChargeCommandFromApiJsonDeserializer = loanChargeCommandFromApiJsonDeserializer;
+-        this.calculateLoanScheduleQueryFromApiJsonDeserializer = calculateLoanScheduleQueryFromApiJsonDeserializer;
+-        this.aprCalculator = aprCalculator;
+         this.loanAssembler = loanAssembler;
+-        this.loanChargeAssembler = loanChargeAssembler;
+         this.loanRepository = loanRepository;
+         this.loanTransactionRepository = loanTransactionRepository;
+         this.noteRepository = noteRepository;
+-        this.calculationPlatformService = calculationPlatformService;
+-        this.clientRepository = clientRepository;
+-        this.loanProductRepository = loanProductRepository;
+         this.chargeRepository = chargeRepository;
+         this.loanChargeRepository = loanChargeRepository;
+         this.applicationCurrencyRepository = applicationCurrencyRepository;
+@@ -133,235 +91,6 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
+         return new DefaultLoanLifecycleStateMachine(allowedLoanStatuses);
+     }
+ 
+-    @Transactional
+-    @Override
+-    public EntityIdentifier submitLoanApplication(final JsonCommand command) {
+-
+-        context.authenticatedUser();
+-
+-        LoanApplicationCommand loanApplicationCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
+-        loanApplicationCommand.validate();
+-
+-        CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.calculateLoanScheduleQueryFromApiJsonDeserializer
+-                .commandFromApiJson(command.json());
+-        calculateLoanScheduleQuery.validate();
+-
+-        final Loan newLoanApplication = loanAssembler.assembleFrom(command);
+-
+-        this.loanRepository.save(newLoanApplication);
+-
+-        final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
+-        if (StringUtils.isNotBlank(submittedOnNote)) {
+-            Note note = Note.loanNote(newLoanApplication, submittedOnNote);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(newLoanApplication.getId(), command.commandId());
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier modifyLoanApplication(final Long loanId, final JsonCommand command) {
+-
+-        context.authenticatedUser();
+-
+-        LoanApplicationCommand loanApplicationCommand = this.fromApiJsonDeserializer.commandFromApiJson(command.json());
+-        loanApplicationCommand.validate();
+-
+-        CalculateLoanScheduleQuery calculateLoanScheduleQuery = this.calculateLoanScheduleQueryFromApiJsonDeserializer
+-                .commandFromApiJson(command.json());
+-        calculateLoanScheduleQuery.validate();
+-
+-        final Loan existingLoanApplication = retrieveLoanBy(loanId);
+-
+-        final Map<String, Object> changes = existingLoanApplication.modifyLoanApplication(command, loanApplicationCommand.getCharges(),
+-                this.aprCalculator);
+-
+-        final String clientIdParamName = "clientId";
+-        if (changes.containsKey(clientIdParamName)) {
+-            final Long clientId = command.longValueOfParameterNamed(clientIdParamName);
+-            final Client client = this.clientRepository.findOne(clientId);
+-            if (client == null || client.isDeleted()) { throw new ClientNotFoundException(clientId); }
+-
+-            existingLoanApplication.updateClient(client);
+-        }
+-
+-        final String productIdParamName = "productId";
+-        if (changes.containsKey(productIdParamName)) {
+-            final Long productId = command.longValueOfParameterNamed(productIdParamName);
+-            final LoanProduct loanProduct = this.loanProductRepository.findOne(productId);
+-            if (loanProduct == null) { throw new LoanProductNotFoundException(productId); }
+-
+-            existingLoanApplication.updateLoanProduct(loanProduct);
+-        }
+-
+-        final String fundIdParamName = "fundId";
+-        if (changes.containsKey(fundIdParamName)) {
+-            final Long fundId = command.longValueOfParameterNamed(fundIdParamName);
+-            final Fund fund = this.loanAssembler.findFundByIdIfProvided(fundId);
+-
+-            existingLoanApplication.updateFund(fund);
+-        }
+-
+-        final String strategyIdParamName = "transactionProcessingStrategyId";
+-        if (changes.containsKey(strategyIdParamName)) {
+-            final Long strategyId = command.longValueOfParameterNamed(strategyIdParamName);
+-            final LoanTransactionProcessingStrategy strategy = this.loanAssembler.findStrategyByIdIfProvided(strategyId);
+-
+-            existingLoanApplication.updateTransactionProcessingStrategy(strategy);
+-        }
+-
+-        final String chargesParamName = "charges";
+-        if (changes.containsKey(chargesParamName)) {
+-            final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(command.parsedJson());
+-            existingLoanApplication.updateLoanCharges(loanCharges);
+-        }
+-
+-        if (changes.containsKey("recalculateLoanSchedule")) {
+-            changes.remove("recalculateLoanSchedule");
+-
+-            final JsonElement parsedQuery = this.fromJsonHelper.parse(command.json());
+-            final JsonQuery query = JsonQuery.from(command.json(), parsedQuery, this.fromJsonHelper);
+-
+-            final LoanScheduleData loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query);
+-            existingLoanApplication.updateLoanSchedule(loanSchedule);
+-            existingLoanApplication.updateLoanScheduleDependentDerivedFields();
+-        }
+-
+-        this.loanRepository.save(existingLoanApplication);
+-
+-        final String submittedOnNote = command.stringValueOfParameterNamed("submittedOnNote");
+-        if (StringUtils.isNotBlank(submittedOnNote)) {
+-            Note note = Note.loanNote(existingLoanApplication, submittedOnNote);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier deleteLoan(final Long loanId) {
+-
+-        context.authenticatedUser();
+-
+-        final Loan loan = retrieveLoanBy(loanId);
+-
+-        if (loan.isNotSubmittedAndPendingApproval()) { throw new LoanNotInSubmittedAndPendingApprovalStateCannotBeDeleted(loanId); }
+-
+-        List<Note> relatedNotes = this.noteRepository.findByLoanId(loan.getId());
+-        this.noteRepository.deleteInBatch(relatedNotes);
+-
+-        this.loanRepository.delete(loanId);
+-
+-        return new EntityIdentifier(loanId);
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier approveLoanApplication(final Long loanId, final JsonCommand command) {
+-
+-        AppUser currentUser = context.authenticatedUser();
+-
+-        final LoanStateTransitionCommand approveLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
+-                .commandFromApiJson(command.json());
+-        approveLoanApplication.validate();
+-
+-        final Loan loan = retrieveLoanBy(loanId);
+-
+-        final LocalDate approvedOnLocalDate = approveLoanApplication.getApprovedOnDate();
+-        if (this.isBeforeToday(approvedOnLocalDate) && currentUser.canNotApproveLoanInPast()) { throw new NoAuthorizationException(
+-                "User has no authority to approve loan with a date in the past."); }
+-
+-        final Map<String, Object> changes = loan.loanApplicationApproval(command, defaultLoanLifecycleStateMachine());
+-        this.loanRepository.save(loan);
+-
+-        final String noteText = command.stringValueOfParameterNamed("note");
+-        if (StringUtils.isNotBlank(noteText)) {
+-            Note note = Note.loanNote(loan, noteText);
+-            changes.put("note", noteText);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier undoLoanApplicationApproval(final Long loanId, final JsonCommand command) {
+-
+-        context.authenticatedUser();
+-
+-        final Loan loan = retrieveLoanBy(loanId);
+-
+-        final Map<String, Object> changes = loan.undoApproval(defaultLoanLifecycleStateMachine());
+-        this.loanRepository.save(loan);
+-
+-        String noteText = command.stringValueOfParameterNamed("note");
+-        if (StringUtils.isNotBlank(noteText)) {
+-            Note note = Note.loanNote(loan, noteText);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier rejectLoanApplication(final Long loanId, final JsonCommand command) {
+-
+-        final AppUser currentUser = context.authenticatedUser();
+-
+-        final LoanStateTransitionCommand rejectLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
+-                .commandFromApiJson(command.json());
+-        rejectLoanApplication.validate();
+-
+-        final Loan loan = retrieveLoanBy(loanId);
+-
+-        final LocalDate eventDate = rejectLoanApplication.getRejectedOnDate();
+-        if (this.isBeforeToday(eventDate) && currentUser.canNotRejectLoanInPast()) { throw new NoAuthorizationException(
+-                "User has no authority to reject loan with a date in the past."); }
+-
+-        final Map<String, Object> changes = loan.loanApplicationRejection(command, defaultLoanLifecycleStateMachine());
+-        this.loanRepository.save(loan);
+-
+-        String noteText = command.stringValueOfParameterNamed("note");
+-        if (StringUtils.isNotBlank(noteText)) {
+-            Note note = Note.loanNote(loan, noteText);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
+-    }
+-
+-    @Transactional
+-    @Override
+-    public EntityIdentifier applicantWithdrawsFromLoanApplication(final Long loanId, final JsonCommand command) {
+-
+-        final AppUser currentUser = context.authenticatedUser();
+-
+-        final LoanStateTransitionCommand applicantWithdrawsFromLoanApplication = this.loanStateTransitionCommandFromApiJsonDeserializer
+-                .commandFromApiJson(command.json());
+-        applicantWithdrawsFromLoanApplication.validate();
+-
+-        final Loan loan = retrieveLoanBy(loanId);
+-
+-        final LocalDate eventDate = applicantWithdrawsFromLoanApplication.getWithdrawnOnDate();
+-        if (this.isBeforeToday(eventDate) && currentUser.canNotWithdrawByClientLoanInPast()) { throw new NoAuthorizationException(
+-                "User has no authority to mark loan as withdrawn by applicant with a date in the past."); }
+-
+-        final Map<String, Object> changes = loan.loanApplicationWithdrawnByApplicant(command, defaultLoanLifecycleStateMachine());
+-        this.loanRepository.save(loan);
+-
+-        String noteText = command.stringValueOfParameterNamed("note");
+-        if (StringUtils.isNotBlank(noteText)) {
+-            Note note = Note.loanNote(loan, noteText);
+-            this.noteRepository.save(note);
+-        }
+-
+-        return EntityIdentifier.resourceResult(loanId, command.commandId(), changes);
+-    }
+-
+     @Transactional
+     @Override
+     public EntityIdentifier disburseLoan(final Long loanId, final JsonCommand command) {
+

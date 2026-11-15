@@ -1,0 +1,116 @@
+diff --git a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GA4GHV2IT.java b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GA4GHV2IT.java
+index 4eb47d036..9bdc81077 100644
+--- a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GA4GHV2IT.java
++++ b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GA4GHV2IT.java
+@@ -77,6 +77,9 @@ public class GA4GHV2IT extends GA4GHIT {
+         Response response = checkedResponse(basePath + "tools/quay.io%2Ftest_org%2Ftest6");
+         Tool responseObject = response.readEntity(Tool.class);
+         assertTool(MAPPER.writeValueAsString(responseObject), true);
++        // regression test for #1248
++        Assert.assertTrue("registry_url should never be null", responseObject.getVersions().size() > 0 && responseObject.getVersions().stream().allMatch(version -> version.getRegistryUrl() != null));
++        Assert.assertTrue("imageName should never be null", responseObject.getVersions().size() > 0 && responseObject.getVersions().stream().allMatch(version -> version.getImageName() != null));
+     }
+ 
+     private void toolsIdWorkflow() throws Exception {
+diff --git a/dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java b/dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java
+index 93569f5ce..cb95de5ad 100644
+--- a/dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java
++++ b/dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java
+@@ -167,16 +167,17 @@ public final class ToolsImplCommon {
+ 
+         Set inputVersions;
+         // tool specific
++        io.dockstore.webservice.core.Tool castedContainer = null;
+         if (container instanceof io.dockstore.webservice.core.Tool) {
+-            io.dockstore.webservice.core.Tool dockstoreTool = (io.dockstore.webservice.core.Tool)container;
++            castedContainer = (io.dockstore.webservice.core.Tool)container;
+ 
+             // The name is composed of the repository name and then the optional toolname split with a '/'
+-            String name = dockstoreTool.getName();
+-            String toolName = dockstoreTool.getToolname();
++            String name = castedContainer.getName();
++            String toolName = castedContainer.getToolname();
+             String returnName = constructName(Arrays.asList(name, toolName));
+             tool.setToolname(returnName);
+-            tool.setOrganization(dockstoreTool.getNamespace());
+-            inputVersions = ((io.dockstore.webservice.core.Tool)container).getTags();
++            tool.setOrganization(castedContainer.getNamespace());
++            inputVersions = castedContainer.getTags();
+         } else if (container instanceof Workflow) {
+             // workflow specific
+             Workflow workflow = (Workflow)container;
+@@ -207,6 +208,15 @@ public final class ToolsImplCommon {
+             }
+ 
+             ToolVersion toolVersion = new ToolVersion();
++            if (container instanceof io.dockstore.webservice.core.Tool) {
++                toolVersion.setRegistryUrl(castedContainer.getRegistry());
++                toolVersion.setImageName(
++                    constructName(Arrays.asList(castedContainer.getRegistry(), castedContainer.getNamespace(), castedContainer.getName())));
++            } else {
++                toolVersion.setRegistryUrl("");
++                toolVersion.setImageName("");
++            }
++
+             try {
+                 toolVersion = setGeneralToolVersionInfo(url, toolVersion, version);
+             } catch (UnsupportedEncodingException e) {
+diff --git a/dockstore-webservice/src/main/java/io/swagger/model/ToolVersionV1.java b/dockstore-webservice/src/main/java/io/swagger/model/ToolVersionV1.java
+index 9ae40e267..9558e83c4 100644
+--- a/dockstore-webservice/src/main/java/io/swagger/model/ToolVersionV1.java
++++ b/dockstore-webservice/src/main/java/io/swagger/model/ToolVersionV1.java
+@@ -20,6 +20,7 @@ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Objects;
+ 
++import com.fasterxml.jackson.annotation.JsonInclude;
+ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+ import com.fasterxml.jackson.databind.annotation.JsonNaming;
+ import io.swagger.annotations.ApiModel;
+@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
+ 
+ @ApiModel(description = "A tool version describes a particular iteration of a tool as described by a reference to a specific image and dockerfile.")
+ @JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
++@JsonInclude(JsonInclude.Include.NON_NULL)
+ public class ToolVersionV1  {
+     private static final Logger LOG = LoggerFactory.getLogger(ToolVersionV1.class);
+ 
+diff --git a/dockstore-webservice/src/test/java/io/swagger/api/impl/ToolsImplCommonTest.java b/dockstore-webservice/src/test/java/io/swagger/api/impl/ToolsImplCommonTest.java
+index 785e8bf8a..635d3d875 100644
+--- a/dockstore-webservice/src/test/java/io/swagger/api/impl/ToolsImplCommonTest.java
++++ b/dockstore-webservice/src/test/java/io/swagger/api/impl/ToolsImplCommonTest.java
+@@ -174,6 +174,8 @@ public class ToolsImplCommonTest {
+         expectedToolVersion.setMetaVersion(null);
+         expectedToolVersion.setVerified(false);
+         expectedToolVersion.setVerifiedSource("");
++        expectedToolVersion.setRegistryUrl("quay.io");
++        expectedToolVersion.setImageName("quay.io/test_org/test6");
+         List<ToolVersion> expectedToolVersions = new ArrayList<>();
+         expectedToolVersions.add(expectedToolVersion);
+         expectedTool.setVersions(expectedToolVersions);
+@@ -280,10 +282,15 @@ public class ToolsImplCommonTest {
+         expectedToolVersion1.setMetaVersion(null);
+         expectedToolVersion1.setVerified(true);
+         expectedToolVersion1.setVerifiedSource("potatoTesterSource");
++        expectedToolVersion1.setImageName("");
++        expectedToolVersion1.setRegistryUrl("");
+         json = gson.toJson(expectedToolVersion1);
+         ToolVersion expectedToolVersion2 = gson.fromJson(json, ToolVersion.class);
+         expectedToolVersion2.setName(REFERENCE3);
+         expectedToolVersion2.setVerifiedSource("chickenTesterSource");
++        expectedToolVersion2.setImageName("");
++        expectedToolVersion2.setRegistryUrl("");
++
+         if (toolname != null) {
+             expectedToolVersion2.setUrl("http://localhost:8080/api/ga4gh/v2/tools/%23workflow%2Fgithub.com%2FICGC-TCGA-PanCancer%2Fwdl-pcawg-sanger-cgp-workflow%2F"
+                     + TOOLNAME + "/versions/" + REFERENCE3);
+@@ -324,7 +331,7 @@ public class ToolsImplCommonTest {
+ 
+         // Meta-version dates are currently dependant on the environment, disabling for now
+         List<ToolVersion> versions = actualTool.getVersions();
+-        versions.stream().forEach(version -> version.setMetaVersion(null));
++        versions.forEach(version -> version.setMetaVersion(null));
+         actualTool.setVersions(versions);
+         Assert.assertEquals(expectedTool, actualTool);
+     }
+

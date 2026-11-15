@@ -1,0 +1,260 @@
+diff --git a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/HbciSandboxPaymentE2EHbciProtocolTest.java b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/HbciSandboxPaymentE2EHbciProtocolTest.java
+index 917d52875..227965f38 100644
+--- a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/HbciSandboxPaymentE2EHbciProtocolTest.java
++++ b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/HbciSandboxPaymentE2EHbciProtocolTest.java
+@@ -10,6 +10,7 @@ import de.adorsys.opba.protocol.hbci.tests.e2e.sandbox.hbcisteps.HbciPaymentInit
+ import de.adorsys.opba.protocol.hbci.tests.e2e.sandbox.hbcisteps.HbciPaymentInitiationResult;
+ import de.adorsys.opba.protocol.hbci.tests.e2e.sandbox.hbcisteps.HbciServers;
+ import de.adorsys.opba.protocol.sandbox.hbci.HbciServerApplication;
++import de.adorsys.xs2a.adapter.service.model.TransactionStatus;
+ import org.junit.jupiter.api.BeforeEach;
+ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+@@ -70,32 +71,8 @@ class HbciSandboxPaymentE2EHbciProtocolTest extends SpringScenarioTest<
+         makeHbciAdapterToPointToHbciMockEndpoints();
+     }
+ 
+-    @Test
+-    void testSinglePaymentWithSca() {
+-        makeSinglePaymentWithSca();
+-    }
+-
+     @Test
+     void testPaymentStatusWithSca() {
+-        makeSinglePaymentWithSca();
+-
+-        given()
+-                .rest_assured_points_to_opba_server();
+-        when()
+-                .fintech_calls_payment_status_for_max_musterman_for_blz_30000003()
+-                .and()
+-                .user_max_musterman_provided_initial_parameters_to_make_payment()
+-                .and()
+-                .user_max_musterman_provided_password_to_embedded_authorization()
+-                .and()
+-                .user_max_musterman_selected_sca_challenge_type_push_tan_to_embedded_authorization()
+-                .and()
+-                .user_max_musterman_provided_sca_challenge_result_to_embedded_authorization_and_sees_redirect_to_fintech_ok_pis();
+-        then()
+-                .fintech_calls_payment_status(BANK_BLZ_30000003_ID);
+-    }
+-
+-    private void makeSinglePaymentWithSca() {
+         given()
+                 .rest_assured_points_to_opba_server()
+                 .user_registered_in_opba_with_credentials(OPBA_LOGIN, OPBA_PASSWORD);
+@@ -114,7 +91,8 @@ class HbciSandboxPaymentE2EHbciProtocolTest extends SpringScenarioTest<
+                 .user_max_musterman_provided_sca_challenge_result_to_embedded_authorization_and_sees_redirect_to_fintech_ok();
+         then()
+                 .open_banking_has_stored_payment()
+-                .fintech_calls_payment_activation_for_current_authorization_id();
++                .fintech_calls_payment_activation_for_current_authorization_id()
++                .fintech_calls_payment_status(BANK_BLZ_30000003_ID, TransactionStatus.ACSC.name());
+     }
+ 
+     private void makeHbciAdapterToPointToHbciMockEndpoints() {
+diff --git a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/hbcisteps/HbciPaymentInitiationRequest.java b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/hbcisteps/HbciPaymentInitiationRequest.java
+index d4e8f1575..b751eeb7c 100644
+--- a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/hbcisteps/HbciPaymentInitiationRequest.java
++++ b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/java/de/adorsys/opba/protocol/hbci/tests/e2e/sandbox/hbcisteps/HbciPaymentInitiationRequest.java
+@@ -11,12 +11,9 @@ import static de.adorsys.opba.protocol.hbci.tests.e2e.sandbox.hbcisteps.FixtureC
+ import static de.adorsys.opba.protocol.hbci.tests.e2e.sandbox.hbcisteps.FixtureConst.MAX_MUSTERMAN_BANK_BLZ_30000003_ACCOUNT_ID;
+ import static de.adorsys.opba.protocol.xs2a.tests.e2e.ResourceUtil.readResource;
+ import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.PaymentStagesCommonUtil.withPaymentHeaders;
+-import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.PaymentStagesCommonUtil.withPaymentInfoHeaders;
+ import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.StagesCommonUtil.AUTHORIZE_CONSENT_ENDPOINT;
+ import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.StagesCommonUtil.MAX_MUSTERMAN;
+-import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.StagesCommonUtil.PIS_PAYMENT_STATUS_ENDPOINT;
+ import static de.adorsys.opba.protocol.xs2a.tests.e2e.stages.StagesCommonUtil.PIS_SINGLE_PAYMENT_ENDPOINT;
+-import static de.adorsys.opba.restapi.shared.HttpHeaders.SERVICE_SESSION_ID;
+ import static org.springframework.http.HttpStatus.ACCEPTED;
+ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+ 
+@@ -45,25 +42,6 @@ public class HbciPaymentInitiationRequest<SELF extends HbciPaymentInitiationRequ
+         return self();
+     }
+ 
+-    public SELF fintech_calls_payment_status_for_max_musterman_for_blz_30000003() {
+-        return fintech_calls_payment_status_for_max_musterman(BANK_BLZ_30000003_ID);
+-    }
+-
+-    public SELF fintech_calls_payment_status_for_max_musterman(String bankId) {
+-        ExtractableResponse<Response> response = withPaymentInfoHeaders("", requestSigningService, PIS, bankId)
+-                .header(SERVICE_SESSION_ID, serviceSessionId)
+-            .when()
+-                .get(PIS_PAYMENT_STATUS_ENDPOINT, StandardPaymentProduct.SEPA_CREDIT_TRANSFERS.getSlug())
+-            .then()
+-                .statusCode(ACCEPTED.value())
+-                .extract();
+-
+-        updateServiceSessionId(response);
+-        updateRedirectCode(response);
+-        updateNextPaymentAuthorizationUrl(response);
+-        return self();
+-    }
+-
+     public SELF user_max_musterman_selected_sca_challenge_type_push_tan_to_embedded_authorization() {
+         provideParametersToBankingProtocolWithBody(
+                 AUTHORIZE_CONSENT_ENDPOINT,
+diff --git a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/resources/application-hbci-sandbox-config.yml b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/resources/application-hbci-sandbox-config.yml
+index cf7c48e63..a97d5e27a 100644
+--- a/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/resources/application-hbci-sandbox-config.yml
++++ b/opba-protocols/hbci-protocol-tests/hbci-bdd-sandbox/src/test/resources/application-hbci-sandbox-config.yml
+@@ -9,6 +9,7 @@ hbci:
+         accounts: AUTHENTICATED
+         transactions: AUTHENTICATED
+         payment: AUTHENTICATED
++        payment-status: AUTHENTICATED
+       users:
+         - anton.brueckner
+         - max.musterman
+@@ -22,6 +23,7 @@ hbci:
+         accounts: AUTHENTICATED
+         transactions: AUTHENTICATED
+         payment: AUTHORIZED
++        payment-status: AUTHENTICATED
+       users:
+         - anton.brueckner
+         - max.musterman
+@@ -35,6 +37,7 @@ hbci:
+         accounts: AUTHENTICATED
+         transactions: AUTHORIZED
+         payment: AUTHORIZED
++        payment-status: AUTHENTICATED
+       users:
+         - anton.brueckner
+         - max.musterman
+diff --git a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
+index 3772f24a1..8922c4751 100644
+--- a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
++++ b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/context/HbciContext.java
+@@ -114,10 +114,14 @@ public class HbciContext extends BaseContext {
+         }
+ 
+         HbciConsent hbciDialogConsent = getHbciDialogConsent();
+-        if (hbciDialogConsent == null) return null;
++        if (hbciDialogConsent == null) {
++            return null;
++        }
+ 
+         Credentials credentials = hbciDialogConsent.getCredentials();
+-        if (credentials == null) return null;
++        if (credentials == null) {
++            return null;
++        }
+ 
+         return credentials.getPin();
+     }
+@@ -140,9 +144,9 @@ public class HbciContext extends BaseContext {
+ 
+     @JsonIgnore
+     public HbciProtocolConfiguration.UrlSet getActiveUrlSet(HbciProtocolConfiguration config) {
+-        return (ProtocolAction.SINGLE_PAYMENT.equals(this.getAction()) ||
+-                ProtocolAction.GET_PAYMENT_INFORMATION.equals(this.getAction()) ||
+-                ProtocolAction.GET_PAYMENT_STATUS.equals(this.getAction()))
++        return ProtocolAction.SINGLE_PAYMENT.equals(this.getAction())
++                || ProtocolAction.GET_PAYMENT_INFORMATION.equals(this.getAction())
++                || ProtocolAction.GET_PAYMENT_STATUS.equals(this.getAction())
+                 ? config.getPis() : config.getAis();
+     }
+ }
+diff --git a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/service/protocol/pis/HbciPaymentStatus.java b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/service/protocol/pis/HbciPaymentStatus.java
+index 2341d3e7b..2591138c3 100644
+--- a/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/service/protocol/pis/HbciPaymentStatus.java
++++ b/opba-protocols/hbci-protocol/src/main/java/de/adorsys/opba/protocol/hbci/service/protocol/pis/HbciPaymentStatus.java
+@@ -15,7 +15,6 @@ import de.adorsys.opba.protocol.bpmnshared.service.exec.ValidatedExecution;
+ import de.adorsys.opba.protocol.hbci.context.HbciContext;
+ import de.adorsys.opba.protocol.hbci.context.PaymentHbciContext;
+ import de.adorsys.opba.protocol.hbci.service.protocol.pis.dto.PaymentInitiateBody;
+-import de.adorsys.opba.protocol.hbci.service.protocol.pis.dto.PisSinglePaymentResult;
+ import lombok.RequiredArgsConstructor;
+ import org.flowable.engine.delegate.DelegateExecution;
+ import org.mapstruct.Mapper;
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/nonauthorized/AuthenticatedCustomMsg.java b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/nonauthorized/AuthenticatedCustomMsg.java
+index 68b2cd1ea..cd65a3457 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/nonauthorized/AuthenticatedCustomMsg.java
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/nonauthorized/AuthenticatedCustomMsg.java
+@@ -35,11 +35,9 @@ public class AuthenticatedCustomMsg extends TemplateBasedOperationHandler {
+             if (context.getBank().getSecurity().getTransactions() == SensitiveAuthLevel.AUTHENTICATED) {
+                 return "response-templates/authenticated/custom-message-konto-mt940.json";
+             }
+-
+             if (RequestStatusUtil.isForTransactionListing(context.getRequestData())) {
+                 context.setAccountNumberRequestedBeforeSca(MapRegexUtil.getDataRegex(context.getRequestData(), "TAN2Step6\\.OrderAccount\\.number"));
+             }
+-
+             return getAuthorizationRequiredTemplateOrWrongTanMethod();
+         }
+ 
+@@ -47,11 +45,9 @@ public class AuthenticatedCustomMsg extends TemplateBasedOperationHandler {
+             if (context.getBank().getSecurity().getPayment() == SensitiveAuthLevel.AUTHENTICATED) {
+                 return "response-templates/authenticated/custom-message-konto-mt940.json";
+             }
+-
+             if (RequestStatusUtil.isForPayment(context.getRequestData())) {
+                 context.setAccountNumberRequestedBeforeSca(MapRegexUtil.getDataRegex(context.getRequestData(), "TAN2Step6\\.OrderAccount\\.number"));
+             }
+-
+             return "response-templates/authenticated/custom-message-authorization-required-payment.json";
+         }
+ 
+@@ -59,11 +55,9 @@ public class AuthenticatedCustomMsg extends TemplateBasedOperationHandler {
+             if (context.getBank().getSecurity().getPaymentStatus() == SensitiveAuthLevel.AUTHENTICATED) {
+                 return "response-templates/authenticated/custom-message-payment-status.json";
+             }
+-
+             if (RequestStatusUtil.isForPaymentStatus(context.getRequestData())) {
+                 context.setAccountNumberRequestedBeforeSca(MapRegexUtil.getDataRegex(context.getRequestData(), "TAN2Step6\\.OrderAccount\\.number"));
+             }
+-
+             return "response-templates/authenticated/custom-message-authorization-required-payment-status.json";
+         }
+ 
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/resources/response-templates/authenticated/custom-message-payment-status.json b/opba-protocols/sandboxes/hbci-sandbox/src/main/resources/response-templates/authenticated/custom-message-payment-status.json
+index 7703ae643..55f8f2384 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/resources/response-templates/authenticated/custom-message-payment-status.json
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/resources/response-templates/authenticated/custom-message-payment-status.json
+@@ -10,7 +10,7 @@
+   "GVRes.InstantUebSEPAStatusRes1.orderid" : "${ctx.getDialogId()}",
+   "GVRes.InstantUebSEPAStatusRes1.sepadescr" : "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03",
+   "GVRes.InstantUebSEPAStatusRes1.sepapain" : "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.03\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.03 pain.001.001.03.xsd\"><CstmrCdtTrfInitn><GrpHdr><MsgId>2019-12-16T12:37:09:0244</MsgId><CreDtTm>2019-12-16T12:37:09</CreDtTm><NbOfTxs>1</NbOfTxs><CtrlSum>120</CtrlSum><InitgPty><Nm>TESTKONTO</Nm></InitgPty></GrpHdr><PmtInf><PmtInfId>2019-12-16T12:37:09:0244</PmtInfId><PmtMtd>TRF</PmtMtd><NbOfTxs>1</NbOfTxs><CtrlSum>120</CtrlSum><PmtTpInf><SvcLvl><Cd>SEPA</Cd></SvcLvl></PmtTpInf><ReqdExctnDt>1999-01-01</ReqdExctnDt><Dbtr><Nm>TESTKONTO</Nm></Dbtr><DbtrAcct><Id><IBAN>DE51250400903312345678</IBAN></Id></DbtrAcct><DbtrAgt><FinInstnId><BIC>XBANDECGXXX</BIC></FinInstnId></DbtrAgt><ChrgBr>SLEV</ChrgBr><CdtTrfTxInf><PmtId><EndToEndId>NOTPROVIDED</EndToEndId></PmtId><Amt><InstdAmt Ccy=\"EUR\">120</InstdAmt></Amt><Cdtr><Nm>Max Mustermann</Nm></Cdtr><CdtrAcct><Id><IBAN>DE56760905000002257793</IBAN></Id></CdtrAcct><RmtInf><Ustrd>Test123</Ustrd></RmtInf></CdtTrfTxInf></PmtInf></CstmrCdtTrfInitn></Document>",
+-  "GVRes.InstantUebSEPAStatusRes1.status" : "2",
++  "GVRes.InstantUebSEPAStatusRes1.status" : "7",
+   "MsgHead.MsgRef.dialogid" : "${ctx.getDialogId()}",
+   "MsgHead.MsgRef.msgnum" : "2",
+   "MsgHead.SegHead.code" : "HNHBK",
+@@ -31,7 +31,7 @@
+   "RetGlob.SegHead.version" : "2",
+   "RetSeg.RetVal.code" : "9210",
+   "RetSeg.RetVal.parm" : "2",
+-  "RetSeg.RetVal.text" : "Auftrag fehlgeschlagen mit Status 2.",
++  "RetSeg.RetVal.text" : "Auftrag ausgeführt; Geld für den Zahlungsempfänger verfügbar",
+   "RetSeg.SegHead.code" : "HIRMS",
+   "RetSeg.SegHead.ref" : "3",
+   "RetSeg.SegHead.seq" : "3",
+diff --git a/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/PaymentResult.java b/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/PaymentResult.java
+index a57ff4ac0..ba768496e 100644
+--- a/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/PaymentResult.java
++++ b/opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/PaymentResult.java
+@@ -114,17 +114,17 @@ public class PaymentResult<SELF extends PaymentResult<SELF>> extends Stage<SELF>
+     }
+ 
+     public SELF fintech_calls_payment_status() {
+-        return fintech_calls_payment_status(SANDBOX_BANK_ID);
++        return fintech_calls_payment_status(SANDBOX_BANK_ID, TransactionStatus.ACSP.name());
+     }
+ 
+-    public SELF fintech_calls_payment_status(String bankId) {
++    public SELF fintech_calls_payment_status(String bankId, String expectedStatus) {
+         withPaymentInfoHeaders("", requestSigningService, OperationType.PIS, bankId)
+                 .header(SERVICE_SESSION_ID, serviceSessionId)
+             .when()
+                 .get(PIS_PAYMENT_STATUS_ENDPOINT, StandardPaymentProduct.SEPA_CREDIT_TRANSFERS.getSlug())
+             .then()
+                 .statusCode(OK.value())
+-                .body("transactionStatus", equalTo(TransactionStatus.ACSP.name()))
++                .body("transactionStatus", equalTo(expectedStatus))
+                 .extract();
+         return self();
+     }
+

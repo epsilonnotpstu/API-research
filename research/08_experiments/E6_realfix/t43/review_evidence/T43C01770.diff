@@ -1,0 +1,285 @@
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/ClientCommand.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/ClientCommand.java
+index a474fed2eb..537dfbc09b 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/ClientCommand.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/commands/ClientCommand.java
+@@ -1,5 +1,7 @@
+ package org.mifosng.platform.api.commands;
+ 
++import java.util.Set;
++
+ import org.joda.time.LocalDate;
+ 
+ public class ClientCommand {
+@@ -11,9 +13,12 @@ public class ClientCommand {
+ 	private final String clientOrBusinessName;
+ 	private final Long officeId;
+ 	private final LocalDate joiningDate;
++	
++	private final Set<String> modifiedParameters;
+ 
+-	public ClientCommand(final Long id, final String externalId, final String firstname, final String lastname, final String clientOrBusinessName, 
++	public ClientCommand(final Set<String> modifiedParameters, final Long id, final String externalId, final String firstname, final String lastname, final String clientOrBusinessName, 
+ 			final Long officeId, final LocalDate joiningDate) {
++		this.modifiedParameters = modifiedParameters;
+ 		this.id = id;
+ 		this.externalId = externalId;
+ 		this.firstname = firstname;
+@@ -50,4 +55,8 @@ public class ClientCommand {
+ 	public LocalDate getJoiningDate() {
+ 		return joiningDate;
+ 	}
++	
++	public boolean isOfficeIdChanged() {
++		return this.modifiedParameters.contains("officeId");
++	}
+ }
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/ClientData.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/ClientData.java
+index 6242e35302..83ab02a2a6 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/ClientData.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/ClientData.java
+@@ -13,6 +13,7 @@ public class ClientData {
+ 	private final Long id;
+ 	private final String firstname;
+ 	private final String lastname;
++	private final String clientOrBusinessName;
+ 	private final String displayName;
+ 	private final String externalId;
+ 	private final LocalDate joinedDate;
+@@ -26,15 +27,22 @@ public class ClientData {
+ 		this.officeName = officeName;
+ 		this.id = id;
+ 		this.firstname = firstname;
+-		this.lastname = lastname;
+ 
+ 		StringBuilder nameBuilder = new StringBuilder(this.firstname);
+ 		if (StringUtils.isNotBlank(nameBuilder.toString())) {
+ 			nameBuilder.append(' ');
+ 		}
+-		nameBuilder.append(this.lastname);
++		nameBuilder.append(lastname);
+ 
+ 		this.displayName = nameBuilder.toString();
++		if (StringUtils.isBlank(this.firstname)) {
++			this.lastname = null;
++			this.clientOrBusinessName = nameBuilder.toString();
++		} else {
++			this.lastname = lastname;
++			this.clientOrBusinessName = null;
++		}
++		
+ 		this.externalId = externalId;
+ 		this.joinedDate = joinedDate;
+ 	}
+@@ -45,6 +53,7 @@ public class ClientData {
+ 		this.officeName = null;
+ 		this.firstname = null;
+ 		this.lastname = null;
++		this.clientOrBusinessName = null;
+ 		this.displayName = null;
+ 		this.externalId = null;
+ 		this.joinedDate = joinedDate;
+@@ -70,6 +79,10 @@ public class ClientData {
+ 	public String getLastname() {
+ 		return lastname;
+ 	}
++	
++	public String getClientOrBusinessName() {
++		return clientOrBusinessName;
++	}
+ 
+ 	public String getDisplayName() {
+ 		return displayName;
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeLookup.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeLookup.java
+index 8827146b3a..f69efdefaa 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeLookup.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeLookup.java
+@@ -1,19 +1,12 @@
+ package org.mifosng.platform.api.data;
+ 
+-import java.io.Serializable;
+-
+-public class OfficeLookup implements Serializable {
++public class OfficeLookup {
+ 
+ 	private Long id;
+ 	private String name;
+ 	private String nameDecorated;
+ 
+-	public OfficeLookup() {
+-		//
+-	}
+-
+-	public OfficeLookup(final Long id, final String name,
+-			final String nameDecorated) {
++	public OfficeLookup(final Long id, final String name, final String nameDecorated) {
+ 		this.id = id;
+ 		this.name = name;
+ 		this.nameDecorated = nameDecorated;
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeTransactionData.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeTransactionData.java
+index 0dd4dbb4fa..b11e3cd66f 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeTransactionData.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/data/OfficeTransactionData.java
+@@ -1,21 +1,16 @@
+ package org.mifosng.platform.api.data;
+ 
+-import java.io.Serializable;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+ import org.joda.time.LocalDate;
+ 
+-public class OfficeTransactionData implements Serializable {
++public class OfficeTransactionData {
+ 
+ 	private LocalDate transactionDate;
+ 	private List<CurrencyData> currencyOptions = new ArrayList<CurrencyData>();
+ 	private List<OfficeLookup> allowedOffices = new ArrayList<OfficeLookup>();
+ 
+-	public OfficeTransactionData() {
+-		//
+-	}
+-
+ 	public OfficeTransactionData(final LocalDate transactionDate, final List<OfficeLookup> allowedOffices, final List<CurrencyData> currencyOptions) {
+ 		this.transactionDate = transactionDate;
+ 		this.allowedOffices = allowedOffices;
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java b/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
+index 2e36fe06ef..333a524358 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/api/infrastructure/ApiDataConversionServiceImpl.java
+@@ -403,7 +403,8 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
+ 	
+ 	@Override
+ 	public String convertOfficeTransactionDataToJson(final boolean prettyPrint, final Set<String> responseParameters, final OfficeTransactionData... officeTransactions) {
+-		Set<String> supportedParameters = new HashSet<String>(Arrays.asList("id", "transactionDate", "allowedOffices", "currencyOptions"));
++		
++		Set<String> supportedParameters = new HashSet<String>(Arrays.asList("transactionDate", "allowedOffices", "currencyOptions"));
+ 		
+ 		final Set<String> parameterNamesToSkip = new HashSet<String>();
+ 		
+@@ -810,7 +811,7 @@ public class ApiDataConversionServiceImpl implements ApiDataConversionService {
+ 	    String lastname = extractStringParameter("lastname", requestMap, modifiedParameters);
+ 	    String clientOrBusinessName = extractStringParameter("clientOrBusinessName", requestMap, modifiedParameters);
+ 	    
+-	    return new ClientCommand(resourceIdentifier, externalId, firstname, lastname, clientOrBusinessName, officeId, joiningDate);
++	    return new ClientCommand(modifiedParameters, resourceIdentifier, externalId, firstname, lastname, clientOrBusinessName, officeId, joiningDate);
+ 	}
+ 	
+ 	@Override
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/client/service/ClientCommandValidator.java b/mifosng-provider/src/main/java/org/mifosng/platform/client/service/ClientCommandValidator.java
+index 8ca227a46d..6e7f7d18d2 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/client/service/ClientCommandValidator.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/client/service/ClientCommandValidator.java
+@@ -32,7 +32,10 @@ public class ClientCommandValidator {
+ 		
+ 		baseDataValidator.reset().parameter("joiningDate").value(command.getJoiningDate()).ignoreIfNull().notBlank();
+ 		baseDataValidator.reset().parameter("externalId").value(command.getExternalId()).ignoreIfNull().notExceedingLengthOf(100);
+-		baseDataValidator.reset().parameter("officeId").value(command.getOfficeId()).ignoreIfNull().notNull().greaterThanZero();
++		
++		if (command.isOfficeIdChanged()) {
++			baseDataValidator.reset().parameter("officeId").value(command.getOfficeId()).notNull().greaterThanZero();
++		}
+ 		
+ 		baseDataValidator.reset().anyOfNotNull(command.getFirstname(), command.getLastname(), command.getClientOrBusinessName(), 
+ 				command.getJoiningDate(), command.getExternalId(), command.getOfficeId());
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/AdjustLoanTransactionCommandValidator.java b/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/AdjustLoanTransactionCommandValidator.java
+index 984898ef23..75f210b4e8 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/AdjustLoanTransactionCommandValidator.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/AdjustLoanTransactionCommandValidator.java
+@@ -3,7 +3,7 @@ package org.mifosng.platform.loan.service;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+-import org.apache.commons.lang.StringUtils;
++import org.mifosng.platform.DataValidatorBuilder;
+ import org.mifosng.platform.api.commands.AdjustLoanTransactionCommand;
+ import org.mifosng.platform.api.data.ApiParameterError;
+ import org.mifosng.platform.exceptions.PlatformApiDataValidationException;
+@@ -17,36 +17,19 @@ public class AdjustLoanTransactionCommandValidator {
+ 	}
+ 
+ 	public void validate() {
+-		List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+-		
+-		if (command.getTransactionId() == null || command.getTransactionId().longValue() <= 0) {
+-			ApiParameterError error = ApiParameterError.parameterError("validation.msg.loan.id.is.invalid", "The parameter repaymentId is invalid.", "transactionId", command.getTransactionId());
+-			dataValidationErrors.add(error);
+-		}
+-		
+-		if (command.getLoanId() == null || command.getLoanId().doubleValue() <= 0) {
+-			ApiParameterError error = ApiParameterError.parameterError("validation.msg.loan.id.is.invalid", "The parameter loanId is invalid.", "loanId", command.getLoanId());
+-			dataValidationErrors.add(error);
+-		}
+ 		
+-		if (command.getTransactionDate() == null) {
+-			ApiParameterError error = ApiParameterError.parameterError("validation.msg.loan.repayment.date.cannot.be.blank", "The parameter transactionDate cannot be blank.", "transactionDate");
+-			dataValidationErrors.add(error);
+-		}
++		List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+ 		
+-		if (command.getTransactionAmount() == null || command.getTransactionAmount().doubleValue() <= 0) {
+-			ApiParameterError error = ApiParameterError.parameterError("validation.msg.loan.repayment.must.be.greater.than.zero", "The parameter transactionAmount less than zero.", "transactionAmount", command.getTransactionAmount());
+-			dataValidationErrors.add(error);
+-		}
++		DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+ 		
+-		if (StringUtils.isNotBlank(command.getNote()) && command.getNote().length() > 1000) {
+-			ApiParameterError error = ApiParameterError.parameterError("validation.msg.note.exceeds.max.length", "The parameter note exceeds max allowed size of {0}", "note", 1000);
+-			dataValidationErrors.add(error);
+-		}
++		baseDataValidator.reset().parameter("loanId").value(command.getLoanId()).notNull().greaterThanZero();
++		baseDataValidator.reset().parameter("transactionId").value(command.getTransactionId()).notNull().greaterThanZero();
++		baseDataValidator.reset().parameter("transactionDate").value(command.getTransactionDate()).notNull();
++		baseDataValidator.reset().parameter("transactionAmount").value(command.getTransactionAmount()).notNull().positiveAmount();
++		baseDataValidator.reset().parameter("note").value(command.getNote()).notExceedingLengthOf(1000);
+ 		
+ 		if (!dataValidationErrors.isEmpty()) {
+ 			throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.", dataValidationErrors);
+ 		}
+ 	}
+-
+-}
++}
+\ No newline at end of file
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/LoanTransactionCommandValidator.java b/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/LoanTransactionCommandValidator.java
+index 609618ddb1..c3e9a70576 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/LoanTransactionCommandValidator.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/loan/service/LoanTransactionCommandValidator.java
+@@ -20,9 +20,9 @@ public class LoanTransactionCommandValidator {
+ 		
+ 		List<ApiParameterError> dataValidationErrors = new ArrayList<ApiParameterError>();
+ 		
+-		DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("role");
++		DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("loan.transaction");
+ 		
+-		baseDataValidator.reset().parameter("loanid").value(command.getLoanId()).notNull().greaterThanZero();
++		baseDataValidator.reset().parameter("loanId").value(command.getLoanId()).notNull().greaterThanZero();
+ 		baseDataValidator.reset().parameter("transactionDate").value(command.getTransactionDate()).notNull();
+ 		baseDataValidator.reset().parameter("transactionAmount").value(command.getTransactionAmount()).notNull().positiveAmount();
+ 		baseDataValidator.reset().parameter("note").value(command.getNote()).notExceedingLengthOf(1000);
+diff --git a/mifosng-provider/src/main/java/org/mifosng/platform/organisation/service/BranchMoneyTransferCommandValidator.java b/mifosng-provider/src/main/java/org/mifosng/platform/organisation/service/BranchMoneyTransferCommandValidator.java
+index 6119128029..90fdb8a46e 100644
+--- a/mifosng-provider/src/main/java/org/mifosng/platform/organisation/service/BranchMoneyTransferCommandValidator.java
++++ b/mifosng-provider/src/main/java/org/mifosng/platform/organisation/service/BranchMoneyTransferCommandValidator.java
+@@ -22,17 +22,13 @@ public class BranchMoneyTransferCommandValidator {
+ 		
+ 		DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("office.money.transfer");
+ 		
+-		baseDataValidator.reset().parameter("fromOfficeId").value(command.getFromOfficeId()).greaterThanZero();
+-		baseDataValidator.reset().parameter("toOfficeId").value(command.getToOfficeId()).greaterThanZero();
++		baseDataValidator.reset().parameter("fromOfficeId").value(command.getFromOfficeId()).ignoreIfNull().greaterThanZero();
++		baseDataValidator.reset().parameter("toOfficeId").value(command.getToOfficeId()).ignoreIfNull().greaterThanZero();
+ 		
+-		if (command.getFromOfficeId() == null) {
++		if (command.getFromOfficeId() == null && command.getToOfficeId() == null) {
+ 			baseDataValidator.reset().parameter("toOfficeId").value(command.getToOfficeId()).notNull();
+ 		}
+ 		
+-		if (command.getToOfficeId() == null) {
+-			baseDataValidator.reset().parameter("fromOfficeId").value(command.getFromOfficeId()).notNull();
+-		}
+-		
+ 		if (command.getFromOfficeId() != null && command.getToOfficeId() != null) {
+ 			baseDataValidator.reset().parameter("fromOfficeId").value(command.getFromOfficeId()).notSameAsParameter("toOfficeId", command.getToOfficeId());
+ 		}
+

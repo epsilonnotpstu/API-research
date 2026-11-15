@@ -1,0 +1,23 @@
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/helpers/GoogleHelper.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/helpers/GoogleHelper.java
+index cacbe54e8..75e9d7281 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/helpers/GoogleHelper.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/helpers/GoogleHelper.java
+@@ -2,6 +2,7 @@ package io.dockstore.webservice.helpers;
+ 
+ import java.io.IOException;
+ import java.security.GeneralSecurityException;
++import java.text.MessageFormat;
+ import java.util.Map;
+ import java.util.Optional;
+ 
+@@ -155,7 +156,8 @@ public final class GoogleHelper {
+             return Optional.ofNullable(tokenInfo);
+         } catch (RuntimeException | GeneralSecurityException | IOException e) {
+             // If token is invalid, Google client throws exception. See https://github.com/google/google-api-java-client/issues/970
+-            LOG.info("Error getting token info", e);
++            LOG.info(MessageFormat.format("Error getting token info: {0}", e.getMessage()));
++            LOG.debug("Error getting token info", e);
+             return Optional.empty();
+         }
+     }
+

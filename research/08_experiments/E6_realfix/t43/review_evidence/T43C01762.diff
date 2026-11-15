@@ -1,0 +1,176 @@
+diff --git a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/StaffTest.java b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/StaffTest.java
+index f7467ec02c..d95949fc62 100644
+--- a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/StaffTest.java
++++ b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/StaffTest.java
+@@ -31,7 +31,6 @@ import org.apache.fineract.integrationtests.common.Utils;
+ import org.apache.fineract.integrationtests.common.organisation.StaffHelper;
+ import org.junit.Assert;
+ import org.junit.Before;
+-import org.junit.Ignore;
+ import org.junit.Test;
+ 
+ public class StaffTest {
+@@ -71,7 +70,7 @@ public class StaffTest {
+         StaffHelper.createStaffWithJson(requestSpec, responseSpecForValidationError, noFirstnameJson);
+         StaffHelper.createStaffWithJson(requestSpec, responseSpecForValidationError, noLastnameJson);
+ 
+-        final HashMap<String, Object> map = new HashMap<>();
++        final Map<String, Object> map = StaffHelper.getMapWithJoiningDate();
+ 
+         map.put("officeId", 1);
+         map.put("firstname", Utils.randomNameGenerator("michael_", 5));
+@@ -93,10 +92,9 @@ public class StaffTest {
+     }
+ 
+     @Test
+-    @Ignore //TODO FINERACT-1005
+     public void testStaffCreateMaxNameLength() {
+ 
+-        final HashMap<String, Object> map = new HashMap<>();
++        final Map<String, Object> map = StaffHelper.getMapWithJoiningDate();
+ 
+         map.put("officeId", 1);
+         map.put("firstname", Utils.randomNameGenerator("michael_", 42));
+@@ -107,7 +105,7 @@ public class StaffTest {
+ 
+     @Test
+     public void testStaffCreateExternalIdValidationError() {
+-        final HashMap<String, Object> map = new HashMap<>();
++        final Map<String, Object> map = StaffHelper.getMapWithJoiningDate();
+ 
+         map.put("officeId", 1);
+         map.put("firstname", Utils.randomNameGenerator("michael_", 5));
+@@ -188,7 +186,6 @@ public class StaffTest {
+     }
+ 
+     @Test
+-    @Ignore // TODO FINERACT- 1005
+     public void testStaffUpdateLongExternalIdError() {
+         final HashMap<String, Object> map = new HashMap<>();
+         map.put("externalId", Utils.randomStringGenerator("EXT", 98));
+@@ -197,7 +194,6 @@ public class StaffTest {
+     }
+ 
+     @Test
+-    @Ignore // TODO FINERACT- 1005
+     public void testStaffUpdateWrongActiveState() {
+         final HashMap<String, Object> map = new HashMap<>();
+         map.put("isActive", "xyz");
+diff --git a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/common/organisation/StaffHelper.java b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/common/organisation/StaffHelper.java
+index 399c7ac8fa..39f4cbef5d 100755
+--- a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/common/organisation/StaffHelper.java
++++ b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/common/organisation/StaffHelper.java
+@@ -90,22 +90,34 @@ public class StaffHelper {
+         return Utils.performServerPut(requestSpec, responseSpec, url, json, "");
+     }
+ 
+-    public static String createStaffAsJSON(){
+-        final HashMap<String, Object> map = new HashMap<>();
++    public static String createStaffAsJSON() {
++
++        final Map<String, Object> map = getMapWithJoiningDate();
++
+         map.put("officeId", 1);
+         map.put("firstname", Utils.randomNameGenerator("michael_", 5));
+         map.put("lastname", Utils.randomNameGenerator("Doe_", 4));
+         map.put("isLoanOfficer", true);
+-        map.put("locale", "en");
+-        map.put("dateFormat", "dd MMMM yyyy");
+-        map.put("joiningDate", "20 September 2011") ;
++
+         LOG.info("map :  {}" , map);
+         return new Gson().toJson(map);
+     }
+ 
++    public static Map<String, Object> getMapWithJoiningDate()
++    {
++        HashMap<String, Object> map = new HashMap<>();
++
++        map.put("locale", "en");
++        map.put("dateFormat", "dd MMMM yyyy");
++        map.put("joiningDate", "20 September 2011");
++
++        return map;
++    }
++
+     public static String createStaffWithJSONFields(String... fields) {
+-        final HashMap<String, Object> map = new HashMap<>();
++        final Map<String, Object> map = getMapWithJoiningDate();
+         final List<String> fieldList = Arrays.asList(fields);
++
+         if(fieldList.contains("officeId")) {
+             map.put("officeId", 1);
+         }
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/organisation/staff/serialization/StaffCommandFromApiJsonDeserializer.java b/fineract-provider/src/main/java/org/apache/fineract/organisation/staff/serialization/StaffCommandFromApiJsonDeserializer.java
+index a958fc1abb..3556245657 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/organisation/staff/serialization/StaffCommandFromApiJsonDeserializer.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/organisation/staff/serialization/StaffCommandFromApiJsonDeserializer.java
+@@ -87,13 +87,13 @@ public final class StaffCommandFromApiJsonDeserializer {
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists("isLoanOfficer", element)) {
+-            final Boolean loanOfficerFlag = this.fromApiJsonHelper.extractBooleanNamed("isLoanOfficer", element);
+-            baseDataValidator.reset().parameter("isLoanOfficer").value(loanOfficerFlag).notNull();
++            final String loanOfficerFlag = this.fromApiJsonHelper.extractStringNamed("isLoanOfficer", element);
++            baseDataValidator.reset().parameter("isLoanOfficer").trueOrFalseRequired(loanOfficerFlag);
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists("isActive", element)) {
+-            final Boolean activeFlag = this.fromApiJsonHelper.extractBooleanNamed("isActive", element);
+-            baseDataValidator.reset().parameter("isActive").value(activeFlag).notNull();
++            final String activeFlag = this.fromApiJsonHelper.extractStringNamed("isActive", element);
++            baseDataValidator.reset().parameter("isActive").trueOrFalseRequired(activeFlag);
+         }
+ 
+         final LocalDate joiningDate = this.fromApiJsonHelper.extractLocalDateNamed("joiningDate", element);
+@@ -109,6 +109,11 @@ public final class StaffCommandFromApiJsonDeserializer {
+             baseDataValidator.reset().parameter("locale").value(locale).notBlank();
+         }
+ 
++        if (this.fromApiJsonHelper.parameterExists("externalId", element)) {
++            final String externalId = this.fromApiJsonHelper.extractStringNamed("externalId", element);
++            baseDataValidator.reset().parameter("externalId").value(externalId).notBlank().notExceedingLengthOf(100);
++        }
++
+         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+     }
+ 
+@@ -147,12 +152,16 @@ public final class StaffCommandFromApiJsonDeserializer {
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists("isLoanOfficer", element)) {
+-            final Boolean loanOfficerFlag = this.fromApiJsonHelper.extractBooleanNamed("isLoanOfficer", element);
+-            baseDataValidator.reset().parameter("isLoanOfficer").value(loanOfficerFlag).notNull();
++            final String loanOfficerFlag = this.fromApiJsonHelper.extractStringNamed("isLoanOfficer", element);
++            baseDataValidator.reset().parameter("isLoanOfficer").trueOrFalseRequired(loanOfficerFlag);
+         }
+ 
+         if (this.fromApiJsonHelper.parameterExists("isActive", element)) {
++            final String activeFlagStr = this.fromApiJsonHelper.extractStringNamed("isActive", element);
++            baseDataValidator.reset().parameter("isActive").trueOrFalseRequired(activeFlagStr);
++
+             final Boolean activeFlag = this.fromApiJsonHelper.extractBooleanNamed("isActive", element);
++
+             //Need to add here check to see if any clients, group, account and loans are assigned to this staff if staff is being set to inactive --LJB
+             final Boolean forceStatus = this.fromApiJsonHelper.extractBooleanNamed("forceStatus", element);
+             if ((!activeFlag && forceStatus == null) ||
+@@ -182,6 +191,11 @@ public final class StaffCommandFromApiJsonDeserializer {
+             baseDataValidator.reset().parameter("locale").value(locale).notBlank();
+         }
+ 
++        if (this.fromApiJsonHelper.parameterExists("externalId", element)) {
++            final String externalId = this.fromApiJsonHelper.extractStringNamed("externalId", element);
++            baseDataValidator.reset().parameter("externalId").value(externalId).notBlank().notExceedingLengthOf(100);
++        }
++
+         throwExceptionIfValidationWarningsExist(dataValidationErrors);
+     }
+ 
+@@ -189,4 +203,4 @@ public final class StaffCommandFromApiJsonDeserializer {
+         if (!dataValidationErrors.isEmpty()) { throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist",
+                 "Validation errors exist.", dataValidationErrors); }
+     }
+-}
+\ No newline at end of file
++}
+

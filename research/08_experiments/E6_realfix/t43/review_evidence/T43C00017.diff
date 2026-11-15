@@ -1,0 +1,176 @@
+diff --git a/src/main/java/com/zufarproject/aws/dynamodb/dto/AddressDto.java b/src/main/java/com/zufarproject/aws/dynamodb/dto/AddressDto.java
+index 4de3176c..fc1f8d06 100644
+--- a/src/main/java/com/zufarproject/aws/dynamodb/dto/AddressDto.java
++++ b/src/main/java/com/zufarproject/aws/dynamodb/dto/AddressDto.java
+@@ -4,22 +4,22 @@ import jakarta.validation.constraints.Size;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
++import jakarta.validation.constraints.NotBlank;
+ 
+ @Data
+ @AllArgsConstructor
+ @NoArgsConstructor
+ public class AddressDto {
+ 
+-    @NotBlank(message = "Line must be between 2 to 55 characters")
+-    @Size(min = 2, max = 55)
++    @NotBlank(message = "Line is mandatory")
++    @Size(max = 55, message = "Line length must be less than 55 characters")
+     private String line;
+ 
+-    @NotBlank(message = "City must be between 2 to 55 characters")
+-    @Size(min = 2, max = 55)
++    @NotBlank(message = "City is mandatory")
++    @Size(max = 55, message = "City length must be less than 55 characters")
+     private String city;
+ 
+-    @NotBlank(message = "Country must be between 2 to 55 characters")
+-    @Size(min = 2, max = 55)
++    @NotBlank(message = "Country is mandatory")
++    @Size(max = 55, message = "Country length must be less than 55 characters")
+     private String country;
+ }
+diff --git a/src/main/java/com/zufarproject/aws/dynamodb/dto/CustomerDto.java b/src/main/java/com/zufarproject/aws/dynamodb/dto/CustomerDto.java
+index 96a45d11..b45a9419 100644
+--- a/src/main/java/com/zufarproject/aws/dynamodb/dto/CustomerDto.java
++++ b/src/main/java/com/zufarproject/aws/dynamodb/dto/CustomerDto.java
+@@ -2,12 +2,12 @@ package com.zufarproject.aws.dynamodb.dto;
+ 
+ import jakarta.validation.Valid;
+ import jakarta.validation.constraints.Email;
++import jakarta.validation.constraints.NotBlank;
+ import jakarta.validation.constraints.NotNull;
+ import jakarta.validation.constraints.Size;
+ import lombok.AllArgsConstructor;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
+-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+ 
+ @Data
+ @AllArgsConstructor
+@@ -15,22 +15,22 @@ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBl
+ public class CustomerDto {
+ 
+     @NotBlank(message = "CustomerId is mandatory")
+-    @Size(min = 2, max = 55)
++    @Size(max = 55, message = "CustomerId length must be less than 55 characters")
+     private String customerId;
+ 
+-    @NotBlank(message = "FirstName must be between 2 to 55 characters")
+-    @Size(min = 2, max = 55)
++    @NotBlank(message = "FirstName is mandatory")
++    @Size(max = 55, message = "FirstName length must be less than 55 characters")
+     private String firstName;
+ 
+-    @NotBlank(message = "LastName must be between 2 to 55 characters")
+-    @Size(min = 2, max = 55)
++    @NotBlank(message = "LastName is mandatory")
++    @Size(max = 55, message = "LastName length must be less than 55 characters")
+     private String lastName;
+ 
++    @Email(message = "Email should be valid")
+     @NotBlank(message = "Email is mandatory")
+-    @Email
+     private String email;
+ 
+-    @NotNull(message = "AddressDto is mandatory")
+     @Valid
++    @NotNull(message = "Address is mandatory")
+     private AddressDto address;
+ }
+diff --git a/src/main/java/com/zufarproject/aws/dynamodb/endpoint/CustomerEndpoint.java b/src/main/java/com/zufarproject/aws/dynamodb/endpoint/CustomerEndpoint.java
+index bd506f7e..865be531 100644
+--- a/src/main/java/com/zufarproject/aws/dynamodb/endpoint/CustomerEndpoint.java
++++ b/src/main/java/com/zufarproject/aws/dynamodb/endpoint/CustomerEndpoint.java
+@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
+ import lombok.RequiredArgsConstructor;
+ import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
+ import org.modelmapper.ModelMapper;
++import org.springframework.http.HttpStatus;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.validation.annotation.Validated;
+ import org.springframework.web.bind.annotation.*;
+@@ -15,17 +16,17 @@ import org.springframework.web.bind.annotation.*;
+ @RestController
+ @RequiredArgsConstructor
+ @Validated
+-@RequestMapping(value = "v1")
++@RequestMapping(value = "/v1")
+ public class CustomerEndpoint {
+     private final CustomerCrudRepository customerCrudRepository;
+     private final ModelMapper modelMapper;
+ 
+     @PostMapping("/customer")
+     @ResponseBody
+-    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid @NotNull final CustomerDto customer) {
++    public ResponseEntity<Void> saveCustomer(@RequestBody @Valid @NotNull(message = "Customer is mandatory") final CustomerDto customer) {
+         Customer customerEntity = modelMapper.map(customer, Customer.class);
+         customerCrudRepository.saveCustomer(customerEntity);
+-        return ResponseEntity.ok()
++        return ResponseEntity.status(HttpStatus.CREATED)
+                 .build();
+     }
+ 
+diff --git a/src/main/java/com/zufarproject/aws/dynamodb/exception/ExceptionsHandler.java b/src/main/java/com/zufarproject/aws/dynamodb/exception/ExceptionsHandler.java
+index 4192f3ee..013299fb 100644
+--- a/src/main/java/com/zufarproject/aws/dynamodb/exception/ExceptionsHandler.java
++++ b/src/main/java/com/zufarproject/aws/dynamodb/exception/ExceptionsHandler.java
+@@ -1,27 +1,43 @@
+ package com.zufarproject.aws.dynamodb.exception;
+ 
+-import org.springframework.http.HttpStatus;
++import com.amazonaws.util.StringUtils;
++import org.springframework.http.ResponseEntity;
++import org.springframework.http.converter.HttpMessageNotReadableException;
+ import org.springframework.validation.FieldError;
+ import org.springframework.web.bind.MethodArgumentNotValidException;
++import org.springframework.web.bind.annotation.ControllerAdvice;
+ import org.springframework.web.bind.annotation.ExceptionHandler;
+-import org.springframework.web.bind.annotation.ResponseStatus;
+ 
+ import java.util.HashMap;
+ import java.util.Map;
++import java.util.stream.Collectors;
+ 
++@ControllerAdvice
+ public class ExceptionsHandler {
+ 
+-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+     @ExceptionHandler(MethodArgumentNotValidException.class)
+-    public Map<String, String> handleValidationExceptions(final MethodArgumentNotValidException exception) {
+-        Map<String, String> errors = new HashMap<>();
+-        exception.getBindingResult()
++    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(final MethodArgumentNotValidException exception) {
++        Map<String, String> errors = exception.getBindingResult()
+                 .getAllErrors()
+-                .forEach((error) -> {
+-                    String fieldName = ((FieldError) error).getField();
+-                    String errorMessage = error.getDefaultMessage();
+-                    errors.put(fieldName, errorMessage);
+-                });
+-        return errors;
++                .stream()
++                .collect(Collectors.toMap(error -> ((FieldError) error).getField(),
++                        error -> {
++                            String errorMessage = error.getDefaultMessage();
++                            if (StringUtils.isNullOrEmpty(errorMessage)) {
++                                errorMessage = "ErrorMessage is empty";
++                            }
++                            return errorMessage;
++                        }));
++
++        return ResponseEntity.badRequest()
++                .body(errors);
++    }
++
++    @ExceptionHandler(HttpMessageNotReadableException.class)
++    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException() {
++        Map<String, String> errors = new HashMap<>();
++        errors.put("Error message", "Request body is mandatory");
++        return ResponseEntity.badRequest()
++                .body(errors);
+     }
+ }
+

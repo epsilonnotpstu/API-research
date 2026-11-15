@@ -1,0 +1,94 @@
+diff --git a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/parsing/Parsing.java b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/parsing/Parsing.java
+index 140423cfe..6714846ef 100644
+--- a/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/parsing/Parsing.java
++++ b/integration/hive/hive-openlineage-hook/src/main/java/io/openlineage/hive/parsing/Parsing.java
+@@ -50,16 +50,7 @@ public class Parsing {
+     for (String subAlias : qb.getSubqAliases()) {
+       QBExpr qbExpr = qb.getSubqForAlias(subAlias);
+       query.getSubQueries().computeIfAbsent(subAlias, k -> new ArrayList<>());
+-      if (qbExpr.getOpcode().equals(QBExpr.Opcode.NULLOP)) {
+-        QB subQB = qbExpr.getQB();
+-        query.getSubQueries().get(subAlias).add(buildQueryTree(subQB, outputTable));
+-      } else {
+-        // This could be, for example, a UNION query
+-        QB subQB1 = qbExpr.getQBExpr1().getQB();
+-        query.getSubQueries().get(subAlias).add(buildQueryTree(subQB1, outputTable));
+-        QB subQB2 = qbExpr.getQBExpr2().getQB();
+-        query.getSubQueries().get(subAlias).add(buildQueryTree(subQB2, outputTable));
+-      }
++      addQBExprToSubQueries(qbExpr, query, subAlias, outputTable);
+     }
+ 
+     // Parse the expressions in the query clauses (SELECT, JOIN, GROUP BY, etc.)
+@@ -67,6 +58,31 @@ public class Parsing {
+     return query;
+   }
+ 
++  /**
++   * Recursively add a {@link QBExpr} to {@code query.getSubQueries().get(subAlias)}.
++   *
++   * <p>Hive parses chained set operations ({@code UNION ALL} / {@code INTERSECT} / {@code EXCEPT})
++   * left-associatively as a binary tree of non-{@code NULLOP} {@code QBExpr}s. Only the leaves of
++   * that tree wrap a concrete {@link QB} via {@code QBExpr#getQB()}; intermediate non-{@code
++   * NULLOP} nodes return {@code null} from {@code getQB()}, so the previous code's assumption that
++   * both legs of a non-{@code NULLOP} {@code QBExpr} could be unwrapped with a single {@code
++   * .getQB()} call NPE'd for any 3+ way set operation. See OpenLineage#4481.
++   *
++   * <p>The fix is to recurse: at each level, either follow the {@code NULLOP} leaf into {@code
++   * buildQueryTree} or descend into both legs of the binary node.
++   */
++  private static void addQBExprToSubQueries(
++      QBExpr qbExpr, QueryExpr query, String subAlias, String outputTable) {
++    if (qbExpr.getOpcode().equals(QBExpr.Opcode.NULLOP)) {
++      QB subQB = qbExpr.getQB();
++      query.getSubQueries().get(subAlias).add(buildQueryTree(subQB, outputTable));
++    } else {
++      // Set operation. Each leg may itself be a non-NULLOP QBExpr for 3+ way unions.
++      addQBExprToSubQueries(qbExpr.getQBExpr1(), query, subAlias, outputTable);
++      addQBExprToSubQueries(qbExpr.getQBExpr2(), query, subAlias, outputTable);
++    }
++  }
++
+   @SuppressWarnings("PMD.AvoidLiteralsInIfCondition")
+   public static String getClauseName(QB qb, String outputTable) {
+     QBParseInfo parseInfo = qb.getParseInfo();
+diff --git a/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/integration/ColumnLevelLineageTests.java b/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/integration/ColumnLevelLineageTests.java
+index a8cbf064a..530c7c4cb 100644
+--- a/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/integration/ColumnLevelLineageTests.java
++++ b/integration/hive/hive-openlineage-hook/src/test/java/io/openlineage/hive/integration/ColumnLevelLineageTests.java
+@@ -183,6 +183,34 @@ public class ColumnLevelLineageTests extends ContainerHiveTestBase {
+     verifyEvents("cllUnionStart.json", "cllUnionComplete.json");
+   }
+ 
++  // Regression test for OpenLineage#4481: Hive parses chained set operations
++  // (UNION ALL / INTERSECT / EXCEPT) left-associatively as a binary tree of
++  // non-NULLOP QBExpr nodes. Parsing.buildQueryTree previously assumed both
++  // legs of a non-NULLOP QBExpr were NULLOP-wrapped QBs, so any 3+ way union
++  // NPE'd at QBExpr#getQB on the intermediate node and the lineage hook
++  // dropped the event silently. Witness: the fix lets buildQueryTree recurse
++  // into both legs, so the hook completes and emits at least one lineage
++  // event for a 3-way UNION ALL CTAS. Today's master would record zero
++  // events because of the NPE.
++  @Test
++  public void unionThreeWay() {
++    createManagedHiveTable("t1", "a int, b string");
++    createManagedHiveTable("t2", "a int, c string");
++    createManagedHiveTable("t3", "a int, d string");
++    runHiveQuery(
++        "CREATE TABLE xxx AS\n"
++            + "SELECT a, b FROM t1\n"
++            + "UNION ALL\n"
++            + "SELECT a, c FROM t2\n"
++            + "UNION ALL\n"
++            + "SELECT a, d FROM t3");
++    assertThat(mockServerClient.retrieveRecordedRequests(request().withPath("/api/v1/lineage")))
++        .as(
++            "lineage events must be emitted for a 3-way UNION ALL; "
++                + "today's master records zero because Parsing.buildQueryTree NPEs")
++        .isNotEmpty();
++  }
++
+   @Test
+   void simpleInsertValues() {
+     createManagedHiveTable("t1", "a int, b string");
+

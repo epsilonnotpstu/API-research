@@ -1,0 +1,73 @@
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/UpdateWidgetHandler.java b/src/main/java/com/epam/ta/reportportal/core/widget/UpdateWidgetHandler.java
+index eaed3c158..d6fb4f578 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/UpdateWidgetHandler.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/UpdateWidgetHandler.java
+@@ -41,5 +41,5 @@ public interface UpdateWidgetHandler {
+ 	 * @param projectId {@link com.epam.ta.reportportal.entity.project.Project#id}
+ 	 * @param isShared  flag that indicates whether widget should be shared or unshared
+ 	 */
+-	void updateSharing(Collection<Widget> widgets, Long projectId, boolean isShared);
++	void updateSharing(Collection<Widget> widgets, Long projectId, Boolean isShared);
+ }
+\ No newline at end of file
+diff --git a/src/main/java/com/epam/ta/reportportal/core/widget/impl/UpdateWidgetHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/widget/impl/UpdateWidgetHandlerImpl.java
+index 3322293f5..72497ecd4 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/widget/impl/UpdateWidgetHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/widget/impl/UpdateWidgetHandlerImpl.java
+@@ -116,20 +116,22 @@ public class UpdateWidgetHandlerImpl implements UpdateWidgetHandler {
+ 	}
+ 
+ 	@Override
+-	public void updateSharing(Collection<Widget> widgets, Long projectId, boolean isShared) {
++	public void updateSharing(Collection<Widget> widgets, Long projectId, Boolean isShared) {
+ 		widgets.forEach(widget -> updateSharing(widget, projectId, isShared));
+ 	}
+ 
+-	private void updateSharing(Widget widget, Long projectId, boolean shared) {
+-		if (shared != widget.isShared()) {
+-			widget.setShared(shared);
+-			aclHandler.updateAcl(widget, projectId, widget.isShared());
+-		}
+-		if (widget.isShared()) {
+-			ofNullable(widget.getFilters()).ifPresent(filters -> updateUserFilterHandler.updateSharing(filters,
+-					projectId,
+-					widget.isShared()
+-			));
++	private void updateSharing(Widget widget, Long projectId, Boolean shared) {
++		if (null != shared) {
++			if (shared != widget.isShared()) {
++				widget.setShared(shared);
++				aclHandler.updateAcl(widget, projectId, widget.isShared());
++			}
++			if (widget.isShared()) {
++				ofNullable(widget.getFilters()).ifPresent(filters -> updateUserFilterHandler.updateSharing(filters,
++						projectId,
++						widget.isShared()
++				));
++			}
+ 		}
+ 	}
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/ws/converter/builders/WidgetBuilder.java b/src/main/java/com/epam/ta/reportportal/ws/converter/builders/WidgetBuilder.java
+index 38a75d6f6..dfd1b651b 100644
+--- a/src/main/java/com/epam/ta/reportportal/ws/converter/builders/WidgetBuilder.java
++++ b/src/main/java/com/epam/ta/reportportal/ws/converter/builders/WidgetBuilder.java
+@@ -47,7 +47,7 @@ public class WidgetBuilder implements Supplier<Widget> {
+ 	}
+ 
+ 	public WidgetBuilder addWidgetRq(WidgetRQ widgetRQ) {
+-		widget.setName(widgetRQ.getName());
++		ofNullable(widgetRQ.getName()).ifPresent(name -> widget.setName(name));
+ 		ofNullable(widgetRQ.getShare()).ifPresent(it -> widget.setShared(it));
+ 		widget.setDescription(widgetRQ.getDescription());
+ 
+@@ -59,8 +59,6 @@ public class WidgetBuilder implements Supplier<Widget> {
+ 			widget.setWidgetOptions(widgetOptions);
+ 		});
+ 
+-		widget.setDescription(widgetRQ.getDescription());
+-
+ 		widget.setWidgetType(widgetRQ.getWidgetType());
+ 		widget.setItemsCount(widgetRQ.getContentParameters().getItemsCount());
+ 
+

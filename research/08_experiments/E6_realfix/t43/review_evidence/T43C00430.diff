@@ -1,0 +1,62 @@
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/JobMetricsHolder.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/JobMetricsHolder.java
+index d4d027e85..749715d43 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/JobMetricsHolder.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/JobMetricsHolder.java
+@@ -33,16 +33,25 @@ public class JobMetricsHolder {
+   JobMetricsHolder() {}
+ 
+   public void addJobStages(int jobId, Set<Integer> stages) {
+-    jobStages.put(jobId, stages);
++    if (stages != null) {
++      jobStages.put(jobId, stages);
++    }
+   }
+ 
+   public void addMetrics(int stage, TaskMetrics taskMetrics) {
+-    stageMetrics.put(stage, taskMetrics);
++    if (taskMetrics != null) {
++      stageMetrics.put(stage, taskMetrics);
++    }
+   }
+ 
+   public Map<Metric, Number> pollMetrics(int jobId) {
+     return Optional.ofNullable(jobStages.remove(jobId))
+-        .map(stages -> stages.stream().map(stageMetrics::remove).collect(Collectors.toList()))
++        .map(
++            stages ->
++                stages.stream()
++                    .map(stageMetrics::remove)
++                    .filter(Objects::nonNull)
++                    .collect(Collectors.toList()))
+         .filter(l -> !l.isEmpty())
+         .map(this::mapOutputMetrics)
+         .orElse(Collections.emptyMap());
+diff --git a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/JobMetricsHolderTest.java b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/JobMetricsHolderTest.java
+index 7d6474ecb..529c08972 100644
+--- a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/JobMetricsHolderTest.java
++++ b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/JobMetricsHolderTest.java
+@@ -92,6 +92,23 @@ class JobMetricsHolderTest {
+     assertThat(jobMetrics).isEmpty();
+   }
+ 
++  @Test
++  void testAddMetricsWhenNull() {
++    JobMetricsHolder underTest = new JobMetricsHolder();
++    underTest.addMetrics(1, null);
++    underTest.addJobStages(0, new HashSet<>(Arrays.asList(1)));
++
++    assertThat(underTest.pollMetrics(0)).isEmpty();
++  }
++
++  @Test
++  void testAddJobStagesWhenNull() {
++    JobMetricsHolder underTest = new JobMetricsHolder();
++    underTest.addJobStages(0, null);
++
++    assertThat(underTest.pollMetrics(0)).isEmpty();
++  }
++
+   private TaskMetrics outputTaskMetrics(int bytes, int records) {
+     TaskMetrics taskMetrics = new TaskMetrics();
+     taskMetrics.outputMetrics()._bytesWritten().add(bytes);
+

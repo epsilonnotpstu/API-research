@@ -1,0 +1,35 @@
+diff --git a/Dockerfile b/Dockerfile
+index 2a8aaa7..de21a5d 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,7 +1,7 @@
+ FROM gradle:jdk11 as build
+ COPY . .
+ ARG RELEASE_VERSION=${RELEASE_VERSION:-0.0.0}
+-RUN gradle -Pversion=docker --no-daemon -PnodeVersion=12.16.3 vaadinPrepareNode bootJar
++RUN gradle -Pversion=docker --no-daemon -PnodeVersion=12.16.3 vaadinPrepareFrontend vaadinBuildFrontend bootJar
+ 
+ FROM openjdk:11-jre-slim as production
+ COPY --from=build /home/gradle/build/libs/allure-server-docker.jar /allure-server-docker.jar
+diff --git a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+index 8d17114..20079a0 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+@@ -30,6 +30,7 @@ import lombok.SneakyThrows;
+ import lombok.extern.slf4j.Slf4j;
+ import org.apache.commons.io.FileUtils;
+ import org.apache.commons.lang3.StringUtils;
++import org.springframework.data.domain.Sort;
+ import org.springframework.stereotype.Component;
+ import org.springframework.transaction.annotation.Transactional;
+ import ru.iopump.qa.allure.AppCfg;
+@@ -105,7 +106,7 @@ public class JpaReportService {
+     }
+ 
+     public Collection<ReportEntity> getAll() {
+-        return repository.findAll();
++        return repository.findAll(Sort.by("createdDateTime").descending());
+     }
+ 
+     public ReportEntity generate(@NonNull String reportPath,
+

@@ -1,0 +1,150 @@
+diff --git a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
+index 3b736a7b3..5522fdb3f 100644
+--- a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
++++ b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapter.java
+@@ -190,8 +190,8 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+                                 }, () -> {
+                                     final DataPointFactory dataPointFactory = adapterFactories.dataPointFactory();
+                                     dataList.stream()
+-                                            .map(data -> dataPointFactory.createJsonDataPoint(data.getTagName(),
+-                                                    Objects.requireNonNull(data.getJsonString())))
++                                            .map(data -> dataPointFactory.create(data.getTagName(),
++                                                    Objects.requireNonNull(data.getJsonNode())))
+                                             .forEach(pollingOutput::addDataPoint);
+                                     protocolAdapterState.setConnectionStatus(ProtocolAdapterState.ConnectionStatus.STATELESS);
+                                     pollingOutput.finish();
+@@ -232,7 +232,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+             if (optionalContentType.map(value -> CONTENT_TYPE_TEXT_XML.equals(value) ||
+                     CONTENT_TYPE_APPLICATION_XML.equals(value)).orElse(false)) {
+                 try {
+-                    mtConnectData.setJsonString(processXml(httpResponse.body(), definition));
++                    mtConnectData.setJsonNode(processXml(httpResponse.body(), definition));
+                 } catch (final Exception e) {
+                     mtConnectData.setSuccessful(false);
+                     mtConnectData.setCause(e);
+@@ -251,7 +251,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+         return mtConnectData;
+     }
+ 
+-    protected @NotNull String processXml(
++    protected @NotNull JsonNode processXml(
+             final @NotNull String body,
+             final @NotNull MtConnectAdapterTagDefinition definition)
+             throws JsonProcessingException, XMLParseException, JAXBException {
+@@ -272,7 +272,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+             } else {
+                 try (StringReader stringReader = new StringReader(body)) {
+                     final JAXBElement<?> element = (JAXBElement<?>) unmarshaller.unmarshal(stringReader);
+-                    return objectMapper.writeValueAsString(element.getValue());
++                    return objectMapper.convertValue(element.getValue(), JsonNode.class);
+                 } catch (final Exception e) {
+                     throw new XMLParseException(e, "Incoming XML message failed to conform " + schemaLocation);
+                 }
+@@ -283,7 +283,7 @@ public class MtConnectProtocolAdapter implements BatchPollingProtocolAdapter {
+         if (jsonNodeSchemaLocation == null) {
+             throw new XMLParseException("Attribute schemaLocation is not found");
+         }
+-        return objectMapper.writeValueAsString(rootNode);
++        return rootNode;
+     }
+ 
+     @Override
+diff --git a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/models/MtConnectData.java b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/models/MtConnectData.java
+index b42076272..0f578aec7 100644
+--- a/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/models/MtConnectData.java
++++ b/modules/hivemq-edge-module-mtconnect/src/main/java/com/hivemq/edge/adapters/mtconnect/models/MtConnectData.java
+@@ -15,6 +15,7 @@
+  */
+ package com.hivemq.edge.adapters.mtconnect.models;
+ 
++import com.fasterxml.jackson.databind.JsonNode;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+ 
+@@ -22,14 +23,15 @@ public class MtConnectData {
+     private final @NotNull String url;
+     private final @NotNull String tagName;
+     private boolean successful;
+-    private @Nullable String jsonString;
++    private @Nullable JsonNode jsonNode;
+     private @Nullable String errorMessage;
+     private @Nullable Throwable cause;
++
+     public MtConnectData(@NotNull final String url, final boolean successful, final @NotNull String tagName) {
+         this.url = url;
+         this.successful = successful;
+         this.tagName = tagName;
+-        jsonString = null;
++        jsonNode = null;
+         errorMessage = null;
+         cause = null;
+     }
+@@ -66,11 +68,11 @@ public class MtConnectData {
+         this.successful = successful;
+     }
+ 
+-    public @Nullable String getJsonString() {
+-        return jsonString;
++    public @Nullable JsonNode getJsonNode() {
++        return jsonNode;
+     }
+ 
+-    public void setJsonString(@NotNull final String jsonString) {
+-        this.jsonString = jsonString;
++    public void setJsonNode(@NotNull final JsonNode jsonNode) {
++        this.jsonNode = jsonNode;
+     }
+ }
+diff --git a/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java b/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
+index 441c321a8..e0a2147ee 100644
+--- a/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
++++ b/modules/hivemq-edge-module-mtconnect/src/test/java/com/hivemq/edge/adapters/mtconnect/MtConnectProtocolAdapterTest.java
+@@ -174,8 +174,8 @@ public class MtConnectProtocolAdapterTest {
+         assertThat(httpHeaders.firstValue("name").orElse("")).isEqualTo("value");
+         assertThat(httpHeaders.firstValue("User-Agent").orElse("")).startsWith("HiveMQ-Edge");
+         assertThat(argumentCaptorDataPoint.getValue().getTagName()).isEqualTo("tagName");
+-        final String jsonString = (String) argumentCaptorDataPoint.getValue().getTagValue();
+-        final JsonNode jsonNode = OBJECT_MAPPER.readTree(jsonString);
++        final JsonNode jsonNode = (JsonNode) argumentCaptorDataPoint.getValue().getTagValue();
++        assertThat(jsonNode).isNotNull();
+         assertThat(jsonNode.get(MtConnectProtocolAdapter.NODE_SCHEMA_LOCATION).asText()).isEqualTo(
+                 "urn:nist.gov:NistStreams:1.3 /schemas/NistStreams_1.3.xsd");
+         assertThat(jsonNode.get("Streams")).isNotNull();
+@@ -187,7 +187,7 @@ public class MtConnectProtocolAdapterTest {
+ 
+     @Test
+     @SuppressWarnings("unchecked")
+-    public void whenTagsAreNotEmptyAndResponsesAreInvalid_thenPollShouldFail() throws IOException {
++    public void whenTagsAreNotEmptyAndResponsesAreInvalid_thenPollShouldFail() {
+         when(config.isAllowUntrustedCertificates()).thenReturn(false);
+         when(config.getHttpConnectTimeoutSeconds()).thenReturn(5);
+         when(adapterInput.getAdapterId()).thenReturn("streams");
+@@ -234,11 +234,10 @@ public class MtConnectProtocolAdapterTest {
+             throws IOException, XMLParseException, JAXBException {
+         when(adapterInput.adapterFactories()).thenReturn(new AdapterFactoriesImpl());
+         final MtConnectProtocolAdapter adapter = new MtConnectProtocolAdapter(information, adapterInput);
+-        final String jsonString = adapter.processXml(IOUtils.resourceToString(
++        final JsonNode jsonNode = adapter.processXml(IOUtils.resourceToString(
+                 "/streams/streams-1-3-smstestbed-time-series.xml",
+                 StandardCharsets.UTF_8), new MtConnectAdapterTagDefinition("", false, true, 10, List.of()));
+-        assertThat(jsonString).isNotNull();
+-        final JsonNode jsonNode = OBJECT_MAPPER.readTree(jsonString);
++        assertThat(jsonNode).isNotNull();
+         assertThat(jsonNode.get(MtConnectProtocolAdapter.NODE_SCHEMA_LOCATION).asText()).isEqualTo(
+                 "urn:nist.gov:NistStreams:1.3 /schemas/NistStreams_1.3.xsd");
+     }
+@@ -251,11 +250,10 @@ public class MtConnectProtocolAdapterTest {
+             throws IOException, XMLParseException, JAXBException {
+         when(adapterInput.adapterFactories()).thenReturn(new AdapterFactoriesImpl());
+         final MtConnectProtocolAdapter adapter = new MtConnectProtocolAdapter(information, adapterInput);
+-        final String jsonString = adapter.processXml(IOUtils.resourceToString("/devices/devices-1-3-smstestbed.xml",
++        final JsonNode jsonNode = adapter.processXml(IOUtils.resourceToString("/devices/devices-1-3-smstestbed.xml",
+                         StandardCharsets.UTF_8),
+                 new MtConnectAdapterTagDefinition("", enableSchemaValidation, includeNull, 10, List.of()));
+-        assertThat(jsonString).isNotNull();
+-        final JsonNode jsonNode = OBJECT_MAPPER.readTree(jsonString);
++        assertThat(jsonNode).isNotNull();
+         if (!enableSchemaValidation) {
+             assertThat(jsonNode.get(MtConnectProtocolAdapter.NODE_SCHEMA_LOCATION)
+                     .asText()).isEqualTo(MtConnectSchema.Devices_1_3.getLocation());
+

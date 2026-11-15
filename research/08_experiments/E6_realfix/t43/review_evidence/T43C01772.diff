@@ -1,0 +1,312 @@
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/AbstractWorkbookPopulator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/AbstractWorkbookPopulator.java
+index e6446a7f6c..d87b933352 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/AbstractWorkbookPopulator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/AbstractWorkbookPopulator.java
+@@ -163,7 +163,15 @@ public abstract class AbstractWorkbookPopulator implements WorkbookPopulator {
+      * See {@link Name#setNameName(String)} and https://issues.apache.org/jira/browse/FINERACT-1256.
+      */
+     protected void setSanitized(Name poiName, String roughName) {
+-        String sanitized = NAME_REGEX.matcher(roughName.trim()).replaceAll("_");
+-        poiName.setNameName(sanitized);
++        poiName.setNameName(sanitizeName(roughName));
++    }
++
++    /**
++     * The exact string {@link #setSanitized} would use as the Excel defined name. Use it as the de-duplication key when
++     * guarding name-keyed defined-name loops, so two source values that sanitise to the same name are treated as a
++     * collision (e.g. "TARGET SAVINGS" and "TARGET-SAVINGS" both sanitise to "TARGET_SAVINGS").
++     */
++    protected String sanitizeName(String roughName) {
++        return NAME_REGEX.matcher(roughName.trim()).replaceAll("_");
+     }
+ }
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulator.java
+index 540d37f872..02c9924d16 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulator.java
+@@ -18,7 +18,10 @@
+  */
+ package org.apache.fineract.infrastructure.bulkimport.populator.loan;
+ 
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Locale;
++import java.util.Set;
+ import org.apache.fineract.infrastructure.bulkimport.constants.LoanConstants;
+ import org.apache.fineract.infrastructure.bulkimport.constants.TemplatePopulateImportConstants;
+ import org.apache.fineract.infrastructure.bulkimport.populator.AbstractWorkbookPopulator;
+@@ -516,13 +519,19 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
+                 TemplatePopulateImportConstants.CHARGE_SHEET_NAME + "!$B$2:$B$" + (chargeSheetPopulator.getChargesSize() + 1));
+ 
+         // Default Charge Name, Charge Amount, Charge Amount Type, Charge Due Date
++        Set<String> seenChargeNames = new HashSet<>();
+         for (Integer i = 0; i < charges.size(); i++) {
++            String chargeName = charges.get(i).getName().trim().replaceAll("[ )(]", "_");
++            // Guard against duplicate charge-keyed defined names — POI rejects a duplicate and 500s the whole
++            // template. Excel defined names are case-insensitive, so upper-case the key. The names are resolved
++            // before any createName() call so a skipped charge leaves no orphan Name in the workbook.
++            if (!seenChargeNames.add(chargeName.toUpperCase(Locale.ROOT))) {
++                continue;
++            }
+             Name chargeColName = loanWorkbook.createName();
+             Name chargeAmount = loanWorkbook.createName();
+             Name chargeAmountType = loanWorkbook.createName();
+ 
+-            String chargeName = charges.get(i).getName().trim().replaceAll("[ )(]", "_");
+-
+             chargeColName.setNameName("CHARGE_NAME_" + chargeName);
+             chargeColName.setRefersToFormula(TemplatePopulateImportConstants.CHARGE_SHEET_NAME + "!$B$" + (i + 2));
+ 
+@@ -548,7 +557,14 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
+         // Interest Calculation Period, Transaction Processing Strategy, Arrears
+         // Tolerance, GraceOnPrincipalPayment, GraceOnInterestPayment,
+         // GraceOnInterestCharged, StartDate Names for each loan product
++        Set<String> seenProductNames = new HashSet<>();
+         for (Integer i = 0; i < products.size(); i++) {
++            String productName = products.get(i).getName().replaceAll("[ ]", "_");
++            // Guard against duplicate product-keyed defined names — POI rejects a duplicate and 500s the whole
++            // template. Excel defined names are case-insensitive, so key on the sanitised, upper-cased name.
++            if (!seenProductNames.add(sanitizeName(productName).toUpperCase(Locale.ROOT))) {
++                continue;
++            }
+             Name fundName = loanWorkbook.createName();
+             Name principalName = loanWorkbook.createName();
+             Name minPrincipalName = loanWorkbook.createName();
+@@ -571,7 +587,6 @@ public class LoanWorkbookPopulator extends AbstractWorkbookPopulator {
+             Name graceOnInterestPaymentName = loanWorkbook.createName();
+             Name graceOnInterestChargedName = loanWorkbook.createName();
+             Name startDateName = loanWorkbook.createName();
+-            String productName = products.get(i).getName().replaceAll("[ ]", "_");
+             setSanitized(fundName, "FUND_" + productName);
+             setSanitized(principalName, "PRINCIPAL_" + productName);
+             setSanitized(minPrincipalName, "MIN_PRINCIPAL_" + productName);
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulator.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulator.java
+index 9607177f06..b7d19df3c0 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulator.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulator.java
+@@ -18,7 +18,10 @@
+  */
+ package org.apache.fineract.infrastructure.bulkimport.populator.savings;
+ 
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Locale;
++import java.util.Set;
+ import org.apache.fineract.infrastructure.bulkimport.constants.SavingsConstants;
+ import org.apache.fineract.infrastructure.bulkimport.constants.TemplatePopulateImportConstants;
+ import org.apache.fineract.infrastructure.bulkimport.populator.AbstractWorkbookPopulator;
+@@ -365,7 +368,16 @@ public class SavingsWorkbookPopulator extends AbstractWorkbookPopulator {
+         // Withdrawal Fee Amount, Withdrawal Fee Type, Annual Fee, Annual Fee on
+         // Date
+         // Names for each product
++        Set<String> seenProductNames = new HashSet<>();
+         for (Integer i = 0; i < products.size(); i++) {
++            SavingsProductData product = products.get(i);
++            String productName = product.getName();
++            // Guard against duplicate product-keyed defined names — POI rejects a duplicate and 500s the whole
++            // template. Excel defined names are case-insensitive, so key on the sanitised, upper-cased name. The name
++            // is resolved before any createName() call so a skipped product leaves no orphan Name in the workbook.
++            if (!seenProductNames.add(sanitizeName(productName).toUpperCase(Locale.ROOT))) {
++                continue;
++            }
+             Name interestRateName = savingsWorkbook.createName();
+             Name interestCompoundingPeriodName = savingsWorkbook.createName();
+             Name interestPostingPeriodName = savingsWorkbook.createName();
+@@ -380,8 +392,6 @@ public class SavingsWorkbookPopulator extends AbstractWorkbookPopulator {
+             Name withdrawalFeeName = savingsWorkbook.createName();
+             Name allowOverdraftName = savingsWorkbook.createName();
+             Name overdraftLimitName = savingsWorkbook.createName();
+-            SavingsProductData product = products.get(i);
+-            String productName = product.getName();
+             if (product.getNominalAnnualInterestRate() != null) {
+                 setSanitized(interestRateName, "Interest_Rate_" + productName);
+                 interestRateName.setRefersToFormula("Products!$C$" + (i + 2));
+diff --git a/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulatorTest.java b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulatorTest.java
+new file mode 100644
+index 0000000000..9fe6ac10cc
+--- /dev/null
++++ b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/loan/LoanWorkbookPopulatorTest.java
+@@ -0,0 +1,101 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.bulkimport.populator.loan;
++
++import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.mockito.Mockito.doReturn;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.spy;
++import static org.mockito.Mockito.when;
++
++import java.util.List;
++import org.apache.fineract.infrastructure.bulkimport.populator.ChargeSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.ClientSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.ExtrasSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.GroupSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.LoanProductSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.OfficeSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.PersonnelSheetPopulator;
++import org.apache.fineract.portfolio.charge.data.ChargeData;
++import org.apache.fineract.portfolio.loanproduct.data.LoanProductData;
++import org.apache.poi.hssf.usermodel.HSSFWorkbook;
++import org.apache.poi.ss.usermodel.Name;
++import org.apache.poi.ss.usermodel.Workbook;
++import org.junit.jupiter.api.Test;
++
++class LoanWorkbookPopulatorTest {
++
++    private static final String DATE_FORMAT = "dd MMMM yyyy";
++
++    private LoanWorkbookPopulator populator(LoanProductSheetPopulator products, ChargeSheetPopulator charges) {
++        return new LoanWorkbookPopulator(new OfficeSheetPopulator(List.of()), new ClientSheetPopulator(List.of(), List.of()),
++                new GroupSheetPopulator(List.of(), List.of()), new PersonnelSheetPopulator(List.of(), List.of()), products, charges,
++                new ExtrasSheetPopulator(List.of(), List.of(), List.of()));
++    }
++
++    private long definedNamesStartingWith(Workbook workbook, String prefix) {
++        return workbook.getAllNames().stream().map(Name::getNameName).filter(name -> name.startsWith(prefix)).count();
++    }
++
++    // Two charges whose names differ only by case (or by characters the name transform folds away) resolve to the
++    // SAME Excel defined name — defined names are case-insensitive — so the second createName call was rejected with
++    // "The workbook already contains this name", failing the whole template download. Each name must be emitted once.
++    // The spy feeds setNames the colliding pair while the real (empty) populator still writes its own sheet.
++    @Test
++    void chargeNamesCollidingOnlyByCaseEmitOneDefinedNameSet() throws Exception {
++        ChargeData first = mock(ChargeData.class);
++        ChargeData second = mock(ChargeData.class);
++        when(first.getName()).thenReturn("Late Fee");
++        when(second.getName()).thenReturn("LATE FEE ");
++        ChargeSheetPopulator charges = spy(new ChargeSheetPopulator(List.of()));
++        doReturn(List.of(first, second)).when(charges).getCharges();
++
++        try (Workbook workbook = new HSSFWorkbook()) {
++            LoanWorkbookPopulator populator = populator(new LoanProductSheetPopulator(List.of()), charges);
++
++            assertDoesNotThrow(() -> populator.populate(workbook, DATE_FORMAT));
++
++            assertEquals(1, definedNamesStartingWith(workbook, "CHARGE_NAME_"),
++                    "colliding charge names must yield a single defined-name set");
++        }
++    }
++
++    // Same defect on the loan-product loop. Note the product loop substitutes spaces BEFORE the name is sanitised, so
++    // a trailing space survives as a trailing underscore and produces a genuinely different defined name — unlike the
++    // charge loop above, only a case-only clash collides here.
++    @Test
++    void productNamesCollidingOnlyByCaseEmitOneDefinedNameSet() throws Exception {
++        LoanProductData first = mock(LoanProductData.class);
++        LoanProductData second = mock(LoanProductData.class);
++        when(first.getName()).thenReturn("Micro Loan");
++        when(second.getName()).thenReturn("MICRO LOAN");
++        LoanProductSheetPopulator products = spy(new LoanProductSheetPopulator(List.of()));
++        doReturn(List.of(first, second)).when(products).getProducts();
++
++        try (Workbook workbook = new HSSFWorkbook()) {
++            LoanWorkbookPopulator populator = populator(products, new ChargeSheetPopulator(List.of()));
++
++            assertDoesNotThrow(() -> populator.populate(workbook, DATE_FORMAT));
++
++            assertEquals(1, definedNamesStartingWith(workbook, "PRINCIPAL_"),
++                    "colliding product names must yield a single defined-name set");
++        }
++    }
++}
+diff --git a/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulatorTest.java b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulatorTest.java
+new file mode 100644
+index 0000000000..2561b6265d
+--- /dev/null
++++ b/fineract-provider/src/test/java/org/apache/fineract/infrastructure/bulkimport/populator/savings/SavingsWorkbookPopulatorTest.java
+@@ -0,0 +1,75 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.infrastructure.bulkimport.populator.savings;
++
++import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.mockito.Mockito.doReturn;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.spy;
++import static org.mockito.Mockito.when;
++
++import java.util.List;
++import org.apache.fineract.infrastructure.bulkimport.populator.ClientSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.GroupSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.OfficeSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.PersonnelSheetPopulator;
++import org.apache.fineract.infrastructure.bulkimport.populator.SavingsProductSheetPopulator;
++import org.apache.fineract.organisation.monetary.data.CurrencyData;
++import org.apache.fineract.portfolio.savings.data.SavingsProductData;
++import org.apache.poi.hssf.usermodel.HSSFWorkbook;
++import org.apache.poi.ss.usermodel.Name;
++import org.apache.poi.ss.usermodel.Workbook;
++import org.junit.jupiter.api.Test;
++
++class SavingsWorkbookPopulatorTest {
++
++    private static final String DATE_FORMAT = "dd MMMM yyyy";
++
++    // Two savings products whose names differ only by case, or by whitespace the sanitiser trims, resolve to the SAME
++    // Excel defined name — defined names are case-insensitive — so the second createName call was rejected with
++    // "The workbook already contains this name", failing the whole template download. Each name must be emitted once.
++    // The spy feeds setNames the colliding pair while the real (empty) populator still writes its own sheet.
++    @Test
++    void productNamesCollidingOnlyByCaseEmitOneDefinedNameSet() throws Exception {
++        CurrencyData currency = mock(CurrencyData.class);
++        when(currency.getInMultiplesOf()).thenReturn(1);
++        when(currency.getDecimalPlaces()).thenReturn(2);
++        SavingsProductData first = mock(SavingsProductData.class);
++        SavingsProductData second = mock(SavingsProductData.class);
++        when(first.getName()).thenReturn("Target Savings");
++        when(second.getName()).thenReturn("TARGET SAVINGS "); // the sanitiser trims, so this collides with the first
++        when(first.getCurrency()).thenReturn(currency);
++        when(second.getCurrency()).thenReturn(currency);
++        SavingsProductSheetPopulator products = spy(new SavingsProductSheetPopulator(List.of()));
++        doReturn(List.of(first, second)).when(products).getProducts();
++
++        try (Workbook workbook = new HSSFWorkbook()) {
++            SavingsWorkbookPopulator populator = new SavingsWorkbookPopulator(new OfficeSheetPopulator(List.of()),
++                    new ClientSheetPopulator(List.of(), List.of()), new GroupSheetPopulator(List.of(), List.of()),
++                    new PersonnelSheetPopulator(List.of(), List.of()), products);
++
++            assertDoesNotThrow(() -> populator.populate(workbook, DATE_FORMAT));
++
++            long compoundingNames = workbook.getAllNames().stream().map(Name::getNameName)
++                    .filter(name -> name.startsWith("Interest_Compouding_")).count();
++            assertEquals(1, compoundingNames, "colliding product names must yield a single defined-name set");
++        }
++    }
++}
+

@@ -1,0 +1,194 @@
+diff --git a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GitHubWorkflowIT.java b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GitHubWorkflowIT.java
+index 6e7c249b0..224b5db4b 100644
+--- a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GitHubWorkflowIT.java
++++ b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GitHubWorkflowIT.java
+@@ -16,12 +16,14 @@
+ 
+ package io.dockstore.client.cli;
+ 
++import static io.dockstore.webservice.jdbi.EntryDAO.INVALID_SORTCOL_MESSAGE;
+ import static io.openapi.api.impl.ToolsApiServiceImpl.DESCRIPTOR_FILE_SHA256_TYPE_FOR_TRS;
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertNotEquals;
+ import static org.junit.jupiter.api.Assertions.assertNotNull;
+ import static org.junit.jupiter.api.Assertions.assertNull;
++import static org.junit.jupiter.api.Assertions.assertThrows;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ import com.google.common.collect.Lists;
+@@ -53,6 +55,7 @@ import io.swagger.model.DescriptorType;
+ import jakarta.ws.rs.client.Client;
+ import java.util.List;
+ import java.util.Optional;
++import org.apache.http.HttpStatus;
+ import org.hibernate.Session;
+ import org.hibernate.SessionFactory;
+ import org.hibernate.context.internal.ManagedSessionContext;
+@@ -194,6 +197,29 @@ class GitHubWorkflowIT extends BaseIT {
+             WorkflowSubClass.BIOWORKFLOW.getValue()).size(), "Published workflow count should be unchanged");
+     }
+ 
++    /**
++     * Tests that the correct error is given when provided an invalid value for sortCol when getting all published workflows
++     *
++     */
++    @Test
++    void testGetPublishedWorkflowsWithInvalidSortCol() {
++        final ApiClient webClient = getWebClient(USER_2_USERNAME, testingPostgres);
++        WorkflowsApi workflowApi = new WorkflowsApi(webClient);
++        final PublishRequest publishRequest = CommonTestUtilities.createPublishRequest(true);
++
++        AppToolHelper.registerAppTool(webClient);
++        Workflow appTool = workflowApi.getWorkflowByPath("github.com/" + toolAndWorkflowRepoToolPath, APPTOOL, "versions");
++        workflowApi.publish(appTool.getId(), publishRequest);
++
++        assertEquals(1, workflowApi.allPublishedWorkflows(null, null, null, null, null, false,
++                WorkflowSubClass.APPTOOL.getValue()).size(), "There should be 1 app tool published");
++
++        ApiException exception = assertThrows(ApiException.class, () -> workflowApi.allPublishedWorkflows(null, null, null, "invalid", null, false,
++                    WorkflowSubClass.APPTOOL.getValue()));
++        assertTrue(exception.getMessage().contains(INVALID_SORTCOL_MESSAGE));
++        assertEquals(HttpStatus.SC_BAD_REQUEST, exception.getCode(), "There should be a 400 error");
++    }
++
+     /**
+      * Tests that the info for quay images included in CWL workflows are grabbed and that the trs endpoints convert this info correctly
+      */
+diff --git a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/SwaggerClientIT.java b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/SwaggerClientIT.java
+index 8f839a8ca..81ab528a5 100644
+--- a/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/SwaggerClientIT.java
++++ b/dockstore-integration-testing/src/test/java/io/dockstore/client/cli/SwaggerClientIT.java
+@@ -18,6 +18,7 @@ package io.dockstore.client.cli;
+ 
+ import static io.dockstore.common.DescriptorLanguage.CWL;
+ import static io.dockstore.webservice.TokenResourceIT.GITHUB_ACCOUNT_USERNAME;
++import static io.dockstore.webservice.jdbi.EntryDAO.INVALID_SORTCOL_MESSAGE;
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertNotNull;
+@@ -449,6 +450,21 @@ class SwaggerClientIT extends BaseIT {
+         assertTrue(containers.isEmpty());
+     }
+ 
++    /**
++     * Tests that the correct error is given when provided an invalid value for sortCol when getting all published tools
++     *
++     */
++    @Test
++    void testGetPublishedToolsWithInvalidSortCol() {
++        ApiClient client = getWebClient();
++        ContainersApi containersApi = new ContainersApi(client);
++        List<DockstoreTool> containers = containersApi.allPublishedContainers(null, null, "test6", null, null);
++        assertEquals(1, containers.size());
++        ApiException exception = assertThrows(ApiException.class, () -> containersApi.allPublishedContainers(null, null, "test6", "invalid", null));
++        assertTrue(exception.getMessage().contains(INVALID_SORTCOL_MESSAGE));
++        assertEquals(HttpStatus.SC_BAD_REQUEST, exception.getCode(), "There should be a 400 error");
++    }
++
+     @Test
+     void testHidingTags() throws ApiException {
+         ApiClient client = getAdminWebClient();
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java
+index 749ae09f2..c57f961a0 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java
+@@ -18,6 +18,7 @@ package io.dockstore.webservice.jdbi;
+ 
+ import com.google.common.base.Strings;
+ import io.dockstore.common.DescriptorLanguage;
++import io.dockstore.webservice.CustomWebApplicationException;
+ import io.dockstore.webservice.core.Category;
+ import io.dockstore.webservice.core.CategorySummary;
+ import io.dockstore.webservice.core.CollectionEntry;
+@@ -44,7 +45,10 @@ import java.util.List;
+ import java.util.Map;
+ import java.util.Objects;
+ import java.util.Optional;
++
++import jakarta.persistence.metamodel.Attribute;
+ import org.apache.commons.lang3.tuple.MutablePair;
++import org.apache.http.HttpStatus;
+ import org.hibernate.Session;
+ import org.hibernate.SessionFactory;
+ import org.hibernate.query.Query;
+@@ -67,6 +71,8 @@ public abstract class EntryDAO<T extends Entry> extends AbstractDockstoreDAO<T>
+ 
+     private Class<T> typeOfT;
+ 
++    public static final String INVALID_SORTCOL_MESSAGE = "Could not process query due to the invalid sortCol value.";
++
+     EntryDAO(SessionFactory factory) {
+         super(factory);
+         /*
+@@ -398,12 +404,24 @@ public abstract class EntryDAO<T extends Entry> extends AbstractDockstoreDAO<T>
+                     query.orderBy(cb.asc(cb.size(entry.<Collection>get("starredUsers"))), cb.desc(entry.get("id")));
+                 }
+             } else {
+-                Path<Object> sortPath = entry.get(sortCol);
+-                if (!Strings.isNullOrEmpty(sortOrder) && "desc".equalsIgnoreCase(sortOrder)) {
+-                    query.orderBy(cb.desc(sortPath), cb.desc(entry.get("id")));
+-                    predicates.add(sortPath.isNotNull());
++                boolean hasSortCol = entry.getModel()
++                        .getAttributes()
++                        .stream()
++                        .map(Attribute::getName)
++                        .anyMatch(sortCol::equals);
++
++                if (!hasSortCol) {
++                    LOG.error(INVALID_SORTCOL_MESSAGE);
++                    throw new CustomWebApplicationException(INVALID_SORTCOL_MESSAGE,
++                            HttpStatus.SC_BAD_REQUEST);
++
+                 } else {
+-                    query.orderBy(cb.asc(sortPath), cb.desc(entry.get("id")));
++                    Path<Object> sortPath = entry.get(sortCol);
++                    if (!Strings.isNullOrEmpty(sortOrder) && "desc".equalsIgnoreCase(sortOrder)) {
++                        query.orderBy(cb.desc(sortPath), cb.desc(entry.get("id")));
++                    } else {
++                        query.orderBy(cb.asc(sortPath), cb.desc(entry.get("id")));
++                    }
+                     predicates.add(sortPath.isNotNull());
+                 }
+             }
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java
+index 24f8e3729..9f483fcca 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java
+@@ -807,25 +807,16 @@ public class WorkflowResource extends AbstractWorkflowResource<Workflow>
+         @ApiParam(value = "Should only be used by Dockstore versions < 1.14.0. Indicates whether to get a service or workflow") @DefaultValue("false") @QueryParam("services") boolean services,
+         @ApiParam(value = "Which workflow subclass to retrieve. If present takes precedence over services parameter") @QueryParam("subclass") WorkflowSubClass subclass,
+         @Context HttpServletResponse response) {
+-        try {
+-            // delete the next line if GUI pagination is not working by 1.5.0 release
+-            int maxLimit = Math.min(Integer.parseInt(PAGINATION_LIMIT), limit);
+-            final Class<Workflow> workflowClass = (Class<Workflow>) workflowSubClass(services, subclass);
+-            List<Workflow> workflows = workflowDAO.findAllPublished(offset, maxLimit, filter, sortCol, sortOrder,
+-                    workflowClass);
+-            filterContainersForHiddenTags(workflows);
+-            stripContent(workflows);
+-            EntryDAO entryDAO = services ? serviceEntryDAO : bioWorkflowDAO;
+-            response.addHeader("X-total-count", String.valueOf(entryDAO.countAllPublished(Optional.of(filter), workflowClass)));
+-            response.addHeader("Access-Control-Expose-Headers", "X-total-count");
+-            return workflows;
+-        } catch (IllegalArgumentException e) {
+-            LOG.error("Could not get published workflows due to invalid arguments. Error is " + e.getMessage(), e);
+-            throw new CustomWebApplicationException("Could not get published workflows due to invalid arguments. "
+-                    + "Error is " + e.getMessage(), HttpStatus.SC_INTERNAL_SERVER_ERROR);
+-        }
+-
+-
++        int maxLimit = Math.min(Integer.parseInt(PAGINATION_LIMIT), limit);
++        final Class<Workflow> workflowClass = (Class<Workflow>) workflowSubClass(services, subclass);
++        List<Workflow> workflows = workflowDAO.findAllPublished(offset, maxLimit, filter, sortCol, sortOrder,
++                workflowClass);
++        filterContainersForHiddenTags(workflows);
++        stripContent(workflows);
++        EntryDAO entryDAO = services ? serviceEntryDAO : bioWorkflowDAO;
++        response.addHeader("X-total-count", String.valueOf(entryDAO.countAllPublished(Optional.of(filter), workflowClass)));
++        response.addHeader("Access-Control-Expose-Headers", "X-total-count");
++        return workflows;
+     }
+ 
+     @GET
+

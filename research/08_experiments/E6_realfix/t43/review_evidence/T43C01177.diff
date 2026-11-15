@@ -1,0 +1,32 @@
+diff --git a/dockstore-common/src/main/java/io/dockstore/common/PipHelper.java b/dockstore-common/src/main/java/io/dockstore/common/PipHelper.java
+index 55b876abc..e6bffbf23 100644
+--- a/dockstore-common/src/main/java/io/dockstore/common/PipHelper.java
++++ b/dockstore-common/src/main/java/io/dockstore/common/PipHelper.java
+@@ -15,8 +15,11 @@ import java.util.regex.Pattern;
+ public final class PipHelper {
+     public static final String DEV_SEM_VER = "development-build";
+     // https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+-    // Modified regex linked above to mitigate against ReDoS attacks.
+-    public static final String SEM_VER_STRING = "(^(0|[1-9]\\d*+)\\.(0|[1-9]\\d*+)\\.(0|[1-9]\\d*+)(?:-((?:0|[1-9]\\d*+|\\d*+[a-zA-Z-][0-9a-zA-Z-]*+)(?:\\.(?:0|[1-9]\\d*+|\\d*+[a-zA-Z-][0-9a-zA-Z-]*+))*+))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*+))?$)|(^" + DEV_SEM_VER + "$)";
++    // OPENAPI_SEM_VER_STRING is only used for the openapi schema pattern. Do not use it for pattern matching because it does not mitigate against ReDos attacks.
++    // The openapi schema pattern must be a valid regular expression according to the Ecma-262 dialect, which does not support possessive quantifiers.
++    public static final String OPENAPI_SEM_VER_STRING = "(^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$)|(^" + DEV_SEM_VER + "$)";
++    // SEM_VER_STRING regex is modified with possessive quantifiers to mitigate against ReDoS attacks. Use this for pattern matching.
++    public static final String SEM_VER_STRING = OPENAPI_SEM_VER_STRING.replace("*", "*+");
+     public static final Pattern SEM_VER_PATTERN = Pattern.compile(SEM_VER_STRING);
+ 
+     private PipHelper() { }
+diff --git a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java
+index 4d73d494f..a66e9c397 100644
+--- a/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java
++++ b/dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java
+@@ -297,7 +297,7 @@ public class MetadataResource {
+         schema = @Schema(implementation = String.class)))
+     @ApiOperation(value = "Returns the file containing runner dependencies.", response = String.class)
+     public Response getRunnerDependencies(
+-            @Parameter(name = "client_version", description = "The Dockstore client version (e.g. 1.13.0)", schema = @Schema(pattern = PipHelper.SEM_VER_STRING))
++            @Parameter(name = "client_version", description = "The Dockstore client version (e.g. 1.13.0)", schema = @Schema(pattern = PipHelper.OPENAPI_SEM_VER_STRING))
+             @ApiParam(value = "The Dockstore client version (e.g. 1.13.0)") @QueryParam("client_version") String clientVersion,
+             @Parameter(name = "python_version", description = "Python version, only relevant for the cwltool runner", in = ParameterIn.QUERY, schema = @Schema(defaultValue = "2"))
+             @ApiParam(value = "Python version, only relevant for the cwltool runner") @DefaultValue("3") @QueryParam("python_version") String pythonVersion,
+

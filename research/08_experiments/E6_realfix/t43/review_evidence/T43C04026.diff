@@ -1,0 +1,25 @@
+diff --git a/opba-api-security/src/main/java/de/adorsys/opba/api/security/external/mapper/FeignTemplateToDataToSignMapper.java b/opba-api-security/src/main/java/de/adorsys/opba/api/security/external/mapper/FeignTemplateToDataToSignMapper.java
+index 849f7ab7e..135d38489 100644
+--- a/opba-api-security/src/main/java/de/adorsys/opba/api/security/external/mapper/FeignTemplateToDataToSignMapper.java
++++ b/opba-api-security/src/main/java/de/adorsys/opba/api/security/external/mapper/FeignTemplateToDataToSignMapper.java
+@@ -82,11 +82,19 @@ public class FeignTemplateToDataToSignMapper {
+     }
+ 
+     private String extractRequiredValue(Map<String, Collection<String>> headers, String valueName) {
++        if (headers.get(valueName) == null) {
++            throw new IllegalStateException(valueName + MISSING_HEADER_ERROR_MESSAGE);
++        }
++
+         return headers.get(valueName).stream().findFirst()
+                        .orElseThrow(() -> new IllegalStateException(valueName + MISSING_HEADER_ERROR_MESSAGE));
+     }
+ 
+     private String extractNonRequiredValue(Map<String, Collection<String>> headers, String valueName) {
++        if (headers.get(valueName) == null) {
++            return null;
++        }
++
+         return headers.get(valueName).stream().findFirst().orElse(null);
+     }
+ }
+

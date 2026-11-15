@@ -1,0 +1,51 @@
+diff --git a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/Rdds.java b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/Rdds.java
+index 643e63996..0e13d45cb 100644
+--- a/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/Rdds.java
++++ b/integration/spark/shared/src/main/java/io/openlineage/spark/agent/lifecycle/Rdds.java
+@@ -63,10 +63,12 @@ public class Rdds {
+     deps.add(rdd);
+     while (!deps.isEmpty()) {
+       RDD<?> cur = deps.pop();
+-      deps.addAll(
+-          ScalaConversionUtils.fromSeq(cur.getDependencies()).stream()
+-              .map(Dependency::rdd)
+-              .collect(Collectors.toList()));
++      if (cur.getDependencies() != null) {
++        deps.addAll(
++            ScalaConversionUtils.fromSeq(cur.getDependencies()).stream()
++                .map(Dependency::rdd)
++                .collect(Collectors.toList()));
++      }
+       if (cur instanceof HadoopRDD) {
+         ret.add(cur);
+       } else if (cur instanceof FileScanRDD) {
+diff --git a/integration/spark/shared/src/test/java/io/openlineage/spark/agent/lifecycle/RddsTest.java b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/lifecycle/RddsTest.java
+new file mode 100644
+index 000000000..790df2db4
+--- /dev/null
++++ b/integration/spark/shared/src/test/java/io/openlineage/spark/agent/lifecycle/RddsTest.java
+@@ -0,0 +1,23 @@
++/*
+[REDACTED attribution]
++/* SPDX-License-Identifier: Apache-2.0
++*/
++
++package io.openlineage.spark.agent.lifecycle;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.apache.spark.rdd.RDD;
++import org.junit.jupiter.api.Test;
++
++class RddsTest {
++  @Test
++  void testFindFileLikeRddsWhenDependeciesAreNull() {
++    RDD<?> rdd = mock(RDD.class);
++    when(rdd.getDependencies()).thenReturn(null);
++
++    assertThat(Rdds.findFileLikeRdds(rdd)).isEmpty();
++  }
++}
+

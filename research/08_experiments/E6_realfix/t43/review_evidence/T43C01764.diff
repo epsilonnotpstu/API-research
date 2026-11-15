@@ -1,0 +1,113 @@
+diff --git a/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachine.java b/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachine.java
+index 097d6378c6..5b44f78ed4 100644
+--- a/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachine.java
++++ b/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachine.java
+@@ -202,6 +202,18 @@ public class DefaultLoanLifecycleStateMachine implements LoanLifecycleStateMachi
+                     newState = activeTransition();
+                 }
+             break;
++            case LOAN_COMPLETE_TRANSFER:
++                if (anyOfAllowedWhenComingFrom(from, LoanStatus.TRANSFER_IN_PROGRESS)) {
++                    boolean isOverpaid = loan.getTotalOverpaid() != null && loan.getTotalOverpaid().compareTo(BigDecimal.ZERO) > 0;
++                    if (isOverpaid) {
++                        newState = overpaidTransition();
++                    } else if (loan.getSummary().isRepaidInFull(loan.getCurrency())) {
++                        newState = closeObligationsMetTransition();
++                    } else {
++                        newState = activeTransition();
++                    }
++                }
++            break;
+             case WRITE_OFF_OUTSTANDING_UNDO:
+                 if (anyOfAllowedWhenComingFrom(from, LoanStatus.CLOSED_WRITTEN_OFF)) {
+                     newState = activeTransition();
+diff --git a/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/LoanEvent.java b/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/LoanEvent.java
+index a55a58d902..ca570eb66b 100755
+--- a/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/LoanEvent.java
++++ b/fineract-loan/src/main/java/org/apache/fineract/portfolio/loanaccount/domain/LoanEvent.java
+@@ -48,6 +48,7 @@ public enum LoanEvent {
+     LOAN_INITIATE_TRANSFER, //
+     LOAN_REJECT_TRANSFER, //
+     LOAN_WITHDRAW_TRANSFER, //
++    LOAN_COMPLETE_TRANSFER, //
+     LOAN_CREDIT_BALANCE_REFUND, //
+     LOAN_CHARGEBACK, //
+     LOAN_CHARGE_ADDED, //
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java b/fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
+index 49bc7e2a0f..cc59562340 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/service/LoanWritePlatformServiceJpaRepositoryImpl.java
+@@ -1731,11 +1731,7 @@ public class LoanWritePlatformServiceJpaRepositoryImpl implements LoanWritePlatf
+         final LoanTransaction newTransferAcceptanceTransaction = LoanTransaction.approveTransfer(acceptedInOffice, loan, transferDate,
+                 externalId);
+         loan.addLoanTransaction(newTransferAcceptanceTransaction);
+-        if (loan.getTotalOverpaid() != null) {
+-            loanLifecycleStateMachine.transition(LoanEvent.LOAN_OVERPAYMENT, loan);
+-        } else {
+-            loanLifecycleStateMachine.transition(LoanEvent.LOAN_REPAYMENT_OR_WAIVER, loan);
+-        }
++        loanLifecycleStateMachine.transition(LoanEvent.LOAN_COMPLETE_TRANSFER, loan);
+         if (loanOfficer != null) {
+             loanOfficerService.reassignLoanOfficer(loan, loanOfficer, transferDate);
+         }
+diff --git a/fineract-provider/src/test/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachineTest.java b/fineract-provider/src/test/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachineTest.java
+index ac92c81a82..15f01d2352 100644
+--- a/fineract-provider/src/test/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachineTest.java
++++ b/fineract-provider/src/test/java/org/apache/fineract/portfolio/loanaccount/domain/DefaultLoanLifecycleStateMachineTest.java
+@@ -421,6 +421,55 @@ class DefaultLoanLifecycleStateMachineTest {
+         verify(businessEventNotifierService).notifyPostBusinessEvent(any(LoanStatusChangedBusinessEvent.class));
+     }
+ 
++    @Test
++    public void testTransitionShouldWorkProperlyForLoanCompleteTransferWhenTransferInProgress() {
++        // given
++        MonetaryCurrency currency = new MonetaryCurrency("USD", 2, null);
++        Loan loan = Mockito.mock(Loan.class);
++        LoanSummary loanSummary = Mockito.mock(LoanSummary.class);
++        Mockito.when(loan.getStatus()).thenReturn(LoanStatus.TRANSFER_IN_PROGRESS);
++        Mockito.when(loan.getTotalOverpaid()).thenReturn(null);
++        Mockito.when(loan.getSummary()).thenReturn(loanSummary);
++        Mockito.when(loan.getCurrency()).thenReturn(currency);
++        Mockito.when(loanSummary.isRepaidInFull(currency)).thenReturn(false);
++        // when
++        underTest.transition(LoanEvent.LOAN_COMPLETE_TRANSFER, loan);
++        // then
++        verify(loan).setLoanStatus(LoanStatus.ACTIVE);
++        verify(businessEventNotifierService).notifyPostBusinessEvent(any(LoanStatusChangedBusinessEvent.class));
++    }
++
++    @Test
++    public void testTransitionShouldWorkProperlyForLoanCompleteTransferWhenTransferInProgressAndOverpaid() {
++        // given
++        Loan loan = Mockito.mock(Loan.class);
++        Mockito.when(loan.getStatus()).thenReturn(LoanStatus.TRANSFER_IN_PROGRESS);
++        Mockito.when(loan.getTotalOverpaid()).thenReturn(BigDecimal.ONE);
++        // when
++        underTest.transition(LoanEvent.LOAN_COMPLETE_TRANSFER, loan);
++        // then
++        verify(loan).setLoanStatus(LoanStatus.OVERPAID);
++        verify(businessEventNotifierService).notifyPostBusinessEvent(any(LoanStatusChangedBusinessEvent.class));
++    }
++
++    @Test
++    public void testTransitionShouldWorkProperlyForLoanCompleteTransferWhenTransferInProgressAndFullyPaid() {
++        // given
++        MonetaryCurrency currency = new MonetaryCurrency("USD", 2, null);
++        Loan loan = Mockito.mock(Loan.class);
++        LoanSummary loanSummary = Mockito.mock(LoanSummary.class);
++        Mockito.when(loan.getStatus()).thenReturn(LoanStatus.TRANSFER_IN_PROGRESS);
++        Mockito.when(loan.getTotalOverpaid()).thenReturn(null);
++        Mockito.when(loan.getSummary()).thenReturn(loanSummary);
++        Mockito.when(loan.getCurrency()).thenReturn(currency);
++        Mockito.when(loanSummary.isRepaidInFull(currency)).thenReturn(true);
++        // when
++        underTest.transition(LoanEvent.LOAN_COMPLETE_TRANSFER, loan);
++        // then
++        verify(loan).setLoanStatus(LoanStatus.CLOSED_OBLIGATIONS_MET);
++        verify(businessEventNotifierService).notifyPostBusinessEvent(any(LoanStatusChangedBusinessEvent.class));
++    }
++
+     private Loan createLoanWithStatus(LoanStatus status) {
+         Loan result = new Loan();
+         result.setLoanStatus(status);
+

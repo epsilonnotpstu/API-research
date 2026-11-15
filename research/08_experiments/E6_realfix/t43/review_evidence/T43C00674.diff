@@ -1,0 +1,563 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/LevelsController.java b/cwms-data-api/src/main/java/cwms/cda/api/LevelsController.java
+index f48b50e1..d6cdc684 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/LevelsController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/LevelsController.java
+@@ -119,8 +119,8 @@ public class LevelsController implements CrudHandler {
+             DSLContext dsl = getDslContext(ctx);
+             LocationLevelsDao levelsDao = getLevelsDao(dsl);
+             levelsDao.storeLocationLevel(level);
+-            ctx.status(HttpServletResponse.SC_OK).json("Created Location Level");
+-        } catch(IOException e) {
++            ctx.status(HttpServletResponse.SC_CREATED).json("Created Location Level");
++        } catch (IOException e) {
+             throw new IllegalArgumentException("Unable to parse the request body", e);
+         }
+     }
+@@ -133,7 +133,7 @@ public class LevelsController implements CrudHandler {
+         String body = writer.toString();
+         if (body.contains("constituent")) {
+             return Formats.parseContent(contentType, body, VirtualLocationLevel.class);
+-        } else if (body.contains("seasonal-timeseries-id")) {
++        } else if (body.contains("seasonal-time-series-id")) {
+             return Formats.parseContent(contentType, body, TimeSeriesLocationLevel.class);
+         } else if (body.contains("seasonal-values")) {
+             return Formats.parseContent(contentType, body, SeasonalLocationLevel.class);
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/LocationLevelsDaoImpl.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/LocationLevelsDaoImpl.java
+index 215f4469..a49ba0f2 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/LocationLevelsDaoImpl.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/LocationLevelsDaoImpl.java
+@@ -165,6 +165,7 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                                             String datum, ZonedDateTime beginZdt, ZonedDateTime endZdt) {
+         Integer total = null;
+         int offset = 0;
++        boolean totalSet = false;
+ 
+         if (cursor != null && !cursor.isEmpty()) {
+             String[] parts = CwmsDTOPaginated.decodeCursor(cursor);
+@@ -174,6 +175,7 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                 if (!"null".equals(parts[1])) {
+                     try {
+                         total = Integer.valueOf(parts[1]);
++                        totalSet = true;
+                     } catch (NumberFormatException e) {
+                         logger.log(Level.INFO, "Could not parse {0}", parts[1]);
+                     }
+@@ -222,6 +224,19 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                 .offset(offset)
+                 .limit(pageSize);
+ 
++        if (!totalSet) {
++            total = dsl.selectDistinct(LOCATION_LEVEL_FIELDS)
++                .from(view)
++                .fullOuterJoin(virtView)
++                .on(view.LOCATION_LEVEL_CODE.eq(virtView.LOCATION_LEVEL_CODE))
++                .where(whereCondition)
++                .orderBy(DSL.upper(view.OFFICE_ID), DSL.upper(view.LOCATION_LEVEL_ID),
++                    view.LEVEL_DATE, view.CALENDAR_OFFSET, DSL.upper(virtView.OFFICE_ID),
++                    DSL.upper(virtView.LOCATION_LEVEL_ID),
++                    virtView.EFFECTIVE_DATE_UTC
++                ).fetch().size();
++        }
++
+         final SelectLimitPercentAfterOffsetStep<Record> queryFinal = query;
+ 
+         logger.fine(() -> "getLocationLevels query: " + queryFinal.getSQL(ParamType.INLINED));
+@@ -242,7 +257,6 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                 throw new IllegalArgumentException("Unknown builder type: " + builder.getClass().getName());
+             }
+         }
+-
+         LocationLevels.Builder builder = new LocationLevels.Builder(offset, pageSize, total);
+         builder.addAll(levels);
+         return builder.build();
+@@ -302,7 +316,6 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+         SEASONAL_VALUE_TAB_T seasonalValues = null;
+         Number constantValue = null;
+         String seasonalTimeSeriesId = null;
+-        String interpolateString = null;
+ 
+         if (locationLevel instanceof SeasonalLocationLevel) {
+             SeasonalLocationLevel seasonalLocationLevel = (SeasonalLocationLevel) locationLevel;
+@@ -312,8 +325,6 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                     BigInteger.valueOf(seasonalLocationLevel.getIntervalMinutes());
+             intervalOrigin = seasonalLocationLevel.getIntervalOrigin() == null ? null :
+                     Timestamp.from(seasonalLocationLevel.getIntervalOrigin().toInstant());
+-            interpolateString = seasonalLocationLevel.getInterpolateString();
+-
+             seasonalValues = getSeasonalValues(seasonalLocationLevel);
+         } else if (locationLevel instanceof ConstantLocationLevel) {
+             constantValue = ((ConstantLocationLevel) locationLevel).getConstantValue();
+@@ -328,7 +339,6 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+         final BigInteger minutesFinal = minutes;
+         final SEASONAL_VALUE_TAB_T seasonalValuesFinal = seasonalValues;
+         final String seasonalTimeSeriesIdFinal = seasonalTimeSeriesId;
+-        final String interpolateStringFinal = interpolateString;
+ 
+         connection(dsl, c -> {
+             String officeId = locationLevel.getOfficeId();
+@@ -338,7 +348,7 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+                     locationLevel.getLevelComment(),
+                     dateFinal, "UTC", locationLevel.getAttributeValue(), locationLevel.getAttributeUnitsId(),
+                     locationLevel.getAttributeDurationId(), locationLevel.getAttributeComment(), intervalOriginFinal, monthsFinal,
+-                    minutesFinal, interpolateStringFinal, seasonalTimeSeriesIdFinal, seasonalValuesFinal,
++                    minutesFinal, locationLevel.getInterpolateString(), seasonalTimeSeriesIdFinal, seasonalValuesFinal,
+                     "F",
+                     officeId);
+         });
+@@ -684,7 +694,9 @@ public class LocationLevelsDaoImpl extends JooqDao<LocationLevel> implements Loc
+             SeasonalLocationLevel.Builder seasonalBuilder = new SeasonalLocationLevel.Builder(locLevelId, levelZdt);
+             seasonalBuilder.withSeasonalValue(seasonalValue);
+             seasonalBuilder.withInterpolateString(interp);
+-            seasonalBuilder.withIntervalMinutes(timeInterval.getMinutes());
++            if (timeInterval != null) {
++                seasonalBuilder.withIntervalMinutes(timeInterval.getMinutes());
++            }
+             seasonalBuilder.withAttributeParameterId(attrId);
+             seasonalBuilder.withAttributeUnitsId(attrUnit);
+             seasonalBuilder.withLevelUnitsId(levelUnit);
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevel.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevel.java
+index ee15631f..c5f6237e 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevel.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevel.java
+@@ -67,6 +67,8 @@ import hec.data.level.JDomLocationLevelImpl;
+ @FormattableWith(contentType = Formats.JSONV1, formatter = JsonV1.class)
+ @FormattableWith(contentType = Formats.XMLV2, formatter = XMLv2.class, aliases = {Formats.XML})
+ @JsonIgnoreProperties(ignoreUnknown = true)
++@Schema(oneOf = {ConstantLocationLevel.class, TimeSeriesLocationLevel.class,
++    SeasonalLocationLevel.class, VirtualLocationLevel.class}, accessMode = Schema.AccessMode.READ_ONLY)
+ public abstract class LocationLevel extends CwmsDTO {
+     @JsonProperty(required = true)
+     @Schema(description = "Name of the location level")
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalValueBean.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalValueBean.java
+index 45bd6258..a36de3a6 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalValueBean.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalValueBean.java
+@@ -50,16 +50,15 @@ public class SeasonalValueBean {
+         this.offsetMonths = builder.offsetMonths;
+     }
+ 
+-    public Double getValue()
+-    {
++    public Double getValue() {
+         return value;
+     }
+-    public BigInteger getOffsetMinutes()
+-    {
++
++    public BigInteger getOffsetMinutes() {
+         return offsetMinutes;
+     }
+-    public Integer getOffsetMonths()
+-    {
++
++    public Integer getOffsetMonths() {
+         return offsetMonths;
+     }
+ 
+@@ -67,8 +66,8 @@ public class SeasonalValueBean {
+     @JsonNaming(PropertyNamingStrategies.KebabCaseStrategy.class)
+     public static class Builder {
+         private Double value;
+-        private Integer offsetMonths;
+-        private BigInteger offsetMinutes;
++        private Integer offsetMonths = 0; // Default to 0 months if not set
++        private BigInteger offsetMinutes = BigInteger.ZERO; // Default to 0 minutes if not set
+ 
+         public Builder() {
+             //No-op
+diff --git a/cwms-data-api/src/test/java/cwms/cda/api/LevelsControllerTestIT.java b/cwms-data-api/src/test/java/cwms/cda/api/LevelsControllerTestIT.java
+index b7456938..73edd6d0 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/api/LevelsControllerTestIT.java
++++ b/cwms-data-api/src/test/java/cwms/cda/api/LevelsControllerTestIT.java
+@@ -30,6 +30,10 @@ import cwms.cda.data.dao.RatingSetDao;
+ import cwms.cda.data.dto.locationlevel.ConstantLocationLevel;
+ import cwms.cda.data.dto.locationlevel.LocationLevel;
+ import cwms.cda.data.dto.TimeSeries;
++import cwms.cda.data.dto.locationlevel.SeasonalLocationLevel;
++import cwms.cda.data.dto.locationlevel.SeasonalValueBean;
++import cwms.cda.data.dto.locationlevel.TimeSeriesLocationLevel;
++import cwms.cda.formatters.ContentType;
+ import cwms.cda.formatters.Formats;
+ import fixtures.CwmsDataApiSetupCallback;
+ import fixtures.TestAccounts;
+@@ -863,7 +867,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         //Read level with unit
+         given()
+@@ -989,7 +993,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         levelJson = readResourceFile("cwms/cda/api/virtuallevels/virtual_level_2.json");
+ 
+@@ -1006,7 +1010,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         levelJson = readResourceFile("cwms/cda/api/virtuallevels/virtual_level_3.json");
+ 
+@@ -1023,7 +1027,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         //Read level with unit
+         given()
+@@ -1132,9 +1136,12 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+     void testStoreRetrieveAllVirtualLocationLevelsPaged() throws Exception {
+         TestAccounts.KeyUser user = TestAccounts.KeyUser.SPK_NORMAL;
+         String existingLoc = "LevelsControllerTestIT";
+-        String levelLoc1 = "level_get_all_loc1";
+-        String levelLoc2 = "level_get_all_loc2";
+-        String levelLoc3 = "level_get_all_loc3";
++        String levelLoc1 = "non_virtual_level_1";
++        String oldLevelLoc1 = "level_get_all_loc1";
++        String levelLoc2 = "non_virtual_level_2";
++        String oldLevelLoc2 = "level_get_all_loc2";
++        String levelLoc3 = "non_virtual_level_3";
++        String oldLevelLoc3 = "level_get_all_loc3";
+         String virtualLoc = "virtual_level_value";
+         String virtualLoc1 = "virtual_level_value_1";
+         String virtualLoc2 = "virtual_level_value_2";
+@@ -1158,6 +1165,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         createVirtualLocation(specXml, setXml, time, levelIdLocal, levelId2Local);
+ 
+         String levelJson = readResourceFile("cwms/cda/api/virtuallevels/virtual_level_1.json");
++        levelJson = levelJson.replace(oldLevelLoc1, levelLoc1);
+         // Store the virtual level
+         given()
+             .log().ifValidationFails(LogDetail.ALL, true)
+@@ -1172,9 +1180,10 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         levelJson = readResourceFile("cwms/cda/api/virtuallevels/virtual_level_2.json");
++        levelJson = levelJson.replace(oldLevelLoc2, levelLoc2);
+ 
+         given()
+             .log().ifValidationFails(LogDetail.ALL, true)
+@@ -1189,9 +1198,10 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         levelJson = readResourceFile("cwms/cda/api/virtuallevels/virtual_level_3.json");
++        levelJson = levelJson.replace(oldLevelLoc3, levelLoc3);
+ 
+         given()
+             .log().ifValidationFails(LogDetail.ALL, true)
+@@ -1206,7 +1216,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         //Read level with unit
+         given()
+@@ -1268,6 +1278,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+             .queryParam(Controllers.OFFICE, OFFICE)
+             .queryParam(UNIT, "SI")
+             .queryParam(BEGIN, time.toInstant().toString())
++            .queryParam(LEVEL_ID_MASK, "*virtual_level*")
+             .queryParam(PAGE_SIZE, 3)
+         .when()
+             .redirects().follow(true)
+@@ -1308,7 +1319,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+ 
+         String page = path.getString("next-page");
+ 
+-        for (int i = 0; i <= 5; i++) {
++        while (page != null) {
+             response = given()
+                 .log().ifValidationFails(LogDetail.ALL, true)
+                 .accept(Formats.JSONV2)
+@@ -1316,8 +1327,8 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+                 .queryParam(Controllers.OFFICE, OFFICE)
+                 .queryParam(UNIT, "SI")
+                 .queryParam(BEGIN, time.toInstant().toString())
++                .queryParam(LEVEL_ID_MASK, "*virtual_level*")
+                 .queryParam(PAGE, page)
+-                .queryParam(PAGE_SIZE, 3)
+             .when()
+                 .redirects().follow(true)
+                 .redirects().max(2)
+@@ -1330,10 +1341,8 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+ 
+             path = JsonPath.from(response.body().asInputStream());
+             levels = path.getList("levels");
+-            assertTrue(levels.size() <= 3, "Expected at most 3 levels per page, but got: " + levels.size());
+-            if (levels.isEmpty()) {
+-                break;
+-            }
++            page = path.getString("next-page");
++            assertTrue(!levels.isEmpty() && levels.size() <= 3);
+             for (Map<String, Object> item : levels) {
+                 if (item.get("location-level-id").equals(levelId)) {
+                     foundLevel1 = true;
+@@ -1352,8 +1361,6 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+                     assertThat(item.get("office-id"), equalTo(user.getOperatingOffice()));
+                 }
+             }
+-
+-            page = path.getString("next-page");
+         }
+ 
+         assertTrue(foundLevel1, "Did not find levelId: " + levelId);
+@@ -1396,7 +1403,7 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+         .then()
+             .log().ifValidationFails(LogDetail.ALL, true)
+         .assertThat()
+-            .statusCode(is(HttpServletResponse.SC_OK));
++            .statusCode(is(HttpServletResponse.SC_CREATED));
+ 
+         //Read level with unit
+         given()
+@@ -1540,6 +1547,165 @@ public class LevelsControllerTestIT extends DataApiTestIT {
+             .contentType(is(test._expectedContentType));
+     }
+ 
++    @Test
++    void testStoreSeasonalLevel() throws Exception {
++        String locName = "seasonalLoc6";
++        createLocation(locName, true, OFFICE);
++        String levelId = String.format("%s.Elev.Ave.1Day.tst", locName);
++        ZonedDateTime intervalOrigin = ZonedDateTime.ofInstant(Instant.parse("2012-01-01T00:00:00Z"), ZoneId.of("UTC"));
++        ZonedDateTime levelDate = ZonedDateTime.ofInstant(Instant.parse("2024-01-01T00:00:00Z"), ZoneId.of("UTC"));
++        List<SeasonalValueBean> values = new ArrayList<>();
++        int numValues = 12;
++        for (int i = 1; i <= numValues; i++) {
++            values.add(new SeasonalValueBean.Builder()
++                .withValue(i + 1.0)
++                .withOffsetMonths(i)
++                .build());
++        }
++        SeasonalLocationLevel level = new SeasonalLocationLevel.Builder(levelId, levelDate)
++                .withOfficeId(OFFICE)
++                .withLevelUnitsId("ft")
++                .withIntervalMonths(12)
++                .withIntervalOrigin(intervalOrigin)
++                .withSeasonalValues(values)
++                .withInterpolateString("T")
++                .build();
++
++        String levelJson = Formats.format(new ContentType(Formats.JSONV2), level);
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .header("Authorization", TestAccounts.KeyUser.SPK_NORMAL.toHeaderValue())
++            .body(levelJson)
++            .contentType(Formats.JSONV2)
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .post("/levels/")
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_CREATED));
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .queryParam(EFFECTIVE_DATE, levelDate.toInstant().toString())
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .get("/levels/{level-id}", levelId)
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_OK))
++            .body("seasonal-values.size()", is(numValues));
++    }
++
++    @Test
++    void testStoreTimeSeriesLevel() throws Exception {
++        String locName = "tsLocation123";
++        createLocation(locName, true, OFFICE);
++        String levelId = String.format("%s.Elev.Ave.1Day.Regulating", locName);
++        String tsId = String.format("%s.Elev.Ave.1Day.1Week.Regulating", locName);
++        createTimeseries(OFFICE, tsId);
++        ZonedDateTime time = ZonedDateTime.now();
++        TimeSeriesLocationLevel level = new TimeSeriesLocationLevel.Builder(levelId, time, tsId)
++            .withOfficeId(OFFICE)
++            .withLevelUnitsId("ft")
++            .withInterpolateString("T")
++            .build();
++
++        String levelJson = Formats.format(new ContentType(Formats.JSONV2), level);
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .header("Authorization", TestAccounts.KeyUser.SPK_NORMAL.toHeaderValue())
++            .body(levelJson)
++            .contentType(Formats.JSONV2)
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .post("/levels/")
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_CREATED));
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .queryParam(EFFECTIVE_DATE, time.toInstant().toString())
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .get("/levels/{level-id}", levelId)
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_OK))
++            .body("seasonal-time-series-id", equalTo(tsId));
++    }
++
++    @Test
++    void testStoreConstantLevel() throws Exception {
++        String locName = "constLocation123";
++        createLocation(locName, true, OFFICE);
++        String levelId = String.format("%s.Elev.Ave.1Day.Regulating", locName);
++        ZonedDateTime time = ZonedDateTime.now();
++        ConstantLocationLevel level = new ConstantLocationLevel.Builder(levelId, time)
++            .withOfficeId(OFFICE)
++            .withLevelUnitsId("ft")
++            .withConstantValue(8675.309)
++            .build();
++
++        String levelJson = Formats.format(new ContentType(Formats.JSONV2), level);
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .header("Authorization", TestAccounts.KeyUser.SPK_NORMAL.toHeaderValue())
++            .body(levelJson)
++            .contentType(Formats.JSONV2)
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .post("/levels/")
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_CREATED));
++
++        given()
++            .log().ifValidationFails(LogDetail.ALL, true)
++            .queryParam(Controllers.OFFICE, OFFICE)
++            .queryParam(EFFECTIVE_DATE, time.toInstant().toString())
++            .queryParam(UNIT, "ft")
++        .when()
++            .redirects()
++            .follow(true)
++            .redirects()
++            .max(3)
++            .get("/levels/{level-id}", levelId)
++        .then()
++            .log().ifValidationFails(LogDetail.ALL, true)
++        .assertThat()
++            .statusCode(is(HttpServletResponse.SC_OK))
++            .body("constant-value", equalTo(8675.309f));
++    }
++
+     enum GetAllTestLegacy {
+         JSON(Formats.JSON_LEGACY, Formats.JSON),
+         XML(Formats.XML_LEGACY, Formats.XML),
+diff --git a/cwms-data-api/src/test/java/cwms/cda/api/LockControllerIT.java b/cwms-data-api/src/test/java/cwms/cda/api/LockControllerIT.java
+index 8149443d..a9a465ba 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/api/LockControllerIT.java
++++ b/cwms-data-api/src/test/java/cwms/cda/api/LockControllerIT.java
+@@ -882,7 +882,7 @@ final class LockControllerIT extends DataApiTestIT {
+             .then()
+                 .log().ifValidationFails(LogDetail.ALL, true)
+             .assertThat()
+-                .statusCode(is(HttpServletResponse.SC_OK))
++                .statusCode(is(HttpServletResponse.SC_CREATED))
+             ;
+         }
+ 
+@@ -1011,39 +1011,39 @@ final class LockControllerIT extends DataApiTestIT {
+ 
+     private List<LocationLevel> createLocationLevelList(Lock lock) {
+         List<LocationLevel> retVal = new ArrayList<>();
+-        ConstantLocationLevel lowLowerLevel = ((ConstantLocationLevel.Builder) new ConstantLocationLevel.Builder(lock.getLowWaterLowerPoolLocationLevel().getLevelId(), ZonedDateTime.now())
++        ConstantLocationLevel lowLowerLevel = new ConstantLocationLevel.Builder(lock.getLowWaterLowerPoolLocationLevel().getLevelId(), ZonedDateTime.now())
+                 .withLevelUnitsId(lock.getElevationUnits())
+                 .withOfficeId(lock.getLowWaterLowerPoolLocationLevel().getOfficeId())
+-                .withSpecifiedLevelId(lock.getLowWaterLowerPoolLocationLevel().getSpecifiedLevelId()))
++                .withSpecifiedLevelId(lock.getLowWaterLowerPoolLocationLevel().getSpecifiedLevelId())
+                 .withConstantValue(lock.getLowWaterLowerPoolLocationLevel().getLevelValue())
+                 .build();
+         retVal.add(lowLowerLevel);
+-        ConstantLocationLevel lowUpperLevel = ((ConstantLocationLevel.Builder) new ConstantLocationLevel.Builder(lock.getLowWaterUpperPoolLocationLevel().getLevelId(), ZonedDateTime.now())
++        ConstantLocationLevel lowUpperLevel = new ConstantLocationLevel.Builder(lock.getLowWaterUpperPoolLocationLevel().getLevelId(), ZonedDateTime.now())
+                 .withLevelUnitsId(lock.getElevationUnits())
+                 .withOfficeId(lock.getLowWaterUpperPoolLocationLevel().getOfficeId())
+-                .withSpecifiedLevelId(lock.getLowWaterUpperPoolLocationLevel().getSpecifiedLevelId()))
++                .withSpecifiedLevelId(lock.getLowWaterUpperPoolLocationLevel().getSpecifiedLevelId())
+                 .withConstantValue(lock.getLowWaterUpperPoolLocationLevel().getLevelValue())
+                 .build();
+         retVal.add(lowUpperLevel);
+-        ConstantLocationLevel highLowerLevel = ((ConstantLocationLevel.Builder) new ConstantLocationLevel.Builder(lock.getHighWaterLowerPoolLocationLevel().getLevelId(), ZonedDateTime.now())
++        ConstantLocationLevel highLowerLevel = new ConstantLocationLevel.Builder(lock.getHighWaterLowerPoolLocationLevel().getLevelId(), ZonedDateTime.now())
+                 .withLevelUnitsId(lock.getElevationUnits())
+                 .withOfficeId(lock.getHighWaterLowerPoolLocationLevel().getOfficeId())
+-                .withSpecifiedLevelId(lock.getHighWaterLowerPoolLocationLevel().getSpecifiedLevelId()))
++                .withSpecifiedLevelId(lock.getHighWaterLowerPoolLocationLevel().getSpecifiedLevelId())
+                 .withConstantValue(lock.getHighWaterLowerPoolLocationLevel().getLevelValue())
+                 .build();
+         retVal.add(highLowerLevel);
+-        ConstantLocationLevel highUpperLevel = ((ConstantLocationLevel.Builder) new ConstantLocationLevel.Builder(lock.getHighWaterUpperPoolLocationLevel().getLevelId(), ZonedDateTime.now())
++        ConstantLocationLevel highUpperLevel = new ConstantLocationLevel.Builder(lock.getHighWaterUpperPoolLocationLevel().getLevelId(), ZonedDateTime.now())
+                 .withLevelUnitsId(lock.getElevationUnits())
+ 
+                 .withOfficeId(lock.getHighWaterUpperPoolLocationLevel().getOfficeId())
+-                .withSpecifiedLevelId(lock.getHighWaterUpperPoolLocationLevel().getSpecifiedLevelId()))
++                .withSpecifiedLevelId(lock.getHighWaterUpperPoolLocationLevel().getSpecifiedLevelId())
+                 .withConstantValue(lock.getHighWaterUpperPoolLocationLevel().getLevelValue())
+                 .build();
+         retVal.add(highUpperLevel);
+-        ConstantLocationLevel warningBuffer = ((ConstantLocationLevel.Builder) new ConstantLocationLevel.Builder(String.format("%s.Elev-Closure.Inst.0.Warning Buffer", lock.getLocation().getName()), ZonedDateTime.now())
++        ConstantLocationLevel warningBuffer = new ConstantLocationLevel.Builder(String.format("%s.Elev-Closure.Inst.0.Warning Buffer", lock.getLocation().getName()), ZonedDateTime.now())
+                 .withLevelUnitsId(lock.getElevationUnits())
+                 .withOfficeId(lock.getLocation().getOfficeId())
+-                .withSpecifiedLevelId("Warning Buffer"))
++                .withSpecifiedLevelId("Warning Buffer")
+                 .withConstantValue(lock.getHighWaterLowerPoolWarningLevel())
+                 .build();
+         retVal.add(warningBuffer);
+

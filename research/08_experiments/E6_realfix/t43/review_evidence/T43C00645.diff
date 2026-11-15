@@ -1,0 +1,190 @@
+diff --git a/build.gradle b/build.gradle
+index ad4f283..9ba1763 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -43,7 +43,7 @@ wrapper {
+     }
+ }
+ vaadin {
+-    productionMode = true
++    productionMode = false
+ }
+ classes {
+     doLast {
+diff --git a/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java b/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
+index 78e41dd..ccc6b5e 100644
+--- a/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
++++ b/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
+@@ -59,7 +59,7 @@ public class AllureReportController {
+     @Cacheable(CACHE) // caching results
+     public Collection<ReportResponse> getAllCached() {
+         return StreamUtil.stream(reportService.getAll())
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl(), appCfg.reportsDir())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+@@ -77,7 +77,7 @@ public class AllureReportController {
+             baseUrl()
+         );
+ 
+-        return new ReportResponse(reportEntity.getUuid(), reportEntity.getPath(), reportEntity.generateUrl(baseUrl()));
++        return new ReportResponse(reportEntity.getUuid(), reportEntity.getPath(), reportEntity.generateUrl(baseUrl(), appCfg.reportsDir()));
+     }
+ 
+     @Operation(summary = "Clear all history reports")
+@@ -85,7 +85,7 @@ public class AllureReportController {
+     @CacheEvict(value = CACHE, allEntries = true)
+     public Collection<ReportResponse> deleteAllHistory() {
+         return reportService.clearAllHistory().stream()
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl(), appCfg.reportsDir())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+@@ -94,7 +94,7 @@ public class AllureReportController {
+     @CacheEvict(value = CACHE, allEntries = true)
+     public Collection<ReportResponse> deleteAll() throws IOException {
+         return reportService.deleteAll().stream()
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl(), appCfg.reportsDir())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+index ebe9ec2..1ba3fa2 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+@@ -1,5 +1,8 @@
+ package ru.iopump.qa.allure.entity;
+ 
++
++import static ru.iopump.qa.allure.helper.Util.join;
++
+ import java.net.MalformedURLException;
+ import java.net.URL;
+ import java.nio.file.Files;
+@@ -79,8 +82,8 @@ public class ReportEntity {
+         this.size = ObjectUtils.defaultIfNull(size, 0L);
+     }
+ 
+-    public String generateUrl(String baseUrl) {
+-        return isFullUrl() ? url : baseUrl + url;
++    public String generateUrl(String serverBaseUrl, String reportPath) {
++        return isFullUrl() ? url : join(serverBaseUrl, reportPath, uuid) + "/";
+     }
+ 
+     public boolean isFullUrl() {
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java b/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
+index b051f72..8516475 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
+@@ -1,5 +1,7 @@
+ package ru.iopump.qa.allure.gui.component;
+ 
++import static ru.iopump.qa.allure.helper.Util.lastSegment;
++
+ import com.google.common.collect.Maps;
+ import com.vaadin.flow.component.HasComponents;
+ import com.vaadin.flow.component.grid.Grid;
+@@ -145,7 +147,7 @@ public class FilteredGrid<T> {
+     private Renderer<T> link(Col<T> columnSpec) {
+         return new ComponentRenderer<>(row -> {
+             var link = Str.toStr(columnSpec.getValue().apply(row));
+-            var res = new Anchor(link, link);
++            var res = new Anchor(link, lastSegment(link));
+             res.setTarget("_blank");
+             res.getStyle().set(FONT_FAMILY, GERMANIA_ONE);
+             return res;
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java b/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
+index b0d1f2c..122ba45 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
+@@ -88,7 +88,7 @@ public class ReportsView extends VerticalLayout {
+                     .value(e -> dateTimeResolver.printDate(e.getCreatedDateTime()))
+                     .build()
+             )
+-            .add(Col.<ReportEntity>with().name("Url").value(e -> e.generateUrl(url(appCfg))).type(LINK).build())
++            .add(Col.<ReportEntity>with().name("Url").value(e -> e.generateUrl(url(appCfg), appCfg.reportsDir())).type(LINK).build())
+             .add(Col.<ReportEntity>with().name("Path").value(prop("path")).build())
+             .add(Col.<ReportEntity>with().name("Active").value(prop("active")).build())
+             .add(Col.<ReportEntity>with().name("Size KB").value(prop("size")).type(NUMBER).build())
+diff --git a/src/main/java/ru/iopump/qa/allure/helper/Util.java b/src/main/java/ru/iopump/qa/allure/helper/Util.java
+index a104287..49b3753 100644
+--- a/src/main/java/ru/iopump/qa/allure/helper/Util.java
++++ b/src/main/java/ru/iopump/qa/allure/helper/Util.java
+@@ -1,9 +1,14 @@
+ package ru.iopump.qa.allure.helper;
+ 
++import java.util.Optional;
++import java.util.stream.Collectors;
++import javax.annotation.Nullable;
+ import lombok.experimental.UtilityClass;
+ import org.apache.commons.lang3.StringUtils;
+ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+ import ru.iopump.qa.allure.AppCfg;
++import ru.iopump.qa.util.Str;
++import ru.iopump.qa.util.StreamUtil;
+ 
+ @SuppressWarnings("RedundantModifiersUtilityClassLombok")
+ @UtilityClass
+@@ -15,4 +20,16 @@ public class Util {
+             return appCfg.reportHost();
+         }
+     }
++
++    public static String join(@Nullable Object... part) {
++        return StreamUtil.stream(part)
++            .map(Str::toStr)
++            .map(s -> StringUtils.strip(s, "/"))
++            .collect(Collectors.joining("/"));
++    }
++
++    public static String lastSegment(@Nullable String str) {
++        var localString = StringUtils.stripEnd(str, "/");
++        return Optional.ofNullable(StringUtils.substringAfterLast(localString, "/")).orElse(localString);
++    }
+ }
+diff --git a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+index 20079a0..889b440 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+@@ -3,6 +3,7 @@ package ru.iopump.qa.allure.service; //NOPMD
+ import static org.apache.commons.io.FileUtils.deleteQuietly;
+ import static ru.iopump.qa.allure.gui.DateTimeResolver.zeroZone;
+ import static ru.iopump.qa.allure.helper.ExecutorCiPlugin.JSON_FILE_NAME;
++import static ru.iopump.qa.allure.helper.Util.join;
+ import static ru.iopump.qa.allure.service.PathUtil.str;
+ 
+ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+@@ -172,7 +173,7 @@ public class JpaReportService {
+             .uuid(uuid)
+             .path(reportPath)
+             .createdDateTime(LocalDateTime.now(zeroZone()))
+-            .url(cfg.reportsPath() + reportPath)
++            .url(join(baseUrl, cfg.reportsDir(), uuid.toString()) + "/")
+             .level(prevEntity.map(e -> e.getLevel() + 1).orElse(0L))
+             .active(true)
+             .size(ReportEntity.sizeKB(destination))
+diff --git a/src/test/java/ru/iopump/qa/allure/helper/UtilTest.java b/src/test/java/ru/iopump/qa/allure/helper/UtilTest.java
+new file mode 100644
+index 0000000..7d2a7f4
+--- /dev/null
++++ b/src/test/java/ru/iopump/qa/allure/helper/UtilTest.java
+@@ -0,0 +1,14 @@
++package ru.iopump.qa.allure.helper;
++
++import static org.junit.Assert.assertEquals;
++
++import org.junit.Test;
++
++public class UtilTest {
++
++    @Test
++    public void lastSegment() {
++        assertEquals(Util.lastSegment("http://localhost:8080/allure/reports/e6b22402-a153-4eac-9254-fae06a232931/"),
++            "e6b22402-a153-4eac-9254-fae06a232931");
++    }
++}
+\ No newline at end of file
+

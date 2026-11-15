@@ -1,0 +1,77 @@
+diff --git a/src/main/java/com/zufar/icedlatte/common/correlation/RequestCompletionLoggingFilter.java b/src/main/java/com/zufar/icedlatte/common/correlation/RequestCompletionLoggingFilter.java
+index c62793e9..055e0a1d 100644
+--- a/src/main/java/com/zufar/icedlatte/common/correlation/RequestCompletionLoggingFilter.java
++++ b/src/main/java/com/zufar/icedlatte/common/correlation/RequestCompletionLoggingFilter.java
+@@ -88,7 +88,11 @@ public class RequestCompletionLoggingFilter extends OncePerRequestFilter {
+ 
+     private static String resolvePathTemplate(HttpServletRequest request) {
+         Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+-        return sanitize(pattern != null ? pattern.toString() : request.getRequestURI());
++        String resolved = pattern != null ? pattern.toString() : null;
++        if (resolved == null || "/**".equals(resolved)) {
++            resolved = request.getRequestURI();
++        }
++        return sanitize(resolved);
+     }
+ 
+     private static boolean isAuthenticated() {
+diff --git a/src/main/resources/logback-spring.xml b/src/main/resources/logback-spring.xml
+index 244077cd..4b23af86 100644
+--- a/src/main/resources/logback-spring.xml
++++ b/src/main/resources/logback-spring.xml
+@@ -83,31 +83,29 @@
+                 <http>
+                     <url>${loki_url}</url>
+                 </http>
+-                <format>
+-                    <label>
+-                        <pattern>application=${application_name},environment=${environment},level=%level</pattern>
+-                    </label>
+-                    <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+-                        <providers>
+-                            <timestamp><timeZone>UTC</timeZone></timestamp>
+-                            <logLevel/>
+-                            <message/>
+-                            <loggerName/>
+-                            <threadName/>
+-                            <pattern>
+-                                <omitEmptyFields>true</omitEmptyFields>
+-                                <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
+-                            </pattern>
+-                            <mdc>
+-                                <excludeMdcKeyName>traceId</excludeMdcKeyName>
+-                                <excludeMdcKeyName>spanId</excludeMdcKeyName>
+-                                <excludeMdcKeyName>parentId</excludeMdcKeyName>
+-                            </mdc>
+-                            <stackTrace/>
+-                        </providers>
+-                    </message>
+-                    <sortByTime>true</sortByTime>
+-                </format>
++                <label>
++                    <pattern>application=${application_name},environment=${environment},level=%level</pattern>
++                </label>
++                <message class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
++                    <providers>
++                        <timestamp><timeZone>UTC</timeZone></timestamp>
++                        <logLevel/>
++                        <message/>
++                        <loggerName/>
++                        <threadName/>
++                        <pattern>
++                            <omitEmptyFields>true</omitEmptyFields>
++                            <pattern>{"application":"${application_name}","version":"${application_version}","environment":"${environment}"}</pattern>
++                        </pattern>
++                        <mdc>
++                            <excludeMdcKeyName>traceId</excludeMdcKeyName>
++                            <excludeMdcKeyName>spanId</excludeMdcKeyName>
++                            <excludeMdcKeyName>parentId</excludeMdcKeyName>
++                        </mdc>
++                        <stackTrace/>
++                    </providers>
++                </message>
++                <sortByTime>true</sortByTime>
+             </appender>
+         </then>
+     </if>
+

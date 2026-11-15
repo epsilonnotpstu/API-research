@@ -1,0 +1,16 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java b/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java
+index 99680b809..68ece4289 100644
+--- a/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java
++++ b/src/main/java/org/candlepin/subscriptions/resource/HostsResource.java
+@@ -132,8 +132,8 @@ public class HostsResource implements HostsApi {
+         if (isSpecial) {
+ 
+             OffsetDateTime now = OffsetDateTime.now();
+-            OffsetDateTime start = Optional.of(beginning).orElse(now);
+-            OffsetDateTime end = Optional.of(ending).orElse(now);
++            OffsetDateTime start = Optional.ofNullable(beginning).orElse(now);
++            OffsetDateTime end = Optional.ofNullable(ending).orElse(now);
+ 
+             validateBeginningAndEndingDates(start, end);
+ 
+

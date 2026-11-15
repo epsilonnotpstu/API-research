@@ -1,0 +1,42 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+index 5c4747e..def1e5e 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+@@ -558,7 +558,10 @@ public class HttpBridge extends AbstractVerticle {
+     }
+ 
+     private void metrics(RoutingContext routingContext) {
+-        routingContext.response().setStatusCode(HttpResponseStatus.OK.code()).end(metricsReporter.scrape());
++        routingContext.response()
++                .putHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
++                .setStatusCode(HttpResponseStatus.OK.code())
++                .end(metricsReporter.scrape());
+     }
+ 
+     private void information(RoutingContext routingContext) {
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/OtherServicesIT.java b/src/test/java/io/strimzi/kafka/bridge/http/OtherServicesIT.java
+index 1237f7a..b915547 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/OtherServicesIT.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/OtherServicesIT.java
+@@ -67,6 +67,20 @@ public class OtherServicesIT extends HttpBridgeITAbstract {
+         }
+     }
+ 
++    @Test
++    void metricsTest(VertxTestContext context) {
++        baseService()
++                .getRequest("/metrics")
++                .send(ar -> {
++                    context.verify(() -> {
++                        assertThat(ar.succeeded(), is(true));
++                        assertThat(ar.result().statusCode(), is(HttpResponseStatus.OK.code()));
++                        assertThat(ar.result().getHeader("Content-Type"), is("text/plain; version=0.0.4; charset=utf-8"));
++                        context.completeNow();
++                    });
++                });
++    }
++
+     @Test
+     void openapiv2Test(VertxTestContext context) {
+         baseService()
+

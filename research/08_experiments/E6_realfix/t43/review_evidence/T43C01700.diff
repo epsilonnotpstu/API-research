@@ -1,0 +1,125 @@
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
+index 2162f7e..3a0b059 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/VerifierContext.kt
+@@ -149,8 +149,8 @@ class VerifierContext(environment: Environment) {
+ private fun Environment.verifierConfig(): VerifierConfig {
+ 
+     val publicUrl = getProperty("verifier.publicUrl", "http://localhost:8080")
+-    fun requestJarByRef() = EmbedOption.byReference(WalletApi.requestJwtUrlBuilder(publicUrl))
+-    fun presentationDefByRef() = EmbedOption.byReference(WalletApi.presentationDefinitionUrlBuilder(publicUrl))
++    fun requestJarByRef() = WalletApi.requestJwtUrlBuilder(publicUrl)
++    fun presentationDefByRef() = WalletApi.presentationDefinitionUrlBuilder(publicUrl)
+ 
+     return VerifierConfig(
+         clientId = getProperty("verifier.clientId", "verifier"),
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
+index 6bfd854..66ae5a5 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/adapter/in/web/WalletApi.kt
+@@ -4,12 +4,12 @@ import eu.europa.ec.euidw.prex.PresentationDefinition
+ import eu.europa.ec.euidw.verifier.application.port.`in`.GetPresentationDefinition
+ import eu.europa.ec.euidw.verifier.application.port.`in`.GetRequestObject
+ import eu.europa.ec.euidw.verifier.application.port.`in`.QueryResponse.*
++import eu.europa.ec.euidw.verifier.domain.EmbedOption
+ import eu.europa.ec.euidw.verifier.domain.RequestId
+ import org.springframework.http.MediaType
+ import org.springframework.web.reactive.function.server.*
+ import org.springframework.web.reactive.function.server.ServerResponse.*
+ import org.springframework.web.util.DefaultUriBuilderFactory
+-import java.net.URL
+ 
+ 
+ class WalletApi(
+@@ -58,19 +58,21 @@ class WalletApi(
+     companion object {
+         const val requestJwtPath = "/wallet/request.jwt/{requestId}"
+ 
+-        fun requestJwtUrlBuilder(baseUrl: String): (RequestId) -> URL = { requestId ->
+-            DefaultUriBuilderFactory(baseUrl)
+-                .uriString(requestJwtPath)
+-                .build(requestId.value).toURL()
+-        }
++        fun requestJwtUrlBuilder(baseUrl: String): EmbedOption.ByReference<RequestId> =
++            EmbedOption.byReference { requestId ->
++                DefaultUriBuilderFactory(baseUrl)
++                    .uriString(requestJwtPath)
++                    .build(requestId.value).toURL()
++            }
+ 
+         const val presentationDefinitionPath = "/wallet/pd/{requestId}"
+ 
+-        fun presentationDefinitionUrlBuilder(baseUrl: String): (RequestId) -> URL = { requestId ->
+-            DefaultUriBuilderFactory(baseUrl)
+-                .uriString(presentationDefinitionPath)
+-                .build(requestId.value).toURL()
+-        }
++        fun presentationDefinitionUrlBuilder(baseUrl: String): EmbedOption.ByReference<RequestId> =
++            EmbedOption.byReference { requestId ->
++                DefaultUriBuilderFactory(baseUrl)
++                    .uriString(presentationDefinitionPath)
++                    .build(requestId.value).toURL()
++            }
+     }
+ }
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt b/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
+index b36f72b..d377f10 100644
+--- a/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
++++ b/src/main/kotlin/eu/europa/ec/euidw/verifier/application/port/in/InitTransaction.kt
+@@ -6,6 +6,7 @@ import eu.europa.ec.euidw.verifier.application.port.out.cfg.GenerateRequestId
+ import eu.europa.ec.euidw.verifier.application.port.out.jose.SignRequestObject
+ import eu.europa.ec.euidw.verifier.application.port.out.persistence.StorePresentation
+ import eu.europa.ec.euidw.verifier.domain.*
++import kotlinx.serialization.Required
+ import kotlinx.serialization.SerialName
+ import kotlinx.serialization.Serializable
+ import java.net.URLEncoder
+@@ -46,7 +47,7 @@ enum class IdTokenTypeTO {
+ data class InitTransactionTO(
+     @SerialName("type") val type: PresentationTypeTO = PresentationTypeTO.IdAndVpTokenRequest,
+     @SerialName("id_token_type") val idTokenType: IdTokenTypeTO? = null,
+-    @SerialName("presentation_definition") val presentationDefinition: PresentationDefinition?
++    @SerialName("presentation_definition") val presentationDefinition: PresentationDefinition? =  null
+ )
+ 
+ /**
+@@ -68,7 +69,7 @@ data class ValidationException(val error: ValidationError) : RuntimeException()
+  */
+ @Serializable
+ data class JwtSecuredAuthorizationRequestTO(
+-    @SerialName("client_id") val clientId: String,
++    @Required @SerialName("client_id") val clientId: String,
+     @SerialName("request") val request: String? = null,
+     @SerialName("request_uri") val requestUri: String?
+ )
+@@ -130,14 +131,12 @@ class InitTransactionLive(
+         when (val requestJarOption = verifierConfig.requestJarOption) {
+             is EmbedOption.ByValue -> {
+                 val jwt = signRequestObject(verifierConfig, clock,requestedPresentation).getOrThrow()
+-                val requestObjectRetrieved =
+-                    requestedPresentation.retrieveRequestObject(clock).getOrThrow()
++                val requestObjectRetrieved = requestedPresentation.retrieveRequestObject(clock).getOrThrow()
+                 requestObjectRetrieved to JwtSecuredAuthorizationRequestTO(verifierConfig.clientId, jwt, null)
+             }
+ 
+             is EmbedOption.ByReference -> {
+                 val requestUri = requestJarOption.buildUrl(requestedPresentation.requestId).toExternalForm()
+-
+                 requestedPresentation to JwtSecuredAuthorizationRequestTO(verifierConfig.clientId, null, requestUri)
+             }
+         }
+diff --git a/src/test/kotlin/eu/europa/ec/euidw/verifier/adapter/out/jose/SignRequestObjectNimbusTest.kt b/src/test/kotlin/eu/europa/ec/euidw/verifier/adapter/out/jose/SignRequestObjectNimbusTest.kt
+index 3065117..c44c9f6 100644
+--- a/src/test/kotlin/eu/europa/ec/euidw/verifier/adapter/out/jose/SignRequestObjectNimbusTest.kt
++++ b/src/test/kotlin/eu/europa/ec/euidw/verifier/adapter/out/jose/SignRequestObjectNimbusTest.kt
+@@ -76,8 +76,6 @@ class SignRequestObjectNimbusTest {
+ 
+     }
+ 
+-    private fun URL.urlEncoded() = URLEncoder.encode(toExternalForm(), "UTF-8")
+-
+ 
+     val pd = """{
+   "type": "vp_token id_token",
+

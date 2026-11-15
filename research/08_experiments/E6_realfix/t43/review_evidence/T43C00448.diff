@@ -1,0 +1,78 @@
+diff --git a/integration/flink/shared/src/main/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapper.java b/integration/flink/shared/src/main/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapper.java
+index 2d0ef85f3..660d5b582 100644
+--- a/integration/flink/shared/src/main/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapper.java
++++ b/integration/flink/shared/src/main/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapper.java
+@@ -121,30 +121,25 @@ public class KafkaSourceWrapper {
+       log.debug(
+           "Deserialization schema is {} when extracting schema facet for Kafka source",
+           recordDeserializationSchema);
+-      if (recordDeserializationSchema
+-          .getClass()
+-          .isAssignableFrom(deserializationSchemaWrapperClass)) {
+-        return convert(
+-            WrapperUtils.<DeserializationSchema>getFieldValue(
+-                    deserializationSchemaWrapperClass,
+-                    recordDeserializationSchema,
+-                    "deserializationSchema")
+-                .get());
+-      } else if (recordDeserializationSchema
+-          .getClass()
+-          .isAssignableFrom(deserializationSchemaClass)) {
++      if (deserializationSchemaWrapperClass.isInstance(recordDeserializationSchema)) {
++        return WrapperUtils.<DeserializationSchema>getFieldValue(
++                deserializationSchemaWrapperClass,
++                recordDeserializationSchema,
++                "deserializationSchema")
++            .flatMap(this::convert);
++      } else if (deserializationSchemaClass.isInstance(recordDeserializationSchema)) {
+         Optional<KafkaDeserializationSchema> deserializationSchemaOpt =
+             WrapperUtils.<KafkaDeserializationSchema>getFieldValue(
+                 deserializationSchemaClass,
+                 recordDeserializationSchema,
+                 "kafkaDeserializationSchema");
+-        if (deserializationSchemaOpt.isPresent()) {
+-          return convert(
+-              WrapperUtils.<DeserializationSchema>getFieldValue(
+-                      dynamicDeserializationSchemaClass,
+-                      deserializationSchemaOpt.get(),
+-                      "valueDeserialization")
+-                  .get());
++        if (deserializationSchemaOpt.isPresent()
++            && dynamicDeserializationSchemaClass.isInstance(deserializationSchemaOpt.get())) {
++          return WrapperUtils.<DeserializationSchema>getFieldValue(
++                  dynamicDeserializationSchemaClass,
++                  deserializationSchemaOpt.get(),
++                  "valueDeserialization")
++              .flatMap(this::convert);
+         }
+       }
+ 
+diff --git a/integration/flink/shared/src/test/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapperTest.java b/integration/flink/shared/src/test/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapperTest.java
+index 38552d858..1cbdd6066 100644
+--- a/integration/flink/shared/src/test/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapperTest.java
++++ b/integration/flink/shared/src/test/java/io/openlineage/flink/visitor/wrapper/KafkaSourceWrapperTest.java
+@@ -154,6 +154,23 @@ class KafkaSourceWrapperTest {
+         .hasFieldOrPropertyWithValue("type", "long");
+   }
+ 
++  @Test
++  @SneakyThrows
++  void testGetSchemaFacetForUnsupportedKafkaDeserializationSchema() {
++    KafkaRecordDeserializationSchema deserializationSchema =
++        (KafkaRecordDeserializationSchema)
++            mock(
++                Class.forName(
++                    "org.apache.flink.connector.kafka.source.reader.deserializer.KafkaDeserializationSchemaWrapper"));
++    KafkaDeserializationSchema customDeserializationSchema = mock(KafkaDeserializationSchema.class);
++
++    FieldUtils.writeField(kafkaSource, DESERIALIZATION_SCHEMA, deserializationSchema, true);
++    FieldUtils.writeField(
++        deserializationSchema, "kafkaDeserializationSchema", customDeserializationSchema, true);
++
++    assertEquals(Optional.empty(), wrapper.getSchemaFacet());
++  }
++
+   @Test
+   @SneakyThrows
+   void testGetAvroSchemaForNonAvroDeserializationSchema() {
+

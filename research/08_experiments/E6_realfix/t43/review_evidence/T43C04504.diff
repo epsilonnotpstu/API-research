@@ -1,0 +1,119 @@
+diff --git a/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java b/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java
+index 872807164..7502a5085 100644
+--- a/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java
++++ b/swatch-common-resteasy/src/main/java/com/redhat/swatch/common/resteasy/EnumParamConverterProvider.java
+@@ -20,6 +20,7 @@
+  */
+ package com.redhat.swatch.common.resteasy;
+ 
++import jakarta.ws.rs.BadRequestException;
+ import jakarta.ws.rs.ext.ParamConverter;
+ import jakarta.ws.rs.ext.ParamConverterProvider;
+ import jakarta.ws.rs.ext.Provider;
+@@ -79,8 +80,7 @@ public class EnumParamConverterProvider implements ParamConverterProvider {
+         // Combined with our logging configuration, this tells the OnMdcEvaluator class to suppress
+         // the stacktrace
+         MDC.put("INVALID_" + className.getSimpleName().toUpperCase(), Boolean.TRUE.toString());
+-        throw new IllegalArgumentException(
+-            String.format(INVALID_VALUE_EXCEPTION_MSG, value, className));
++        throw new BadRequestException(String.format(INVALID_VALUE_EXCEPTION_MSG, value, className));
+       }
+     }
+ 
+diff --git a/swatch-contracts/ct/java/tests/CapacityReportGranularityComponentTest.java b/swatch-contracts/ct/java/tests/CapacityReportGranularityComponentTest.java
+index d84e21733..f9d278175 100644
+--- a/swatch-contracts/ct/java/tests/CapacityReportGranularityComponentTest.java
++++ b/swatch-contracts/ct/java/tests/CapacityReportGranularityComponentTest.java
+@@ -37,7 +37,6 @@ import io.restassured.response.Response;
+ import java.time.OffsetDateTime;
+ import java.util.List;
+ import org.junit.jupiter.api.Assertions;
+-import org.junit.jupiter.api.Disabled;
+ import org.junit.jupiter.api.Test;
+ 
+ public class CapacityReportGranularityComponentTest extends BaseContractComponentTest {
+@@ -240,7 +239,6 @@ public class CapacityReportGranularityComponentTest extends BaseContractComponen
+     thenLastSnapshotShouldEndAt(snapshots, beginning.plusYears(yearRange - 1));
+   }
+ 
+-  @Disabled(value = "Test disabled due to a known issue to be fixed in SWATCH-4482.")
+   @TestPlanName("capacity-report-granularity-TC007")
+   @Test
+   void shouldNotGetCapacityReportInvalidGranularity() {
+diff --git a/swatch-tally/TEST_PLAN.md b/swatch-tally/TEST_PLAN.md
+index e1548a423..84bca3fa6 100644
+--- a/swatch-tally/TEST_PLAN.md
++++ b/swatch-tally/TEST_PLAN.md
+@@ -241,10 +241,11 @@ Test cases should be testable locally and in deployed environments.
+ 
+ The tally report filtering test cases are organized into two component test files:
+ 
+-- **TallyReportFiltersPaygTest.java** - Contains 20 test cases (TC001-TC023, excluding TC009, TC010, TC024) covering PAYG (Pay-As-You-Go) scenarios:
++- **TallyReportFiltersPaygTest.java** - Contains 21 test cases (TC001-TC023, TC025, excluding TC009, TC010, TC024) covering PAYG (Pay-As-You-Go) scenarios:
+   - TC001-TC008: Basic filtering by granularity, SLA, usage, billing provider, and billing account ID
+   - TC011-TC014: Validation errors and metadata verification
+   - TC016-TC023: Daily granularity filtering, monthly/quarterly/yearly granularity support
++  - TC025: Invalid granularity enum value
+   - Product: RHEL for x86 ELS PAYG (supports hourly granularity)
+ 
+ - **TallyReportFiltersEdgeCaseTest.java** - Contains 3 test cases for edge cases requiring special event patterns:
+@@ -653,6 +654,18 @@ All test files use `@BeforeAll` to create test data once and share it across all
+     - API accepts and processes yearly granularity queries
+     - All filter parameters are properly reflected in response metadata
+ 
++**tally-report-filters-TC025 - Invalid granularity enum value**
++
++- **Description**: Verify that tally report API returns validation error when granularity is not a valid enum value
++- **Setup**:
++    - Organization is opted in
++- **Action**:
++    - Request tally report with granularity=HOURLLY (typo)
++- **Verification**:
++    - HTTP 400 Bad Request
++- **Expected Result**:
++    - Invalid enum query parameters return client error instead of server error
++
+ **tally-report-filters-TC024 - Daily report tracks billing account change for same instance**
+ 
+ - **Description**: Verify that daily tally reports correctly track measurements when a single instance changes its billing account ID
+diff --git a/swatch-tally/ct/java/tests/TallyReportTests/TallyReportFiltersPaygTest.java b/swatch-tally/ct/java/tests/TallyReportTests/TallyReportFiltersPaygTest.java
+index 1b6f2521f..4b27f4ccc 100644
+--- a/swatch-tally/ct/java/tests/TallyReportTests/TallyReportFiltersPaygTest.java
++++ b/swatch-tally/ct/java/tests/TallyReportTests/TallyReportFiltersPaygTest.java
+@@ -45,6 +45,7 @@ import java.util.UUID;
+ import org.apache.http.HttpStatus;
+ import org.candlepin.subscriptions.json.Event;
+ import org.junit.jupiter.api.BeforeAll;
++import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.params.ParameterizedTest;
+ import org.junit.jupiter.params.provider.ValueSource;
+ 
+@@ -741,4 +742,27 @@ public class TallyReportFiltersPaygTest extends BaseTallyComponentTest {
+     assertNotNull(meta, "Metadata should not be null");
+     assertEquals(GranularityType.YEARLY, meta.getGranularity(), "Granularity should be YEARLY");
+   }
++
++  @TestPlanName("tally-report-filters-TC025")
++  @Test
++  void shouldReturnBadRequestForInvalidGranularity() {
++    // When: Querying report with an invalid granularity enum value
++    Map<String, Object> queryParams =
++        Map.of(
++            "granularity",
++            "HOURLLY",
++            "beginning",
++            timeRanges.dailyBeginning().toString(),
++            "ending",
++            timeRanges.dailyEnding().toString());
++
++    Response response =
++        service.getTallyReportDataRaw(testOrgId, PRODUCT_TAG, METRIC_ID, queryParams);
++
++    // Then: API returns 400 Bad Request
++    assertEquals(
++        HttpStatus.SC_BAD_REQUEST,
++        response.getStatusCode(),
++        "Invalid granularity should return 400 Bad Request");
++  }
+ }
+

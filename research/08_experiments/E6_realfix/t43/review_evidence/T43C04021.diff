@@ -1,0 +1,212 @@
+diff --git a/fintech-examples/fintech-api/src/main/resources/static/fintech_api.yml b/fintech-examples/fintech-api/src/main/resources/static/fintech_api.yml
+index 119136202..73a96f629 100644
+--- a/fintech-examples/fintech-api/src/main/resources/static/fintech_api.yml
++++ b/fintech-examples/fintech-api/src/main/resources/static/fintech_api.yml
+@@ -377,8 +377,6 @@ paths:
+         #header
+         - $ref: "#/components/parameters/X-Request-ID"
+         - $ref: "#/components/parameters/X-XSRF-TOKEN"
+-        - $ref: "#/components/parameters/Fintech-Redirect-URL-OK"
+-        - $ref: "#/components/parameters/Fintech-Redirect-URL-NOK"
+ 
+       responses:
+         "200":
+diff --git a/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/controller/FintechRetrieveAllSinglePaymentsImpl.java b/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/controller/FintechRetrieveAllSinglePaymentsImpl.java
+index 3018792c4..83cf9d719 100644
+--- a/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/controller/FintechRetrieveAllSinglePaymentsImpl.java
++++ b/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/controller/FintechRetrieveAllSinglePaymentsImpl.java
+@@ -25,9 +25,7 @@ public class FintechRetrieveAllSinglePaymentsImpl implements FintechRetrieveAllS
+             String bankId,
+             String accountId,
+             UUID xRequestID,
+-            String xsrfToken,
+-            String fintechRedirectURLOK,
+-            String fintechRedirectURLNOK
++            String xsrfToken
+     ) {
+         log.debug("got list all payment requrest");
+ 
+@@ -37,7 +35,7 @@ public class FintechRetrieveAllSinglePaymentsImpl implements FintechRetrieveAllS
+         }
+ 
+         return sessionLogicService.addSessionMaxAgeToHeader(
+-                paymentService.retrieveAllSinglePayments(bankId, accountId, fintechRedirectURLOK, fintechRedirectURLNOK)
++                paymentService.retrieveAllSinglePayments(bankId, accountId)
+         );
+     }
+ }
+diff --git a/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/service/PaymentService.java b/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/service/PaymentService.java
+index df6bc58a0..14fd4956e 100644
+--- a/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/service/PaymentService.java
++++ b/fintech-examples/fintech-impl/src/main/java/de/adorsys/opba/fintech/impl/service/PaymentService.java
+@@ -87,7 +87,7 @@ public class PaymentService {
+                 responseOfTpp.getHeaders());
+     }
+ 
+-    public ResponseEntity<List<PaymentInitiationWithStatusResponse>> retrieveAllSinglePayments(String bankId, String accountId, String fintechOkUrl, String fintechNOkUrl) {
++    public ResponseEntity<List<PaymentInitiationWithStatusResponse>> retrieveAllSinglePayments(String bankId, String accountId) {
+         SessionEntity sessionEntity = sessionLogicService.getSession();
+         // TODO https://app.zenhub.com/workspaces/open-banking-gateway-5dd3b3daf010250001260675/issues/adorsys/open-banking-gateway/812
+         // TODO https://app.zenhub.com/workspaces/open-banking-gateway-5dd3b3daf010250001260675/issues/adorsys/open-banking-gateway/794
+@@ -97,14 +97,10 @@ public class PaymentService {
+         }
+         PaymentEntity payment = payments.get(0);
+ 
+-        final String fintechRedirectCode = UUID.randomUUID().toString();
+-
+         ResponseEntity<PaymentInformationResponse> response = tppPisPaymentStatusClient.getPaymentInformation(
+                 tppProperties.getServiceSessionPassword(),
+                 sessionEntity.getUserEntity().getFintechUserId(),
+                 UUID.fromString(restRequestContext.getRequestId()),
+-                RedirectUrlsEntity.buildPaymentOkUrl(uiConfig, fintechRedirectCode),
+-                RedirectUrlsEntity.buildPaymentNokUrl(uiConfig, fintechRedirectCode),
+                 paymentProduct,
+                 COMPUTE_X_TIMESTAMP_UTC,
+                 COMPUTE_X_REQUEST_SIGNATURE,
+@@ -116,8 +112,6 @@ public class PaymentService {
+         switch (response.getStatusCode()) {
+             case OK:
+                 return paymentInfoResponse(payment, response);
+-            case ACCEPTED:
+-                return redirectResponse(bankId, accountId, fintechOkUrl, fintechNOkUrl, sessionEntity, fintechRedirectCode, response);
+             case UNAUTHORIZED:
+                 return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+             default:
+@@ -133,22 +127,6 @@ public class PaymentService {
+         return new ResponseEntity<>(Collections.singletonList(paymentInfo), HttpStatus.OK);
+     }
+ 
+-    private ResponseEntity redirectResponse(String bankId, String accountId, String fintechOkUrl, String fintechNOkUrl,
+-                                            SessionEntity sessionEntity, String fintechRedirectCode,
+-                                            ResponseEntity<PaymentInformationResponse> response) {
+-        log.debug("create redirect entity for redirect code {}", fintechRedirectCode);
+-        redirectHandlerService.registerRedirectStateForSession(fintechRedirectCode, fintechOkUrl, fintechNOkUrl);
+-        return handleAcceptedService.handleAccepted(
+-                paymentRepository,
+-                ConsentType.PIS,
+-                bankId,
+-                accountId,
+-                fintechRedirectCode,
+-                sessionEntity,
+-                response.getHeaders()
+-        );
+-    }
+-
+     private AccountReference getAccountReference(String iban) {
+         AccountReference account = new AccountReference();
+         account.setIban(iban);
+diff --git a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
+index 5a056cc78..b02c0189f 100644
+--- a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
++++ b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
+@@ -58,8 +58,6 @@ paths:
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-User-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Service-Session-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-ID"
+-        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-Redirect-URL-OK"
+-        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-Redirect-URL-NOK"
+         #path
+         - $ref: "#/components/parameters/PaymentProduct"
+       responses:
+@@ -88,8 +86,6 @@ paths:
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-User-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Service-Session-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-ID"
+-        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-Redirect-URL-OK"
+-        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-Redirect-URL-NOK"
+         #path
+         - $ref: "#/components/parameters/PaymentProduct"
+       responses:
+diff --git a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+index a23ddc481..1a654b2de 100644
+--- a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
++++ b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+@@ -39,8 +39,6 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+     public CompletableFuture getPaymentInformation(String serviceSessionPassword,
+                                                    String fintechUserID,
+                                                    UUID xRequestID,
+-                                                   String fintechRedirectURLOK,
+-                                                   String fintechRedirectURLNOK,
+                                                    String paymentProduct,
+                                                    String xTimestampUTC,
+                                                    String xRequestSignature,
+@@ -68,8 +66,6 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+     public CompletableFuture getPaymentStatus(String serviceSessionPassword,
+                                                         String fintechUserID,
+                                                         UUID xRequestID,
+-                                                        String fintechRedirectURLOK,
+-                                                        String fintechRedirectURLNOK,
+                                                         String paymentProduct,
+                                                         String xTimestampUTC,
+                                                         String xRequestSignature,
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/Operation.java b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/Operation.java
+index b16586dbd..2f7e54490 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/Operation.java
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/Operation.java
+@@ -22,11 +22,11 @@ import java.util.stream.Collectors;
+ @RequiredArgsConstructor
+ public enum Operation {
+ 
++    CUSTOM_MSG("CustomMsg", Operation::typeMatch),
+     DIALOG_INIT_ANON("DialogInitAnon", Operation::typeMatch),
+     DIALOG_INIT_SCA_TAN_2_STEP("DialogInitScaTAN", Operation::isScaInit),
+     DIALOG_INIT_SCA("DialogInitSCA", Operation::typeMatchAndNotAfterSca),
+     DIALOG_INIT("DialogInit", Operation::typeMatch),
+-    CUSTOM_MSG("CustomMsg", Operation::typeMatch),
+     SYNCH("Synch", Operation::typeMatch),
+     DIALOG_END("DialogEnd", Operation::typeMatch),
+     ANY("*", Operation::typeMatch);
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/RequestStatusUtil.java b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/RequestStatusUtil.java
+index 792f39dc9..39137f1cd 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/RequestStatusUtil.java
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/RequestStatusUtil.java
+@@ -20,7 +20,7 @@ public class RequestStatusUtil {
+     }
+ 
+     public boolean isForInstantPayment(Map<String, String> requestData) {
+-        return "HKIPZ".equals(MapRegexUtil.getDataRegex(requestData, "GV\\.InstantUebSEPA1\\.SegHead\\.code"));
++        return "HKIPZ".equals(MapRegexUtil.getDataRegex(requestData, "TAN2Step\\d*\\.ordersegcode"));
+     }
+ 
+     public boolean isForPaymentStatus(Map<String, String> requestData) {
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/authorized/AuthorizedCustomMsg.java b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/authorized/AuthorizedCustomMsg.java
+index 3b167e937..be5b047f4 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/authorized/AuthorizedCustomMsg.java
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/protocol/authenticated/authorized/AuthorizedCustomMsg.java
+@@ -37,17 +37,11 @@ public class AuthorizedCustomMsg extends TemplateBasedOperationHandler {
+             return "response-templates/authorized/custom-message-konto-mt940.json";
+         }
+ 
+-        if (context.getRequestData().keySet().stream().anyMatch(it -> it.startsWith(PAYMENT))
+-                || RequestStatusUtil.isForPayment(context.getRequestData())) {
+-            paymentService.createPaymentIfNeededAndPossibleFromContext(context);
+-            paymentService.acceptPayment(context, false);
+-            return "response-templates/authorized/custom-message-payment-response.json";
+-        }
+-
+-        if (context.getRequestData().keySet().stream().anyMatch(it -> it.startsWith(INSTANT_PAYMENT))
++        if (context.getRequestData().keySet().stream().anyMatch(it -> it.startsWith(PAYMENT) || it.startsWith(INSTANT_PAYMENT))
++                || RequestStatusUtil.isForPayment(context.getRequestData())
+                 || RequestStatusUtil.isForInstantPayment(context.getRequestData())) {
+             paymentService.createPaymentIfNeededAndPossibleFromContext(context);
+-            paymentService.acceptPayment(context, true);
++            paymentService.acceptPayment(context);
+             return "response-templates/authorized/custom-message-payment-response.json";
+         }
+ 
+diff --git a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/service/HbciSandboxPaymentService.java b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/service/HbciSandboxPaymentService.java
+index d5c8177c9..429a98768 100644
+--- a/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/service/HbciSandboxPaymentService.java
++++ b/opba-protocols/sandboxes/hbci-sandbox/src/main/java/de/adorsys/opba/protocol/sandbox/hbci/service/HbciSandboxPaymentService.java
+@@ -53,8 +53,8 @@ public class HbciSandboxPaymentService {
+     }
+ 
+     @Transactional
+-    public void acceptPayment(HbciSandboxContext context, boolean instantPayment) {
+-        String orderReference = MapRegexUtil.getDataRegex(context.getRequestData(), instantPayment ? "GV\\.InstantUebSEPA1\\.orderref" : "GV\\.TAN2Step\\d+\\.orderref");
++    public void acceptPayment(HbciSandboxContext context) {
++        String orderReference = MapRegexUtil.getDataRegex(context.getRequestData(), "GV\\.TAN2Step\\d+\\.orderref");
+         HbciSandboxPayment payment = paymentRepository.findByOwnerLoginAndOrderReference(context.getUser().getLogin(), orderReference)
+                 .orElseThrow(() -> new IllegalStateException(String.format("Order with reference %s of user %s not found", orderReference, context.getUser().getLogin())));
+         // Some magic flag to accept payment immediately
+

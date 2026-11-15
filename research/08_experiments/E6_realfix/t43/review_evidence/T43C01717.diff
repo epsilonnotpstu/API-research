@@ -1,0 +1,2691 @@
+diff --git a/README.md b/README.md
+index 6bfdc6e..5622647 100644
+--- a/README.md
++++ b/README.md
+@@ -686,49 +686,69 @@ Variable: `CORS_MAXAGE`
+ Description: Time in seconds of how long pre-flight request responses can be cached by clients  
+ Default value: `3600`
+ 
+-### Configuring trust sources
+-
+-The verifier supports the configuration of multiple trust sources, that will be used to trust the issuers of presented credentials.  
+-Each trust source is associated with a regex pattern, that will be used to match the trust source to an issuer, based on a credential's docType/vct.
+-Each trust source can be configured with a List of Trusted Lists, a Keystore or both.
+-The trust sources are configured using the environment variable `VERIFIER_TRUSTSOURCES` and are indexed starting from `0`. You can define multiple trust sources by incrementing the index (e.g., VERIFIER_TRUSTSOURCES_0_*, VERIFIER_TRUSTSOURCES_1_*, etc.)
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_PATTERN`
+-Description: The regex pattern used to match the trust source to an issuer, based on a credential's docType/vct
+-Example: `eu.europa.ec.eudi.pid.*|urn:eu.europa.ec.eudi:pid:.*`
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_LOTL_LOCATION`
+-Description: If present, the URL of the List of Trusted Lists from which to load the X509 Certificates for this trust source
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_LOTL_REFRESHINTERVAL`
+-Description: If present, a cron expression with the refresh interval of the List of Trusted Lists in seconds. If not present, the default value is `0 0 * * * * ` (every hour)
+-Example: `0 0 */4 * * *`
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_LOTL_SERVICETYPEFILTER`
+-Description: If present, the service type filter to be used when loading the List of Trusted Lists. If not present, all service types are loaded. Valid values are `PIDProvider`, `QEEAProvider` and `PubEAAProvider`.
+-Example: `PIDProvider`
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_LOTL_KEYSTORE_PATH`
+-Description: If present, the URL of the Keystore which contains the public key that was used to sign the List of Trusted Lists
+-Examples: `classpath:lotl-key.jks`, `file:///lotl-key.jks`
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_LOTL_KEYSTORE_TYPE`
+-Description: Type of the Keystore which contains the public key that was used to sign the List of Trusted Lists
+-Examples: `jks`, `pkcs12`
+-
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_KEYSTORE_PATH`
+-Description: If present, the URL of the Keystore from which to load the X509 Certificates for this trust source 
+-Examples: `classpath:trusted-issuers.jks`, `file:///trusted-issuers.jks`
+-
+-Variable: `VERIFIER_TRUSTSOURCES_0_KEYSTORE_TYPE`
+-Description: Type of the Keystore from which to load the X509 Certificates for this trust source
+-Examples: `jks`, `pkcs12`
+-
+[REDACTED credential-related line]
+[REDACTED credential-related line]
++### Configuring trust
++
++Verifier Endpoint verifies whether the Issuer of a Verifiable Credential is trusted or not using an external service. 
++Currently, only [eudi-srv-trust-validator](https://github.com/eu-digital-identity-wallet/eudi-srv-trust-validator) is supported.
++
++> [!CAUTION]
++> 
++> By default, Verifier Endpoint considers all Verifiable Credential Issuers trusted.  
++> To enable Issuer Verifiable Credential Issuers verification, configure the following environment variables.
++
++Variable: `VERIFIER_TRUSTVALIDATOR_SERVICEURL`  
++Description: The URL of the `/trust` endpoint of the service to use for trust verification.          
++Default value: none
++
++### Attestation Classifications
++
++> [!IMPORTANT]
++>
++> Verifier Endpoint requires each Verifiable Credential be classified as:
++> * PID
++> * QEAA
++> * PubEAA
++> * EAA
++> 
++> Use the following configuration properties to configuration the classifications.
++> 
++> This information is used when checking whether the issuer of the Verifiable Credential is trusted or not.
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_PID_VCTS`  
++Description: Comma separated list of SD-JWT VC VCTs that corresponds to PIDs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_PID_DOCTYPES`  
++Description: Comma separated list of MSO MDoc docTypes that corresponds to PIDs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_QEAA_VCTS`  
++Description: Comma separated list of SD-JWT VC VCTs that corresponds to QEAAs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_QEAA_DOCTYPES`  
++Description: Comma separated list of MSO MDoc docTypes that corresponds to QEAAs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_PUBEAA_VCTS`  
++Description: Comma separated list of SD-JWT VC VCTs that corresponds to PubEAAs.  
++Default value: none
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_PUBEAA_DOCTYPES`  
++Description: Comma separated list of MSO MDoc docTypes that corresponds to PubEAAs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_EAA_XXX_USECASE`  
++Description: EAA use-case.  
++Examples: `mDL`, `learningCredential`, etc...
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_EAA_XXX_VCTS`  
++Description: Comma separated list of SD-JWT VC VCTs that corresponds to EAAs.  
++Default value: none  
++
++Variable: `VERIFIER_ATTESTATIONCLASSIFICATIONS_EAA_XXX_DOCTYPES`  
++Description: Comma separated list of MSO MDoc docTypes that corresponds to EAAs.  
++Default value: none
+ 
+ ### Proxy configuration  
+ 
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 90d9d3c..feb6864 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -78,12 +78,10 @@ dependencies {
+     }
+     implementation(libs.zxing)
+     implementation(libs.uri)
+-    implementation(libs.dss.service)
+-    implementation(libs.dss.validation)
+-    implementation(libs.dss.tsl.validation)
+-    implementation(libs.dss.utils.apache.commons)
+     implementation(libs.aedile)
+ 
++    implementation(libs.consultation)
++
+     testImplementation(kotlin("test"))
+     testImplementation(libs.kotlinx.coroutines.test)
+     testImplementation("org.springframework.boot:spring-boot-starter-test")
+@@ -103,7 +101,10 @@ kotlin {
+ 
+     compilerOptions {
+         apiVersion = KotlinVersion.DEFAULT
+-        freeCompilerArgs.add("-Xjsr305=strict")
++        freeCompilerArgs.addAll(
++            "-Xjsr305=strict",
++            "-Xannotation-default-target=param-property",
++        )
+         optIn.addAll(
+             "kotlinx.serialization.ExperimentalSerializationApi",
+             "kotlin.io.encoding.ExperimentalEncodingApi",
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+index 454cb82..7cc8411 100644
+--- a/gradle/libs.versions.toml
++++ b/gradle/libs.versions.toml
+@@ -22,8 +22,8 @@ statium = "0.4.0"
+ kover = "0.9.4"
+ zxing = "3.5.3"
+ uri = "0.0.19"
+-dss = "6.2"
+ aedile = "2.1.2"
++consultation = "0.2.2"
+ 
+ [libraries]
+ kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
+@@ -32,7 +32,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
+ kotlinx-serialization-bom = { module = "org.jetbrains.kotlinx:kotlinx-serialization-bom", version.ref = "kotlinxSerialization" }
+ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+ arrow-stack = { module = "io.arrow-kt:arrow-stack", version.ref = "arrow" }
+-arrow-core  = { module = "io.arrow-kt:arrow-core" }
++arrow-core = { module = "io.arrow-kt:arrow-core" }
+ arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines" }
+ arrow-core-serialization = { module = "io.arrow-kt:arrow-core-serialization" }
+ ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
+@@ -49,12 +49,9 @@ tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
+ statium = { module = "eu.europa.ec.eudi:eudi-lib-kmp-statium", version.ref = "statium" }
+ zxing = { module = "com.google.zxing:javase", version.ref = "zxing" }
+ uri = { module = "com.eygraber:uri-kmp", version.ref = "uri" }
+-dss-service = { module = "eu.europa.ec.joinup.sd-dss:dss-service", version.ref = "dss" }
+-dss-validation = { module = "eu.europa.ec.joinup.sd-dss:dss-validation", version.ref = "dss" }
+-dss-tsl-validation = { module = "eu.europa.ec.joinup.sd-dss:dss-tsl-validation", version.ref = "dss" }
+-dss-utils-apache-commons = { module = "eu.europa.ec.joinup.sd-dss:dss-utils-apache-commons", version.ref = "dss" }
+ aedile = { module = "com.sksamuel.aedile:aedile-core", version.ref = "aedile" }
+ cose-java = { module = "com.augustcellars.cose:cose-java", version.ref = "cose" }
++consultation = { module = "eu.europa.ec.eudi:etsi-1196x2-consultation", version.ref = "consultation" }
+ 
+ [plugins]
+ spring-boot = { id = "org.springframework.boot", version.ref = "springboot" }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+index 418d018..574be7f 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierContext.kt
+@@ -16,31 +16,31 @@
+ package eu.europa.ec.eudi.verifier.endpoint
+ 
+ import arrow.core.*
++import arrow.core.NonEmptyList
+ import com.github.benmanes.caffeine.cache.Caffeine
+ import com.nimbusds.jose.EncryptionMethod
+ import com.nimbusds.jose.JWEAlgorithm
+ import com.nimbusds.jose.JWSAlgorithm
+ import com.nimbusds.jose.util.Base64
+ import com.sksamuel.aedile.core.asCache
+-import com.sksamuel.aedile.core.expireAfterWrite
++import eu.europa.ec.eudi.etsi1196x2.consultation.*
+ import eu.europa.ec.eudi.sdjwt.vc.*
+ import eu.europa.ec.eudi.verifier.endpoint.EmbedOptionEnum.ByReference
+ import eu.europa.ec.eudi.verifier.endpoint.EmbedOptionEnum.ByValue
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.input.timer.RefreshTrustSources
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.input.timer.ScheduleDeleteOldPresentations
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.input.timer.ScheduleTimeoutPresentations
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.input.web.*
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ProvideTrustSource
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.TrustSources
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cfg.GenerateRequestIdNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cfg.GenerateTransactionIdNimbus
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.Ignored
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.usingTrustAnchors
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.usingTrustValidatorService
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.jose.CreateJarNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.jose.GenerateEphemeralEncryptionKeyPairNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.jose.VerifyEncryptedResponseWithNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.json.jsonSupport
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.keystore.loadJWK
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.keystore.loadKeyStore
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.lotl.FetchLOTLCertificatesDSS
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DocumentValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.IssuerSignedItemsShouldBe
+@@ -51,7 +51,7 @@ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.qrcode.GenerateQrCodeFrom
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.LookupTypeMetadataFromUrl
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.tokenstatuslist.StatusListTokenValidator
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.x509.ParsePemEncodedX509CertificateChainWithNimbus
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.x509.ParsePemEncodedX509CertificatesWithNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.domain.*
+ import eu.europa.ec.eudi.verifier.endpoint.port.input.*
+ import eu.europa.ec.eudi.verifier.endpoint.port.out.cfg.CreateQueryWalletResponseRedirectUri
+@@ -73,20 +73,25 @@ import org.slf4j.LoggerFactory
+ import org.springframework.beans.factory.BeanRegistrarDsl
+ import org.springframework.beans.factory.BeanRegistrarDsl.SupplierContextDsl
+ import org.springframework.boot.context.properties.ConfigurationProperties
++import org.springframework.boot.context.properties.bind.Name
+ import org.springframework.boot.http.codec.CodecCustomizer
+ import org.springframework.core.env.Environment
+ import org.springframework.core.env.getProperty
+-import org.springframework.core.io.DefaultResourceLoader
+ import org.springframework.http.codec.json.KotlinSerializationJsonDecoder
+ import org.springframework.http.codec.json.KotlinSerializationJsonEncoder
+ import org.springframework.security.config.web.server.ServerHttpSecurity
+ import org.springframework.security.config.web.server.invoke
+ import org.springframework.web.cors.CorsConfiguration
+ import org.springframework.web.cors.reactive.CorsConfigurationSource
+-import java.net.URI
++import java.net.URL
+ import java.security.KeyStore
++import java.security.cert.TrustAnchor
++import java.security.cert.X509Certificate
++import kotlin.collections.toSet
+ import kotlin.time.Duration
++import kotlin.time.Duration.Companion.hours
+ import kotlin.time.Duration.Companion.minutes
++import kotlin.time.toJavaDuration
+ 
+ private val log = LoggerFactory.getLogger(VerifierApplication::class.java)
+ 
+@@ -149,7 +154,7 @@ internal class AppBeans : BeanRegistrarDsl({
+     }
+ 
+     // X509
+-    registerBean { ParsePemEncodedX509CertificateChainWithNimbus }
++    registerBean { ParsePemEncodedX509CertificatesWithNimbus }
+ 
+     //
+     // Use cases
+@@ -208,87 +213,93 @@ internal class AppBeans : BeanRegistrarDsl({
+         }
+     }
+ 
+-    // Default DeviceResponseValidator
+-    registerBean { TrustSources(revocationEnabled = false) }
+-    registerBean<DeviceResponseValidator> {
+-        val trustSources = bean<TrustSources>()
+-        deviceResponseValidator(trustSources::invoke)
++    // Default IsChainTrustedForContextF
++    registerBean {
++        val config = bean<VerifierEndpointConfigurationProperties>()
++        log.info("Using Attestation Classifications: ${config.attestationClassifications}")
++
++        val trustValidatorConfig = config.trustValidator
++        if (null == trustValidatorConfig) {
++            log.warn("Trust Validator Service has not been configured. Trusting all Attestation Issuers.")
++            IsChainTrustedForContextF.Ignored
++        } else {
++            log.info("Using Trust Validator Service '{}'", trustValidatorConfig.serviceUrl)
++            IsChainTrustedForContextF.usingTrustValidatorService(bean(), Url(trustValidatorConfig.serviceUrl.toExternalForm()))
++        }
+     }
+ 
++    // Default DeviceResponseValidator
++    registerBean(lazyInit = true) { deviceResponseValidator(bean()) }
++
+     // Default SdJwtVcValidator
+-    registerBean<SdJwtVcValidator> {
+-        val trustSources = bean<TrustSources>()
+-        sdJwtVcValidator(trustSources::invoke)
+-    }
++    registerBean(lazyInit = true) { sdJwtVcValidator(bean()) }
+ 
+-    registerBean {
++    registerBean(lazyInit = true) {
+         ValidateMsoMdocDeviceResponse(
+             bean(),
+             bean(),
+             deviceResponseValidatorFactory = { userProvided ->
+                 val appDefault = bean<DeviceResponseValidator>()
+-                userProvided?.let { deviceResponseValidator { userProvided } } ?: appDefault
++                userProvided?.let {
++                    deviceResponseValidator(IsChainTrustedForContextF.usingTrustAnchors(it))
++                } ?: appDefault
+             },
+         )
+     }
+-    registerBean {
++    registerBean(lazyInit = true) {
+         ValidateSdJwtVc(
+             sdJwtVcValidatorFactory = { userProvided ->
+                 val appDefault = bean<SdJwtVcValidator>()
+-                userProvided?.let { sdJwtVcValidator { userProvided } } ?: appDefault
++                userProvided?.let {
++                    sdJwtVcValidator(IsChainTrustedForContextF.usingTrustAnchors(it))
++                } ?: appDefault
+             },
+             bean(),
+         )
+     }
+     registerBean { ProcessSdJwtVc() }
+ 
+-    registerBean {
++    registerBean(lazyInit = true) {
+         ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+             config = bean(),
+             sdJwtVcValidatorFactory = { userProvided ->
+                 val appDefault = bean<SdJwtVcValidator>()
+-                userProvided?.let { sdJwtVcValidator { userProvided } } ?: appDefault
++                userProvided?.let {
++                    sdJwtVcValidator(IsChainTrustedForContextF.usingTrustAnchors(it))
++                } ?: appDefault
+             },
+             deviceResponseValidatorFactory = { userProvided ->
+                 val appDefault = bean<DeviceResponseValidator>()
+-                userProvided?.let { deviceResponseValidator { userProvided } } ?: appDefault
++                userProvided?.let {
++                    deviceResponseValidator(IsChainTrustedForContextF.usingTrustAnchors(it))
++                } ?: appDefault
+             },
+         )
+     }
+ 
+-    registerBean { FetchLOTLCertificatesDSS() }
+-
+     //
+     // Type metadata policy
+     //
+     registerBean<TypeMetadataPolicy> {
+         fun resolveTypeMetadata(): ResolveTypeMetadata {
+-            val typeMetadataResolutionProperties = bean<TypeMetadataResolutionProperties>()
+-            val vcts = typeMetadataResolutionProperties.vcts
++            val config = bean<VerifierEndpointConfigurationProperties>().validation.sdJwtVc.typeMetadataResolution
++            val vcts = config.vcts
+                 .associateBy { Vct(it.vct) }.mapValues { Url(it.value.url) }
+             require(vcts.isNotEmpty()) {
+                 "verifier.validation.sdJwtVc.typeMetadata.resolution.vcts must be set"
+             }
+ 
+-            val cacheTtl = Duration.parse(
+-                env.getProperty("verifier.validation.sdJwtVc.typeMetadata.resolution.cache.ttl", "PT1H"),
+-            )
+-            val cacheSize = env.getProperty(
+-                "verifier.validation.sdJwtVc.typeMetadata.resolution.cache.maxEntries",
+-                10,
+-            ).toLong()
+-
+             val cache = Caffeine.newBuilder()
+-                .expireAfterWrite(cacheTtl)
+-                .maximumSize(cacheSize)
++                .expireAfterWrite(config.cache.ttl)
++                .maximumSize(config.cache.maxEntries.toLong())
+                 .asCache<Vct, ResolvedTypeMetadata>()
+ 
+             val sriValidator =
+-                if (!typeMetadataResolutionProperties.integrity.enabled) {
++                if (!config.integrity.enabled) {
+                     null
+                 } else {
+                     SRIValidator(
+-                        requireNotNull(typeMetadataResolutionProperties.integrity.allowedAlgorithms.toNonEmptySetOrNull()) {
++                        requireNotNull(config.integrity.allowedAlgorithms.toNonEmptySetOrNull()) {
+                             "verifier.validation.sdJwtVc.typeMetadata.resolution.integrity.allowedAlgorithms cannot be empty"
+                         },
+                     )
+@@ -340,7 +351,6 @@ internal class AppBeans : BeanRegistrarDsl({
+     //
+     registerBean { ScheduleTimeoutPresentations(bean()) }
+     registerBean { ScheduleDeleteOldPresentations(bean()) }
+-    registerBean { RefreshTrustSources(bean(), bean(), bean()) }
+ 
+     //
+     // Config
+@@ -424,13 +434,17 @@ internal class AppBeans : BeanRegistrarDsl({
+ })
+ 
+ private fun SupplierContextDsl<*>.deviceResponseValidator(
+-    provideTrustSource: ProvideTrustSource,
++    isChainTrustedForContext: IsChainTrustedForContextF<NonEmptyList<X509Certificate>, VerificationContext, TrustAnchor>,
+ ): DeviceResponseValidator {
++    val config = bean<VerifierEndpointConfigurationProperties>()
+     val docValidator = DocumentValidator(
+         clock = bean(),
+         issuerSignedItemsShouldBe = IssuerSignedItemsShouldBe.Verified,
+         validityInfoShouldBe = ValidityInfoShouldBe.NotExpired,
+-        provideTrustSource = provideTrustSource,
++        isChainTrustedForAttestation = IsChainTrustedForAttestation(
++            isChainTrustedForContext,
++            config.attestationClassifications.toConsultationAttestationClassifications(),
++        ),
+         statusListTokenValidator = beanProvider<StatusListTokenValidator>().ifAvailable,
+     )
+     log.info(
+@@ -442,13 +456,19 @@ private fun SupplierContextDsl<*>.deviceResponseValidator(
+ }
+ 
+ private fun SupplierContextDsl<*>.sdJwtVcValidator(
+-    provideTrustSource: ProvideTrustSource,
+-): SdJwtVcValidator = SdJwtVcValidator(
+-    provideTrustSource = provideTrustSource,
+-    audience = bean<VerifierConfig>().verifierId,
+-    beanProvider<StatusListTokenValidator>().ifAvailable,
+-    typeMetadataPolicy = bean<TypeMetadataPolicy>(),
+-)
++    isChainTrustedForContext: IsChainTrustedForContextF<NonEmptyList<X509Certificate>, VerificationContext, TrustAnchor>,
++): SdJwtVcValidator {
++    val config = bean<VerifierEndpointConfigurationProperties>()
++    return SdJwtVcValidator(
++        isChainTrustedForAttestation = IsChainTrustedForAttestation(
++            isChainTrustedForContext,
++            config.attestationClassifications.toConsultationAttestationClassifications(),
++        ),
++        audience = bean<VerifierConfig>().verifierId,
++        statusListTokenValidator = beanProvider<StatusListTokenValidator>().ifAvailable,
++        typeMetadataPolicy = bean<TypeMetadataPolicy>(),
++    )
++}
+ 
+ private enum class EmbedOptionEnum {
+     ByValue,
+@@ -526,94 +546,9 @@ private fun verifierConfig(environment: Environment): VerifierConfig {
+         clientMetaData = environment.clientMetaData(),
+         transactionDataHashAlgorithm = transactionDataHashAlgorithm,
+         authorizationRequestUri = authorizationRequestUri,
+-        trustSourcesConfig = environment.trustSources(),
+     )
+ }
+ 
+-/**
+- * Parses the trust sources configuration from the environment.
+- * Handles array-like property names: verifier.trustSources[0].pattern, etc.
+- */
+-private fun Environment.trustSources(): Map<Regex, TrustSourceConfig>? {
+-    val trustSourcesConfigMap = mutableMapOf<Regex, TrustSourceConfig>()
+-    val prefix = "verifier.trustSources"
+-
+-    var index = 0
+-    while (true) {
+-        val indexPrefix = "$prefix[$index]"
+-        val patternStr = getPropertyOrEnvVariable("$indexPrefix.pattern") ?: break
+-        val pattern = patternStr.toRegex()
+-
+-        // Parse LOTL configuration if present
+-        val lotlSourceConfig = getPropertyOrEnvVariable("$indexPrefix.lotl.location")?.takeIf { it.isNotBlank() }?.let { lotlLocation ->
+-            val location = URI(lotlLocation).toURL()
+-            val serviceTypeFilter = getPropertyOrEnvVariable<ProviderKind>("$indexPrefix.lotl.serviceTypeFilter")
+-            val refreshInterval = getPropertyOrEnvVariable("$indexPrefix.lotl.refreshInterval", "0 0 * * * *")
+-
+-            val lotlKeystoreConfig = parseKeyStoreConfig("$indexPrefix.lotl.keystore")
+-
+-            TrustedListConfig(location, serviceTypeFilter, refreshInterval, lotlKeystoreConfig)
+-        }
+-
+-        // Parse keystore configuration if present
+-        val keystoreConfig = parseKeyStoreConfig("$indexPrefix.keystore")
+-
+-        trustSourcesConfigMap[pattern] = TrustSourcesConfig(lotlSourceConfig, keystoreConfig)
+-
+-        index++
+-    }
+-
+-    return trustSourcesConfigMap.ifEmpty {
+-        fallbackTrustSources()
+-    }
+-}
+-
+-private fun Environment.getPropertyOrEnvVariable(property: String): String? {
+-    return getProperty(property) ?: getProperty(toEnvironmentVariable(property))
+-}
+-
+-private fun Environment.getPropertyOrEnvVariable(property: String, defaultValue: String): String {
+-    return getProperty(property) ?: getProperty(toEnvironmentVariable(property)) ?: defaultValue
+-}
+-
+-private inline fun <reified T> Environment.getPropertyOrEnvVariable(property: String): T? {
+-    return this.getProperty(key = property) ?: this.getProperty(key = toEnvironmentVariable(property))
+-}
+-
+-private fun toEnvironmentVariable(property: String): String {
+-    return property.replace(".", "_")
+-        .replace("[", "_")
+-        .replace("]", "")
+-        .replace("-", "")
+-        .uppercase()
+-}
+-
+-private fun Environment.fallbackTrustSources(): Map<Regex, TrustSourceConfig>? =
+-    parseKeyStoreConfig("trustedIssuers.keystore")?.let {
+-        mapOf(".*".toRegex() to TrustSourcesConfig(null, it))
+-    }
+-
+-private fun Environment.parseKeyStoreConfig(propertyPrefix: String): KeyStoreConfig? = getPropertyOrEnvVariable(
+-    "$propertyPrefix.path",
+-)?.let { keystorePath ->
+-    val keystoreType = getPropertyOrEnvVariable("$propertyPrefix.type") ?: "JKS"
+[REDACTED credential-related line]
+-    loadKeystore(keystorePath, keystoreType, keystorePassword)
+-        .onLeft { log.warn("Failed to load keystore from '$keystorePath'", it) }
+-        .map { KeyStoreConfig(keystorePath, keystoreType, keystorePassword, it) }
+-        .getOrNull()
+-}
+-
+[REDACTED credential-related line]
+-    DefaultResourceLoader().getResource(keystorePath)
+-        .inputStream
+-        .use {
+-            KeyStore.getInstance(keystoreType).apply {
+-                load(it, keystorePassword.toCharArray())
+-            }
+-        }
+-}
+-
+ private fun Environment.clientMetaData(): ClientMetaData {
+     val responseEncryptionOptionAlgorithm =
+         getProperty("verifier.clientMetadata.responseEncryption.algorithm", JWEAlgorithm.ECDH_ES.name)
+@@ -741,18 +676,81 @@ private enum class TypeMetadataPolicyEnum {
+     RequiredFor,
+ }
+ 
+-@ConfigurationProperties("verifier.validation.sd-jwt-vc.type-metadata.resolution")
+-internal data class TypeMetadataResolutionProperties(
+-    val vcts: List<VctProperties> = emptyList(),
+-    val integrity: IntegrityProperties = IntegrityProperties(),
++@ConfigurationProperties("verifier")
++data class VerifierEndpointConfigurationProperties(
++    val validation: ValidationConfigurationProperties,
++    val trustValidator: TrustValidatorConfigurationProperties? = null,
++    val attestationClassifications: AttestationClassificationsConfigurationProperties = AttestationClassificationsConfigurationProperties(),
++)
++
++data class ValidationConfigurationProperties(
++    @Name("sd-jwt-vc") val sdJwtVc: SdJwtVcConfigurationProperties,
++)
++
++data class SdJwtVcConfigurationProperties(
++    @Name("type-metadata.resolution") val typeMetadataResolution: TypeMetadataResolutionConfigurationProperties,
++)
++
++data class TypeMetadataResolutionConfigurationProperties(
++    val vcts: List<VctConfigurationProperties> = emptyList(),
++    val integrity: IntegrityConfigurationProperties = IntegrityConfigurationProperties(),
++    val cache: CacheConfigurationProperties = CacheConfigurationProperties(),
+ ) {
+-    data class VctProperties(
++    data class VctConfigurationProperties(
+         val vct: String,
+         val url: String,
+     )
+ 
+-    data class IntegrityProperties(
++    data class IntegrityConfigurationProperties(
+         val enabled: Boolean = false,
+         val allowedAlgorithms: Set<IntegrityAlgorithm> = IntegrityAlgorithm.entries.toSet(),
+     )
++
++    data class CacheConfigurationProperties(
++        val ttl: java.time.Duration = 1.hours.toJavaDuration(),
++        val maxEntries: Int = 10,
++    )
+ }
++
++data class TrustValidatorConfigurationProperties(val serviceUrl: URL)
++
++data class AttestationClassificationsConfigurationProperties(
++    val pid: AttestationIdentifiersConfigurationProperties = AttestationIdentifiersConfigurationProperties(),
++    val qeaa: AttestationIdentifiersConfigurationProperties = AttestationIdentifiersConfigurationProperties(),
++    val pubeaa: AttestationIdentifiersConfigurationProperties = AttestationIdentifiersConfigurationProperties(),
++    val eaa: List<EAAAttestationClassificationConfigurationProperties> = emptyList(),
++)
++
++private fun AttestationClassificationsConfigurationProperties.toConsultationAttestationClassifications(): AttestationClassifications =
++    AttestationClassifications(
++        pids = pid.attestationIdentifierPredicate,
++        qEAAs = qeaa.attestationIdentifierPredicate,
++        pubEAAs = pubeaa.attestationIdentifierPredicate,
++        eaAs = eaa.associate { it.useCase to it.attestationIdentifierPredicate },
++    )
++
++data class AttestationIdentifiersConfigurationProperties(
++    val vcts: List<String> = emptyList(),
++    val docTypes: List<String> = emptyList(),
++)
++
++private val AttestationIdentifiersConfigurationProperties.attestationIdentifierPredicate: AttestationIdentifierPredicate
++    get() = AttestationIdentifierPredicate.of(vcts = vcts, docTypes = docTypes)
++
++private fun AttestationIdentifierPredicate.Companion.of(
++    vcts: List<String>,
++    docTypes: List<String>,
++): AttestationIdentifierPredicate {
++    val vctsPredicate = AttestationIdentifierPredicate.any(vcts.map { SDJwtVc(it) }.toSet())
++    val docTypesPredicate = AttestationIdentifierPredicate.any(docTypes.map { MDoc(it) }.toSet())
++    return vctsPredicate or docTypesPredicate
++}
++
++data class EAAAttestationClassificationConfigurationProperties(
++    val useCase: String,
++    val vcts: List<String> = emptyList(),
++    val docTypes: List<String> = emptyList(),
++)
++
++private val EAAAttestationClassificationConfigurationProperties.attestationIdentifierPredicate: AttestationIdentifierPredicate
++    get() = AttestationIdentifierPredicate.of(vcts = vcts, docTypes = docTypes)
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierEndpointApplication.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierEndpointApplication.kt
+index 25bd3e9..9fc9c88 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierEndpointApplication.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/VerifierEndpointApplication.kt
+@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Import
+ 
+ @SpringBootApplication
+ @Import(AppBeans::class)
+-@EnableConfigurationProperties(TypeMetadataResolutionProperties::class)
++@EnableConfigurationProperties(VerifierEndpointConfigurationProperties::class)
+ class VerifierApplication
+ 
+ fun main(args: Array<String>) {
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/timer/RefreshTrustSources.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/timer/RefreshTrustSources.kt
+deleted file mode 100644
+index da43aba..0000000
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/timer/RefreshTrustSources.kt
++++ /dev/null
+@@ -1,102 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.input.timer
+-
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.TrustSources
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+-import eu.europa.ec.eudi.verifier.endpoint.domain.KeyStoreConfig
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TrustSourceConfig
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TrustedListConfig
+-import eu.europa.ec.eudi.verifier.endpoint.domain.VerifierConfig
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.lotl.FetchLOTLCertificates
+-import kotlinx.coroutines.*
+-import org.springframework.beans.factory.InitializingBean
+-import org.springframework.scheduling.annotation.EnableScheduling
+-import org.springframework.scheduling.annotation.SchedulingConfigurer
+-import org.springframework.scheduling.config.CronTask
+-import org.springframework.scheduling.config.ScheduledTaskRegistrar
+-import java.security.cert.X509Certificate
+-
+-@EnableScheduling
+-class RefreshTrustSources(
+-    private val fetchLOTLCertificates: FetchLOTLCertificates,
+-    private var trustSources: TrustSources,
+-    private val verifierConfig: VerifierConfig,
+-) : InitializingBean, SchedulingConfigurer {
+-    private val ioDispatcher = Dispatchers.IO.limitedParallelism(2)
+-
+-    override fun afterPropertiesSet() {
+-        runBlocking { updateLOTLs() }
+-    }
+-
+-    override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
+-        // Configure LOTL refresh tasks for each trust source that has LOTL configuration
+-        verifierConfig.trustSourcesConfig?.forEach { (regex, trustSourceConfig) ->
+-            trustSourceConfig.leftOrNull()?.let {
+-                taskRegistrar.addCronTask(
+-                    CronTask(
+-                        {
+-                            CoroutineScope(ioDispatcher + CoroutineName("$regex")).launch {
+-                                updateLotl(regex, trustSourceConfig)
+-                            }
+-                        },
+-                        it.refreshInterval,
+-                    ),
+-                )
+-            }
+-        }
+-    }
+-
+-    private suspend fun updateLOTLs() =
+-        withContext(ioDispatcher + CoroutineName("initializing LOTL(s)")) {
+-            when (verifierConfig.trustSourcesConfig) {
+-                null -> trustSources.ignoreAll()
+-                else ->
+-                    verifierConfig.trustSourcesConfig
+-                        .map { (regex, trustSourceConfig) ->
+-                            launch { updateLotl(regex, trustSourceConfig) }
+-                        }.joinAll()
+-            }
+-        }
+-
+-    private suspend fun updateLotl(regex: Regex, trustSourceConfig: TrustSourceConfig) {
+-        val certs = trustSourceConfig.fetchCerts()
+-        trustSources.updateWithX5CShouldBe(regex, certs)
+-    }
+-
+-    private suspend fun TrustSourceConfig.fetchCerts(): List<X509Certificate> =
+-        coroutineScope {
+-            suspend fun TrustedListConfig.lotlCerts(): List<X509Certificate> =
+-                fetchLOTLCertificates(this).getOrThrow()
+-
+-            suspend fun KeyStoreConfig.keyCerts(): List<X509Certificate> =
+-                withContext(ioDispatcher) {
+-                    val x5CShouldBe = X5CShouldBe.fromKeystore(keystore)
+-                    x5CShouldBe.caCertificates()
+-                }
+-
+-            fold(
+-                fa = { trustedList -> trustedList.lotlCerts() },
+-                fb = { keyStore -> keyStore.keyCerts() },
+-                fab = { trustedList, keyStore ->
+-                    val lotlCerts = async { trustedList.lotlCerts() }
+-                    val ksCerts = async { keyStore.keyCerts() }
+-                    ksCerts.await() + lotlCerts.await()
+-                },
+-            )
+-        }
+-}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
+index 42f4460..3d3d09d 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt
+@@ -24,7 +24,6 @@ import org.springframework.http.MediaType.APPLICATION_JSON
+ import org.springframework.web.reactive.function.server.*
+ import org.springframework.web.reactive.function.server.ServerResponse.badRequest
+ import org.springframework.web.reactive.function.server.ServerResponse.ok
+-import kotlin.collections.firstOrNull
+ 
+ private val log = LoggerFactory.getLogger(UtilityApi::class.java)
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/TrustSources.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/TrustSources.kt
+deleted file mode 100644
+index 93d98f8..0000000
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/TrustSources.kt
++++ /dev/null
+@@ -1,78 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert
+-
+-import kotlinx.coroutines.sync.Mutex
+-import kotlinx.coroutines.sync.withLock
+-import org.slf4j.Logger
+-import org.slf4j.LoggerFactory
+-import java.security.cert.X509Certificate
+-
+-/**
+- * Functional interface for providing appropriate X5CShouldBe trust source based on document type.
+- */
+-fun interface ProvideTrustSource {
+-    /**
+-     * Returns the appropriate X5CShouldBe for the given doctype/vct.
+-     *
+-     * @param type The doctype/vct
+-     * @return The X5CShouldBe configuration for the doctype/vct
+-     */
+-    suspend operator fun invoke(type: String): X5CShouldBe?
+-
+-    companion object {
+-        val Ignored: ProvideTrustSource = forAll(X5CShouldBe.Ignored)
+-        fun forAll(x5CShouldBe: X5CShouldBe): ProvideTrustSource = ProvideTrustSource { _ -> x5CShouldBe }
+-    }
+-}
+-
+-class TrustSources(
+-    private val revocationEnabled: Boolean = false,
+-    private val x5CShouldBeMap: MutableMap<Regex, X5CShouldBe> = mutableMapOf(),
+-) : ProvideTrustSource {
+-
+-    private val logger: Logger = LoggerFactory.getLogger(TrustSources::class.java)
+-    private val mutex = Mutex()
+-
+-    suspend fun updateWithX5CShouldBe(pattern: Regex, certs: List<X509Certificate>) {
+-        mutex.withLock {
+-            val x5CShouldBe = X5CShouldBe(
+-                rootCACertificates = certs,
+-                customizePKIX = { isRevocationEnabled = revocationEnabled },
+-            )
+-            x5CShouldBeMap[pattern] = x5CShouldBe
+-            logger.info("TrustSources updated for pattern $pattern with ${x5CShouldBe.caCertificates().size} certificates")
+-        }
+-    }
+-
+-    suspend fun ignoreAll() {
+-        mutex.withLock {
+-            x5CShouldBeMap[Regex(".*")] = X5CShouldBe.Ignored
+-            logger.info("No trust sources configured. X5CShouldBe is set to Ignored")
+-        }
+-    }
+-
+-    /**
+-     * Implementation of TrustSourceProvider
+-     * Retrieves the X5CShouldBe for the given document type.
+-     */
+-    override suspend fun invoke(type: String): X5CShouldBe? =
+-        mutex.withLock {
+-            x5CShouldBeMap.entries
+-                .firstOrNull { (pattern, _) -> pattern.matches(type) }
+-                ?.value
+-        }
+-}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidator.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidator.kt
+deleted file mode 100644
+index 8ed0930..0000000
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidator.kt
++++ /dev/null
+@@ -1,126 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert
+-
+-import arrow.core.Either
+-import arrow.core.Nel
+-import arrow.core.NonEmptyList
+-import arrow.core.toNonEmptyListOrNull
+-import java.security.KeyStore
+-import java.security.cert.*
+-
+-typealias ConfigurePKIXParameters = PKIXParameters.() -> Unit
+-
+-internal val SkipRevocation: ConfigurePKIXParameters = { isRevocationEnabled = false }
+-
+-/**
+- * Options about [certificate chain validator][X5CValidator]
+- */
+-sealed interface X5CShouldBe {
+-
+-    /**
+-     * The chain should be trusted
+-     *
+-     * @param rootCACertificates list of trusted root CA certificates. To be used as trust anchors
+-     * @param customizePKIX a way to parameterize [PKIXParameters]. If not provided, revocation checks are disabled
+-     */
+-    data class Trusted(
+-        val rootCACertificates: NonEmptyList<X509Certificate>,
+-        val customizePKIX: ConfigurePKIXParameters = SkipRevocation,
+-    ) : X5CShouldBe
+-
+-    /**
+-     * The chain will not be checked
+-     */
+-    data object Ignored : X5CShouldBe
+-
+-    fun caCertificates(): List<X509Certificate> =
+-        when (this) {
+-            Ignored -> emptyList()
+-            is Trusted -> rootCACertificates
+-        }
+-
+-    companion object {
+-        operator fun invoke(
+-            rootCACertificates: List<X509Certificate>,
+-            customizePKIX: ConfigurePKIXParameters = SkipRevocation,
+-        ): X5CShouldBe =
+-            when (val nel = rootCACertificates.toNonEmptyListOrNull()) {
+-                null -> Ignored
+-                else -> Trusted(nel, customizePKIX)
+-            }
+-
+-        fun fromKeystore(
+-            trustedCAsKeyStore: KeyStore,
+-            customizePKIX: ConfigurePKIXParameters = SkipRevocation,
+-        ): X5CShouldBe {
+-            val trustedRootCAs = trustedCAs(trustedCAsKeyStore)
+-            return X5CShouldBe(trustedRootCAs, customizePKIX)
+-        }
+-
+-        internal fun trustedCAs(keystore: KeyStore): List<X509Certificate> {
+-            fun x509(alias: String) =
+-                alias.takeIf(keystore::isCertificateEntry)
+-                    ?.let(keystore::getCertificate) as? X509Certificate
+-
+-            return buildList {
+-                for (alias in keystore.aliases()) {
+-                    x509(alias)?.let(::add)
+-                }
+-            }
+-        }
+-    }
+-}
+-
+-class X5CValidator(private val x5CShouldBe: X5CShouldBe) {
+-
+-    fun ensureTrusted(
+-        chain: Nel<X509Certificate>,
+-    ): Either<CertPathValidatorException, Nel<X509Certificate>> =
+-        Either.catchOrThrow {
+-            trustedOrThrow(chain)
+-            chain
+-        }
+-
+-    @Throws(CertPathValidatorException::class)
+-    fun trustedOrThrow(chain: Nel<X509Certificate>) {
+-        when (x5CShouldBe) {
+-            X5CShouldBe.Ignored -> Unit // Do nothing
+-            is X5CShouldBe.Trusted -> {
+-                trustedOrThrow(chain, x5CShouldBe)
+-            }
+-        }
+-    }
+-}
+-
+-@Throws(CertPathValidatorException::class)
+-private fun trustedOrThrow(
+-    chain: Nel<X509Certificate>,
+-    trusted: X5CShouldBe.Trusted,
+-) {
+-    val factory = CertificateFactory.getInstance("X.509")
+-    val certPath = factory.generateCertPath(chain)
+-
+-    val pkixParameters = trusted.asPkixParameters()
+-    val validator = CertPathValidator.getInstance("PKIX")
+-
+-    validator.validate(certPath, pkixParameters)
+-}
+-
+-private fun X5CShouldBe.Trusted.asPkixParameters(): PKIXParameters {
+-    val trust = rootCACertificates.map { cert -> TrustAnchor(cert, null) }.toSet()
+-    return PKIXParameters(trust).apply(customizePKIX)
+-}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForAttestationExtensions.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForAttestationExtensions.kt
+new file mode 100644
+index 0000000..828b637
+--- /dev/null
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForAttestationExtensions.kt
+@@ -0,0 +1,41 @@
++/*
+[REDACTED attribution]
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation
++
++import eu.europa.ec.eudi.etsi1196x2.consultation.CertificationChainValidation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForAttestation
++import eu.europa.ec.eudi.etsi1196x2.consultation.MDoc
++import eu.europa.ec.eudi.etsi1196x2.consultation.SDJwtVc
++
++suspend fun <CHAIN : Any, TRUST_ANCHOR : Any> IsChainTrustedForAttestation<CHAIN, TRUST_ANCHOR>.sdJwtVcIssuance(
++    chain: CHAIN,
++    vct: String,
++): CertificationChainValidation<TRUST_ANCHOR>? = issuance(chain, SDJwtVc(vct))
++
++suspend fun <CHAIN : Any, TRUST_ANCHOR : Any> IsChainTrustedForAttestation<CHAIN, TRUST_ANCHOR>.sdJwtVcRevocation(
++    chain: CHAIN,
++    vct: String,
++): CertificationChainValidation<TRUST_ANCHOR>? = revocation(chain, SDJwtVc(vct))
++
++suspend fun <CHAIN : Any, TRUST_ANCHOR : Any> IsChainTrustedForAttestation<CHAIN, TRUST_ANCHOR>.msoMdocIssuance(
++    chain: CHAIN,
++    docType: String,
++): CertificationChainValidation<TRUST_ANCHOR>? = issuance(chain, MDoc(docType))
++
++suspend fun <CHAIN : Any, TRUST_ANCHOR : Any> IsChainTrustedForAttestation<CHAIN, TRUST_ANCHOR>.msoMdocRevocation(
++    chain: CHAIN,
++    docType: String,
++): CertificationChainValidation<TRUST_ANCHOR>? = revocation(chain, MDoc(docType))
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForContextFExtensions.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForContextFExtensions.kt
+new file mode 100644
+index 0000000..d8129e1
+--- /dev/null
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/consultation/IsChainTrustedForContextFExtensions.kt
+@@ -0,0 +1,182 @@
++/*
+[REDACTED attribution]
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++@file:UseSerializers(NonEmptyListSerializer::class)
++
++package eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation
++
++import arrow.core.NonEmptyList
++import arrow.core.serialization.NonEmptyListSerializer
++import eu.europa.ec.eudi.etsi1196x2.consultation.CertificationChainValidation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForContextF
++import eu.europa.ec.eudi.etsi1196x2.consultation.ValidateCertificateChainJvm
++import eu.europa.ec.eudi.etsi1196x2.consultation.VerificationContext
++import io.ktor.client.*
++import io.ktor.client.call.*
++import io.ktor.client.plugins.*
++import io.ktor.client.request.*
++import io.ktor.http.*
++import kotlinx.serialization.KSerializer
++import kotlinx.serialization.Required
++import kotlinx.serialization.Serializable
++import kotlinx.serialization.UseSerializers
++import kotlinx.serialization.descriptors.PrimitiveKind
++import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
++import kotlinx.serialization.descriptors.SerialDescriptor
++import kotlinx.serialization.encoding.Decoder
++import kotlinx.serialization.encoding.Encoder
++import java.io.ByteArrayInputStream
++import java.security.cert.CertificateFactory
++import java.security.cert.PKIXParameters
++import java.security.cert.TrustAnchor
++import java.security.cert.X509Certificate
++import kotlin.io.encoding.Base64
++import eu.europa.ec.eudi.etsi1196x2.consultation.NonEmptyList as ConsultationNonEmptyList
++
++fun IsChainTrustedForContextF.Companion.usingTrustValidatorService(
++    httpClient: HttpClient,
++    service: Url,
++): IsChainTrustedForContextF<NonEmptyList<X509Certificate>, VerificationContext, TrustAnchor> =
++    IsChainTrustedForContextF { chain, context ->
++        val response = httpClient.post {
++            expectSuccess = true
++
++            url(service)
++            contentType(ContentType.Application.Json)
++            setBody(TrustQueryTO(chain, VerificationContextTO.from(context), context.useCaseOrNull))
++
++            accept(ContentType.Application.Json)
++        }.body<TrustResponseTO>()
++
++        val trustAnchor = response.trustAnchor?.let { TrustAnchor(it, null) }
++        if (response.trusted) CertificationChainValidation.Trusted(
++            checkNotNull(trustAnchor) { "trustAnchor cannot be null when chain is trusted" },
++        )
++        else CertificationChainValidation.NotTrusted(IllegalArgumentException("chain is not trusted "))
++    }
++
++@Serializable
++private enum class VerificationContextTO {
++    WalletInstanceAttestation,
++    WalletUnitAttestation,
++    WalletUnitAttestationStatus,
++    PID,
++    PIDStatus,
++    QEAA,
++    QEAAStatus,
++    PubEAA,
++    PubEAAStatus,
++    EAA,
++    EAAStatus,
++    WalletRelyingPartyAccessCertificate,
++    WalletRelyingPartyRegistrationCertificate,
++    Custom,
++    ;
++
++    companion object {
++        fun from(context: VerificationContext): VerificationContextTO =
++            when (context) {
++                VerificationContext.WalletInstanceAttestation -> WalletInstanceAttestation
++                VerificationContext.WalletUnitAttestation -> WalletUnitAttestation
++                VerificationContext.WalletUnitAttestationStatus -> WalletUnitAttestationStatus
++                VerificationContext.PID -> PID
++                VerificationContext.PIDStatus -> PIDStatus
++                VerificationContext.QEAA -> QEAA
++                VerificationContext.QEAAStatus -> QEAAStatus
++                VerificationContext.PubEAA -> PubEAA
++                VerificationContext.PubEAAStatus -> PubEAAStatus
++                is VerificationContext.EAA -> EAA
++                is VerificationContext.EAAStatus -> EAAStatus
++                is VerificationContext.Custom -> Custom
++                VerificationContext.WalletRelyingPartyAccessCertificate -> WalletRelyingPartyAccessCertificate
++                VerificationContext.WalletRelyingPartyRegistrationCertificate -> WalletRelyingPartyRegistrationCertificate
++            }
++    }
++}
++
++private object X509CertificateBase64Serializer : KSerializer<X509Certificate> {
++    private val base64 = Base64.withPadding(Base64.PaddingOption.ABSENT_OPTIONAL)
++
++    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
++        "eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.X509CertificateBase64Serializer",
++        PrimitiveKind.STRING,
++    )
++
++    override fun serialize(encoder: Encoder, value: X509Certificate) {
++        val der = value.encoded
++        encoder.encodeString(base64.encode(der))
++    }
++
++    override fun deserialize(decoder: Decoder): X509Certificate {
++        val der = base64.decode(decoder.decodeString())
++        val factory = CertificateFactory.getInstance("X.509")
++        return ByteArrayInputStream(der).use { inputStream -> factory.generateCertificate(inputStream) as X509Certificate }
++    }
++}
++
++private typealias Base64X509Certificate =
++    @Serializable(with = X509CertificateBase64Serializer::class)
++    X509Certificate
++
++@Serializable
++private data class TrustQueryTO(
++    @Required val chain: NonEmptyList<Base64X509Certificate>,
++    @Required val verificationContext: VerificationContextTO,
++    val useCase: String? = null,
++) {
++    init {
++        require(
++            null == useCase ||
++                verificationContext in setOf(VerificationContextTO.EAA, VerificationContextTO.EAAStatus, VerificationContextTO.Custom),
++        ) {
++            "useCase can be used only when verificationContext is EAA, EAAStatus, or Custom"
++        }
++    }
++}
++
++@Serializable
++private data class TrustResponseTO(
++    @Required val trusted: Boolean,
++    val trustAnchor: Base64X509Certificate? = null,
++) {
++    init {
++        require(!trusted || null != trustAnchor) { "trustAnchor must be provided if trusted is true" }
++    }
++}
++
++private val VerificationContext.useCaseOrNull: String?
++    get() = when (this) {
++        is VerificationContext.EAA -> useCase
++        is VerificationContext.EAAStatus -> useCase
++        is VerificationContext.Custom -> useCase
++        else -> null
++    }
++
++val IsChainTrustedForContextF.Companion.Ignored: IsChainTrustedForContextF<NonEmptyList<X509Certificate>, VerificationContext, TrustAnchor>
++    get() = IsChainTrustedForContextF { chain, _ ->
++        CertificationChainValidation.Trusted(TrustAnchor(chain.last(), null))
++    }
++
++fun IsChainTrustedForContextF.Companion.usingTrustAnchors(
++    trustAnchors: NonEmptyList<X509Certificate>,
++    customization: PKIXParameters.() -> Unit = { isRevocationEnabled = false },
++): IsChainTrustedForContextF<NonEmptyList<X509Certificate>, VerificationContext, TrustAnchor> =
++    IsChainTrustedForContextF { chain, _ ->
++        ValidateCertificateChainJvm(customization = customization)
++            .invoke(
++                chain = chain,
++                trustAnchors = ConsultationNonEmptyList(trustAnchors.map { TrustAnchor(it, null) }),
++            )
++    }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSS.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSS.kt
+deleted file mode 100644
+index f7fca9d..0000000
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSS.kt
++++ /dev/null
+@@ -1,135 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.lotl
+-
+-import arrow.core.Either
+-import eu.europa.ec.eudi.verifier.endpoint.domain.KeyStoreConfig
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TrustedListConfig
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.lotl.FetchLOTLCertificates
+-import eu.europa.esig.dss.service.http.commons.CommonsDataLoader
+-import eu.europa.esig.dss.service.http.commons.FileCacheDataLoader
+-import eu.europa.esig.dss.spi.client.http.DSSCacheFileLoader
+-import eu.europa.esig.dss.spi.client.http.IgnoreDataLoader
+-import eu.europa.esig.dss.spi.tsl.TrustedListsCertificateSource
+-import eu.europa.esig.dss.spi.x509.KeyStoreCertificateSource
+-import eu.europa.esig.dss.tsl.cache.CacheCleaner
+-import eu.europa.esig.dss.tsl.function.GrantedOrRecognizedAtNationalLevelTrustAnchorPeriodPredicate
+-import eu.europa.esig.dss.tsl.job.TLValidationJob
+-import eu.europa.esig.dss.tsl.source.LOTLSource
+-import eu.europa.esig.dss.tsl.sync.ExpirationAndSignatureCheckStrategy
+-import kotlinx.coroutines.CoroutineName
+-import kotlinx.coroutines.asCoroutineDispatcher
+-import kotlinx.coroutines.withContext
+-import org.slf4j.Logger
+-import org.slf4j.LoggerFactory
+-import org.springframework.beans.factory.DisposableBean
+-import org.springframework.core.io.DefaultResourceLoader
+-import java.nio.file.Files
+-import java.security.cert.X509Certificate
+-import java.util.concurrent.ExecutorService
+-import java.util.concurrent.Executors
+-import java.util.function.Predicate
+-import kotlin.time.measureTimedValue
+-
+-private val logger: Logger = LoggerFactory.getLogger(FetchLOTLCertificatesDSS::class.java)
+-
+-class FetchLOTLCertificatesDSS(
+-    private val executorService: ExecutorService = Executors.newFixedThreadPool(4),
+-) : FetchLOTLCertificates, DisposableBean {
+-    private val dispatcher = executorService.asCoroutineDispatcher()
+-
+-    override fun destroy() {
+-        dispatcher.close()
+-    }
+-
+-    override suspend fun invoke(
+-        trustedListConfig: TrustedListConfig,
+-    ): Either<Throwable, List<X509Certificate>> = Either.catch {
+-        val trustedListsCertificateSource = TrustedListsCertificateSource()
+-
+-        val tlCacheDirectory = Files.createTempDirectory("lotl-cache").toFile()
+-
+-        val offlineLoader: DSSCacheFileLoader = FileCacheDataLoader().apply {
+-            setCacheExpirationTime(24 * 60 * 60 * 1000)
+-            setFileCacheDirectory(tlCacheDirectory)
+-            dataLoader = IgnoreDataLoader()
+-        }
+-
+-        val onlineLoader: DSSCacheFileLoader = FileCacheDataLoader().apply {
+-            setCacheExpirationTime(24 * 60 * 60 * 1000)
+-            setFileCacheDirectory(tlCacheDirectory)
+-            dataLoader = CommonsDataLoader()
+-        }
+-
+-        val cacheCleaner = CacheCleaner().apply {
+-            setCleanMemory(true)
+-            setCleanFileSystem(true)
+-            setDSSFileLoader(offlineLoader)
+-        }
+-
+-        val validationJob = TLValidationJob().apply {
+-            setListOfTrustedListSources(lotlSource(trustedListConfig))
+-            setOfflineDataLoader(offlineLoader)
+-            setOnlineDataLoader(onlineLoader)
+-            setTrustedListCertificateSource(trustedListsCertificateSource)
+-            setSynchronizationStrategy(ExpirationAndSignatureCheckStrategy())
+-            setCacheCleaner(cacheCleaner)
+-            setExecutorService(executorService)
+-        }
+-
+-        logger.info("Starting validation job")
+-        val (certs, duration) = measureTimedValue {
+-            withContext(dispatcher) {
+-                validationJob.onlineRefresh()
+-            }
+-
+-            trustedListsCertificateSource.certificates.map {
+-                it.certificate
+-            }
+-        }
+-        logger.info("Finished validation job in $duration")
+-        certs
+-    }
+-
+-    private suspend fun lotlSource(
+-        trustedListConfig: TrustedListConfig,
+-    ): LOTLSource = LOTLSource().apply {
+-        url = trustedListConfig.location.toExternalForm()
+-        trustedListConfig.keystoreConfig
+-            ?.let { lotlCertificateSource(it).getOrNull() }
+-            ?.let { certificateSource = it }
+-        isPivotSupport = true
+-        trustAnchorValidityPredicate = GrantedOrRecognizedAtNationalLevelTrustAnchorPeriodPredicate()
+-        tlVersions = listOf(5, 6)
+-        trustedListConfig.serviceTypeFilter?.let {
+-            trustServicePredicate = Predicate { tspServiceType ->
+-                tspServiceType.serviceInformation.serviceTypeIdentifier == it.value
+-            }
+-        }
+-    }
+-
+-    private suspend fun lotlCertificateSource(keystoreConfig: KeyStoreConfig): Either<Throwable, KeyStoreCertificateSource> =
+-        withContext(dispatcher + CoroutineName("LotlCertificateSource-${keystoreConfig.keystorePath}")) {
+-            Either.catch {
+-                val resource = DefaultResourceLoader().getResource(keystoreConfig.keystorePath)
+-                KeyStoreCertificateSource(
+-                    resource.inputStream,
+-                    keystoreConfig.keystoreType,
+-                    keystoreConfig.keystorePassword?.toCharArray(),
+-                )
+-            }
+-        }
+-}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DocumentValidator.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DocumentValidator.kt
+index a1f534f..10405b0 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DocumentValidator.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DocumentValidator.kt
+@@ -22,9 +22,10 @@ import arrow.core.raise.*
+ import com.nimbusds.jose.jwk.Curve
+ import com.nimbusds.jose.jwk.ECKey
+ import com.upokecenter.cbor.CBORObject
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ProvideTrustSource
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CValidator
++import eu.europa.ec.eudi.etsi1196x2.consultation.CertificationChainValidation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForAttestation
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.msoMdocIssuance
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DocumentError.*
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.tokenstatuslist.StatusListTokenValidator
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Clock
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Iso180135
+@@ -44,6 +45,7 @@ import kotlinx.serialization.encodeToByteArray
+ import org.slf4j.LoggerFactory
+ import java.security.MessageDigest
+ import java.security.cert.CertificateFactory
++import java.security.cert.TrustAnchor
+ import java.security.cert.X509Certificate
+ import java.security.interfaces.ECPublicKey
+ import kotlin.time.Instant
+@@ -82,8 +84,8 @@ class DocumentValidator(
+     private val clock: Clock = Clock.System,
+     private val validityInfoShouldBe: ValidityInfoShouldBe = ValidityInfoShouldBe.NotExpired,
+     private val issuerSignedItemsShouldBe: IssuerSignedItemsShouldBe = IssuerSignedItemsShouldBe.Verified,
+-    private val provideTrustSource: ProvideTrustSource,
+     private val statusListTokenValidator: StatusListTokenValidator?,
++    private val isChainTrustedForAttestation: IsChainTrustedForAttestation<NonEmptyList<X509Certificate>, TrustAnchor>,
+ ) {
+     suspend fun ensureValid(
+         document: MDoc,
+@@ -93,15 +95,13 @@ class DocumentValidator(
+         either {
+             document.decodeMso()
+ 
+-            val x5CShouldBe = ensureMatchingX5CShouldBe(document, provideTrustSource)
+-
+-            val issuerChain = ensureTrustedChain(document, x5CShouldBe)
++            val issuerChain = ensureTrustedChain(document, isChainTrustedForAttestation)
+             zipOrAccumulate(
+                 { ensureNotExpiredValidityInfo(document, clock, validityInfoShouldBe) },
+                 { ensureMatchingDocumentType(document) },
+                 { ensureDigestsOfIssuerSignedItems(document, issuerSignedItemsShouldBe) },
+                 {
+-                    ensureValidIssuerSignature(document, issuerChain, x5CShouldBe.caCertificates())
++                    ensureValidIssuerSignature(document, issuerChain)
+                         .also { log.info("IssuerSigned validation succeeded") }
+                 },
+                 { ensureNotRevoked(document, statusListTokenValidator, transactionId) },
+@@ -146,10 +146,9 @@ private fun Raise<DocumentError.DocumentTypeNotMatching>.ensureMatchingDocumentT
+ 
+ private fun Raise<DocumentError>.ensureValidIssuerSignature(
+     document: MDoc,
+-    chain: NonEmptyList<X509Certificate>,
+-    caCertificates: List<X509Certificate>,
++    issuerChain: NonEmptyList<X509Certificate>,
+ ) {
+-    val issuerKeyInfo = cryptoProviderKeyInfo(chain, caCertificates)
++    val issuerKeyInfo = cryptoProviderKeyInfo(issuerChain)
+     val issuerCryptoProvider = SimpleCOSECryptoProvider(listOf(issuerKeyInfo))
+     ensure(document.verifySignature(issuerCryptoProvider, issuerKeyInfo.keyID)) {
+         DocumentError.InvalidIssuerSignature
+@@ -158,17 +157,16 @@ private fun Raise<DocumentError>.ensureValidIssuerSignature(
+ 
+ private const val ISSUER_KEY_ID = "ISSUER_KEY_ID"
+ private fun Raise<DocumentError.IssuerKeyIsNotEC>.cryptoProviderKeyInfo(
+-    chain: NonEmptyList<X509Certificate>,
+-    caCertificates: List<X509Certificate>,
++    issuerChain: NonEmptyList<X509Certificate>,
+ ): COSECryptoProviderKeyInfo {
+-    val issuerECKey = ensureIssuerKeyIsEC(chain.head)
++    val issuerECKey = ensureIssuerKeyIsEC(issuerChain.head)
+     return COSECryptoProviderKeyInfo(
+         keyID = ISSUER_KEY_ID,
+         algorithmID = issuerECKey.coseAlgorithmID,
+         publicKey = issuerECKey.toECPublicKey(),
+[REDACTED credential-related line]
+-        x5Chain = chain,
+-        trustedRootCAs = caCertificates,
++        x5Chain = issuerChain,
++        trustedRootCAs = emptyList(),
+     )
+ }
+ 
+@@ -197,13 +195,13 @@ private fun Raise<DocumentError.InvalidIssuerSignedItems>.ensureDigestsOfIssuerS
+     }
+ }
+ 
+-private fun Raise<Nel<DocumentError.X5CNotTrusted>>.ensureTrustedChain(
++private suspend fun Raise<Nel<DocumentError.X5CNotTrusted>>.ensureTrustedChain(
+     document: MDoc,
+-    x5CShouldBe: X5CShouldBe,
++    isChainTrustedForAttestation: IsChainTrustedForAttestation<NonEmptyList<X509Certificate>, TrustAnchor>,
+ ): NonEmptyList<X509Certificate> =
+     either {
+-        val chain = ensureContainsChain(document)
+-        ensureValidChain(chain, x5CShouldBe)
++        val issuerChain = ensureContainsChain(document)
++        ensureTrustedChain(document.docType.value, issuerChain, isChainTrustedForAttestation)
+     }.toEitherNel().bind()
+ 
+ private fun Raise<DocumentError.X5CNotTrusted>.ensureContainsChain(
+@@ -225,21 +223,16 @@ private fun Raise<DocumentError.X5CNotTrusted>.ensureContainsChain(
+     }
+ }
+ 
+-private fun Raise<DocumentError.X5CNotTrusted>.ensureValidChain(
+-    chain: NonEmptyList<X509Certificate>,
+-    x5CShouldBe: X5CShouldBe,
+-): Nel<X509Certificate> {
+-    val x5cValidator = X5CValidator(x5CShouldBe)
+-    val validChain = x5cValidator.ensureTrusted(chain).mapLeft { exception ->
+-        DocumentError.X5CNotTrusted(exception.message)
++private suspend fun Raise<DocumentError.X5CNotTrusted>.ensureTrustedChain(
++    docType: String,
++    issuerChain: NonEmptyList<X509Certificate>,
++    isChainTrustedForAttestation: IsChainTrustedForAttestation<NonEmptyList<X509Certificate>, TrustAnchor>,
++): Nel<X509Certificate> =
++    when (isChainTrustedForAttestation.msoMdocIssuance(issuerChain, docType)) {
++        is CertificationChainValidation.Trusted -> issuerChain
++        is CertificationChainValidation.NotTrusted -> raise(X5CNotTrusted("Issuer X5C not trusted"))
++        null -> throw IllegalStateException("Could not find Attestation Classification for docType '$docType'")
+     }
+-    return validChain.bind()
+-}
+-
+-private suspend fun Raise<Nel<DocumentError.NoMatchingX5CShouldBe>>.ensureMatchingX5CShouldBe(
+-    document: MDoc,
+-    trustSourceProvider: ProvideTrustSource,
+-): X5CShouldBe = trustSourceProvider(document.docType.value) ?: raise(DocumentError.NoMatchingX5CShouldBe.nel())
+ 
+ private suspend fun Raise<DocumentError.DocumentHasBeenRevoked>.ensureNotRevoked(
+     document: MDoc,
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/HandoverInfo.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/HandoverInfo.kt
+index 2191da3..6bb9117 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/HandoverInfo.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/HandoverInfo.kt
+@@ -16,11 +16,7 @@
+ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso
+ 
+ import com.nimbusds.jose.jwk.JWK
+-import eu.europa.ec.eudi.verifier.endpoint.domain.Nonce
+-import eu.europa.ec.eudi.verifier.endpoint.domain.Presentation
+-import eu.europa.ec.eudi.verifier.endpoint.domain.ResponseMode
+-import eu.europa.ec.eudi.verifier.endpoint.domain.VerifierConfig
+-import eu.europa.ec.eudi.verifier.endpoint.domain.VerifierId
++import eu.europa.ec.eudi.verifier.endpoint.domain.*
+ import java.net.URL
+ 
+ sealed interface HandoverInfo {
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
+index ef5027d..7c1a98f 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/presentation/ValidateSdJwtVcOrMsoMdocVerifiablePresentation.kt
+@@ -26,15 +26,10 @@ import com.nimbusds.jwt.JWTClaimsSet
+ import com.nimbusds.jwt.SignedJWT
+ import eu.europa.ec.eudi.sdjwt.SdJwtVerificationException
+ import eu.europa.ec.eudi.statium.TokenStatusListSpec
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.SkipRevocation
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.digest.hash
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.encoding.base64UrlNoPadding
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.json.jsonSupport
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.*
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseError
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseValidator
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.HandoverInfo
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidationError
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.description
+@@ -50,13 +45,14 @@ import kotlinx.serialization.json.JsonArray
+ import kotlinx.serialization.json.buildJsonObject
+ import kotlinx.serialization.json.put
+ import org.slf4j.LoggerFactory
++import java.security.cert.X509Certificate
+ 
+ private val log = LoggerFactory.getLogger(ValidateSdJwtVcOrMsoMdocVerifiablePresentation::class.java)
+ 
+ internal class ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+     private val config: VerifierConfig,
+-    private val sdJwtVcValidatorFactory: (X5CShouldBe.Trusted?) -> SdJwtVcValidator,
+-    private val deviceResponseValidatorFactory: (X5CShouldBe.Trusted?) -> DeviceResponseValidator,
++    private val sdJwtVcValidatorFactory: (NonEmptyList<X509Certificate>?) -> SdJwtVcValidator,
++    private val deviceResponseValidatorFactory: (NonEmptyList<X509Certificate>?) -> DeviceResponseValidator,
+ ) : ValidateVerifiablePresentation {
+     private val vpFormatsSupported = config.clientMetaData.vpFormatsSupported
+ 
+@@ -65,12 +61,10 @@ internal class ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+         verifiablePresentation: VerifiablePresentation,
+         transactionData: NonEmptyList<TransactionData>?,
+     ): Either<WalletResponseValidationError, VerifiablePresentation> = either {
+-        val issuerChain = presentation.issuerChain?.let { X5CShouldBe.Trusted(rootCACertificates = it, customizePKIX = SkipRevocation) }
+-
+         when (verifiablePresentation.format) {
+             Format.SdJwtVc -> {
+                 val vpFormatSupported = checkNotNull(vpFormatsSupported.sdJwtVc)
+-                val validator = sdJwtVcValidatorFactory(issuerChain)
++                val validator = sdJwtVcValidatorFactory(presentation.issuerChain)
+                 validator.validateSdJwtVcVerifiablePresentation(
+                     vpFormatSupported,
+                     verifiablePresentation,
+@@ -83,7 +77,7 @@ internal class ValidateSdJwtVcOrMsoMdocVerifiablePresentation(
+ 
+             Format.MsoMdoc -> {
+                 val vpFormatSupported = checkNotNull(vpFormatsSupported.msoMdoc)
+-                val validator = deviceResponseValidatorFactory(issuerChain)
++                val validator = deviceResponseValidatorFactory(presentation.issuerChain)
+                 validator.validateMsoMdocVerifiablePresentation(
+                     presentation,
+                     verifiablePresentation,
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVcValidator.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVcValidator.kt
+index fc40e41..05ac6bf 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVcValidator.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVcValidator.kt
+@@ -23,11 +23,13 @@ import com.nimbusds.jose.proc.SecurityContext
+ import com.nimbusds.jwt.JWTClaimsSet
+ import com.nimbusds.jwt.SignedJWT
+ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
++import eu.europa.ec.eudi.etsi1196x2.consultation.CertificationChainValidation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForAttestation
+ import eu.europa.ec.eudi.sdjwt.*
+ import eu.europa.ec.eudi.sdjwt.vc.*
+-import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.*
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ProvideTrustSource
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CValidator
++import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.IssuerKeyVerificationError
++import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.TypeMetadataVerificationError
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.sdJwtVcIssuance
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.tokenstatuslist.StatusCheckException
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.tokenstatuslist.StatusListTokenValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+@@ -38,6 +40,7 @@ import kotlinx.serialization.json.JsonObject
+ import kotlinx.serialization.json.buildJsonObject
+ import kotlinx.serialization.json.put
+ import org.slf4j.LoggerFactory
++import java.security.cert.TrustAnchor
+ import java.security.cert.X509Certificate
+ 
+ internal enum class SdJwtVcValidationErrorCode {
+@@ -119,20 +122,18 @@ private fun SdJwtVcVerificationError.toSdJwtVcValidationErrorCode(): SdJwtVcVali
+ private val log = LoggerFactory.getLogger(SdJwtVcValidator::class.java)
+ 
+ internal class SdJwtVcValidator(
+-    private val provideTrustSource: ProvideTrustSource,
++    private val isChainTrustedForAttestation: IsChainTrustedForAttestation<NonEmptyList<X509Certificate>, TrustAnchor>,
+     private val audience: VerifierId,
+     private val statusListTokenValidator: StatusListTokenValidator?,
+     typeMetadataPolicy: TypeMetadataPolicy,
+ ) {
+     private val sdJwtVcVerifier: SdJwtVcVerifier<SignedJWT> = run {
+         val x509CertificateTrust = X509CertificateTrust.usingVct { chain: List<X509Certificate>, vct ->
+-            val x5CShouldBe = provideTrustSource(vct)
+-            if (x5CShouldBe != null) {
+-                val x5cValidator = X5CValidator(x5CShouldBe)
+-                val x5c = checkNotNull(chain.toNonEmptyListOrNull())
+-                x5cValidator.ensureTrusted(x5c).fold(ifLeft = { false }, ifRight = { true })
+-            } else {
+-                false
++            val x5c = checkNotNull(chain.toNonEmptyListOrNull())
++            when (isChainTrustedForAttestation.sdJwtVcIssuance(x5c, vct)) {
++                is CertificationChainValidation.Trusted -> true
++                is CertificationChainValidation.NotTrusted -> false
++                null -> throw IllegalStateException("Could not find Attestation Classification for vct '$vct'")
+             }
+         }
+         NimbusSdJwtOps.SdJwtVcVerifier(
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVerificationExceptionExtensions.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVerificationExceptionExtensions.kt
+index 2012374..523db05 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVerificationExceptionExtensions.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/sdjwtvc/SdJwtVerificationExceptionExtensions.kt
+@@ -20,7 +20,8 @@ import eu.europa.ec.eudi.sdjwt.SdJwtVerificationException
+ import eu.europa.ec.eudi.sdjwt.VerificationError
+ import eu.europa.ec.eudi.sdjwt.dsl.def.DefinitionViolation
+ import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError
+-import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.*
++import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.IssuerKeyVerificationError
++import eu.europa.ec.eudi.sdjwt.vc.SdJwtVcVerificationError.TypeMetadataVerificationError
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.json.jsonSupport
+ 
+ internal val SdJwtVerificationException.description: String
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificateChainWithNimbus.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificatesWithNimbus.kt
+similarity index 77%
+rename from src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificateChainWithNimbus.kt
+rename to src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificatesWithNimbus.kt
+index c21a429..8915746 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificateChainWithNimbus.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/x509/ParsePemEncodedX509CertificatesWithNimbus.kt
+@@ -18,14 +18,14 @@ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.x509
+ import arrow.core.Either
+ import arrow.core.toNonEmptyListOrNull
+ import com.nimbusds.jose.util.X509CertChainUtils
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509CertificateChain
++import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509Certificates
+ 
+ /**
+- * [ParsePemEncodedX509CertificateChain] implementation using Nimbus.
++ * [ParsePemEncodedX509Certificates] implementation using Nimbus.
+  */
+-internal val ParsePemEncodedX509CertificateChainWithNimbus = ParsePemEncodedX509CertificateChain { chain ->
++internal val ParsePemEncodedX509CertificatesWithNimbus = ParsePemEncodedX509Certificates { certificates ->
+     Either.catch {
+-        val certs = X509CertChainUtils.parse(chain).toNonEmptyListOrNull()
++        val certs = X509CertChainUtils.parse(certificates).toNonEmptyListOrNull()
+         requireNotNull(certs) { "Failed to parse certificates from PEM" }
+     }
+ }
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
+index dc53610..e42ea3a 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/domain/VerifierConfig.kt
+@@ -18,7 +18,6 @@
+ package eu.europa.ec.eudi.verifier.endpoint.domain
+ 
+ import arrow.core.Either
+-import arrow.core.Ior
+ import arrow.core.NonEmptyList
+ import arrow.core.nonEmptyListOf
+ import arrow.core.serialization.NonEmptyListSerializer
+@@ -299,7 +298,6 @@ data class VerifierConfig(
+     val clientMetaData: ClientMetaData,
+     val transactionDataHashAlgorithm: HashAlgorithm,
+     val authorizationRequestUri: UnresolvedAuthorizationRequestUri,
+-    val trustSourcesConfig: Map<Regex, TrustSourceConfig>?,
+ )
+ 
+ /**
+@@ -359,21 +357,6 @@ private fun SanType.asInt() =
+         SanType.DNS -> 2
+     }
+ 
+-typealias TrustSourceConfig = Ior<TrustedListConfig, KeyStoreConfig>
+-
+-enum class ProviderKind(val value: String) {
+-    PIDProvider("http://uri.etsi.org/Svc/Svctype/Provider/PID"),
+-    QEEAProvider("http://uri.etsi.org/TrstSvc/Svctype/EAA/Q"),
+-    PubEAAProvider("http://uri.etsi.org/TrstSvc/Svctype/EAA/Pub-EAA"),
+-}
+-
+-data class TrustedListConfig(
+-    val location: URL,
+-    val serviceTypeFilter: ProviderKind?,
+-    val refreshInterval: String = "0 0 * * * *",
+-    val keystoreConfig: KeyStoreConfig?,
+-)
+-
+ data class KeyStoreConfig(
+     val keystorePath: String,
+     val keystoreType: String? = "JKS",
+@@ -387,6 +370,3 @@ internal fun VpFormatsSupported.supports(format: Format): Boolean =
+         Format.MsoMdoc -> null != msoMdoc
+         else -> false
+     }
+-
+-fun TrustSourcesConfig(trustedList: TrustedListConfig?, keystore: KeyStoreConfig?): Ior<TrustedListConfig, KeyStoreConfig> =
+-    Ior.fromNullables(trustedList, keystore) ?: error("Either trustedList or keystore must be provided")
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransaction.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransaction.kt
+index 7dba320..d2d8bce 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransaction.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransaction.kt
+@@ -42,7 +42,7 @@ import eu.europa.ec.eudi.verifier.endpoint.port.out.persistence.StorePresentatio
+ import eu.europa.ec.eudi.verifier.endpoint.port.out.qrcode.GenerateQrCode
+ import eu.europa.ec.eudi.verifier.endpoint.port.out.qrcode.Pixels.Companion.pixels
+ import eu.europa.ec.eudi.verifier.endpoint.port.out.qrcode.by
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509CertificateChain
++import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509Certificates
+ import kotlinx.serialization.*
+ import kotlinx.serialization.json.JsonArray
+ import kotlinx.serialization.json.JsonObject
+@@ -257,7 +257,7 @@ class InitTransactionLive(
+     private val requestJarByReference: EmbedOption.ByReference<RequestId>,
+     private val createQueryWalletResponseRedirectUri: CreateQueryWalletResponseRedirectUri,
+     private val publishPresentationEvent: PublishPresentationEvent,
+-    private val parsePemEncodedX509CertificateChain: ParsePemEncodedX509CertificateChain,
++    private val parsePemEncodedX509CertificateChain: ParsePemEncodedX509Certificates,
+     private val generateQrCode: GenerateQrCode,
+ ) : InitTransaction {
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateMsoMdocDeviceResponse.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateMsoMdocDeviceResponse.kt
+index 1845b6f..29f65b7 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateMsoMdocDeviceResponse.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateMsoMdocDeviceResponse.kt
+@@ -19,21 +19,20 @@ import arrow.core.Either
+ import arrow.core.NonEmptyList
+ import arrow.core.getOrElse
+ import arrow.core.raise.either
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseError
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DeviceResponseValidator
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.DocumentError
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso.InvalidDocument
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Clock
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509CertificateChain
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.x5cShouldBeTrustedOrNull
++import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509Certificates
+ import id.walt.mdoc.dataelement.*
+ import id.walt.mdoc.doc.MDoc
+ import kotlinx.datetime.atStartOfDayIn
+ import kotlinx.serialization.Serializable
+ import kotlinx.serialization.json.*
+ import org.slf4j.LoggerFactory
++import java.security.cert.X509Certificate
+ import kotlin.io.encoding.Base64
+ import kotlin.io.encoding.ExperimentalEncodingApi
+ 
+@@ -133,32 +132,31 @@ internal sealed interface DeviceResponseValidationResult {
+  */
+ internal class ValidateMsoMdocDeviceResponse(
+     private val clock: Clock,
+-    private val parsePemEncodedX509CertificateChain: ParsePemEncodedX509CertificateChain,
+-    private val deviceResponseValidatorFactory: (X5CShouldBe?) -> DeviceResponseValidator,
++    private val parsePemEncodedX509Certificates: ParsePemEncodedX509Certificates,
++    private val deviceResponseValidatorFactory: (NonEmptyList<X509Certificate>?) -> DeviceResponseValidator,
+ ) {
+-    suspend operator fun invoke(deviceResponse: String, issuerChain: String?): DeviceResponseValidationResult =
+-        either {
+-            val validator = deviceResponseValidator(issuerChain)
+-                .getOrElse {
+-                    raise(ValidationErrorTO.invalidIssuerChain())
+-                }
+-
+-            val documents = validator.ensureValid(deviceResponse)
+-                .mapLeft { it.toValidationFailureTO() }
+-                .bind()
+-                .map { Json.encodeToJsonElement(it.toDocumentTO(clock)) }
+-                .let { JsonArray(it) }
+-
+-            documents
+-        }.fold(
+-            ifLeft = { DeviceResponseValidationResult.Invalid(it) },
+-            ifRight = { DeviceResponseValidationResult.Valid(it) },
+-        )
++    suspend operator fun invoke(deviceResponse: String, issuerChain: String?): DeviceResponseValidationResult = either {
++        val validator = deviceResponseValidator(issuerChain)
++            .getOrElse {
++                return DeviceResponseValidationResult.Invalid(ValidationErrorTO.invalidIssuerChain())
++            }
++
++        val documents = validator.ensureValid(deviceResponse)
++            .mapLeft { it.toValidationFailureTO() }
++            .bind()
++            .map { Json.encodeToJsonElement(it.toDocumentTO(clock)) }
++            .let { JsonArray(it) }
++
++        documents
++    }.fold(
++        ifLeft = { DeviceResponseValidationResult.Invalid(it) },
++        ifRight = { DeviceResponseValidationResult.Valid(it) },
++    )
+ 
+     private fun deviceResponseValidator(issuerChainInPem: String?): Either<Throwable, DeviceResponseValidator> = Either.catch {
+-        val x5cShouldBe = issuerChainInPem
+-            ?.let { parsePemEncodedX509CertificateChain.x5cShouldBeTrustedOrNull(it).getOrThrow() }
+-        deviceResponseValidatorFactory(x5cShouldBe)
++        deviceResponseValidatorFactory(
++            issuerChainInPem?.let { parsePemEncodedX509Certificates(it).getOrThrow() },
++        )
+     }
+ }
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+index 64ee032..7b334a4 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/ValidateSdJwtVc.kt
+@@ -19,7 +19,6 @@ import arrow.core.*
+ import com.nimbusds.jwt.SignedJWT
+ import eu.europa.ec.eudi.sdjwt.SdJwtAndKbJwt
+ import eu.europa.ec.eudi.sdjwt.SdJwtVerificationException
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidationError
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidationErrorCode
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.SdJwtVcValidator
+@@ -27,9 +26,9 @@ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.sdjwtvc.description
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.tokenstatuslist.StatusCheckException
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Nonce
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509CertificateChain
+-import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.x5cShouldBeTrustedOrNull
++import eu.europa.ec.eudi.verifier.endpoint.port.out.x509.ParsePemEncodedX509Certificates
+ import kotlinx.serialization.json.*
++import java.security.cert.X509Certificate
+ 
+ internal enum class SdJwtVcValidationErrorCodeTO {
+     IsUnparsable,
+@@ -86,8 +85,8 @@ internal sealed interface SdJwtVcValidationResult {
+  * Validates an SD-JWT Verifiable Credential.
+  */
+ internal class ValidateSdJwtVc(
+-    private val sdJwtVcValidatorFactory: (X5CShouldBe.Trusted?) -> SdJwtVcValidator,
+-    private val parsePemEncodedX509CertificateChain: ParsePemEncodedX509CertificateChain,
++    private val sdJwtVcValidatorFactory: (NonEmptyList<X509Certificate>?) -> SdJwtVcValidator,
++    private val parsePemEncodedX509Certificates: ParsePemEncodedX509Certificates,
+ ) {
+ 
+     suspend operator fun invoke(
+@@ -124,9 +123,9 @@ internal class ValidateSdJwtVc(
+     }
+ 
+     private fun sdJwtVcValidator(issuerChain: String?): Either<Throwable, SdJwtVcValidator> = Either.catch {
+-        val x5cShouldBe = issuerChain
+-            ?.let { parsePemEncodedX509CertificateChain.x5cShouldBeTrustedOrNull(it).getOrThrow() }
+-        sdJwtVcValidatorFactory(x5cShouldBe)
++        sdJwtVcValidatorFactory(
++            issuerChain?.let { parsePemEncodedX509Certificates(it).getOrThrow() },
++        )
+     }
+ }
+ 
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
+index 06b33c2..5b663cd 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/persistence/PresentationEvent.kt
+@@ -18,11 +18,7 @@ package eu.europa.ec.eudi.verifier.endpoint.port.out.persistence
+ import eu.europa.ec.eudi.statium.StatusReference
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Jwt
+ import eu.europa.ec.eudi.verifier.endpoint.domain.TransactionId
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.InitTransactionResponse
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.ProfileTO
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseAcceptedTO
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseTO
+-import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseValidationError
++import eu.europa.ec.eudi.verifier.endpoint.port.input.*
+ import kotlin.time.Instant
+ 
+ sealed interface PresentationEvent {
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
+index 0a6a938..360c391 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/presentation/ValidateVerifiablePresentation.kt
+@@ -18,7 +18,9 @@ package eu.europa.ec.eudi.verifier.endpoint.port.out.presentation
+ import arrow.core.Either
+ import arrow.core.NonEmptyList
+ import arrow.core.raise.either
+-import eu.europa.ec.eudi.verifier.endpoint.domain.*
++import eu.europa.ec.eudi.verifier.endpoint.domain.Presentation
++import eu.europa.ec.eudi.verifier.endpoint.domain.TransactionData
++import eu.europa.ec.eudi.verifier.endpoint.domain.VerifiablePresentation
+ import eu.europa.ec.eudi.verifier.endpoint.port.input.WalletResponseValidationError
+ 
+ /**
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509CertificateChain.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509CertificateChain.kt
+deleted file mode 100644
+index 0591bc1..0000000
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509CertificateChain.kt
++++ /dev/null
+@@ -1,39 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.port.out.x509
+-
+-import arrow.core.Either
+-import arrow.core.NonEmptyList
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ConfigurePKIXParameters
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.SkipRevocation
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+-import java.security.cert.X509Certificate
+-
+-/**
+- * Parses a PEM encoded X509 Certificate.
+- */
+-fun interface ParsePemEncodedX509CertificateChain {
+-    operator fun invoke(chain: String): Either<Throwable, NonEmptyList<X509Certificate>>
+-}
+-
+-fun ParsePemEncodedX509CertificateChain.x5cShouldBeTrustedOrNull(
+-    chain: String,
+-    customizePKIX: ConfigurePKIXParameters = SkipRevocation,
+-): Either<Throwable, X5CShouldBe.Trusted?> = Either.catch {
+-    val certs = invoke(chain).getOrThrow()
+-    X5CShouldBe.Trusted(certs, customizePKIX)
+-}
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/lotl/FetchLOTLCertificates.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509Certificates.kt
+similarity index 56%
+rename from src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/lotl/FetchLOTLCertificates.kt
+rename to src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509Certificates.kt
+index 11f814f..22ae6f4 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/lotl/FetchLOTLCertificates.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/out/x509/ParsePemEncodedX509Certificates.kt
+@@ -13,22 +13,15 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-package eu.europa.ec.eudi.verifier.endpoint.port.out.lotl
++package eu.europa.ec.eudi.verifier.endpoint.port.out.x509
+ 
+ import arrow.core.Either
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TrustedListConfig
++import arrow.core.NonEmptyList
+ import java.security.cert.X509Certificate
+ 
+ /**
+- * Interface for fetching LOTL certificates
++ * Parses PEM encoded X509 Certificates.
+  */
+-fun interface FetchLOTLCertificates {
+-    /**
+-     * Fetch certificates from a LOTL URL
+-     * @param trustedListConfig Configuration for the trusted list
+-     * @return Result containing a list of X509 certificates or an exception
+-     */
+-    suspend operator fun invoke(
+-        trustedListConfig: TrustedListConfig,
+-    ): Either<Throwable, List<X509Certificate>>
++fun interface ParsePemEncodedX509Certificates {
++    operator fun invoke(certificates: String): Either<Throwable, NonEmptyList<X509Certificate>>
+ }
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index 80894d5..8992f0c 100644
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -52,14 +52,20 @@ cors.headers=*
+ cors.credentials=false
+ cors.maxAge=3600
+ 
+-# Trust Sources
+-#verifier.trustSources[0].pattern=.*
+-#verifier.trustSources[0].keystore.path=classpath:lotl.jks
+-#verifier.trustSources[0].keystore.type=JKS
+[REDACTED credential-related line]
++# Trust Validator Service Configuration
++#verifier.trust.service-url=https://dev.trust-validator.eudiw.dev/trust
++
++# Attestation Classifications
++#verifier.attestation-classifications.pid.vcts=urn:eudi:pid:1
++#verifier.attestation-classifications.pid.doc-types=eu.europa.ec.eudi.pid.1
++#verifier.attestation-classifications.pubeaa.vcts=urn:eudi:ehic:1
++#verifier.attestation-classifications.eaa[0].use-case=mDL
++#verifier.attestation-classifications.eaa[0].doc-types=org.iso.18013.5.1.mDL
++#verifier.attestation-classifications.eaa[1].use-case=learningCredential
++#verifier.attestation-classifications.eaa[1].vcts=urn:eu.europa.ec.eudi:learning:credential:1
+ 
+ # Proxy settings
+-#verifier.http.proxy.url=http://exmaple.com
++#verifier.http.proxy.url=http://example.com
+ #verifier.http.proxy.username=test
+[REDACTED credential-related line]
+ 
+@@ -74,5 +80,4 @@ verifier.validation.sdJwtVc.typeMetadata.resolution.integrity.enabled=false
+ verifier.validation.sdJwtVc.typeMetadata.resolution.integrity.allowedAlgorithms=sha256,sha384,sha512
+ #verifier.validation.sdJwtVc.typeMetadata.resolution.vcts[0].vct=urn:eudi:pid:1
+ #verifier.validation.sdJwtVc.typeMetadata.resolution.vcts[0].url=https://dev.issuer-backend.eudiw.dev/type-metadata/urn:eudi:pid:1
+-verifier.validation.sdJwtVc.typeMetadata.jsonSchema.validation.enabled=true
+ 
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/TestContext.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/TestContext.kt
+index 57644c1..2d1679a 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/TestContext.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/TestContext.kt
+@@ -28,7 +28,7 @@ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.keystore.loadJWK
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.keystore.loadKeyStore
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.persistence.PresentationInMemoryRepo
+ import eu.europa.ec.eudi.verifier.endpoint.adapter.out.qrcode.GenerateQrCodeFromData
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.x509.ParsePemEncodedX509CertificateChainWithNimbus
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.x509.ParsePemEncodedX509CertificatesWithNimbus
+ import eu.europa.ec.eudi.verifier.endpoint.domain.*
+ import eu.europa.ec.eudi.verifier.endpoint.port.input.InitTransaction
+ import eu.europa.ec.eudi.verifier.endpoint.port.input.InitTransactionLive
+@@ -98,7 +98,7 @@ object TestContext {
+             requestJarByReference,
+             CreateQueryWalletResponseRedirectUri.simple("https"),
+             repo.publishPresentationEvent,
+-            ParsePemEncodedX509CertificateChainWithNimbus,
++            ParsePemEncodedX509CertificatesWithNimbus,
+             generateQrCode,
+         )
+ }
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+index 6bfe1d9..5a51cfd 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/WalletResponseDirectPostJwtTest.kt
+@@ -323,6 +323,8 @@ internal class WalletResponseDirectPostJwtValidationsEnabledTest {
+         "verifier.clientMetadata.responseEncryption.method=A128GCM",
+         "verifier.jwk.embed=ByValue",
+         "verifier.validation.sdJwtVc.statusCheck.enabled=false",
++        "verifier.attestation-classifications.eaa[0].use-case=mDL",
++        "verifier.attestation-classifications.eaa[0].doc-types=org.iso.18013.5.1.mDL",
+     ],
+ )
+ internal class DeviceResponseValidationTest {
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/CertOps.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/CertOps.kt
+deleted file mode 100644
+index 0fd3c96..0000000
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/CertOps.kt
++++ /dev/null
+@@ -1,228 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert
+-
+-import eu.europa.ec.eudi.verifier.endpoint.domain.Clock
+-import eu.europa.ec.eudi.verifier.endpoint.domain.toJavaDate
+-import org.bouncycastle.asn1.x500.X500Name
+-import org.bouncycastle.asn1.x509.BasicConstraints
+-import org.bouncycastle.asn1.x509.Extension
+-import org.bouncycastle.asn1.x509.KeyUsage
+-import org.bouncycastle.cert.X509CertificateHolder
+-import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
+-import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder
+-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
+-import org.bouncycastle.operator.ContentSigner
+-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+-import java.math.BigInteger
+-import java.security.*
+-import java.security.cert.CertificateFactory
+-import java.security.cert.X509Certificate
+-import java.util.*
+-import kotlin.time.Duration
+-import kotlin.time.Instant
+-
+-internal object CertOps {
+-    private val Ctx = SecCtx(null)
+-
+-    private val clock = Clock.System
+-
+-    private var serialNumberBase: Long = System.currentTimeMillis()
+-
+-    @Synchronized
+-    private fun calculateSerialNumber(): BigInteger = BigInteger.valueOf(serialNumberBase++)
+-
+-    private fun calculateDate(hoursInFuture: Int): Date {
+-        val secs = System.currentTimeMillis() / 1000
+-        return Date((secs + (hoursInFuture * 60 * 60)) * 1000)
+-    }
+-
+-    private fun notBefore(d: Duration = Duration.ZERO): Instant =
+-        (clock.now() + d)
+-
+-    fun genTrustAnchor(
+-        sigAlg: String,
+-        name: X500Name,
+-    ): Pair<KeyPair, X509CertificateHolder> {
+-        val kp = Ctx.generateECPair()
+-        val certHolder = createTrustAnchor(kp, sigAlg, name)
+-        return kp to certHolder
+-    }
+-
+-    fun genIntermediateCertificate(
+-        signerCert: X509CertificateHolder,
+[REDACTED credential-related line]
+-        sigAlg: String,
+-        followingCACerts: Int = 0,
+-        subject: X500Name,
+-    ): Pair<KeyPair, X509CertificateHolder> {
+-        val caKp = Ctx.generateECPair()
+-        val caCertHolder =
+-            createIntermediateCertificate(signerCert, signerKey, sigAlg, caKp.public, followingCACerts, subject)
+-        return caKp to caCertHolder
+-    }
+-
+-    fun genEndEntity(
+-        signerCert: X509CertificateHolder,
+[REDACTED credential-related line]
+-        sigAlg: String,
+-        subject: X500Name,
+-    ): Pair<KeyPair, X509CertificateHolder> {
+-        val eeKp = Ctx.generateECPair()
+-        val eeCertHolder = createEndEntity(signerCert, signerKey, sigAlg, eeKp.public, subject)
+-        return eeKp to eeCertHolder
+-    }
+-
+-    /**
+-     * Build a sample self-signed V1 certificate to use as a trust anchor, or
+-     *  root certificate.
+-     */
+-    fun createTrustAnchor(
+-        keyPair: KeyPair,
+-        sigAlg: String,
+-        name: X500Name,
+-    ): X509CertificateHolder {
+-        return JcaX509v1CertificateBuilder(
+-            name,
+-            calculateSerialNumber(),
+-            notBefore().toJavaDate(),
+-            calculateDate(24 * 31),
+-            name,
+-            keyPair.public,
+-        ).build(sigAlg, keyPair.private)
+-    }
+-
+-    /**
+-     * Build a sample V3 intermediate certificate that can be used as a CA
+-     *  certificate.
+-     *  @param signerCert certificate carrying the public key that will late
+-     *  be used to verify this certificate's signature
+-     *  @param signerKey private key used to generate the signature in the certificate
+-     *  @param certKey public key to be installed in the certificate.
+-     */
+-    fun createIntermediateCertificate(
+-        signerCert: X509CertificateHolder,
+[REDACTED credential-related line]
+-        sigAlg: String,
+-        certKey: PublicKey,
+-        followingCACerts: Int = 0,
+-        subject: X500Name,
+-    ): X509CertificateHolder =
+-        JcaX509v3CertificateBuilder(
+-            signerCert.subject,
+-            calculateSerialNumber(),
+-            notBefore().toJavaDate(),
+-            calculateDate(24 * 31),
+-            subject,
+-            certKey,
+-        ).apply {
+-            authorityKeyIdentifier(signerCert)
+-            subjectKeyIdentifier(certKey)
+-            basicConstraints(BasicConstraints(followingCACerts)) // allow this cert to sign other certs
+-            keyUsage(KeyUsage(KeyUsage.digitalSignature or KeyUsage.keyCertSign or KeyUsage.cRLSign))
+-        }.build(sigAlg, signerKey)
+-
+-    fun createEndEntity(
+-        signerCert: X509CertificateHolder,
+[REDACTED credential-related line]
+-        sigAlg: String,
+-        certKey: PublicKey,
+-        subject: X500Name,
+-    ): X509CertificateHolder =
+-        JcaX509v3CertificateBuilder(
+-            signerCert.subject,
+-            calculateSerialNumber(),
+-            notBefore().toJavaDate(),
+-            calculateDate(24 * 31),
+-            subject,
+-            certKey,
+-        ).apply {
+-            authorityKeyIdentifier(signerCert)
+-            subjectKeyIdentifier(certKey)
+-            basicConstraints(BasicConstraints(false)) // do not allow this cert to sign other certs
+-            keyUsage(KeyUsage(KeyUsage.digitalSignature))
+-        }.build(sigAlg, signerKey)
+-
+[REDACTED credential-related line]
+-        Ctx.jcaContentSignerBuilder(sigAlg).build(privateKey)
+-
+-    fun X509CertificateHolder.toCertificate(): X509Certificate {
+-        val cFact = Ctx.certFactory()
+-        return cFact.generateCertificate(encoded.inputStream()) as X509Certificate
+-    }
+-
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+-        return build(signer)
+-    }
+[REDACTED credential-related line]
+[REDACTED credential-related line]
+-        return build(signer)
+-    }
+-}
+-
+-//
+-// Kotlin extensions
+-//
+-
+-private fun JcaX509v3CertificateBuilder.authorityKeyIdentifier(signerCert: X509CertificateHolder) {
+-    addExtension(Extension.authorityKeyIdentifier, false, extUtils.createAuthorityKeyIdentifier(signerCert))
+-}
+-
+-private fun JcaX509v3CertificateBuilder.subjectKeyIdentifier(certKey: PublicKey) {
+-    addExtension(Extension.subjectKeyIdentifier, false, extUtils.createSubjectKeyIdentifier(certKey))
+-}
+-
+-private fun JcaX509v3CertificateBuilder.keyUsage(keyUsage: KeyUsage) {
+-    addExtension(Extension.keyUsage, true, keyUsage)
+-}
+-
+-/**
+- * The BasicConstraints extension helps you to determine if the certificate containing it is allowed to
+- * sign other certificates, and if so, what depth this can go to.
+- *
+- * So, for example, if cA is TRUE and the pathLenConstraint is 0, then the certificate, as far as this extension
+- * is concerned, is allowed to sign other certificates, but none of the certificates so signed can be used to sign other certificates and lengthen
+- * the chain.
+- *
+- */
+-private fun JcaX509v3CertificateBuilder.basicConstraints(c: BasicConstraints) {
+-    addExtension(Extension.basicConstraints, true, c)
+-}
+-
+-private val extUtils = JcaX509ExtensionUtils()
+-
+-private class SecCtx(private val provider: Provider? = null) {
+-
+-    fun certFactory(): CertificateFactory =
+-        provider
+-            ?.let { CertificateFactory.getInstance("X.509", it) }
+-            ?: CertificateFactory.getInstance("X.509")
+-
+-    fun kpGenerator(): KeyPairGenerator =
+-        provider
+-            ?.let { KeyPairGenerator.getInstance("EC", provider) }
+-            ?: KeyPairGenerator.getInstance("EC")
+-
+-    fun generateECPair(): KeyPair = kpGenerator().genKeyPair()
+-
+-    fun jcaContentSignerBuilder(sigAlg: String) =
+-        JcaContentSignerBuilder(sigAlg).apply {
+-            if (provider != null) {
+-                setProvider(provider)
+-            }
+-        }
+-}
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidatorTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidatorTest.kt
+deleted file mode 100644
+index a9e4750..0000000
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/cert/X5CValidatorTest.kt
++++ /dev/null
+@@ -1,148 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert
+-
+-import arrow.core.Nel
+-import arrow.core.nonEmptyListOf
+-import org.bouncycastle.asn1.x500.X500Name
+-import org.bouncycastle.asn1.x500.X500NameBuilder
+-import org.bouncycastle.asn1.x500.style.BCStyle
+-import org.junit.jupiter.api.DisplayName
+-import org.junit.jupiter.api.assertDoesNotThrow
+-import org.junit.jupiter.api.assertThrows
+-import java.security.cert.CertPathValidatorException
+-import java.security.cert.X509Certificate
+-import kotlin.test.Test
+-
+-data class TrustedCA(val trustCert: X509Certificate, val caCert: X509Certificate)
+-
+-object Sample {
+-    private const val SIGN_ALG = "SHA256withECDSA"
+-
+-    fun create(): Pair<TrustedCA, X509Certificate> = with(CertOps) {
+-        //
+-        // Trust Anchor
+-        //
+-        val name: X500Name =
+-            X500NameBuilder(BCStyle.INSTANCE).apply {
+-                addRDN(BCStyle.C, "Utopia")
+-                addRDN(BCStyle.O, "Awesome Organization")
+-                addRDN(BCStyle.CN, "Demo Root Certificate")
+-            }.build()
+-        val (trustKeyPair, trustCertHolder) = genTrustAnchor(SIGN_ALG, name)
+-        val trustCert = trustCertHolder.toCertificate()
+-
+-        //
+-        // CA
+-        //
+-        val caSubject =
+-            X500NameBuilder(BCStyle.INSTANCE).apply {
+-                addRDN(BCStyle.C, "Utopia")
+-                addRDN(BCStyle.O, "Awesome Organization")
+-                addRDN(BCStyle.CN, "Demo Intermediate Certificate")
+-            }.build()
+-        val (caKeyPair, caCertHolder) =
+-            genIntermediateCertificate(
+-                trustCertHolder,
+-                trustKeyPair.private,
+-                SIGN_ALG,
+-                0,
+-                caSubject,
+-            )
+-        val caCert = caCertHolder.toCertificate()
+-
+-        //
+-        // End Entity
+-        //
+-        val eeSubject =
+-            X500NameBuilder(BCStyle.INSTANCE).apply {
+-                addRDN(BCStyle.C, "Utopia")
+-                addRDN(BCStyle.O, "Awesome Organization")
+-                addRDN(BCStyle.CN, "Demo End-Entity Certificate")
+-            }.build()
+-        val (_, eeCertHolder) =
+-            genEndEntity(caCertHolder, caKeyPair.private, SIGN_ALG, eeSubject)
+-        val eeCert = eeCertHolder.toCertificate()
+-
+-        return TrustedCA(trustCert, caCert) to eeCert
+-    }
+-}
+-
+-@DisplayName("validateChain, when")
+-class X5CValidatorTest {
+-    private val entities = Sample.create()
+-    private val trustedCA = entities.first
+-    private val eeCertificate = entities.second
+-
+-    @Test
+-    fun `chain contains end-entity and CA certs should succeed`() {
+-        // Chain contains end-entity and CA certs
+-        // trust contains the trust anchor cert
+-        val chain = nonEmptyListOf(eeCertificate, trustedCA.caCert)
+-        val trust = nonEmptyListOf(trustedCA.trustCert)
+-        assertDoesNotThrow { test(chain, trust) }
+-    }
+-
+-    @Test
+-    fun `chain contains end-entity CA and Trust certs should succeed`() {
+-        // Chain contains end-entity, CA and Trust Anchor certs
+-        // trust contains the trust anchor cert
+-        val chain = nonEmptyListOf(
+-            eeCertificate,
+-            trustedCA.caCert,
+-            trustedCA.trustCert,
+-        )
+-        val trust = nonEmptyListOf(trustedCA.trustCert)
+-
+-        assertDoesNotThrow { test(chain, trust) }
+-    }
+-
+-    @Test
+-    fun `chain contain end-entity cert, trust contains CA and Trust certs then should succeed`() {
+-        // Chain contains end-entity
+-        // trust contains the CA and Trust Anchor certs
+-        val chain = nonEmptyListOf(eeCertificate)
+-        val trust = nonEmptyListOf(trustedCA.caCert, trustedCA.trustCert)
+-        assertDoesNotThrow { test(chain, trust) }
+-    }
+-
+-    @Test
+-    fun `cert order in chain should not affect validation`() {
+-        val chain = nonEmptyListOf(trustedCA.caCert, eeCertificate)
+-        val trust = nonEmptyListOf(trustedCA.trustCert)
+-        assertThrows<CertPathValidatorException> { test(chain, trust) }
+-    }
+-
+-    @Test
+-    fun `validate a partial chain should fail`() {
+-        val chain = nonEmptyListOf(eeCertificate)
+-        val trust = nonEmptyListOf(trustedCA.trustCert)
+-        assertThrows<CertPathValidatorException> { test(chain, trust) }
+-    }
+-
+-    @Test
+-    fun `when directly trusting the CA should succeed `() {
+-        val chain = nonEmptyListOf(eeCertificate)
+-        val trust = nonEmptyListOf(trustedCA.caCert)
+-        assertDoesNotThrow { test(chain, trust) }
+-    }
+-}
+-
+-private fun test(chain: Nel<X509Certificate>, trust: Nel<X509Certificate>) {
+-    val x5CShouldBe = X5CShouldBe.Trusted(trust)
+-    val validator = X5CValidator(x5CShouldBe)
+-    validator.trustedOrThrow(chain)
+-}
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSSTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSSTest.kt
+deleted file mode 100644
+index a21c006..0000000
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/lotl/FetchLOTLCertificatesDSSTest.kt
++++ /dev/null
+@@ -1,51 +0,0 @@
+-/*
+[REDACTED attribution]
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package eu.europa.ec.eudi.verifier.endpoint.adapter.out.lotl
+-
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.utils.getOrThrow
+-import eu.europa.ec.eudi.verifier.endpoint.domain.TrustedListConfig
+-import kotlinx.coroutines.test.runTest
+-import org.junit.jupiter.api.Assertions.assertEquals
+-import org.junit.jupiter.api.Assertions.assertTrue
+-import java.net.URI
+-import java.security.KeyStore
+-
+-class FetchLOTLCertificatesDSSTest {
+-
+-    // @Test
+-    fun `get certs`() = runTest {
+-        val fetchLOTLCertificatesDSS = FetchLOTLCertificatesDSS()
+-
+-        val certificates = fetchLOTLCertificatesDSS(
+-            TrustedListConfig(
+-                URI("https://ec.europa.eu/tools/lotl/eu-lotl.xml").toURL(),
+-                null,
+-                "0 *",
+-                keystoreConfig = null,
+-            ),
+-        ).getOrThrow()
+-        assertTrue(certificates.isNotEmpty())
+-
+-        val keyStore = KeyStore.getInstance("JKS")
+-        keyStore.load(null, null)
+-
+-        certificates.forEachIndexed { index, cert ->
+-            keyStore.setCertificateEntry("cert_$index", cert)
+-        }
+-
+-        assertEquals(certificates.size, keyStore.aliases().toList().size)
+-    }
+-}
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DeviceResponseValidatorTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DeviceResponseValidatorTest.kt
+index 18eb611..84740ea 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DeviceResponseValidatorTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/DeviceResponseValidatorTest.kt
+@@ -17,8 +17,12 @@ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso
+ 
+ import arrow.core.NonEmptyList
+ import arrow.core.toNonEmptyListOrNull
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ProvideTrustSource
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.X5CShouldBe
++import eu.europa.ec.eudi.etsi1196x2.consultation.AttestationClassifications
++import eu.europa.ec.eudi.etsi1196x2.consultation.AttestationIdentifierPredicate
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForAttestation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForContextF
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.Ignored
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.usingTrustAnchors
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Clock
+ import eu.europa.ec.eudi.verifier.endpoint.domain.toJavaDate
+ import kotlinx.coroutines.test.runTest
+@@ -59,7 +63,10 @@ object Data {
+             .inputStream
+             .use { inputStream ->
+                 val keyStore = loadKeystore(inputStream)
+-                val certs = X5CShouldBe.trustedCAs(keyStore).toNonEmptyListOrNull()
++                val certs = run {
++                    val aliases = keyStore.aliases().toList()
++                    aliases.filter { keyStore.isCertificateEntry(it) }.mapNotNull { keyStore.getCertificate(it) as? X509Certificate }
++                }.toNonEmptyListOrNull()
+                 requireNotNull(certs) { "Unable to load X509 Certificates from 'classpath:trusted-issuers.jks'" }
+             }
+     }
+@@ -101,17 +108,21 @@ class DeviceResponseValidatorTest {
+     @Test
+     fun `a vp_token where the 3d document has an invalid validity info should not fail when skip`() = runTest {
+         val validDocuments = run {
+-            val trustSources = ProvideTrustSource.forAll(
+-                X5CShouldBe.Trusted(Data.caCerts) {
+-                    isRevocationEnabled = false
+-                    date = clock.now().toJavaDate()
+-                },
+-            )
+-
+             val docV = DocumentValidator(
+                 clock = clock,
+                 validityInfoShouldBe = ValidityInfoShouldBe.Ignored,
+-                provideTrustSource = trustSources,
++                isChainTrustedForAttestation = IsChainTrustedForAttestation(
++                    IsChainTrustedForContextF.usingTrustAnchors(Data.caCerts) {
++                        isRevocationEnabled = false
++                        date = clock.now().toJavaDate()
++                    },
++                    AttestationClassifications(
++                        pids = AttestationIdentifierPredicate.mdocMatching("^eu\\.europa\\.ec\\.eudi\\.pid\\.1$".toRegex()),
++                        eaAs = mapOf(
++                            "mDL" to AttestationIdentifierPredicate.mdocMatching("^org\\.iso\\.18013\\.5\\.1\\.mDL$".toRegex()),
++                        ),
++                    ),
++                ),
+                 statusListTokenValidator = null,
+             )
+             val vpValidator = DeviceResponseValidator(docV)
+@@ -143,7 +154,20 @@ class DeviceResponseValidatorTest {
+     @Test
+     fun `a vp_token having a single document skipping chain validation should be valid`() = runTest {
+         val validDocuments = run {
+-            val docV = DocumentValidator(provideTrustSource = ProvideTrustSource.Ignored, clock = clock, statusListTokenValidator = null)
++            val docV =
++                DocumentValidator(
++                    isChainTrustedForAttestation = IsChainTrustedForAttestation(
++                        IsChainTrustedForContextF.Ignored,
++                        AttestationClassifications(
++                            pids = AttestationIdentifierPredicate.mdocMatching("^eu\\.europa\\.ec\\.eudi\\.pid\\.1$".toRegex()),
++                            eaAs = mapOf(
++                                "mDL" to AttestationIdentifierPredicate.mdocMatching("^org\\.iso\\.18013\\.5\\.1\\.mDL$".toRegex()),
++                            ),
++                        ),
++                    ),
++                    clock = clock,
++                    statusListTokenValidator = null,
++                )
+             val vpValidator = DeviceResponseValidator(docV)
+             val validated = vpValidator.ensureValid(Data.MdlVP)
+             assertNotNull(validated.getOrNull())
+@@ -154,15 +178,22 @@ class DeviceResponseValidatorTest {
+ }
+ 
+ private fun deviceResponseValidator(caCerts: NonEmptyList<X509Certificate>, clock: Clock): DeviceResponseValidator {
+-    val x5CShouldBe = X5CShouldBe.Trusted(Data.caCerts) {
+-        isRevocationEnabled = false
+-        date = clock.now().toJavaDate()
+-    }
+     val documentValidator = DocumentValidator(
+         clock,
+         ValidityInfoShouldBe.NotExpired,
+         IssuerSignedItemsShouldBe.Verified,
+-        provideTrustSource = ProvideTrustSource.forAll(x5CShouldBe),
++        isChainTrustedForAttestation = IsChainTrustedForAttestation(
++            IsChainTrustedForContextF.usingTrustAnchors(Data.caCerts) {
++                isRevocationEnabled = false
++                date = clock.now().toJavaDate()
++            },
++            AttestationClassifications(
++                pids = AttestationIdentifierPredicate.mdocMatching("^eu\\.europa\\.ec\\.eudi\\.pid\\.1$".toRegex()),
++                eaAs = mapOf(
++                    "mDL" to AttestationIdentifierPredicate.mdocMatching("^org\\.iso\\.18013\\.5\\.1\\.mDL$".toRegex()),
++                ),
++            ),
++        ),
+         statusListTokenValidator = null,
+     )
+     return DeviceResponseValidator(documentValidator)
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/ExamplesTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/ExamplesTest.kt
+index 8144eeb..af51e9e 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/ExamplesTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/out/mso/ExamplesTest.kt
+@@ -17,7 +17,11 @@ package eu.europa.ec.eudi.verifier.endpoint.adapter.out.mso
+ 
+ import arrow.core.getOrElse
+ import cbor.Cbor
+-import eu.europa.ec.eudi.verifier.endpoint.adapter.out.cert.ProvideTrustSource
++import eu.europa.ec.eudi.etsi1196x2.consultation.AttestationClassifications
++import eu.europa.ec.eudi.etsi1196x2.consultation.AttestationIdentifierPredicate
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForAttestation
++import eu.europa.ec.eudi.etsi1196x2.consultation.IsChainTrustedForContextF
++import eu.europa.ec.eudi.verifier.endpoint.adapter.out.consultation.Ignored
+ import eu.europa.ec.eudi.verifier.endpoint.domain.Clock
+ import id.walt.mdoc.dataelement.toDataElement
+ import id.walt.mdoc.doc.MDoc
+@@ -64,7 +68,15 @@ class ExamplesTest {
+ 
+         val documentValidator = DocumentValidator(
+             clock = Clock.fixed(issuedAt.toInstant().toKotlinInstant(), issuedAt.zone.toKotlinTimeZone()),
+-            provideTrustSource = ProvideTrustSource.Ignored,
++            isChainTrustedForAttestation = IsChainTrustedForAttestation(
++                IsChainTrustedForContextF.Ignored,
++                AttestationClassifications(
++                    pids = AttestationIdentifierPredicate.mdocMatching("^eu\\.europa\\.ec\\.eudi\\.pid\\.1$".toRegex()),
++                    eaAs = mapOf(
++                        "mDL" to AttestationIdentifierPredicate.mdocMatching("^org\\.iso\\.18013\\.5\\.1\\.mDL$".toRegex()),
++                    ),
++                ),
++            ),
+             statusListTokenValidator = null,
+         )
+         val document = MDoc.fromCBORHex(waltIdExample)
+@@ -80,12 +92,19 @@ class ExamplesTest {
+             return Cbor.decodeFromByteArray<IssuerSigned>(cbor)
+         }
+ 
+-        val trustSources = ProvideTrustSource.Ignored
+         val issuedAt = ZonedDateTime.parse("2024-08-02T16:22:19.252519705Z")
+         val document = issuerSigned().asMDocWithDocType("org.iso.18013.5.1.mDL")
+         val documentValidator = DocumentValidator(
+             clock = Clock.fixed(issuedAt.toInstant().toKotlinInstant(), issuedAt.zone.toKotlinTimeZone()),
+-            provideTrustSource = trustSources::invoke,
++            isChainTrustedForAttestation = IsChainTrustedForAttestation(
++                IsChainTrustedForContextF.Ignored,
++                AttestationClassifications(
++                    pids = AttestationIdentifierPredicate.mdocMatching("^eu\\.europa\\.ec\\.eudi\\.pid\\.1$".toRegex()),
++                    eaAs = mapOf(
++                        "mDL" to AttestationIdentifierPredicate.mdocMatching("^org\\.iso\\.18013\\.5\\.1\\.mDL$".toRegex()),
++                    ),
++                ),
++            ),
+             statusListTokenValidator = null,
+         )
+         documentValidator.ensureValid(document).getOrElse { fail(it.toString()) }
+diff --git a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
+index 45d2de2..4e71e09 100644
+--- a/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
++++ b/src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/InitTransactionTest.kt
+@@ -48,7 +48,6 @@ class InitTransactionTest {
+         transactionDataHashAlgorithm = HashAlgorithm.SHA_256,
+         requestUriMethod = RequestUriMethod.Get,
+         authorizationRequestUri = UnresolvedAuthorizationRequestUri.fromUri("haip-vp://").getOrThrow(),
+-        trustSourcesConfig = mapOf(),
+     )
+ 
+     @Test
+@@ -88,7 +87,6 @@ class InitTransactionTest {
+                 transactionDataHashAlgorithm = HashAlgorithm.SHA_256,
+                 requestUriMethod = RequestUriMethod.Get,
+                 authorizationRequestUri = UnresolvedAuthorizationRequestUri.fromUri("haip-vp://").getOrThrow(),
+-                trustSourcesConfig = mapOf(),
+             )
+ 
+             val input = InitTransactionTO(
+

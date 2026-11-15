@@ -1,0 +1,48 @@
+diff --git a/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/config/mqtt2http/MqttToHttpMapping.java b/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/config/mqtt2http/MqttToHttpMapping.java
+index fa41867a6..d81d58a45 100644
+--- a/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/config/mqtt2http/MqttToHttpMapping.java
++++ b/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/config/mqtt2http/MqttToHttpMapping.java
+@@ -49,6 +49,7 @@ public class MqttToHttpMapping implements WritingContext {
+             required = true)
+     private final @NotNull String mqttTopicFilter;
+ 
++    @SuppressWarnings("UnusedVariable") // field used by Jackson via @JsonProperty
+     @JsonProperty("mqttMaxQos")
+     @ModuleConfigField(
+             title = "MQTT Maximum QoS",
+diff --git a/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/mqtt2http/JsonSchema.java b/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/mqtt2http/JsonSchema.java
+index 7c9326fcf..4c2d12ef8 100644
+--- a/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/mqtt2http/JsonSchema.java
++++ b/modules/hivemq-edge-module-http/src/main/java/com/hivemq/edge/adapters/http/mqtt2http/JsonSchema.java
+@@ -26,17 +26,19 @@ public class JsonSchema {
+ 
+     public static @NotNull JsonNode createJsonSchema() {
+         try {
+-            return OBJECT_MAPPER.readTree("{\n" + "  \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\n"
+-                    + "  \"type\": \"object\",\n"
+-                    + "  \"properties\": {\n"
+-                    + "    \"value\": {\n"
+-                    + "      \"type\": \"object\"\n"
+-                    + "    }\n"
+-                    + "  },\n"
+-                    + "  \"required\": [\n"
+-                    + "    \"value\"\n"
+-                    + "  ]\n"
+-                    + "}");
++            return OBJECT_MAPPER.readTree("""
++                    {
++                      "$schema": "https://json-schema.org/draft/2019-09/schema",
++                      "type": "object",
++                      "properties": {
++                        "value": {
++                          "type": "object"
++                        }
++                      },
++                      "required": [
++                        "value"
++                      ]
++                    }""");
+         } catch (final JsonProcessingException e) {
+             throw new RuntimeException(e);
+         }
+

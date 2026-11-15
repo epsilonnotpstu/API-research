@@ -1,0 +1,28 @@
+diff --git a/src/main/java/ru/iopump/qa/allure/properties/AllureProperties.java b/src/main/java/ru/iopump/qa/allure/properties/AllureProperties.java
+index 6421cb4..beeb5bb 100644
+--- a/src/main/java/ru/iopump/qa/allure/properties/AllureProperties.java
++++ b/src/main/java/ru/iopump/qa/allure/properties/AllureProperties.java
+@@ -37,7 +37,8 @@ public class AllureProperties {
+ 
+     @PostConstruct
+     void init() {
+-        log.info("[ALLURE SERVER CONFIGURATION] Main AllureProperties parameters: " + this);
++        if (log.isInfoEnabled())
++            log.info("[ALLURE SERVER CONFIGURATION] Main AllureProperties parameters: " + this);
+     }
+ 
+     @Getter
+diff --git a/src/main/java/ru/iopump/qa/allure/properties/BasicProperties.java b/src/main/java/ru/iopump/qa/allure/properties/BasicProperties.java
+index a9cb805..0266b71 100644
+--- a/src/main/java/ru/iopump/qa/allure/properties/BasicProperties.java
++++ b/src/main/java/ru/iopump/qa/allure/properties/BasicProperties.java
+@@ -31,6 +31,7 @@ public class BasicProperties {
+ 
+     @PostConstruct
+     void init() {
+-        log.info("[ALLURE SERVER CONFIGURATION] Authorization parameters: " + this);
++        if (log.isInfoEnabled())
++            log.info("[ALLURE SERVER CONFIGURATION] Authorization parameters: " + this);
+     }
+ }
+

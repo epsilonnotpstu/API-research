@@ -1,0 +1,234 @@
+diff --git a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
+index ddc7ac6c2..18d662b99 100644
+--- a/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
++++ b/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml
+@@ -50,12 +50,20 @@ paths:
+         - {}
+         - BearerAuthOAuth: []
+       parameters:
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Timestamp-UTC"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Operation-Type"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-Signature"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-ID"
+[REDACTED credential-related line]
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Bank-ID"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-User-ID"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Service-Session-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-ID"
+       responses:
+         '200':
+           $ref: '#/components/responses/OK_200_PaymentInitiationInformation'
+ 
+-  /v1/{payment-service}/{payment-product}/{paymentId}/status:
++  /v1/banking/pis/payments/{payment-product}/{paymentId}/status:
+     get:
+       summary: Payment initiation status request
+       description: Check the transaction status of a payment initiation.
+@@ -66,6 +74,14 @@ paths:
+         - {}
+         - BearerAuthOAuth: []
+       parameters:
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Timestamp-UTC"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Operation-Type"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-Signature"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-ID"
+[REDACTED credential-related line]
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Bank-ID"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Fintech-User-ID"
++        - $ref: "./tpp_banking_api_commons.yml#/components/parameters/Service-Session-ID"
+         - $ref: "./tpp_banking_api_commons.yml#/components/parameters/X-Request-ID"
+       responses:
+         '200':
+diff --git a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+index d68c9c849..c7f89aca1 100644
+--- a/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
++++ b/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java
+@@ -35,10 +35,24 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+ 
+ 
+     @Override
+-    public CompletableFuture getPaymentInformation(UUID xRequestID) {
++    public CompletableFuture getPaymentInformation(String serviceSessionPassword,
++                                                   String fintechUserID,
++                                                   UUID xRequestID,
++                                                   String xTimestampUTC,
++                                                   String xOperationType,
++                                                   String xRequestSignature,
++                                                   String fintechID,
++                                                   String bankID,
++                                                   UUID serviceSessionID) {
+         return paymentInfoService.execute(
+                 PaymentInfoRequest.builder()
+                         .facadeServiceable(FacadeServiceableRequest.builder()
++                                .requestId(xRequestID)
++                                .bankId(bankID)
++                                .sessionPassword(serviceSessionPassword)
++                                .fintechUserId(fintechUserID)
++                                .authorization(fintechID)
++                                .serviceSessionId(serviceSessionID)
+                                 .build()
+                         )
+                         .build()
+@@ -46,10 +60,24 @@ public class TppBankingApiPisInfoController implements TppBankingApiPaymentStatu
+     }
+ 
+     @Override
+-    public CompletableFuture getPaymentInitiationStatus(UUID xRequestID) {
++    public CompletableFuture getPaymentInitiationStatus(String serviceSessionPassword,
++                                                        String fintechUserID,
++                                                        UUID xRequestID,
++                                                        String xTimestampUTC,
++                                                        String xOperationType,
++                                                        String xRequestSignature,
++                                                        String fintechID,
++                                                        String bankID,
++                                                        UUID serviceSessionID) {
+         return paymentStatusService.execute(
+                 PaymentStatusRequest.builder()
+                         .facadeServiceable(FacadeServiceableRequest.builder()
++                                .requestId(xRequestID)
++                                .bankId(bankID)
++                                .sessionPassword(serviceSessionPassword)
++                                .fintechUserId(fintechUserID)
++                                .authorization(fintechID)
++                                .serviceSessionId(serviceSessionID)
+                                 .build()
+                         )
+                         .build()
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
+index b5a9cdd47..c06db53e7 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java
+@@ -48,4 +48,9 @@ public class GlobalConst {
+      * Commonly used keyword for DTO mappers.
+      */
+     public static final String SPRING_KEYWORD = "spring";
++
++    /**
++     * Default payment product for getting payment info or payment status
++     */
++    public static final String PAYMENT_PRODUCT_SEPA = "sepa-credit-transfers";
+ }
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+index 67e7bf3bf..ec12e2b87 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java
+@@ -23,9 +23,11 @@ import lombok.RequiredArgsConstructor;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.Mapping;
+ import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.util.concurrent.CompletableFuture;
+ 
++import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.PAYMENT_PRODUCT_SEPA;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+@@ -42,13 +44,14 @@ public class Xs2aGetPaymentInfoEntrypoint implements GetPaymentInfoState {
+     private final ExtendWithServiceContext extender;
+ 
+     @Override
++    @Transactional
+     public CompletableFuture<Result<PaymentInfoBody>> execute(ServiceContext<PaymentInfoRequest> context) {
+         ProtocolFacingConsent consent = context.getRequestScoped().consentAccess().getByCurrentSession();
+ 
+         ValidatedPathHeaders<PaymentInfoParameters, PaymentInfoHeaders> params = extractor.forExecution(prepareContext(context));
+ 
+         Response<SinglePaymentInitiationInformationWithStatusResponse> paymentInformation = pis.getSinglePaymentInformation(
+-                params.getPath().getPaymentProduct(),
++                PAYMENT_PRODUCT_SEPA,
+                 consent.getConsentId(),
+                 params.getHeaders().toHeaders(),
+                 params.getPath().toParameters()
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
+index 151b40f68..c2afa9308 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java
+@@ -23,9 +23,11 @@ import lombok.RequiredArgsConstructor;
+ import org.mapstruct.Mapper;
+ import org.mapstruct.Mapping;
+ import org.springframework.stereotype.Service;
++import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.util.concurrent.CompletableFuture;
+ 
++import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.PAYMENT_PRODUCT_SEPA;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+@@ -42,13 +44,14 @@ public class Xs2aGetPaymentStatusEntrypoint implements GetPaymentStatusState {
+     private final ExtendWithServiceContext extender;
+ 
+     @Override
++    @Transactional
+     public CompletableFuture<Result<PaymentStatusBody>> execute(ServiceContext<PaymentStatusRequest> context) {
+         ProtocolFacingConsent consent = context.getRequestScoped().consentAccess().getByCurrentSession();
+ 
+         ValidatedPathHeaders<PaymentStateParameters, PaymentStateHeaders> params = extractor.forExecution(prepareContext(context));
+ 
+         Response<PaymentInitiationStatus> paymentStatus = pis.getSinglePaymentInitiationStatus(
+-                params.getPath().getPaymentProduct(),
++                PAYMENT_PRODUCT_SEPA,
+                 consent.getConsentId(),
+                 params.getHeaders().toHeaders(),
+                 params.getPath().toParameters()
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInfoHeaders.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInfoHeaders.java
+index 59d942313..c23eeec34 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInfoHeaders.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInfoHeaders.java
+@@ -2,13 +2,22 @@ package de.adorsys.opba.protocol.xs2a.service.xs2a.dto.payment;
+ 
+ import de.adorsys.opba.protocol.xs2a.context.pis.Xs2aPisContext;
+ import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.DtoMapper;
+-import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.ConsentInitiateHeaders;
++import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.WithBasicInfo;
++import de.adorsys.xs2a.adapter.service.RequestHeaders;
+ import org.mapstruct.Mapper;
+ 
++import java.util.Map;
++
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+-public class PaymentInfoHeaders extends ConsentInitiateHeaders {
++public class PaymentInfoHeaders extends WithBasicInfo {
++
++    public RequestHeaders toHeaders() {
++        Map<String, String> headers = super.asMap();
++        return RequestHeaders.fromMap(headers);
++    }
++
+     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = XS2A_MAPPERS_PACKAGE)
+     public interface FromPisCtx extends DtoMapper<Xs2aPisContext, PaymentInfoHeaders> {
+         PaymentInfoHeaders map(Xs2aPisContext ctx);
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentStateHeaders.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentStateHeaders.java
+index 4a71272d5..e079ed3fd 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentStateHeaders.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentStateHeaders.java
+@@ -2,13 +2,22 @@ package de.adorsys.opba.protocol.xs2a.service.xs2a.dto.payment;
+ 
+ import de.adorsys.opba.protocol.xs2a.context.pis.Xs2aPisContext;
+ import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.DtoMapper;
+-import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.ConsentInitiateHeaders;
++import de.adorsys.opba.protocol.xs2a.service.xs2a.dto.WithBasicInfo;
++import de.adorsys.xs2a.adapter.service.RequestHeaders;
+ import org.mapstruct.Mapper;
+ 
++import java.util.Map;
++
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ 
+-public class PaymentStateHeaders extends ConsentInitiateHeaders {
++public class PaymentStateHeaders extends WithBasicInfo {
++
++    public RequestHeaders toHeaders() {
++        Map<String, String> headers = super.asMap();
++        return RequestHeaders.fromMap(headers);
++    }
++
+     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = XS2A_MAPPERS_PACKAGE)
+     public interface FromPisCtx extends DtoMapper<Xs2aPisContext, PaymentStateHeaders> {
+         PaymentStateHeaders map(Xs2aPisContext ctx);
+

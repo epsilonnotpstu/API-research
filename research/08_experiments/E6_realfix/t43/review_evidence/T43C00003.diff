@@ -1,0 +1,79 @@
+diff --git a/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java b/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
+index 2e502d83..23f75634 100644
+--- a/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
++++ b/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java
+@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
+     @ResponseStatus(HttpStatus.NOT_FOUND)
+     public ApiErrorResponse handleNoResourceFoundException(final NoResourceFoundException exception) {
+         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.NOT_FOUND);
+-        log.warn("exception.resource_not_found: message={}", exception.getMessage());
++        log.warn("exception.resource_not_found: method={}, path={}", exception.getHttpMethod(), exception.getResourcePath());
+         return apiErrorResponse;
+     }
+ 
+diff --git a/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java b/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java
+index 1919d787..1429fa39 100644
+--- a/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java
++++ b/src/main/java/com/zufar/icedlatte/payment/endpoint/PaymentEndpoint.java
+@@ -2,6 +2,7 @@ package com.zufar.icedlatte.payment.endpoint;
+ 
+ import com.zufar.icedlatte.openapi.dto.*;
+ import com.zufar.icedlatte.payment.api.*;
++import jakarta.servlet.http.HttpServletRequest;
+ import lombok.RequiredArgsConstructor;
+ import lombok.extern.slf4j.Slf4j;
+ import org.springframework.http.ResponseEntity;
+@@ -24,11 +25,12 @@ public class PaymentEndpoint implements com.zufar.icedlatte.openapi.payment.api.
+     private final PaymentProcessor paymentProcessor;
+     private final WebhookEventProcessor webhookEventProcessor;
+     private final RedirectEventProcessor redirectEventProcessor;
++    private final HttpServletRequest httpRequest;
+ 
+     @Override
+     @PostMapping
+     public ResponseEntity<SessionWithClientSecretDto> processPayment() {
+-        var response = paymentProcessor.processPayment(null);
++        var response = paymentProcessor.processPayment(httpRequest);
+         log.info("payment.session.created: sessionId={}", response.getSessionId());
+         return ResponseEntity.ok(response);
+     }
+diff --git a/src/main/java/com/zufar/icedlatte/security/configuration/SecurityEventListener.java b/src/main/java/com/zufar/icedlatte/security/configuration/SecurityEventListener.java
+index 06f512fd..089c25da 100644
+--- a/src/main/java/com/zufar/icedlatte/security/configuration/SecurityEventListener.java
++++ b/src/main/java/com/zufar/icedlatte/security/configuration/SecurityEventListener.java
+@@ -6,6 +6,8 @@ import org.springframework.security.authentication.event.AbstractAuthenticationF
+ import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+ import org.springframework.security.authorization.event.AuthorizationDeniedEvent;
+ import org.springframework.stereotype.Component;
++import org.springframework.web.context.request.RequestContextHolder;
++import org.springframework.web.context.request.ServletRequestAttributes;
+ 
+ @Slf4j
+ @Component
+@@ -25,12 +27,21 @@ public class SecurityEventListener {
+ 
+     @EventListener
+     public void onAuthorizationDenied(AuthorizationDeniedEvent<?> event) {
++        String path = requestPath();
+         var authSupplier = event.getAuthentication();
+         if (authSupplier != null && authSupplier.get() != null) {
+-            log.warn("auth.denied: authorities={}",
+-                    authSupplier.get().getAuthorities());
++            log.warn("auth.denied: authorities={}, path={}",
++                    authSupplier.get().getAuthorities(), path);
+         } else {
+-            log.warn("auth.denied: reason=anonymous");
++            log.warn("auth.denied: reason=anonymous, path={}", path);
+         }
+     }
++
++    private static String requestPath() {
++        var attrs = RequestContextHolder.getRequestAttributes();
++        if (attrs instanceof ServletRequestAttributes sra) {
++            return sra.getRequest().getRequestURI();
++        }
++        return "-";
++    }
+ }
+\ No newline at end of file
+

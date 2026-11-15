@@ -1,0 +1,137 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/event/EventController.java b/src/main/java/org/candlepin/subscriptions/event/EventController.java
+index 755fc2b30..de8daba05 100644
+--- a/src/main/java/org/candlepin/subscriptions/event/EventController.java
++++ b/src/main/java/org/candlepin/subscriptions/event/EventController.java
+@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
+ 
+ import java.time.OffsetDateTime;
+ import java.util.Collection;
+-import java.util.List;
+ import java.util.Optional;
+ import java.util.UUID;
+ import java.util.stream.Collectors;
+diff --git a/src/main/java/org/candlepin/subscriptions/metering/MeteringEventFactory.java b/src/main/java/org/candlepin/subscriptions/metering/MeteringEventFactory.java
+index b1da9fdfd..385d446d5 100644
+--- a/src/main/java/org/candlepin/subscriptions/metering/MeteringEventFactory.java
++++ b/src/main/java/org/candlepin/subscriptions/metering/MeteringEventFactory.java
+@@ -46,6 +46,9 @@ public class MeteringEventFactory {
+     public static final String OPENSHIFT_CLUSTER_EVENT_TYPE = "snapshot";
+     public static final String OPENSHIFT_CLUSTER_SERVICE_TYPE = "OpenShift Cluster";
+ 
++    private MeteringEventFactory() {
++        throw new IllegalStateException("Utility class; should never be instantiated!");
++    }
+ 
+     /**
+      * Creates an Event object that represents a cores snapshot for a given OpenShift cluster.
+@@ -60,17 +63,15 @@ public class MeteringEventFactory {
+     public static Event openShiftClusterCores(String accountNumber, String clusterId, String serviceLevel,
+         OffsetDateTime measuredTime, Double measuredValue) {
+         Event e = new Event()
+-        .withEventSource(OPENSHIFT_CLUSTER_EVENT_SOURCE)
+-        .withEventType(OPENSHIFT_CLUSTER_EVENT_TYPE)
+-        .withServiceType(OPENSHIFT_CLUSTER_SERVICE_TYPE)
+-        .withAccountNumber(accountNumber)
+-        .withInstanceId(clusterId)
+-        .withTimestamp(measuredTime)
+-        .withDisplayName(Optional.of(clusterId))
+-        .withUsage(Usage.PRODUCTION) // Inferred
+-        .withMeasurements(Arrays.asList(
+-            new Measurement().withUom(Uom.CORES).withValue(measuredValue)
+-        ));
++            .withEventSource(OPENSHIFT_CLUSTER_EVENT_SOURCE)
++            .withEventType(OPENSHIFT_CLUSTER_EVENT_TYPE)
++            .withServiceType(OPENSHIFT_CLUSTER_SERVICE_TYPE)
++            .withAccountNumber(accountNumber)
++            .withInstanceId(clusterId)
++            .withTimestamp(measuredTime)
++            .withDisplayName(Optional.of(clusterId))
++            .withUsage(Usage.PRODUCTION) // Inferred
++            .withMeasurements(Arrays.asList(new Measurement().withUom(Uom.CORES).withValue(measuredValue)));
+ 
+         // TODO Prometheus is currently reporting an SLA of Eval. What happens in this case?
+         //      Should the event even get sent? Should it be sent so that we can account for
+diff --git a/src/main/java/org/candlepin/subscriptions/metering/jmx/OpenshiftJmxBean.java b/src/main/java/org/candlepin/subscriptions/metering/jmx/OpenshiftJmxBean.java
+index 4324235a4..4db2f9b5e 100644
+--- a/src/main/java/org/candlepin/subscriptions/metering/jmx/OpenshiftJmxBean.java
++++ b/src/main/java/org/candlepin/subscriptions/metering/jmx/OpenshiftJmxBean.java
+@@ -147,7 +147,7 @@ public class OpenshiftJmxBean {
+     private OffsetDateTime getDate(String dateToParse) {
+         try {
+             // 2018-03-20T09:12:28Z
+-            return StringUtils.hasText(dateToParse) ? OffsetDateTime.parse(dateToParse) : null;
++            return StringUtils.hasText(dateToParse) ? OffsetDateTime.parse(dateToParse) : clock.now();
+         }
+         catch (Exception e) {
+             throw new IllegalArgumentException(
+diff --git a/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringController.java b/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringController.java
+index 8e6969aeb..654fd75ba 100644
+--- a/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringController.java
++++ b/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringController.java
+@@ -28,8 +28,8 @@ import org.candlepin.subscriptions.metering.MeteringProperties;
+ import org.candlepin.subscriptions.prometheus.ApiException;
+ import org.candlepin.subscriptions.prometheus.model.QueryResult;
+ import org.candlepin.subscriptions.prometheus.model.StatusType;
+-
+ import org.candlepin.subscriptions.util.ApplicationClock;
++
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.stereotype.Component;
+diff --git a/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/config/PrometheusServiceConfiguration.java b/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/config/PrometheusServiceConfiguration.java
+index 3316c75d5..89f45715a 100644
+--- a/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/config/PrometheusServiceConfiguration.java
++++ b/src/main/java/org/candlepin/subscriptions/metering/service/prometheus/config/PrometheusServiceConfiguration.java
+@@ -29,8 +29,8 @@ import org.candlepin.subscriptions.metering.service.prometheus.PrometheusService
+ import org.candlepin.subscriptions.metering.service.prometheus.PrometheusServicePropeties;
+ import org.candlepin.subscriptions.prometheus.api.ApiProvider;
+ import org.candlepin.subscriptions.prometheus.api.ApiProviderFactory;
+-
+ import org.candlepin.subscriptions.util.ApplicationClock;
++
+ import org.springframework.beans.factory.annotation.Qualifier;
+ import org.springframework.boot.context.properties.ConfigurationProperties;
+ import org.springframework.context.annotation.Bean;
+diff --git a/src/test/java/org/candlepin/subscriptions/metering/MeteringEventFactoryTest.java b/src/test/java/org/candlepin/subscriptions/metering/MeteringEventFactoryTest.java
+index d0a0c285b..7a2ba2ac6 100644
+--- a/src/test/java/org/candlepin/subscriptions/metering/MeteringEventFactoryTest.java
++++ b/src/test/java/org/candlepin/subscriptions/metering/MeteringEventFactoryTest.java
+@@ -20,17 +20,17 @@
+  */
+ package org.candlepin.subscriptions.metering;
+ 
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
+ import org.candlepin.subscriptions.json.Event;
+ import org.candlepin.subscriptions.json.Event.Sla;
+-import org.candlepin.subscriptions.json.Event.Uom;
+ import org.candlepin.subscriptions.json.Measurement;
++
+ import org.junit.jupiter.api.Test;
+ 
+ import java.time.OffsetDateTime;
+ import java.util.Optional;
+ 
+-import static org.junit.jupiter.api.Assertions.assertEquals;
+-
+ class MeteringEventFactoryTest {
+ 
+     @Test
+diff --git a/src/test/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringControllerTest.java b/src/test/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringControllerTest.java
+index 2c37cb8be..845fcc021 100644
+--- a/src/test/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringControllerTest.java
++++ b/src/test/java/org/candlepin/subscriptions/metering/service/prometheus/PrometheusMeteringControllerTest.java
+@@ -165,9 +165,9 @@ class PrometheusMeteringControllerTest {
+     private QueryResult buildOpenShiftClusterQueryResult(String account, String clusterId, String sla,
+         List<List<BigDecimal>> timeValueTuples) {
+         QueryResultDataResult dataResult = new QueryResultDataResult()
+-        .putMetricItem("_id", clusterId)
+-        .putMetricItem("support", sla)
+-        .putMetricItem("ebs_account", account);
++            .putMetricItem("_id", clusterId)
++            .putMetricItem("support", sla)
++            .putMetricItem("ebs_account", account);
+ 
+         // NOTE: A tuple is [unix_time,value]
+         timeValueTuples.forEach(tuple -> dataResult.addValuesItem(tuple));
+

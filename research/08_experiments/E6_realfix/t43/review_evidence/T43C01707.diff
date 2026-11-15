@@ -1,0 +1,58 @@
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
+index b779d68..8699a7e 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/GetPresentationEvents.kt
+@@ -51,8 +51,8 @@ class GetPresentationEventsLive(
+             val events = loadPresentationEvents(transactionId)
+             checkNotNull(events) { "Didn't find any events for transaction $transactionId" }
+             val lastTimestamp = events.map { it.timestamp }.max()
+-            val transferOject = PresentationEventsTO(transactionId, lastTimestamp, events)
+-            QueryResponse.Found(transferOject)
++            val transferObject = PresentationEventsTO(transactionId, lastTimestamp, events)
++            QueryResponse.Found(transferObject)
+         } else {
+             QueryResponse.NotFound
+         }
+@@ -169,6 +169,7 @@ private fun WalletResponseValidationError.asText(): String =
+         WalletResponseValidationError.RequiredCredentialSetNotSatisfied ->
+             "vp_token does not satisfy all the required credential sets of the query"
+         WalletResponseValidationError.InvalidPresentationSubmission -> "Presentation submission is not valid"
++        is WalletResponseValidationError.InvalidJarm -> "JARM is not valid: '${error.message}'"
+     }
+ 
+ private inline fun <reified A> A.json() = Json.encodeToJsonElement(this)
+diff --git a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
+index c484e0e..4bdb166 100644
+--- a/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
++++ b/src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/port/input/PostWalletResponse.kt
+@@ -21,6 +21,7 @@ import arrow.core.raise.either
+ import arrow.core.raise.ensure
+ import arrow.core.raise.ensureNotNull
+ import arrow.core.toNonEmptyListOrNull
++import com.nimbusds.jose.proc.BadJOSEException
+ import eu.europa.ec.eudi.prex.PresentationDefinition
+ import eu.europa.ec.eudi.prex.PresentationSubmission
+ import eu.europa.ec.eudi.sdjwt.SdJwtVcSpec
+@@ -82,6 +83,7 @@ sealed interface WalletResponseValidationError {
+     data object PresentationSubmissionMustNotBePresent : WalletResponseValidationError
+     data object RequiredCredentialSetNotSatisfied : WalletResponseValidationError
+     data object InvalidPresentationSubmission : WalletResponseValidationError
++    data class InvalidJarm(val error: BadJOSEException) : WalletResponseValidationError
+ }
+ 
+ private suspend fun AuthorisationResponseTO.toDomain(
+@@ -373,7 +375,12 @@ class PostWalletResponseLive(
+[REDACTED credential-related line]
+                     jarmJwt = walletResponse.jarm,
+                     apv = presentation.nonce,
+-                ).getOrThrow()
++                ).getOrElse {
++                    when (it) {
++                        is BadJOSEException -> raise(WalletResponseValidationError.InvalidJarm(it))
++                        else -> throw it
++                    }
++                }
+                 response
+             }
+         }
+

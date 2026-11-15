@@ -1,0 +1,118 @@
+diff --git a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropHelper.java b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropHelper.java
+index 95669e1614..0f4103e01d 100644
+--- a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropHelper.java
++++ b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropHelper.java
+@@ -322,6 +322,16 @@ public class InteropHelper {
+         return response;
+     }
+ 
++    public String postTransferMissingAction(String transferCode, InteropTransactionRole role) {
++        String url = buildUrl(TRANSFERS_URL);
++        String request = buildTransferJson(transferCode, role);
++        LOG.debug("Calling Interoperable POST Transfer: {}, body: {}", url, request);
++
++        String response = Utils.performServerPost(requestSpec, responseSpec, url, request, null);
++        LOG.debug("Response Interoperable POST Transfer: {}", response);
++        return response;
++    }
++
+     private String buildTransferJson(String transferCode, InteropTransactionRole role) {
+         HashMap<String, Object> map = new HashMap<>();
+         map.put(InteropUtil.PARAM_TRANSACTION_CODE, transactionCode);
+diff --git a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropTest.java b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropTest.java
+index e928425fe0..d54acf4bfe 100644
+--- a/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropTest.java
++++ b/fineract-provider/src/integrationTest/java/org/apache/fineract/integrationtests/interoperation/InteropTest.java
+@@ -100,6 +100,14 @@ public class InteropTest {
+         interopHelper = new InteropHelper(requestSpec, responseSpec, savingsExternalId, transactionCode);
+     }
+ 
++    @Test
++    public void testValidateAction() {
++        interopHelper.setResponseSpec(responseClientErrorSpec);
++        interopHelper.postTransferMissingAction(UUID.randomUUID().toString(), InteropTransactionRole.PAYER);
++        interopHelper.postTransfer(UUID.randomUUID().toString(), null, InteropTransactionRole.PAYER);
++        interopHelper.setResponseSpec(responseSpec);
++    }
++
+     @Test
+     public void testInteroperation() {
+         createClient();
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
+index f48d3275e4..d35d724e2e 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/infrastructure/core/data/DataValidatorBuilder.java
+@@ -26,6 +26,7 @@ import java.util.Arrays;
+ import java.util.List;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
++import java.util.stream.Collectors;
+ import net.fortuna.ical4j.model.property.RRule;
+ import net.fortuna.ical4j.validate.ValidationException;
+ import org.apache.commons.lang3.StringUtils;
+@@ -300,6 +301,11 @@ public class DataValidatorBuilder {
+         return this;
+     }
+ 
++    public DataValidatorBuilder isOneOfEnumValues(Class<? extends Enum<?>> e) {
++        final List<String> enumValuesList = Arrays.asList(Arrays.stream(e.getEnumConstants()).map(Enum::name).toArray(String[]::new));
++        return isOneOfTheseStringValues(enumValuesList);
++    }
++
+     public DataValidatorBuilder isOneOfTheseStringValues(final Object... values) {
+         if (this.value == null && this.ignoreNullValue) {
+             return this;
+@@ -330,7 +336,9 @@ public class DataValidatorBuilder {
+ 
+         final String valuesListStr = StringUtils.join(valuesList, ", ");
+ 
+-        if (this.value == null || !valuesList.contains(this.value.toString().toLowerCase())) {
++        List<String> valuesListLowercase = valuesList.stream().map(String::toLowerCase).collect(Collectors.toList());
++
++        if (this.value == null || !valuesListLowercase.contains(this.value.toString().toLowerCase())) {
+             final StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(this.resource).append(".")
+                     .append(this.parameter).append(".is.not.one.of.expected.enumerations");
+             final StringBuilder defaultEnglishMessage = new StringBuilder("The parameter ").append(this.parameter)
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/interoperation/api/InteropApiResource.java b/fineract-provider/src/main/java/org/apache/fineract/interoperation/api/InteropApiResource.java
+index 10684bdcff..c74d7bcf07 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/interoperation/api/InteropApiResource.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/interoperation/api/InteropApiResource.java
+@@ -30,6 +30,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
+ import io.swagger.v3.oas.annotations.responses.ApiResponses;
+ import java.time.LocalDateTime;
+ import java.time.format.DateTimeFormatter;
++import java.util.ArrayList;
++import java.util.List;
+ import javax.ws.rs.Consumes;
+ import javax.ws.rs.DELETE;
+ import javax.ws.rs.DefaultValue;
+@@ -45,7 +47,10 @@ import javax.ws.rs.core.UriInfo;
+ import org.apache.fineract.commands.domain.CommandWrapper;
+ import org.apache.fineract.commands.service.PortfolioCommandSourceWritePlatformService;
+ import org.apache.fineract.infrastructure.core.api.ApiRequestParameterHelper;
++import org.apache.fineract.infrastructure.core.data.ApiParameterError;
+ import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
++import org.apache.fineract.infrastructure.core.data.DataValidatorBuilder;
++import org.apache.fineract.infrastructure.core.exception.PlatformApiDataValidationException;
+ import org.apache.fineract.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
+ import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+ import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+@@ -365,6 +370,17 @@ public class InteropApiResource {
+             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = InteropTransferResponseData.class))) })
+     public String performTransfer(@QueryParam("action") @Parameter(description = "action") String action,
+             @Parameter(hidden = true) String quotesJson, @Context UriInfo uriInfo) {
++
++        final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
++        final DataValidatorBuilder baseDataValidator = new DataValidatorBuilder(dataValidationErrors).resource("InteropApi");
++
++        baseDataValidator.reset().parameter("action").value(action).notNull().isOneOfEnumValues(InteropTransferActionType.class);
++
++        if (!dataValidationErrors.isEmpty()) {
++            throw new PlatformApiDataValidationException("validation.msg.validation.errors.exist", "Validation errors exist.",
++                    dataValidationErrors);
++        }
++
+         CommandWrapper commandRequest = new InteropWrapperBuilder().performTransfer(InteropTransferActionType.valueOf(action))
+                 .withJson(quotesJson).build();
+ 
+

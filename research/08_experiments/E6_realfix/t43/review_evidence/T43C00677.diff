@@ -1,0 +1,353 @@
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/CatalogController.java b/cwms_radar_api/src/main/java/cwms/radar/api/CatalogController.java
+index 9ac3cd7e..06431152 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/CatalogController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/CatalogController.java
+@@ -141,7 +141,7 @@ public class CatalogController implements CrudHandler{
+                         .append("with url:" ).append(ctx.fullUrl());
+                     return builder.toString();
+                 });
+-                ctx.json(re).status(HttpServletResponse.SC_BAD_REQUEST);
++                ctx.json(re).status(HttpServletResponse.SC_NOT_FOUND);
+             }
+ 
+         } catch( SQLException er) {
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/LocationCategoryController.java b/cwms_radar_api/src/main/java/cwms/radar/api/LocationCategoryController.java
+index d6b85f3a..fc49508d 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/LocationCategoryController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/LocationCategoryController.java
+@@ -1,6 +1,7 @@
+ package cwms.radar.api;
+ 
+ import java.util.List;
++import java.util.Optional;
+ import java.util.logging.Logger;
+ import javax.servlet.http.HttpServletResponse;
+ 
+@@ -72,15 +73,27 @@ public class LocationCategoryController implements CrudHandler
+ 
+ 			List<LocationCategory> cats = dao.getLocationCategories(office);
+ 
+-			String formatHeader = ctx.header(Header.ACCEPT);
+-			ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "json");
++			if( !cats.isEmpty()) {
++				String formatHeader = ctx.header(Header.ACCEPT);
++				ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "json");
+ 
+-			String result = Formats.format(contentType,cats);
++				String result = Formats.format(contentType,cats);
+ 
+-			ctx.result(result).contentType(contentType.toString());
+-			requestResultSize.update(result.length());
++				ctx.result(result).contentType(contentType.toString());
++				requestResultSize.update(result.length());
++
++				ctx.status(HttpServletResponse.SC_OK);
++			} else {
++				final RadarError re = new RadarError("Cannot requested location category for office provided");
++
++                logger.info(() -> {
++                    StringBuilder builder = new StringBuilder(re.toString())
++                        .append("with url:" ).append(ctx.fullUrl());
++                    return builder.toString();
++                });
++                ctx.json(re).status(HttpServletResponse.SC_NOT_FOUND);
++			}
+ 
+-			ctx.status(HttpServletResponse.SC_OK);
+ 		}
+ 
+ 	}
+@@ -111,17 +124,28 @@ public class LocationCategoryController implements CrudHandler
+ 			LocationCategoryDao dao = new LocationCategoryDao(dsl);
+ 			String office = ctx.queryParam("office");
+ 
+-			LocationCategory grp = dao.getLocationCategory(office, categoryId);
++			Optional<LocationCategory> grp = dao.getLocationCategory(office, categoryId);
++			if( grp.isPresent() ){
++				String formatHeader = ctx.header(Header.ACCEPT);
++				ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "json");
++
++				String result = Formats.format(contentType,grp.get());
+ 
+-			String formatHeader = ctx.header(Header.ACCEPT);
+-			ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "json");
++				ctx.result(result).contentType(contentType.toString());
++				requestResultSize.update(result.length());
+ 
+-			String result = Formats.format(contentType,grp);
++				ctx.status(HttpServletResponse.SC_OK);
++			} else {
++				final RadarError re = new RadarError("Cannot requested location category id");
+ 
+-			ctx.result(result).contentType(contentType.toString());
+-			requestResultSize.update(result.length());
++                logger.info(() -> {
++                    StringBuilder builder = new StringBuilder(re.toString())
++                        .append("with url:" ).append(ctx.fullUrl());
++                    return builder.toString();
++                });
++                ctx.json(re).status(HttpServletResponse.SC_NOT_FOUND);
++			}
+ 
+-			ctx.status(HttpServletResponse.SC_OK);
+ 		}
+ 
+ 	}
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/LocationGroupController.java b/cwms_radar_api/src/main/java/cwms/radar/api/LocationGroupController.java
+index f010b6c8..c1a4b2f3 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/LocationGroupController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/LocationGroupController.java
+@@ -1,6 +1,7 @@
+ package cwms.radar.api;
+ 
+ import java.util.List;
++import java.util.Optional;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ import javax.servlet.http.HttpServletResponse;
+@@ -80,16 +81,28 @@ public class LocationGroupController implements CrudHandler
+ 
+ 			List<LocationGroup> grps = cdm.getLocationGroups(office);
+ 
+-			String formatHeader = ctx.header(Header.ACCEPT);
+-			ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "");
+-
+-			String result = Formats.format(contentType, grps);
+-
+-			ctx.result(result);
+-			ctx.contentType(contentType.toString());
+-			requestResultSize.update(result.length());
++			if( !grps.isEmpty() ){
++				String formatHeader = ctx.header(Header.ACCEPT);
++				ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "");
++
++				String result = Formats.format(contentType, grps);
++
++				ctx.result(result);
++				ctx.contentType(contentType.toString());
++				requestResultSize.update(result.length());
++
++				ctx.status(HttpServletResponse.SC_OK);
++			} else {
++				RadarError re = new RadarError("No location groups for office provided");
++				logger.info( () -> {
++					return new StringBuilder()
++					.append( re.toString()).append(System.lineSeparator())
++					.append( "for request ").append( ctx.fullUrl() )
++					.toString();
++				});
++				ctx.status(HttpServletResponse.SC_NOT_FOUND).json( re );
++			}
+ 
+-			ctx.status(HttpServletResponse.SC_OK);
+ 		}
+ 
+ 	}
+@@ -134,11 +147,25 @@ public class LocationGroupController implements CrudHandler
+ 				result = mapper.writeValueAsString(fc);
+ 			} else
+ 			{
+-				LocationGroup grp = cdm.getLocationGroup(office, categoryId, groupId);
+-				result = Formats.format(contentType, grp);
++				Optional<LocationGroup> grp = cdm.getLocationGroup(office, categoryId, groupId);
++				if( grp.isPresent() ) {
++					result = Formats.format(contentType, grp.get());
++				} else {
++					RadarError re = new RadarError("Unable to find location group based on parameters given");
++					logger.info( () -> {
++						return new StringBuilder()
++						.append( re.toString()).append(System.lineSeparator())
++						.append( "for request ").append( ctx.fullUrl() )
++						.toString();
++					});
++					ctx.status(HttpServletResponse.SC_NOT_FOUND).json( re );
++					return;
++				}
++
+ 			}
+ 			ctx.result(result);
+ 			ctx.contentType(contentType.toString());
++
+ 			requestResultSize.update(result.length());
+ 
+ 			ctx.status(HttpServletResponse.SC_OK);
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java b/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
+index c3d58cf4..bcc5fe0a 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/api/OfficeController.java
+@@ -2,6 +2,7 @@ package cwms.radar.api;
+ 
+ import java.util.HashMap;
+ import java.util.List;
++import java.util.Optional;
+ import java.util.logging.Logger;
+ import javax.servlet.http.HttpServletResponse;
+ 
+@@ -123,23 +124,26 @@ public class OfficeController implements CrudHandler {
+             DSLContext dsl = getDslContext(ctx))
+         {
+             OfficeDao dao = new OfficeDao(dsl);
+-            Office office = dao.getOfficeById(officeId);
+-            if( office == null ){
+-                RadarError re = new RadarError("Bad input", new HashMap<String,String>(){
++            Optional<Office> office = dao.getOfficeById(officeId);
++            if( office.isPresent() ){
++                String formatParm = ctx.queryParam("format","");
++                String formatHeader = ctx.header(Header.ACCEPT);
++                ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, formatParm);
++                String result = Formats.format(contentType,office.get());
++                ctx.result(result).contentType(contentType.toString());
++
++                requestResultSize.update(result.length());
++            }
++            else {
++                RadarError re = new RadarError("Not Found", new HashMap<String,String>(){
+                     {
+-                        put("office", "A value must be provided");
++                        put("office", "An office with that name does not exist");
+                     }
+ 
+                 });
+-                ctx.status(HttpServletResponse.SC_BAD_REQUEST).json(re);
++                ctx.status(HttpServletResponse.SC_NOT_FOUND).json(re);
+             }
+-            String formatParm = ctx.queryParam("format","");
+-            String formatHeader = ctx.header(Header.ACCEPT);
+-            ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, formatParm);
+-            String result = Formats.format(contentType,office);
+-            ctx.result(result).contentType(contentType.toString());
+ 
+-            requestResultSize.update(result.length());
+         }
+     }
+ 
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationCategoryDao.java b/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationCategoryDao.java
+index 48486d8f..cc002a8b 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationCategoryDao.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationCategoryDao.java
+@@ -1,9 +1,11 @@
+ package cwms.radar.data.dao;
+ 
+ import java.util.List;
++import java.util.Optional;
+ 
+ import cwms.radar.data.dto.LocationCategory;
+ import org.jooq.DSLContext;
++import org.jooq.Record3;
+ 
+ import usace.cwms.db.jooq.codegen.tables.AV_LOC_CAT_GRP;
+ 
+@@ -40,15 +42,17 @@ public class LocationCategoryDao extends JooqDao<LocationCategory>
+ 				.fetch().into(LocationCategory.class);
+ 	}
+ 
+-	public LocationCategory getLocationCategory(String officeId, String categoryId)
++	public Optional<LocationCategory> getLocationCategory(String officeId, String categoryId)
+ 	{
+ 		AV_LOC_CAT_GRP table = AV_LOC_CAT_GRP.AV_LOC_CAT_GRP;
+ 
+-		return dsl.select(table.CAT_DB_OFFICE_ID,
++		 Record3<String, String, String> fetchOne = dsl.select(table.CAT_DB_OFFICE_ID,
+ 				table.LOC_CATEGORY_ID, table.LOC_CATEGORY_DESC)
+ 				.from(table)
+ 				.where(table.CAT_DB_OFFICE_ID.eq(officeId)
+ 						.and(table.LOC_CATEGORY_ID.eq(categoryId)))
+-				.fetchOne().into(LocationCategory.class);
++				.fetchOne();
++		return fetchOne != null ?
++			Optional.of(fetchOne.into(LocationCategory.class)) : Optional.empty();
+ 	}
+ }
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationGroupDao.java b/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationGroupDao.java
+index 9d49141e..c39c85b4 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationGroupDao.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/data/dao/LocationGroupDao.java
+@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
+ import java.util.LinkedHashSet;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Optional;
+ import java.util.Set;
+ import java.util.stream.Collectors;
+ 
+@@ -36,7 +37,7 @@ public class LocationGroupDao extends JooqDao<LocationGroup>
+ 		super(dsl);
+ 	}
+ 
+-	public LocationGroup getLocationGroup(String officeId, String categoryId, String groupId)
++	public Optional<LocationGroup> getLocationGroup(String officeId, String categoryId, String groupId)
+ 	{
+ 		AV_LOC_GRP_ASSGN alga = AV_LOC_GRP_ASSGN.AV_LOC_GRP_ASSGN;
+ 		AV_LOC_CAT_GRP alcg = AV_LOC_CAT_GRP.AV_LOC_CAT_GRP;
+@@ -76,7 +77,7 @@ public class LocationGroupDao extends JooqDao<LocationGroup>
+ 					.collect(Collectors.toList());
+ 			locGroup = new LocationGroup(locGroup, assignedLocations);
+ 		}
+-		return locGroup;
++		return Optional.ofNullable(locGroup);
+ 	}
+ 
+ 	private AssignedLocation buildAssignedLocation(Record resultRecord)
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/data/dao/OfficeDao.java b/cwms_radar_api/src/main/java/cwms/radar/data/dao/OfficeDao.java
+index 2255a460..482958f4 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/data/dao/OfficeDao.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/data/dao/OfficeDao.java
+@@ -1,9 +1,11 @@
+ package cwms.radar.data.dao;
+ 
+ import java.util.List;
++import java.util.Optional;
+ 
+ import cwms.radar.data.dto.Office;
+ import org.jooq.DSLContext;
++import org.jooq.Record4;
+ 
+ import usace.cwms.db.jooq.codegen.tables.AV_OFFICE;
+ 
+@@ -26,12 +28,13 @@ public class OfficeDao extends JooqDao<Office>
+ 		return retval;
+ 	}
+ 
+-	public Office getOfficeById(String officeId) {
++	public Optional<Office> getOfficeById(String officeId) {
+ 		AV_OFFICE view = AV_OFFICE.AV_OFFICE;
+ 		// The .as snippets lets it map directly into the Office ctor fields.
+-		return dsl.select(view.OFFICE_ID.as("name"), view.LONG_NAME, view.OFFICE_TYPE.as("type"),
+-				view.REPORT_TO_OFFICE_ID.as("reportsTo")).from(view).where(view.OFFICE_ID.eq(officeId)).fetchOne().into(
+-				Office.class);
++		Record4<String, String, String, String> fetchOne = dsl.select(view.OFFICE_ID.as("name"), view.LONG_NAME, view.OFFICE_TYPE.as("type"),
++				view.REPORT_TO_OFFICE_ID.as("reportsTo")).from(view).where(view.OFFICE_ID.eq(officeId)).fetchOne();
++		return fetchOne != null ?
++				Optional.of(fetchOne.into(Office.class)) : Optional.empty();
+ 	}
+ 
+ 
+diff --git a/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java b/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
+index 67920505..f8c01a83 100644
+--- a/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
++++ b/cwms_radar_api/src/main/java/cwms/radar/formatters/Formats.java
+@@ -99,7 +99,13 @@ public class Formats {
+         }
+         Map<Class<CwmsDTO>, OutputFormatter> contentFormatters = (Map<Class<CwmsDTO>, OutputFormatter>) formatters.get(type);
+         if( contentFormatters != null ){
+-            return contentFormatters.get(toFormat.getClass()).format(toFormat);
++            OutputFormatter outputFormatter = contentFormatters.get(toFormat.getClass());
++            if( outputFormatter != null ){
++                return outputFormatter.format(toFormat);
++            } else {
++                throw new FormattingException("No Format for this content-type and data-type : (" + type.toString() + ", " + toFormat.getClass().getName() + ")");
++            }
++
+         } else {
+             throw new FormattingException("No Format for this content-type and data-type : (" + type.toString() + ", " + toFormat.getClass().getName() + ")");
+         }
+@@ -111,7 +117,7 @@ public class Formats {
+             logger.info(key.toString());
+         }
+         Map<Class<CwmsDTO>, OutputFormatter> contentFormatters = (Map<Class<CwmsDTO>, OutputFormatter>) formatters.get(type);
+-        if( contentFormatters != null ){
++        if( contentFormatters != null && contentFormatters.size() > 0 ) {
+             return contentFormatters.get(toFormat.get(0).getClass()).format(toFormat);
+         } else {
+             throw new FormattingException("No Format for this content-type and data type : (" + type.toString() + ", " + toFormat.getClass().getName() + ")");
+

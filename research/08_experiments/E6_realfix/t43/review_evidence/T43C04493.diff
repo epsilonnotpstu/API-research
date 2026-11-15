@@ -1,0 +1,46 @@
+diff --git a/src/main/java/org/candlepin/subscriptions/tally/facts/FactNormalizer.java b/src/main/java/org/candlepin/subscriptions/tally/facts/FactNormalizer.java
+index 184a5565f..d3197e14c 100644
+--- a/src/main/java/org/candlepin/subscriptions/tally/facts/FactNormalizer.java
++++ b/src/main/java/org/candlepin/subscriptions/tally/facts/FactNormalizer.java
+@@ -221,14 +221,9 @@ public class FactNormalizer {
+       return;
+     }
+ 
+-    normalizedFacts.setMarketplace(hostFacts.isMarketplace());
+-    if (normalizedFacts.getCores() != 0) {
+-      normalizedFacts.setCores(0);
+-    }
+-
+-    if (normalizedFacts.getSockets() != 0) {
+-      normalizedFacts.setSockets(0);
+-    }
++    normalizedFacts.setMarketplace(true);
++    normalizedFacts.setCores(0);
++    normalizedFacts.setSockets(0);
+   }
+ 
+   private void defaultNullFacts(NormalizedFacts normalizedFacts, InventoryHostFacts hostFacts) {
+diff --git a/src/test/java/org/candlepin/subscriptions/tally/facts/FactNormalizerTest.java b/src/test/java/org/candlepin/subscriptions/tally/facts/FactNormalizerTest.java
+index 2073ba57c..fd0f10456 100644
+--- a/src/test/java/org/candlepin/subscriptions/tally/facts/FactNormalizerTest.java
++++ b/src/test/java/org/candlepin/subscriptions/tally/facts/FactNormalizerTest.java
+@@ -666,6 +666,18 @@ class FactNormalizerTest {
+     assertEquals(0, normalizedFacts.getSockets());
+   }
+ 
++  @Test
++  void testNullSocketsMarketplaceDefaulting() {
++    InventoryHostFacts facts = createRhsmHost(List.of(1), null, clock.now());
++    facts.setMarketplace(true);
++    facts.setSystemProfileSockets(null);
++    facts.setSystemProfileCoresPerSocket(null);
++    NormalizedFacts normalizedFacts = normalizer.normalize(facts, hypervisorData());
++    assertTrue(normalizedFacts.isMarketplace());
++    assertEquals(0, normalizedFacts.getCores());
++    assertEquals(0, normalizedFacts.getSockets());
++  }
++
+   private void assertClassification(
+       NormalizedFacts check, boolean isHypervisor, boolean isHypervisorUnknown, boolean isVirtual) {
+     assertEquals(isHypervisor, check.isHypervisor());
+

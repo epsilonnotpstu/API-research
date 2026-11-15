@@ -1,0 +1,1201 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/BlobController.java b/cwms-data-api/src/main/java/cwms/cda/api/BlobController.java
+index 46efc7e7..a6bdf7bd 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/BlobController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/BlobController.java
+@@ -59,8 +59,8 @@ import org.jooq.DSLContext;
+  *
+  */
+ public class BlobController implements CrudHandler {
+-    private final static FluentLogger logger = FluentLogger.forEnclosingClass();
+-    private static final int defaultPageSize = 20;
++    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
++    private static final int DEFAULT_PAGE_SIZE = 20;
+     public static final String TAG = "Blob";
+ 
+     private final MetricRegistry metrics;
+@@ -84,43 +84,40 @@ public class BlobController implements CrudHandler {
+     }
+ 
+     @OpenApi(
+-            queryParams = {
+-                    @OpenApiParam(name = OFFICE,
+-                            description = "Specifies the owning office. If this field is not "
+-                                    + "specified, matching information from all offices shall be "
+-                                    + "returned."),
+-                    @OpenApiParam(name = PAGE,
+-                            description = "This end point can return a lot of data, this "
+-                                    + "identifies where in the request you are. This is an opaque"
+-                                    + " value, and can be obtained from the 'next-page' value in "
+-                                    + "the response."
+-                    ),
+-                    @OpenApiParam(name = PAGE_SIZE,
+-                            type = Integer.class,
+-                            description = "How many entries per page returned. Default "
+-                                    + defaultPageSize + "."
+-                    ),
+-                    @OpenApiParam(name = LIKE,
+-                            description = "Posix <a href=\"regexp.html\">regular expression</a> describing the blob id's you want"
+-                    )
+-            },
+-            responses = {@OpenApiResponse(status = STATUS_200,
+-                    description = "A list of blobs.",
+-                    content = {
+-                            @OpenApiContent(type = Formats.JSONV2, from = Blobs.class),
+-                            @OpenApiContent(type = Formats.XMLV2, from = Blobs.class)
+-                    }
+-            )
+-            },
+-            tags = {TAG}
++        queryParams = {
++            @OpenApiParam(name = OFFICE,
++                    description = "Specifies the owning office. If this field is not "
++                            + "specified, matching information from all offices shall be "
++                            + "returned."),
++            @OpenApiParam(name = PAGE,
++                    description = "This end point can return a lot of data, this "
++                            + "identifies where in the request you are. This is an opaque"
++                            + " value, and can be obtained from the 'next-page' value in "
++                            + "the response."),
++            @OpenApiParam(name = PAGE_SIZE,
++                    type = Integer.class,
++                    description = "How many entries per page returned. Default "
++                            + DEFAULT_PAGE_SIZE + "."),
++            @OpenApiParam(name = LIKE,
++                    description = "Posix <a href=\"regexp.html\">regular expression</a> "
++                            + "describing the blob id's you want")
++        },
++        responses = {@OpenApiResponse(status = STATUS_200,
++                description = "A list of blobs.",
++                content = {
++                    @OpenApiContent(type = Formats.JSONV2, from = Blobs.class),
++                    @OpenApiContent(type = Formats.XMLV2, from = Blobs.class)
++                })
++        },
++        tags = {TAG}
+     )
+     @Override
+     public void getAll(@NotNull Context ctx) {
+ 
+-        try ( final Timer.Context ignored = markAndTime(GET_ALL)) {
+-                DSLContext dsl = getDslContext(ctx);
++        try (final Timer.Context ignored = markAndTime(GET_ALL)) {
++            DSLContext dsl = getDslContext(ctx);
+             String office = ctx.queryParam(OFFICE);
+-            Optional<String> officeOpt = Optional.ofNullable(office);
++
+ 
+             String cursor = queryParamAsClass(ctx, new String[]{PAGE, CURSOR},
+                     String.class, "", metrics, name(BlobController.class.getName(), GET_ALL));
+@@ -132,7 +129,7 @@ public class BlobController implements CrudHandler {
+             }
+ 
+             int pageSize = queryParamAsClass(ctx, new String[]{PAGE_SIZE},
+-                    Integer.class, defaultPageSize, metrics,
++                    Integer.class, DEFAULT_PAGE_SIZE, metrics,
+                     name(BlobController.class.getName(), GET_ALL));
+ 
+             String like = ctx.queryParamAsClass(LIKE, String.class).getOrDefault(".*");
+@@ -141,7 +138,7 @@ public class BlobController implements CrudHandler {
+             ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "");
+ 
+             BlobDao dao = new BlobDao(dsl);
+-            List<Blob> blobList = dao.getAll(officeOpt, like);
++            List<Blob> blobList = dao.getAll(office, like);
+ 
+             Blobs blobs = new Blobs.Builder(cursor, pageSize, 0).addAll(blobList).build();
+             String result = Formats.format(contentType, blobs);
+@@ -154,7 +151,7 @@ public class BlobController implements CrudHandler {
+ 
+     @OpenApi(
+             queryParams = {
+-                    @OpenApiParam(name = OFFICE, description = "Specifies the owning office."),
++                @OpenApiParam(name = OFFICE, description = "Specifies the owning office."),
+             },
+             tags = {TAG}
+     )
+@@ -193,13 +190,13 @@ public class BlobController implements CrudHandler {
+             description = "Create new Blob",
+             requestBody = @OpenApiRequestBody(
+                     content = {
+-                            @OpenApiContent(from = Blob.class, type = Formats.JSONV2),
+-                            @OpenApiContent(from = Blob.class, type = Formats.XMLV2)
++                        @OpenApiContent(from = Blob.class, type = Formats.JSONV2),
++                        @OpenApiContent(from = Blob.class, type = Formats.XMLV2)
+                     },
+                     required = true),
+             queryParams = {
+-                    @OpenApiParam(name = FAIL_IF_EXISTS, type = Boolean.class,
+-                            description = "Create will fail if provided ID already exists. Default: true")
++                @OpenApiParam(name = FAIL_IF_EXISTS, type = Boolean.class,
++                        description = "Create will fail if provided ID already exists. Default: true")
+             },
+             method = HttpMethod.POST,
+             tags = {TAG}
+diff --git a/cwms-data-api/src/main/java/cwms/cda/api/ClobController.java b/cwms-data-api/src/main/java/cwms/cda/api/ClobController.java
+index d685bb12..d7466cf6 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/api/ClobController.java
++++ b/cwms-data-api/src/main/java/cwms/cda/api/ClobController.java
+@@ -66,7 +66,7 @@ import org.jooq.DSLContext;
+ 
+ public class ClobController implements CrudHandler {
+     private static final FluentLogger log = FluentLogger.forEnclosingClass();
+-    private static final int defaultPageSize = 20;
++    private static final int DEFAULT_PAGE_SIZE = 20;
+     public static final String TAG = "Clob";
+     public static final String TEXT_PLAIN = "text/plain";
+     private final MetricRegistry metrics;
+@@ -90,37 +90,33 @@ public class ClobController implements CrudHandler {
+ 
+     @OpenApi(
+             queryParams = {
+-                    @OpenApiParam(name = OFFICE,
+-                            description = "Specifies the owning office. If this field is not "
+-                                    + "specified, matching information from all offices shall be "
+-                                    + "returned."),
+-                    @OpenApiParam(name = PAGE,
+-                            description = "This end point can return a lot of data, this "
+-                                    + "identifies where in the request you are. This is an opaque"
+-                                    + " value, and can be obtained from the 'next-page' value in "
+-                                    + "the response."
+-                    ),
+-                    @OpenApiParam(name = PAGE_SIZE,
+-                            type = Integer.class,
+-                            description = "How many entries per page returned. Default "
+-                                    + defaultPageSize + "."
+-                    ),
+-                    @OpenApiParam(name = INCLUDE_VALUES,
+-                            type = Boolean.class,
+-                            description = "Do you want the value associated with this particular "
+-                                    + "clob (default: false)"
+-                    ),
+-                    @OpenApiParam(name = LIKE,
+-                            description = "Posix <a href=\"regexp.html\">regular expression</a> matching against the id"
+-                    )
++                @OpenApiParam(name = OFFICE,
++                        description = "Specifies the owning office. If this field is not "
++                                + "specified, matching information from all offices shall be "
++                                + "returned."),
++                @OpenApiParam(name = PAGE,
++                        description = "This end point can return a lot of data, this "
++                                + "identifies where in the request you are. This is an opaque"
++                                + " value, and can be obtained from the 'next-page' value in "
++                                + "the response."),
++                @OpenApiParam(name = PAGE_SIZE,
++                        type = Integer.class,
++                        description = "How many entries per page returned. Default "
++                                + DEFAULT_PAGE_SIZE + "."),
++                @OpenApiParam(name = INCLUDE_VALUES,
++                        type = Boolean.class,
++                        description = "Do you want the value associated with this particular "
++                                + "clob (default: false)"),
++                @OpenApiParam(name = LIKE,
++                        description = "Posix <a href=\"regexp.html\">regular expression</a> "
++                                + "matching against the id")
+             },
+             responses = {@OpenApiResponse(status = STATUS_200,
+                     description = "A list of clobs.",
+                     content = {
+-                            @OpenApiContent(type = Formats.JSONV2, from = Clobs.class),
+-                            @OpenApiContent(type = Formats.XMLV2, from = Clobs.class)
+-                    }
+-            )
++                        @OpenApiContent(type = Formats.JSONV2, from = Clobs.class),
++                        @OpenApiContent(type = Formats.XMLV2, from = Clobs.class)
++                    })
+             },
+             tags = {TAG}
+     )
+@@ -130,7 +126,6 @@ public class ClobController implements CrudHandler {
+         try (final Timer.Context ignored = markAndTime(GET_ALL)) {
+             DSLContext dsl = getDslContext(ctx);
+             String office = ctx.queryParam(OFFICE);
+-            Optional<String> officeOpt = Optional.ofNullable(office);
+ 
+             String formatHeader = ctx.header(Header.ACCEPT);
+             ContentType contentType = Formats.parseHeaderAndQueryParm(formatHeader, "");
+@@ -144,7 +139,7 @@ public class ClobController implements CrudHandler {
+                 return;
+             }
+ 
+-            int pageSize = queryParamAsClass(ctx, new String[]{PAGE_SIZE}, Integer.class, defaultPageSize, metrics,
++            int pageSize = queryParamAsClass(ctx, new String[]{PAGE_SIZE}, Integer.class, DEFAULT_PAGE_SIZE, metrics,
+                     name(ClobController.class.getName(), GET_ALL));
+ 
+             boolean includeValues = queryParamAsClass(ctx, new String[]{INCLUDE_VALUES},
+@@ -153,7 +148,7 @@ public class ClobController implements CrudHandler {
+             String like = ctx.queryParamAsClass(LIKE, String.class).getOrDefault(".*");
+ 
+             ClobDao dao = new ClobDao(dsl);
+-            Clobs clobs = dao.getClobs(cursor, pageSize, officeOpt, includeValues, like);
++            Clobs clobs = dao.getClobs(cursor, pageSize, office, includeValues, like);
+             String result = Formats.format(contentType, clobs);
+ 
+             ctx.result(result);
+@@ -165,28 +160,27 @@ public class ClobController implements CrudHandler {
+ 
+     @OpenApi(
+             description = "Get a single clob.  "
+-                    + "If the accept header is set to " + TEXT_PLAIN + ", the raw value is returned as the response body. "
+-                    + "Responses to " + TEXT_PLAIN + " requests are streamed and support the Range header.  "
+-                    + "When the accept header is set to "+ Formats.JSONV2 + " the clob will be returned as a serialized Clob "
+-                    + "object with fields for office-id, id, description and value.",
++                + "If the accept header is set to " + TEXT_PLAIN + ", the raw value is returned as the response body. "
++                + "Responses to " + TEXT_PLAIN + " requests are streamed and support the Range header.  "
++                + "When the accept header is set to " + Formats.JSONV2 + " the clob will be returned as a serialized Clob "
++                + "object with fields for office-id, id, description and value.",
+             queryParams = {
+-                    @OpenApiParam(name = OFFICE, description = "Specifies the owning office."),
+-                    @OpenApiParam(name = CLOB_ID, description = "If this _query_ parameter is provided the id _path_ parameter "
+-                            + "is ignored and the value of the query parameter is used.   "
+-                            + "Note: this query parameter is necessary for id's that contain '/' or other special "
+-                            + "characters.  Because of abuse even properly escaped '/' in url paths are blocked.  "
+-                            + "When using this query parameter a valid path parameter must still be provided for the request"
+-                            + " to be properly routed.  If your clob id contains '/' you can't specify the clob-id query "
+-                            + "parameter and also specify the id path parameter because firewall and/or server rules will "
+-                            + "deny the request even though you are specifying this override. \"ignored\" is suggested." )
++                @OpenApiParam(name = OFFICE, description = "Specifies the owning office."),
++                @OpenApiParam(name = CLOB_ID, description = "If this _query_ parameter is provided the id _path_ parameter "
++                    + "is ignored and the value of the query parameter is used.   "
++                    + "Note: this query parameter is necessary for id's that contain '/' or other special "
++                    + "characters.  Because of abuse even properly escaped '/' in url paths are blocked.  "
++                    + "When using this query parameter a valid path parameter must still be provided for the request"
++                    + " to be properly routed.  If your clob id contains '/' you can't specify the clob-id query "
++                    + "parameter and also specify the id path parameter because firewall and/or server rules will "
++                    + "deny the request even though you are specifying this override. \"ignored\" is suggested.")
+             },
+             responses = {@OpenApiResponse(status = STATUS_200,
+                     description = "Returns requested clob.",
+                     content = {
+-                            @OpenApiContent(type = Formats.JSONV2, from = Clob.class),
+-                            @OpenApiContent(type = TEXT_PLAIN),
+-                    }
+-            )
++                        @OpenApiContent(type = Formats.JSONV2, from = Clob.class),
++                        @OpenApiContent(type = TEXT_PLAIN),
++                    })
+             },
+             tags = {TAG}
+     )
+@@ -203,7 +197,7 @@ public class ClobController implements CrudHandler {
+ 
+             DSLContext dsl = getDslContext(ctx);
+             ClobDao dao = new ClobDao(dsl);
+-            Optional<String> office = Optional.ofNullable(ctx.queryParam(OFFICE));
++            String office = ctx.queryParam(OFFICE);
+ 
+             if (TEXT_PLAIN.equals(formatHeader)) {
+                 // useful cmd:  curl -X 'GET' 'http://localhost:7000/cwms-data/clobs/encoded?office=SPK&id=%2FTIME%20SERIES%20TEXT%2F6261044'
+@@ -218,7 +212,7 @@ public class ClobController implements CrudHandler {
+                     }
+                 };
+ 
+-                dao.getClob(clobId, office.orElse(null), streamConsumer);
++                dao.getClob(clobId, office, streamConsumer);
+             } else {
+                 Optional<Clob> optAc = dao.getByUniqueName(clobId, office);
+ 
+@@ -244,13 +238,13 @@ public class ClobController implements CrudHandler {
+             description = "Create new Clob",
+             requestBody = @OpenApiRequestBody(
+                     content = {
+-                            @OpenApiContent(from = Clob.class, type = Formats.JSONV2),
+-                            @OpenApiContent(from = Clob.class, type = Formats.XMLV2)
++                        @OpenApiContent(from = Clob.class, type = Formats.JSONV2),
++                        @OpenApiContent(from = Clob.class, type = Formats.XMLV2)
+                     },
+                     required = true),
+             queryParams = {
+-                    @OpenApiParam(name = FAIL_IF_EXISTS, type = Boolean.class,
+-                            description = "Create will fail if provided ID already exists. Default: true")
++                @OpenApiParam(name = FAIL_IF_EXISTS, type = Boolean.class,
++                        description = "Create will fail if provided ID already exists. Default: true")
+             },
+             method = HttpMethod.POST,
+             tags = {TAG}
+@@ -322,20 +316,20 @@ public class ClobController implements CrudHandler {
+ 
+     @OpenApi(
+             pathParams = {
+-                    @OpenApiParam(name = CLOB_ID, required = true,
++                @OpenApiParam(name = CLOB_ID, required = true,
+                             description = "Specifies the id of the clob to be updated"),
+             },
+             queryParams = {
+-                    @OpenApiParam(name = IGNORE_NULLS, type = Boolean.class,
+-                            description = "If true, null and empty fields in the provided clob "
+-                                    + "will be ignored and the existing value of those fields "
+-                                    + "left in place. Default: true")
++                @OpenApiParam(name = IGNORE_NULLS, type = Boolean.class,
++                        description = "If true, null and empty fields in the provided clob "
++                                + "will be ignored and the existing value of those fields "
++                                + "left in place. Default: true")
+             },
+             requestBody = @OpenApiRequestBody(
+-                    content = {
+-                            @OpenApiContent(from = Clob.class, type = Formats.JSONV2),
+-                            @OpenApiContent(from = Clob.class, type = Formats.XMLV2)
+-                    },
++                content = {
++                    @OpenApiContent(from = Clob.class, type = Formats.JSONV2),
++                    @OpenApiContent(from = Clob.class, type = Formats.XMLV2)
++                },
+                     required = true),
+             description = "Update clob",
+             method = HttpMethod.PATCH,
+@@ -412,7 +406,7 @@ public class ClobController implements CrudHandler {
+             tags = {TAG}
+     )
+     @Override
+-    public void delete(Context ctx, @NotNull String clobId) {
++    public void delete(@NotNull Context ctx, @NotNull String clobId) {
+         String office = requiredParam(ctx, OFFICE);
+ 
+         try (final Timer.Context ignored = markAndTime(DELETE)) {
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/AuthDao.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/AuthDao.java
+index 82fc9de7..1ba51136 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/AuthDao.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/AuthDao.java
+@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
+ import org.jooq.DSLContext;
+ import org.jooq.exception.DataAccessException;
+ 
+-public class AuthDao extends Dao<DataApiPrincipal>{
++public class AuthDao extends Dao<DataApiPrincipal> {
+     public static final FluentLogger logger = FluentLogger.forEnclosingClass();
+     public static final String SCHEMA_TOO_OLD = "The CWMS-Data-API requires schema version "
+                                              + "23.03.16 or later to handle authorization operations.";
+@@ -86,11 +86,11 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+         if (AuthDao.defaultOffice == null) {
+             AuthDao.defaultOffice = defaultOffice;
+             try {
+-                connectionUser = dsl.connectionResult(c->c.getMetaData().getUserName());
++                connectionUser = dsl.connectionResult(c -> c.getMetaData().getUserName());
+                 dsl.execute("BEGIN cwms_env.set_session_user_direct(?,?); END;", connectionUser, defaultOffice);
+                 hasCwmsEnvMultiOfficeAuthFix = true;
+             } catch (DataAccessException ex) {
+-                if( ex.getLocalizedMessage()
++                if (ex.getLocalizedMessage()
+                     .toLowerCase()
+                     .contains("wrong number or types of arguments in call")) {
+                     hasCwmsEnvMultiOfficeAuthFix = false;
+@@ -109,8 +109,7 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+      */
+     public static AuthDao getInstance(DSLContext dsl, String defaultOffice) {
+         AuthDao dao = instance.get();
+-        if (dao == null)
+-        {
++        if (dao == null) {
+             dao = new AuthDao(dsl,defaultOffice);
+             instance.set(dao);
+         } else {
+@@ -130,7 +129,7 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+     }
+ 
+     @Override
+-    public List<DataApiPrincipal> getAll(Optional<String> limitToOffice) {
++    public List<DataApiPrincipal> getAll(String limitToOffice) {
+         throw new UnsupportedOperationException("Unimplemented method 'getAll'");
+     }
+ 
+@@ -139,13 +138,13 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+      * (Also required by Dao<dataApiPrincipal>)
+      */
+     @Override
+-    public Optional<DataApiPrincipal> getByUniqueName(String uniqueName, Optional<String> limitToOffice) throws CwmsAuthException {
++    public Optional<DataApiPrincipal> getByUniqueName(String uniqueName, String limitToOffice) throws CwmsAuthException {
+         throw new UnsupportedOperationException("Unimplemented method 'getByUniqueName'");
+     }
+ 
+     /**
+      * Retrieve required user information from database for a given APIKEY.
+-     * @param apikey
++     * @param apikey the key to look up.
+      * @return valid DataApiPrincipal object for further authorization verification.
+      * @throws CwmsAuthException throw for any issue with verification of Key or user information.
+      */
+@@ -157,18 +156,18 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+ 
+     /**
+      * Setup session environment so we can query the required tables.
+-     * @param conn
++     * @param conn the connection to setup.
+      * @throws SQLException
+      */
+     private void setSessionForAuthCheck(Connection conn) throws SQLException {
+         if (hasCwmsEnvMultiOfficeAuthFix) {
+-            try(PreparedStatement setApiUser = conn.prepareStatement(SET_API_USER_DIRECT_WITH_OFFICE)) {
++            try (PreparedStatement setApiUser = conn.prepareStatement(SET_API_USER_DIRECT_WITH_OFFICE)) {
+                 setApiUser.setString(1,connectionUser);
+                 setApiUser.setString(2,defaultOffice);
+                 setApiUser.execute();
+             }
+         } else {
+-            try(PreparedStatement setApiUser = conn.prepareStatement(SET_API_USER_DIRECT)) {
++            try (PreparedStatement setApiUser = conn.prepareStatement(SET_API_USER_DIRECT)) {
+                 setApiUser.setString(1,connectionUser);
+                 setApiUser.execute();
+             }
+@@ -177,7 +176,7 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+ 
+     private String checkKey(String key) throws CwmsAuthException {
+         try {
+-            return dsl.connectionResult(c-> {
++            return dsl.connectionResult(c -> {
+                 setSessionForAuthCheck(c);
+                 try (PreparedStatement checkForKey = c.prepareStatement(CHECK_API_KEY)) {
+                     checkForKey.setString(1,key);
+@@ -204,13 +203,13 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+ 
+     /**
+      *
+-     * @param edipi
+-     * @return
++     * @param edipi the edipi to look up.
++     * @return the username for the given edipi.
+      * @throws CwmsAuthException
+      */
+     private String userForEdipi(long edipi) throws CwmsAuthException {
+         try {
+-            return dsl.connectionResult(c-> {
++            return dsl.connectionResult(c -> {
+                 setSessionForAuthCheck(c);
+                 try (PreparedStatement userForEdipi = c.prepareStatement(USER_FOR_EDIPI)) {
+                     userForEdipi.setLong(1, edipi);
+@@ -247,12 +246,12 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+ 
+     /**
+      * Retrieve roles a user has.
+-     * @param user
+-     * @return
++     * @param user the user to look up.
++     * @return a set of roles the user has.
+      */
+     private Set<RouteRole> getRolesForUser(String user) {
+         final Set<RouteRole> roles = new HashSet<>();
+-        dsl.connection(c->{
++        dsl.connection(c -> {
+             setSessionForAuthCheck(c);
+             try (PreparedStatement getRoles = c.prepareStatement(RETRIEVE_GROUPS_OF_USER)) {
+                 getRoles.setString(1,user);
+@@ -271,13 +270,12 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+     /**
+      * Allows connection to be correctly setup, key is used to assert user, then the office
+      * is set to the user specified office for further checks within the database.
+-     *
+      * NOTE: side affect on ctx for this session.
+      *
+      * @param ctx javalin context if additional parameters are required.
+      * @param p User information
+      */
+-    public static void prepareContextWithUser(Context ctx, DataApiPrincipal p) throws SQLException {
++    public static void prepareContextWithUser(Context ctx, DataApiPrincipal p) {
+         Objects.requireNonNull(ctx, "A valid Javalin Context must be provided to this call.");
+         Objects.requireNonNull(p, "A valid data api principal must be provided to this call.");
+         logger.atInfo()
+@@ -301,9 +299,9 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+     /**
+      * Primary logic to determine if a given principal can perform the desired operation.
+      * Throws exception if not valid, otherwise just returns.
+-     * @param ctx
+-     * @param p
+-     * @param routeRoles
++     * @param ctx the context to check
++     * @param p the principal to check
++     * @param routeRoles the required roles
+      */
+     public static void isAuthorized(Context ctx, DataApiPrincipal p, Set<RouteRole> routeRoles) throws CwmsAuthException {
+         if (routeRoles == null || routeRoles.isEmpty()) {
+@@ -409,7 +407,7 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+             try (PreparedStatement listKeys = c.prepareStatement(LIST_KEYS)) {
+                 listKeys.setString(1,p.getName());
+                 try (ResultSet rs = listKeys.executeQuery()) {
+-                    while(rs.next()) {
++                    while (rs.next()) {
+                         keys.add(rs2ApiKey(rs));
+                     }
+                 }
+@@ -448,9 +446,8 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+      * @param p User principal to narrow and limit request
+      * @param keyName name of the key to remove
+      */
+-    public void deleteKeyForUser(DataApiPrincipal p, String keyName)
+-    {
+-        dsl.connection( c -> {
++    public void deleteKeyForUser(DataApiPrincipal p, String keyName) {
++        dsl.connection(c -> {
+             setSessionForAuthCheck(c);
+             try (PreparedStatement deleteKey = c.prepareStatement(REMOVE_API_KEY)) {
+                 deleteKey.setString(1, p.getName());
+@@ -461,8 +458,7 @@ public class AuthDao extends Dao<DataApiPrincipal>{
+     }
+ 
+ 
+-    public DataApiPrincipal getDataApiPrincipal(Context ctx)
+-    {
++    public DataApiPrincipal getDataApiPrincipal(Context ctx) {
+         return ctx.attribute(DATA_API_PRINCIPAL);
+     }
+ 
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/BlobDao.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/BlobDao.java
+index 69f341cd..ed2184d2 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/BlobDao.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/BlobDao.java
+@@ -33,16 +33,16 @@ public class BlobDao extends JooqDao<Blob> {
+     }
+ 
+     @Override
+-    public Optional<Blob> getByUniqueName(String id, Optional<String> limitToOffice) {
++    public Optional<Blob> getByUniqueName(String id, String limitToOffice) {
+         String queryStr = "SELECT AT_BLOB.ID, AT_BLOB.DESCRIPTION, CWMS_MEDIA_TYPE.MEDIA_TYPE_ID, CWMS_OFFICE.OFFICE_ID, AT_BLOB.VALUE \n"
+                 + "FROM CWMS_20.AT_BLOB \n"
+                 + "join CWMS_20.CWMS_MEDIA_TYPE on AT_BLOB.MEDIA_TYPE_CODE = CWMS_MEDIA_TYPE.MEDIA_TYPE_CODE \n"
+                 + "join CWMS_20.CWMS_OFFICE on AT_BLOB.OFFICE_CODE=CWMS_OFFICE.OFFICE_CODE \n"
+                 + "WHERE ID = ?";
+         ResultQuery<Record> query;
+-        if (limitToOffice.isPresent()) {
++        if (limitToOffice != null && !limitToOffice.isEmpty()) {
+             queryStr = queryStr + " and CWMS_OFFICE.OFFICE_ID = ?";
+-            query = dsl.resultQuery(queryStr, id, limitToOffice.get());
++            query = dsl.resultQuery(queryStr, id, limitToOffice);
+         } else {
+             query = dsl.resultQuery(queryStr, id);
+         }
+@@ -96,7 +96,7 @@ public class BlobDao extends JooqDao<Blob> {
+                     if (resultSet.next()) {
+                         handleResultSet(resultSet, consumer);
+                     } else {
+-                        throw new NotFoundException("Unable to find blob with id " + id );
++                        throw new NotFoundException("Unable to find blob with id " + id);
+                     }
+                 }
+             }
+@@ -115,8 +115,7 @@ public class BlobDao extends JooqDao<Blob> {
+ 
+ 
+     @Override
+-    public List<Blob> getAll(Optional<String> limitToOffice)
+-    {
++    public List<Blob> getAll(String officeId) {
+         String queryStr = "SELECT AT_BLOB.ID, AT_BLOB.DESCRIPTION, CWMS_MEDIA_TYPE.MEDIA_TYPE_ID, CWMS_OFFICE.OFFICE_ID\n"
+                 + " FROM CWMS_20.AT_BLOB \n" +
+                 "join CWMS_20.CWMS_MEDIA_TYPE on AT_BLOB.MEDIA_TYPE_CODE = CWMS_MEDIA_TYPE.MEDIA_TYPE_CODE \n"
+@@ -124,9 +123,9 @@ public class BlobDao extends JooqDao<Blob> {
+                 ;
+ 
+         ResultQuery<Record> query;
+-        if (limitToOffice.isPresent()) {
++        if (officeId != null) {
+             queryStr = queryStr + " and upper(CWMS_OFFICE.OFFICE_ID) = upper(?)";
+-            query = dsl.resultQuery(queryStr, limitToOffice.get());
++            query = dsl.resultQuery(queryStr, officeId);
+         } else {
+             query = dsl.resultQuery(queryStr);
+         }
+@@ -141,20 +140,18 @@ public class BlobDao extends JooqDao<Blob> {
+         });
+     }
+ 
+-    public List<Blob> getAll(Optional<String> limitToOffice, String like)
+-    {
++    public List<Blob> getAll(String  officeId, String like) {
+         String queryStr = "SELECT AT_BLOB.ID, AT_BLOB.DESCRIPTION, CWMS_MEDIA_TYPE.MEDIA_TYPE_ID, CWMS_OFFICE.OFFICE_ID\n"
+-                + " FROM CWMS_20.AT_BLOB \n" +
+-                "join CWMS_20.CWMS_MEDIA_TYPE on AT_BLOB.MEDIA_TYPE_CODE = CWMS_MEDIA_TYPE.MEDIA_TYPE_CODE \n"
++                + " FROM CWMS_20.AT_BLOB \n"
++                + "join CWMS_20.CWMS_MEDIA_TYPE on AT_BLOB.MEDIA_TYPE_CODE = CWMS_MEDIA_TYPE.MEDIA_TYPE_CODE \n"
+                 + "join CWMS_20.CWMS_OFFICE on AT_BLOB.OFFICE_CODE=CWMS_OFFICE.OFFICE_CODE \n"
+                 + " where REGEXP_LIKE (upper(AT_BLOB.ID), upper(?))"
+                 ;
+ 
+-
+         ResultQuery<Record> query;
+-        if (limitToOffice.isPresent()) {
++        if (officeId != null) {
+             queryStr = queryStr + " and upper(CWMS_OFFICE.OFFICE_ID) = upper(?)";
+-            query = dsl.resultQuery(queryStr, like, limitToOffice.get());
++            query = dsl.resultQuery(queryStr, like, officeId);
+         } else {
+             query = dsl.resultQuery(queryStr, like);
+         }
+@@ -172,7 +169,7 @@ public class BlobDao extends JooqDao<Blob> {
+     public void create(Blob blob, boolean failIfExists, boolean ignoreNulls) {
+         String pFailIfExists = getBoolean(failIfExists);
+         String pIgnoreNulls = getBoolean(ignoreNulls);
+-        dsl.connection(c-> CWMS_TEXT_PACKAGE.call_STORE_BINARY(
++        dsl.connection(c -> CWMS_TEXT_PACKAGE.call_STORE_BINARY(
+                 getDslContext(c, blob.getOfficeId()).configuration(),
+                 blob.getValue(),
+                 blob.getId(),
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/ClobDao.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/ClobDao.java
+index 0cd88eda..c5d0e6eb 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/ClobDao.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/ClobDao.java
+@@ -2,6 +2,7 @@ package cwms.cda.data.dao;
+ 
+ import static org.jooq.impl.DSL.asterisk;
+ import static org.jooq.impl.DSL.count;
++import static org.jooq.impl.DSL.noCondition;
+ 
+ import com.google.common.flogger.FluentLogger;
+ import cwms.cda.api.errors.NotFoundException;
+@@ -19,12 +20,9 @@ import org.jooq.Condition;
+ import org.jooq.DSLContext;
+ import org.jooq.Record;
+ import org.jooq.Record1;
+-import org.jooq.Record2;
+ import org.jooq.Record4;
+ import org.jooq.RecordMapper;
+-import org.jooq.Select;
+ import org.jooq.SelectConditionStep;
+-import org.jooq.SelectJoinStep;
+ import org.jooq.SelectLimitPercentStep;
+ import org.jooq.conf.ParamType;
+ import org.jooq.impl.DSL;
+@@ -48,42 +46,32 @@ public class ClobDao extends JooqDao<Clob> {
+     // Not returning Value or Desc fields until a useful way of working with this method is
+     // figured out.
+     @Override
+-    public List<Clob> getAll(Optional<String> limitToOffice) {
++    public List<Clob> getAll(String limitToOffice) {
+         AV_CLOB ac = AV_CLOB.AV_CLOB;
+         AV_OFFICE ao = AV_OFFICE.AV_OFFICE;
+ 
+-        SelectJoinStep<Record2<String, String>> joinStep = dsl.select(ac.ID, ao.OFFICE_ID).from(
+-                ac.join(ao).on(ac.OFFICE_CODE.eq(ao.OFFICE_CODE)));
+-
+-        Select<Record2<String, String>> select = joinStep;
+-
+-        if (limitToOffice.isPresent()) {
+-            String office = limitToOffice.get();
+-            if (office != null && !office.isEmpty()) {
+-                SelectConditionStep<Record2<String, String>> conditionStep =
+-                        joinStep.where(ao.OFFICE_ID.eq(office));
+-                select = conditionStep;
+-            }
++        Condition whereCond = noCondition();
++        if (limitToOffice != null && !limitToOffice.isEmpty()) {
++            whereCond = ao.OFFICE_ID.eq(limitToOffice);
+         }
+ 
+-        RecordMapper<Record2<String, String>, Clob> mapper = joinRecord ->
+-                new Clob(joinRecord.get(ao.OFFICE_ID),
+-                        joinRecord.get(ac.ID), null, null);
++        return dsl.select(ac.ID, ao.OFFICE_ID)
++                .from(ac.join(ao).on(ac.OFFICE_CODE.eq(ao.OFFICE_CODE)))
++                .where(whereCond)
++                .fetch(joinRecord ->
++                        new Clob(joinRecord.get(ao.OFFICE_ID),
++                                joinRecord.get(ac.ID), null, null));
+ 
+-        return select.fetch(mapper);
+     }
+ 
+     @Override
+-    public Optional<Clob> getByUniqueName(String uniqueName, Optional<String> limitToOffice) {
++    public Optional<Clob> getByUniqueName(String uniqueName, String office) {
+         AV_CLOB ac = AV_CLOB.AV_CLOB;
+         AV_OFFICE ao = AV_OFFICE.AV_OFFICE;
+ 
+         Condition cond = ac.ID.eq(uniqueName);
+-        if (limitToOffice.isPresent()) {
+-            String office = limitToOffice.get();
+-            if (!office.isEmpty()) {
+-                cond = cond.and(ao.OFFICE_ID.eq(office));
+-            }
++        if (office != null && !office.isEmpty()) {
++            cond = cond.and(ao.OFFICE_ID.eq(office));
+         }
+ 
+         RecordMapper<Record, Clob> mapper = joinRecord ->
+@@ -93,19 +81,19 @@ public class ClobDao extends JooqDao<Clob> {
+                         joinRecord.getValue(ac.VALUE)
+                 );
+ 
+-        Clob avClob = dsl.select(ao.OFFICE_ID, ac.asterisk()).from(
+-                ac.join(ao).on(ac.OFFICE_CODE.eq(ao.OFFICE_CODE))).where(cond).fetchOne(mapper);
+-
+-        return Optional.ofNullable(avClob);
++        return dsl.select(ao.OFFICE_ID, ac.asterisk())
++                .from(ac.join(ao).on(ac.OFFICE_CODE.eq(ao.OFFICE_CODE)))
++                .where(cond)
++                .fetchOptional(mapper);
+     }
+ 
+-    public Clobs getClobs(String cursor, int pageSize, Optional<String> office,
++    public Clobs getClobs(String cursor, int pageSize, String officeLike,
+                           boolean includeValues) {
+-        return getClobs(cursor, pageSize, office, includeValues, ".*");
++        return getClobs(cursor, pageSize, officeLike, includeValues, ".*");
+     }
+ 
+-    public Clobs getClobs(String cursor, int pageSize, Optional<String> office,
+-                          boolean includeValues, String like) {
++    public Clobs getClobs(String cursor, int pageSize, String officeLike,
++                          boolean includeValues, String idRegex) {
+         int total = 0;
+         String clobCursor = "*";
+         AV_CLOB v_clob = AV_CLOB.AV_CLOB;
+@@ -117,15 +105,14 @@ public class ClobDao extends JooqDao<Clob> {
+                     dsl.select(count(asterisk()))
+                             .from(v_clob)
+                             .join(v_office).on(v_clob.OFFICE_CODE.eq(v_office.OFFICE_CODE))
+-                            .where(JooqDao.caseInsensitiveLikeRegex(v_clob.ID, like))
+-                            .and(DSL.upper(v_office.OFFICE_ID).like(office.isPresent() ?
+-                                    office.get().toUpperCase() : "%"));
++                            .where(JooqDao.caseInsensitiveLikeRegex(v_clob.ID, idRegex))
++                            .and(officeLike == null ? noCondition() : DSL.upper(v_office.OFFICE_ID).like(officeLike.toUpperCase()));
+ 
+             total = count.fetchOne().value1();
+         } else {
+             final String[] parts = CwmsDTOPaginated.decodeCursor(cursor, "||");
+ 
+-            logger.atFine().log( "decoded cursor: " + String.join("||", parts));
++            logger.atFine().log("decoded cursor: " + String.join("||", parts));
+             for (String p : parts) {
+                 logger.atFinest().log(p);
+             }
+@@ -143,19 +130,19 @@ public class ClobDao extends JooqDao<Clob> {
+                         v_office.OFFICE_ID,
+                         v_clob.ID,
+                         v_clob.DESCRIPTION,
+-                        includeValues == true ? v_clob.VALUE : DSL.inline("").as(v_clob.VALUE)
++                        includeValues ? v_clob.VALUE : DSL.inline("").as(v_clob.VALUE)
+                 )
+                 .from(v_clob)
+                 //.innerJoin(forLimit).on(forLimit.field(v_clob.ID).eq(v_clob.ID))
+                 .join(v_office).on(v_clob.OFFICE_CODE.eq(v_office.OFFICE_CODE))
+-                .where(JooqDao.caseInsensitiveLikeRegex(v_clob.ID,like))
++                .where(JooqDao.caseInsensitiveLikeRegex(v_clob.ID,idRegex))
+                 .and(DSL.upper(v_clob.ID).greaterThan(clobCursor))
+                 .orderBy(v_clob.ID).limit(pageSize);
+ 
+ 
+         Clobs.Builder builder = new Clobs.Builder(clobCursor, pageSize, total);
+ 
+-        logger.atFine().log(query.getSQL(ParamType.INLINED) );
++        logger.atFine().log(query.getSQL(ParamType.INLINED));
+ 
+         query.fetch().forEach(row -> {
+             usace.cwms.db.jooq.codegen.tables.records.AV_CLOB clob = row.into(v_clob);
+@@ -208,15 +195,13 @@ public class ClobDao extends JooqDao<Clob> {
+     public void create(Clob clob, boolean failIfExists) {
+ 
+         String pFailIfExists = getBoolean(failIfExists);
+-        dsl.connection(c->{
+-            CWMS_TEXT_PACKAGE.call_STORE_TEXT(
+-                getDslContext(c, clob.getOfficeId()).configuration(),
+-                clob.getValue(),
+-                clob.getId(),
+-                clob.getDescription(),
+-                pFailIfExists,
+-                clob.getOfficeId());
+-        });
++        dsl.connection(c -> CWMS_TEXT_PACKAGE.call_STORE_TEXT(
++            getDslContext(c, clob.getOfficeId()).configuration(),
++            clob.getValue(),
++            clob.getId(),
++            clob.getDescription(),
++            pFailIfExists,
++            clob.getOfficeId()));
+     }
+ 
+     @NotNull
+@@ -231,10 +216,8 @@ public class ClobDao extends JooqDao<Clob> {
+     }
+ 
+     public void delete(String officeId, String id) {
+-        dsl.connection(c->
+-            CWMS_TEXT_PACKAGE.call_DELETE_TEXT(
+-                getDslContext(c,officeId).configuration(), id, officeId
+-            )
++        dsl.connection(c -> CWMS_TEXT_PACKAGE.call_DELETE_TEXT(
++                getDslContext(c,officeId).configuration(), id, officeId)
+         );
+     }
+ 
+@@ -248,7 +231,7 @@ public class ClobDao extends JooqDao<Clob> {
+         // it throws -  ORA-20244: NULL_ARGUMENT: Argument P_TEXT is not allowed to be null
+         // Also note: when p_ignore_nulls == 'F' and the value is "" (empty string)
+         // it throws -  ORA-20244: NULL_ARGUMENT: Argument P_TEXT is not allowed to be null
+-        dsl.connection(c->
++        dsl.connection(c ->
+             CWMS_TEXT_PACKAGE.call_UPDATE_TEXT(
+                 getDslContext(c,clob.getOfficeId()).configuration(),
+                 clob.getValue(),
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/Dao.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/Dao.java
+index ba8a03c2..a7eab4cf 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/Dao.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/Dao.java
+@@ -1,56 +1,51 @@
+ package cwms.cda.data.dao;
+ 
++import static usace.cwms.db.jooq.codegen.tables.AV_DB_CHANGE_LOG.AV_DB_CHANGE_LOG;
++
++import cwms.cda.data.dto.CwmsDTO;
+ import java.sql.Connection;
+ import java.sql.SQLException;
+ import java.util.List;
+ import java.util.Optional;
+-
+ import org.jooq.DSLContext;
+ import org.jooq.SQLDialect;
+ import org.jooq.impl.DSL;
+-
+-import cwms.cda.data.dto.CwmsDTO;
+ import usace.cwms.db.dao.ifc.env.CwmsDbEnv;
+ import usace.cwms.db.dao.util.services.CwmsDbServiceLookup;
+-import usace.cwms.db.jooq.codegen.packages.CWMS_ENV_PACKAGE;
+-
+-import static usace.cwms.db.jooq.codegen.tables.AV_DB_CHANGE_LOG.AV_DB_CHANGE_LOG;
+ 
+ public abstract class Dao<T> {
+     public static final int CWMS_18_1_8 = 180108;
+     public static final int CWMS_21_1_1 = 210101;
+     public static final int CWMS_23_03_16 = 230316;
+ 
+-    private int cwmsDbVersion = 0;
++    private int cwmsDbVersion;
+     @SuppressWarnings("unused")
+-    protected DSLContext dsl = null;
++    protected DSLContext dsl;
+ 
+     public Dao(DSLContext dsl) {
+         this.dsl = dsl;
+-        String version = dsl.connectionResult(c-> {
+-            return DSL.using(c,SQLDialect.ORACLE18C).select(AV_DB_CHANGE_LOG.VERSION)
+-                .from(AV_DB_CHANGE_LOG)
+-                .orderBy(AV_DB_CHANGE_LOG.VERSION_DATE.desc())
+-                .limit(1)
+-                .fetchOne().component1();
+-        });
++        String version = dsl.connectionResult(c -> DSL.using(c,SQLDialect.ORACLE18C).select(AV_DB_CHANGE_LOG.VERSION)
++            .from(AV_DB_CHANGE_LOG)
++            .orderBy(AV_DB_CHANGE_LOG.VERSION_DATE.desc())
++            .limit(1)
++            .fetchOne().component1());
+         String[] parts = version.split("\\.");
+         cwmsDbVersion =
+-            Integer.parseInt(parts[0])*10000
+-            +Integer.parseInt(parts[1])*100
+-            +Integer.parseInt(parts[2]);
++            Integer.parseInt(parts[0]) * 10000
++            + Integer.parseInt(parts[1]) * 100
++            + Integer.parseInt(parts[2]);
+     }
+ 
+-    public int getDbVersion(){
++    public int getDbVersion() {
+         return cwmsDbVersion;
+     }
+ 
+ 
+     /**
+-     * set session office on specific connection
++     * Sets session office on specific connection.
+      * @param c opened connection
+      * @param object Data containing a valid CWMS office
+-     * @throws SQLException
++     * @throws SQLException if the underlying database throws an exception
+      */
+     protected void setOffice(Connection c, CwmsDTO object) throws SQLException {
+         this.setOffice(c,object.getOfficeId());
+@@ -62,8 +57,8 @@ public abstract class Dao<T> {
+     }
+ 
+ 
+-    public abstract List<T> getAll(Optional<String> limitToOffice);
++    public abstract List<T> getAll(String office);
+ 
+-    public abstract Optional<T> getByUniqueName( String uniqueName, Optional<String> limitToOffice);
++    public abstract Optional<T> getByUniqueName(String uniqueName, String office);
+ 
+ }
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java b/cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java
+index 09b91790..0825ece7 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java
+@@ -40,6 +40,7 @@ import java.sql.Connection;
+ import java.sql.SQLClientInfoException;
+ import java.sql.SQLException;
+ import java.util.Arrays;
++import java.util.Collections;
+ import java.util.List;
+ import java.util.Optional;
+ import javax.servlet.http.HttpServletResponse;
+@@ -104,20 +105,6 @@ public abstract class JooqDao<T> extends Dao<T> {
+         return retVal;
+     }
+ 
+-    private static Connection setClientInfo(Context ctx, Connection connection) {
+-        try {
+-            connection.setClientInfo("OCSID.ECID", ApiServlet.APPLICATION_TITLE + " " + ApiServlet.VERSION);
+-            connection.setClientInfo("OCSID.MODULE", ctx.endpointHandlerPath());
+-            connection.setClientInfo("OCSID.ACTION", ctx.method());
+-            connection.setClientInfo("OCSID.CLIENTID", ctx.url().replace(ctx.path(), "") + ctx.contextPath());
+-        } catch (SQLClientInfoException ex) {
+-            logger.atWarning()
+-                    .withCause(ex)
+-                    .log("Unable to set client info on connection.");
+-        }
+-        return connection;
+-    }
+-
+     public static DSLContext getDslContext(Connection connection, String officeId) {
+         // Because this dsl is constructed with a connection, jOOQ will reuse the provided
+         // connection and not get new connections from a DataSource.  See:
+@@ -134,13 +121,27 @@ public abstract class JooqDao<T> extends Dao<T> {
+         return dsl;
+     }
+ 
++    private static Connection setClientInfo(Context ctx, Connection connection) {
++        try {
++            connection.setClientInfo("OCSID.ECID", ApiServlet.APPLICATION_TITLE + " " + ApiServlet.VERSION);
++            connection.setClientInfo("OCSID.MODULE", ctx.endpointHandlerPath());
++            connection.setClientInfo("OCSID.ACTION", ctx.method());
++            connection.setClientInfo("OCSID.CLIENTID", ctx.url().replace(ctx.path(), "") + ctx.contextPath());
++        } catch (SQLClientInfoException ex) {
++            logger.atWarning()
++                    .withCause(ex)
++                    .log("Unable to set client info on connection.");
++        }
++        return connection;
++    }
++
+     @Override
+-    public List<T> getAll(Optional<String> limitToOffice) {
++    public List<T> getAll(String officeId) {
+         throw new UnsupportedOperationException("Not supported yet.");
+     }
+ 
+     @Override
+-    public Optional<T> getByUniqueName(String uniqueName, Optional<String> limitToOffice) {
++    public Optional<T> getByUniqueName(String uniqueName, String officeId) {
+         throw new UnsupportedOperationException("Not supported yet.");
+     }
+ 
+@@ -179,7 +180,7 @@ public abstract class JooqDao<T> extends Dao<T> {
+      * A null regex will return a condition that always evaluates to true
+      */
+     public static Condition caseInsensitiveLikeRegexNullTrue(Field<String> field, String regex) {
+-        if(regex == null) {
++        if (regex == null) {
+             return DSL.trueCondition();
+         }
+         return caseInsensitiveLikeRegex(field, regex);
+@@ -222,7 +223,7 @@ public abstract class JooqDao<T> extends Dao<T> {
+ 
+         if (cause instanceof SQLException) {
+             return Optional.of((SQLException) cause);
+-        } else if(cause instanceof DataAccessException) {
++        } else if (cause instanceof DataAccessException) {
+             return getSqlException(cause); // There might be nested DataAccessExceptions
+         } else {
+             return Optional.empty();
+@@ -272,8 +273,8 @@ public abstract class JooqDao<T> extends Dao<T> {
+         if (optional.isPresent()) {
+             SQLException sqlException = optional.get();
+ 
+-            List<Integer> codes = Arrays.asList(20019);
+-            List<String> segments = Arrays.asList("INVALID_ITEM");
++            List<Integer> codes = Collections.singletonList(20019);
++            List<String> segments = Collections.singletonList("INVALID_ITEM");
+ 
+             retVal = hasCodeOrMessage(sqlException, codes, segments);
+         }
+@@ -310,8 +311,8 @@ public abstract class JooqDao<T> extends Dao<T> {
+ 
+             // 20998 is the code we're getting but that is the generic error code.
+             // We'll need to use hasCode_AND_Message or this will trigger on other errors.
+-            List<Integer> codes = Arrays.asList(20998);
+-            List<String> segments = Arrays.asList("does not have any assigned privileges");
++            List<Integer> codes = Collections.singletonList(20998);
++            List<String> segments = Collections.singletonList("does not have any assigned privileges");
+ 
+             retVal = hasCodeAndMessage(sqlException, codes, segments);  // _AND_
+         }
+@@ -373,7 +374,7 @@ public abstract class JooqDao<T> extends Dao<T> {
+         Optional<SQLException> optional = getSqlException(input);
+         if (optional.isPresent()) {
+             SQLException sqlException = optional.get();
+-            List<Integer> codes = Arrays.asList(20244);
++            List<Integer> codes = Collections.singletonList(20244);
+             List<String> segments = Arrays.asList("NULL_ARGUMENT", " already exists.");
+ 
+             retVal = hasCodeOrMessage(sqlException, codes, segments);
+diff --git a/cwms-data-api/src/test/java/cwms/cda/data/dao/ClobDaoTest.java b/cwms-data-api/src/test/java/cwms/cda/data/dao/ClobDaoTest.java
+index 43631a35..7976d963 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/data/dao/ClobDaoTest.java
++++ b/cwms-data-api/src/test/java/cwms/cda/data/dao/ClobDaoTest.java
+@@ -91,7 +91,7 @@ class ClobDaoTest {
+ 
+         ClobDao dao = new ClobDao(dsl);
+ 
+-        Optional<Clob> found = dao.getByUniqueName(id, Optional.of(OFFICE));
++        Optional<Clob> found = dao.getByUniqueName(id, OFFICE);
+         assertFalse(found.isPresent());
+ 
+ 
+@@ -108,7 +108,7 @@ class ClobDaoTest {
+         ClobDao dao = new ClobDao(dsl);
+ 
+         // try and fail to find it
+-        Optional<Clob> found = dao.getByUniqueName(id, Optional.of(OFFICE));
++        Optional<Clob> found = dao.getByUniqueName(id, OFFICE);
+         assertFalse(found.isPresent());
+ 
+         // create it
+@@ -116,7 +116,7 @@ class ClobDaoTest {
+         dao.create(clob, true);
+ 
+         // try and find it
+-        found = dao.getByUniqueName(id, Optional.of(OFFICE));
++        found = dao.getByUniqueName(id, OFFICE);
+         assertTrue(found.isPresent());
+ 
+ 
+@@ -134,7 +134,7 @@ class ClobDaoTest {
+         ClobDao dao = new ClobDao(dsl);
+ 
+         // try and fail to find it
+-        Optional<Clob> found = dao.getByUniqueName(id, Optional.of(office));
++        Optional<Clob> found = dao.getByUniqueName(id, office);
+         assertFalse(found.isPresent());
+ 
+         // create it
+@@ -142,14 +142,14 @@ class ClobDaoTest {
+         dao.create(clob, true);
+ 
+         // try and find it
+-        found = dao.getByUniqueName(id, Optional.of(office));
++        found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+ 
+         // delete it
+         dao.delete(office, id);
+ 
+         // try and fail to find it
+-        found = dao.getByUniqueName(id, Optional.of(office));
++        found = dao.getByUniqueName(id, office);
+         assertFalse(found.isPresent());
+ 
+ 
+@@ -211,7 +211,7 @@ class ClobDaoTest {
+         dao.update(clob, false);
+ 
+         // find it
+-        Optional<Clob> found = dao.getByUniqueName(id, Optional.of(office));
++        Optional<Clob> found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+         Clob foundClob = found.get();
+         assertEquals("NEW description", foundClob.getDescription());
+@@ -243,7 +243,7 @@ class ClobDaoTest {
+         dao.update(clob, false);
+ 
+         // find it
+-        Optional<Clob> found = dao.getByUniqueName(id, Optional.of(office));
++        Optional<Clob> found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+         Clob foundClob = found.get();
+         assertNull(foundClob.getDescription());
+@@ -263,7 +263,7 @@ class ClobDaoTest {
+         }
+ 
+         // find it again
+-        found = dao.getByUniqueName(id, Optional.of(office));
++        found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+         foundClob = found.get();
+         assertNull(foundClob.getDescription());
+@@ -281,7 +281,7 @@ class ClobDaoTest {
+                     + "allowed to be null"));
+         }
+ 
+-        found = dao.getByUniqueName(id, Optional.of(office));
++        found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+         foundClob = found.get();
+         assertEquals(newValue, foundClob.getValue());
+@@ -291,7 +291,7 @@ class ClobDaoTest {
+         clob = new Clob(office, id, " ", " ");
+         dao.update(clob, false);
+ 
+-        found = dao.getByUniqueName(id, Optional.of(office));
++        found = dao.getByUniqueName(id, office);
+         assertTrue(found.isPresent());
+         foundClob = found.get();
+         // empty is apparently treated the same as null, too bad.  Space is not.
+diff --git a/cwms-data-api/src/test/java/cwms/cda/data/dao/LocationGroupDaoTest.java b/cwms-data-api/src/test/java/cwms/cda/data/dao/LocationGroupDaoTest.java
+index a1cbfdf9..0afbd1cb 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/data/dao/LocationGroupDaoTest.java
++++ b/cwms-data-api/src/test/java/cwms/cda/data/dao/LocationGroupDaoTest.java
+@@ -15,6 +15,7 @@ import cwms.cda.formatters.json.JsonV1;
+ import java.sql.SQLException;
+ import java.util.Iterator;
+ import java.util.List;
++import java.util.Optional;
+ import java.util.stream.Collectors;
+ import org.geojson.FeatureCollection;
+ import org.jooq.DSLContext;
+@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
+ public class LocationGroupDaoTest {
+ 
+     @Test
+-    public void testGetOne() throws SQLException {
++    void testGetOne() throws SQLException {
+         DSLContext lrl = getDslContext(getConnection(), "LRL");
+ 
+         LocationGroupDao dao = new LocationGroupDao(lrl);
+@@ -52,7 +53,9 @@ public class LocationGroupDaoTest {
+     void getLocationGroup() throws SQLException {
+         DSLContext lrl = getDslContext(getConnection(), "LRL");
+         LocationGroupDao dao = new LocationGroupDao(lrl);
+-        LocationGroup group = dao.getLocationGroup("LRL", "Basin", "Green River Basin").get();
++        Optional<LocationGroup> lgOpt = dao.getLocationGroup("LRL", "Basin", "Green River Basin");
++        assertTrue(lgOpt.isPresent());
++        LocationGroup group = lgOpt.get();
+ 
+         assertNotNull(group);
+         List<AssignedLocation> locs = group.getAssignedLocations();
+@@ -98,7 +101,7 @@ public class LocationGroupDaoTest {
+ 
+ 
+     @Test
+-    public void getLocationGroupAsGeojson() throws SQLException, JsonProcessingException {
++    void getLocationGroupAsGeojson() throws SQLException, JsonProcessingException {
+         DSLContext lrl = getDslContext(getConnection(), "LRL");
+         LocationGroupDao dao = new LocationGroupDao(lrl);
+         FeatureCollection fc = dao.buildFeatureCollectionForLocationGroup("LRL", "Basin",
+diff --git a/cwms-data-api/src/test/java/cwms/cda/data/dao/OfficeDaoTest.java b/cwms-data-api/src/test/java/cwms/cda/data/dao/OfficeDaoTest.java
+index c96c1fc8..a5e1780e 100644
+--- a/cwms-data-api/src/test/java/cwms/cda/data/dao/OfficeDaoTest.java
++++ b/cwms-data-api/src/test/java/cwms/cda/data/dao/OfficeDaoTest.java
+@@ -3,22 +3,26 @@ package cwms.cda.data.dao;
+ import static cwms.cda.data.dao.DaoTest.getConnection;
+ import static cwms.cda.data.dao.DaoTest.getDslContext;
+ import static org.junit.jupiter.api.Assertions.assertNotNull;
++import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ import cwms.cda.data.dto.Office;
+ import java.sql.SQLException;
++import java.util.Optional;
+ import org.jooq.DSLContext;
+ import org.junit.jupiter.api.Disabled;
+ import org.junit.jupiter.api.Test;
+ 
+ @Disabled
+-public class OfficeDaoTest {
++class OfficeDaoTest {
+ 
+     @Test
+     void getOfficeById() throws SQLException {
+         DSLContext lrl = getDslContext(getConnection(), "LRL");
+ 
+         OfficeDao dao = new OfficeDao(lrl);
+-        Office office = dao.getOfficeById("LRL").get();
++        Optional<Office> officeOpt = dao.getOfficeById("LRL");
++        assertTrue(officeOpt.isPresent());
++        Office office = officeOpt.get();
+         assertNotNull(office);
+ 
+     }
+

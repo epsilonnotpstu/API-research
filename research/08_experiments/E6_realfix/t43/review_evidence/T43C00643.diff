@@ -1,0 +1,583 @@
+diff --git a/Dockerfile b/Dockerfile
+index 701a5bf..8b22ab8 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -7,4 +7,5 @@ COPY --from=build /home/gradle/build/libs/allure-server-docker.jar /allure-serve
+ # Set port
+ EXPOSE ${PORT:-8080}
+ # Run application
+-ENTRYPOINT ["java","-jar","-XX:+UseContainerSupport","-Dspring.profiles.active=${PROFILE:default}","/allure-server-docker.jar"]
+\ No newline at end of file
++ENV JAVA_OPTS="-Xmx256m -Xmx2048m"
++ENTRYPOINT ["java","-jar","-XX:+UseContainerSupport", "-Dspring.profiles.active=${PROFILE:default}","/allure-server-docker.jar"]
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 808fcdc..6039b72 100644
+--- a/README.md
++++ b/README.md
+@@ -108,6 +108,17 @@ Spring Configutaion:
+ - environment vars `export allure.support.old.format=true` 
+ - in docker environment vars `-e allure.support.old.format=true`
+ 
++| ENV                          	| TYPE    	| DEFAULT                  	| DESCRIPTION                                                                   	|
++|------------------------------	|---------	|--------------------------	|-------------------------------------------------------------------------------	|
++| spring.datasource.url        	| string  	| jdbc:h2:file:./allure/db 	| H2 jdbc connection string. By default DB file will be created/read on startup 	|
++| PORT                         	| int     	| 8080                     	| Tomcat http port                                                              	|
++| allure.results.dir           	| string  	| allure/results/          	| Unzipped results store                                                        	|
++| allure.reports.dir           	| string  	| allure/reports/          	| Generated results store                                                       	|
++| allure.reports.path          	| string  	| reports/                 	| Url path (after base url) to acccess to reports                               	|
++| allure.reports.history.level 	| int     	| 20                       	| Number of reports in history                                                  	|
++| allure.support.old.format    	| boolean 	| false                    	| Auto-convert old format reports to new and add to db                          	|
++| JAVA_OPTS    	                | string 	| -Xmx256m -Xmx2048m     	| Java memory options for container                                              	|
++
+ ### GUI
+ ##### See example on [allure.iopump.ru](http://allure.iopump.ru/) or [allure-server.herokuapp.com](https://allure-server.herokuapp.com/)
+ 
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 9b78be9..4373a80 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -4,4 +4,6 @@ services:
+     container_name: allure-server
+     image: kochetkovma/allure-server:latest
+     ports:
+-      - 8080:8080
+\ No newline at end of file
++      - 8080:8080
++    volumes:
++      - /allure-server-store:/allure
+\ No newline at end of file
+diff --git a/gradle/dependencies.gradle b/gradle/dependencies.gradle
+index f14410e..14dbe5d 100644
+--- a/gradle/dependencies.gradle
++++ b/gradle/dependencies.gradle
+@@ -3,7 +3,7 @@ repositories {
+ }
+ ext {
+     qaLibVersion = '1.1.0'
+-    vaadinVersion = '14.1.27'
++    vaadinVersion = '14.2.0'
+     junit4Version = '4.13'
+     mockitoVersion = '3.3.3'
+     assertjVersion = '3.16.0'
+@@ -43,6 +43,7 @@ dependencies {
+     /* Spring Boot */
+     implementation('org.springframework.boot:spring-boot-starter-web') { exclude group: 'ch.qos.logback' }
+     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
++    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+ 
+     implementation "org.jooq:joor:$joorVersion"
+ 
+diff --git a/src/main/java/ru/iopump/qa/allure/Application.java b/src/main/java/ru/iopump/qa/allure/Application.java
+index 63ce206..1c282ca 100644
+--- a/src/main/java/ru/iopump/qa/allure/Application.java
++++ b/src/main/java/ru/iopump/qa/allure/Application.java
+@@ -2,14 +2,12 @@ package ru.iopump.qa.allure;
+ 
+ import com.vaadin.flow.spring.annotation.EnableVaadin;
+ import org.springframework.boot.SpringApplication;
+-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+ import org.springframework.boot.autoconfigure.SpringBootApplication;
+ import org.springframework.boot.context.properties.EnableConfigurationProperties;
+ import org.springframework.cache.annotation.EnableCaching;
+ import org.springframework.transaction.annotation.EnableTransactionManagement;
+ 
+ @SpringBootApplication
+-@EnableAutoConfiguration
+ @EnableCaching
+ @EnableTransactionManagement
+ @EnableConfigurationProperties(AppCfg.class)
+diff --git a/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java b/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
+index 6b8503e..fc1bac3 100644
+--- a/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
++++ b/src/main/java/ru/iopump/qa/allure/controller/AllureReportController.java
+@@ -56,7 +56,7 @@ public class AllureReportController {
+     @Cacheable(CACHE) // caching results
+     public Collection<ReportResponse> getAllCached() {
+         return StreamUtil.stream(reportService.getAll())
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.getUrl()))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+@@ -74,7 +74,7 @@ public class AllureReportController {
+             baseUrl()
+         );
+ 
+-        return new ReportResponse(reportEntity.getUuid(), reportEntity.getPath(), reportEntity.getUrl());
++        return new ReportResponse(reportEntity.getUuid(), reportEntity.getPath(), reportEntity.generateUrl(baseUrl()));
+     }
+ 
+     @Operation(summary = "Clear all history reports")
+@@ -82,7 +82,7 @@ public class AllureReportController {
+     @CacheEvict(value = CACHE, allEntries = true)
+     public Collection<ReportResponse> deleteAllHistory() {
+         return reportService.clearAllHistory().stream()
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.getUrl()))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+@@ -91,7 +91,7 @@ public class AllureReportController {
+     @CacheEvict(value = CACHE, allEntries = true)
+     public Collection<ReportResponse> deleteAll() throws IOException {
+         return reportService.deleteAll().stream()
+-            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.getUrl()))
++            .map(entity -> new ReportResponse(entity.getUuid(), entity.getPath(), entity.generateUrl(baseUrl())))
+             .collect(Collectors.toUnmodifiableList());
+     }
+ 
+diff --git a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+index 0d66ceb..d957269 100644
+--- a/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
++++ b/src/main/java/ru/iopump/qa/allure/entity/ReportEntity.java
+@@ -1,6 +1,13 @@
+ package ru.iopump.qa.allure.entity;
+ 
++import java.net.MalformedURLException;
++import java.net.URL;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.util.UUID;
++import javax.annotation.Nullable;
++import javax.persistence.Access;
++import javax.persistence.AccessType;
+ import javax.persistence.Basic;
+ import javax.persistence.Entity;
+ import javax.persistence.Id;
+@@ -11,6 +18,8 @@ import lombok.AllArgsConstructor;
+ import lombok.Builder;
+ import lombok.Data;
+ import lombok.NoArgsConstructor;
++import org.apache.commons.io.FileUtils;
++import org.apache.commons.lang3.ObjectUtils;
+ 
+ @Entity
+ @Data
+@@ -18,23 +27,55 @@ import lombok.NoArgsConstructor;
+ @NoArgsConstructor
+ @AllArgsConstructor
+ public class ReportEntity {
++
+     @Id
+     private UUID uuid;
+-
+     @NotNull
+     @Basic
+     private java.time.LocalDateTime createdDateTime;
+-
+     @NotEmpty
+     private String url;
+-
+     @NotEmpty
+     private String path;
+-
+     @NotNull
+     private boolean active;
+-
+     @Builder.Default
+     @PositiveOrZero
+     private long level = 0L; //NOPMD
++    @Builder.Default
++    @PositiveOrZero
++    @Access(AccessType.PROPERTY)
++    private long size = 0L; //NOPMD
++
++    public static long sizeKB(@Nullable Path path) {
++        if (path == null || Files.notExists(path)) {
++            return 0L;
++        }
++        return FileUtils.sizeOfDirectory(path.toFile()) / 1024;
++    }
++
++    public static boolean checkUrl(@Nullable String url) {
++        if (url == null) {
++            return false;
++        }
++
++        try {
++            new URL(url);
++            return true;
++        } catch (MalformedURLException e) {
++            return false;
++        }
++    }
++
++    public void setSize(Long size) {
++        this.size = ObjectUtils.defaultIfNull(size, 0L);
++    }
++
++    public String generateUrl(String baseUrl) {
++        return isFullUrl() ? url : baseUrl + url;
++    }
++
++    public boolean isFullUrl() {
++        return checkUrl(url);
++    }
+ }
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java b/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
+index 384f501..9469c1a 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/component/FilteredGrid.java
+@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.Anchor;
+ import com.vaadin.flow.component.html.Span;
+ import com.vaadin.flow.component.textfield.TextField;
+ import com.vaadin.flow.data.provider.ListDataProvider;
++import com.vaadin.flow.data.provider.Query;
+ import com.vaadin.flow.data.renderer.ComponentRenderer;
+ import com.vaadin.flow.data.renderer.Renderer;
+ import com.vaadin.flow.data.value.ValueChangeMode;
+@@ -24,10 +25,9 @@ import org.apache.commons.lang3.StringUtils;
+ import ru.iopump.qa.util.Str;
+ 
+ public class FilteredGrid<T> {
+-    private final static String GRID_CLASS = "report-grid";
+     public static final String FONT_FAMILY = "font-family";
+     public static final String GERMANIA_ONE = "Germania One";
+-
++    private final static String GRID_CLASS = "report-grid";
+     private final ListDataProvider<T> dataProvider;
+     @Getter
+     private final Grid<T> grid;
+@@ -56,6 +56,38 @@ public class FilteredGrid<T> {
+         return this;
+     }
+ 
++    protected Grid.Column<T> addColumn(Col<T> columnSpec) {
++        final Grid.Column<T> column;
++
++        switch (columnSpec.getType()) {
++            case LINK:
++                column = grid.addColumn(link(columnSpec));
++                break;
++            case NUMBER:
++                column = grid.addColumn(text(columnSpec));
++                final Supplier<String> footer = () -> {
++                    long amount = dataProvider.fetch(new Query<>(dataProvider.getFilter()))
++                        .mapToLong(item -> Long.parseLong(Str.toStr(columnSpec.getValue().apply(item))))
++                        .sum();
++                    return "Total: " + amount;
++                };
++                dynamicFooter.put(column, footer);
++                break;
++            default:
++                column = grid.addColumn(text(columnSpec));
++                break;
++        }
++
++        column.setKey(columnSpec.getName())
++            .setHeader(columnSpec.getName())
++            .setAutoWidth(true)
++            .setSortable(columnSpec.isSortable());
++        //noinspection unchecked,rawtypes
++        column.setComparator((ValueProvider) columnSpec.getValue());
++        return column;
++    }
++
++    //region Private methods
+     //// PRIVATE ////
+     private void filterConfiguration() {
+         var headerCells = grid.appendHeaderRow().getCells();
+@@ -70,13 +102,16 @@ public class FilteredGrid<T> {
+ 
+     private void addFilter(Col<T> spec, HeaderRow.HeaderCell headerCell) {
+         final TextField filterField = new TextField();
+-
+-        filterField.addValueChangeListener(event -> dataProvider.addFilter(
+-            row -> {
+-                var value = spec.getValue().apply(row);
+-                return StringUtils.containsIgnoreCase(Str.toStr(value), filterField.getValue());
+-            }));
++        filterField.addValueChangeListener(event -> {
++            dataProvider.addFilter(
++                row -> {
++                    var value = spec.getValue().apply(row);
++                    return StringUtils.containsIgnoreCase(Str.toStr(value), filterField.getValue());
++                });
++            updateFooters();
++        });
+         filterField.setValueChangeMode(ValueChangeMode.LAZY);
++        filterField.setValueChangeTimeout(1000);
+         filterField.setClearButtonVisible(true);
+         filterField.setPlaceholder("Filter contains ...");
+ 
+@@ -94,38 +129,9 @@ public class FilteredGrid<T> {
+             .map(this::addColumn)
+             .collect(Collectors.toUnmodifiableList());
+         cols.stream().findFirst()
+-            .ifPresent(c -> dynamicFooter.put(c, () -> "Count: " + dataProvider.getItems().size()));
+-    }
+-
+-    protected Grid.Column<T> addColumn(Col<T> columnSpec) {
+-        final Grid.Column<T> column;
+-
+-        switch (columnSpec.getType()) {
+-            case LINK:
+-                column = grid.addColumn(link(columnSpec));
+-                break;
+-            case NUMBER:
+-                column = grid.addColumn(text(columnSpec));
+-                final Supplier<String> footer = () -> {
+-                    long amount = dataProvider.getItems().stream()
+-                        .mapToLong(item -> Long.parseLong(Str.toStr(columnSpec.getValue().apply(item))))
+-                        .sum();
+-                    return "Total: " + amount;
+-                };
+-                dynamicFooter.put(column, footer);
+-                break;
+-            default:
+-                column = grid.addColumn(text(columnSpec));
+-                break;
+-        }
+-
+-        column.setKey(columnSpec.getName())
+-            .setHeader(columnSpec.getName())
+-            .setAutoWidth(true)
+-            .setSortable(columnSpec.isSortable());
+-        //noinspection unchecked,rawtypes
+-        column.setComparator((ValueProvider) columnSpec.getValue());
+-        return column;
++            .ifPresent(c -> dynamicFooter.put(c, () -> "Count: " + dataProvider
++                .size(new Query<>(dataProvider.getFilter())))
++            );
+     }
+ 
+     private Renderer<T> text(Col<T> columnSpec) {
+@@ -150,4 +156,5 @@ public class FilteredGrid<T> {
+     private void updateFooters() {
+         dynamicFooter.forEach((col, sup) -> col.setFooter(sup.get()));
+     }
++//endregion
+ }
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java b/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
+index 7cef4e9..5d0105e 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/view/ReportsView.java
+@@ -2,6 +2,7 @@ package ru.iopump.qa.allure.gui.view;
+ 
+ import static ru.iopump.qa.allure.gui.MainLayout.ALLURE_SERVER;
+ import static ru.iopump.qa.allure.gui.component.Col.Type.LINK;
++import static ru.iopump.qa.allure.gui.component.Col.Type.NUMBER;
+ import static ru.iopump.qa.allure.gui.component.Col.prop;
+ 
+ import com.google.common.collect.ImmutableList;
+@@ -21,6 +22,7 @@ import java.util.List;
+ import java.util.UUID;
+ import javax.annotation.PostConstruct;
+ import lombok.extern.slf4j.Slf4j;
++import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+ import ru.iopump.qa.allure.entity.ReportEntity;
+ import ru.iopump.qa.allure.gui.MainLayout;
+ import ru.iopump.qa.allure.gui.component.Col;
+@@ -34,12 +36,13 @@ import ru.iopump.qa.allure.service.JpaReportService;
+ public class ReportsView extends VerticalLayout {
+     private static final long serialVersionUID = 5822017036734476962L;
+ 
+-    private static final List<Col<ReportEntity>> COLUMNS = ImmutableList.<Col<ReportEntity>>builder()
++    private final List<Col<ReportEntity>> COLUMNS = ImmutableList.<Col<ReportEntity>>builder()
+         .add(Col.<ReportEntity>with().name("Uuid").value(prop("uuid")).build())
+         .add(Col.<ReportEntity>with().name("Created").value(prop("createdDateTime")).build())
+-        .add(Col.<ReportEntity>with().name("Url").value(prop("url")).type(LINK).build())
++        .add(Col.<ReportEntity>with().name("Url").value(e -> e.generateUrl(baseUrl())).type(LINK).build())
+         .add(Col.<ReportEntity>with().name("Path").value(prop("path")).build())
+         .add(Col.<ReportEntity>with().name("Active").value(prop("active")).build())
++        .add(Col.<ReportEntity>with().name("Size KB").value(prop("size")).type(NUMBER).build())
+         .build();
+ 
+     /* COMPONENTS */
+@@ -89,4 +92,8 @@ public class ReportsView extends VerticalLayout {
+         add(deleteSelection);
+         reports.addTo(this);
+     }
++
++    public String baseUrl() {
++        return ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/";
++    }
+ }
+diff --git a/src/main/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelper.java b/src/main/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelper.java
+index cde5f5d..f8476f0 100644
+--- a/src/main/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelper.java
++++ b/src/main/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelper.java
+@@ -23,16 +23,14 @@ public class OldReportsFormatConverterHelper {
+ 
+     private final Path reportsDir;
+     private final String reportsPath;
+-    private final String baseUrl;
+ 
+-    public OldReportsFormatConverterHelper(AppCfg cfg, String baseUrl) {
+-        this(Paths.get(cfg.reportsDir()), cfg.reportsPath(), baseUrl);
++    public OldReportsFormatConverterHelper(AppCfg cfg) {
++        this(Paths.get(cfg.reportsDir()), cfg.reportsPath());
+     }
+ 
+-    OldReportsFormatConverterHelper(Path reportsDir, String reportsPath, String baseUrl) {
++    OldReportsFormatConverterHelper(Path reportsDir, String reportsPath) {
+         this.reportsDir = reportsDir;
+         this.reportsPath = reportsPath;
+-        this.baseUrl = baseUrl;
+     }
+ 
+     public Collection<ReportEntity> convertOldFormat() throws IOException {
+@@ -62,7 +60,7 @@ public class OldReportsFormatConverterHelper {
+                             .uuid(uuid)
+                             .path(thisReportPath)
+                             .createdDateTime(LocalDateTime.now())
+-                            .url(baseUrl + reportsPath + thisReportPath)
++                            .url(reportsPath + thisReportPath)
+                             .level(0)
+                             .active(true)
+                             .build();
+diff --git a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+index b957468..d4c9757 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+@@ -70,7 +70,7 @@ public class JpaReportService {
+     }
+ 
+     @PostConstruct
+-    protected void initRedirection() throws IOException {
++    protected void initRedirection() {
+         repository.findByActiveTrue().forEach(
+             e -> redirection.mapRequestTo(e.getPath(), reportsDir.resolve(e.getUuid().toString()).toString())
+         );
+@@ -114,7 +114,7 @@ public class JpaReportService {
+                                  String baseUrl
+     ) throws IOException {
+         if (cfg.supportOldFormat() && init.compareAndSet(false, true)) {
+-            var old = new OldReportsFormatConverterHelper(cfg, baseUrl).convertOldFormat();
++            var old = new OldReportsFormatConverterHelper(cfg).convertOldFormat();
+             repository.saveAll(old);
+             old.forEach(e -> redirection.mapRequestTo(e.getPath(), reportsDir.resolve(e.getUuid().toString()).toString()));
+         }
+@@ -130,15 +130,6 @@ public class JpaReportService {
+             .stream()
+             .findFirst();
+ 
+-        // New report entity
+-        final ReportEntity newEntity = ReportEntity.builder()
+-            .uuid(uuid)
+-            .path(reportPath)
+-            .createdDateTime(LocalDateTime.now())
+-            .url(baseUrl + cfg.reportsPath() + reportPath)
+-            .level(prevEntity.map(e -> e.getLevel() + 1).orElse(0L))
+-            .active(true).build();
+-
+         // New uuid directory
+         final Path destination = reportsDir.resolve(uuid.toString());
+ 
+@@ -157,14 +148,13 @@ public class JpaReportService {
+             addExecutionInfo(
+                 resultDirs.get(0),
+                 executorInfo,
+-                prevEntity
+-                    .map(e -> baseUrl + str(reportsDir.resolve(e.getUuid().toString())) + "/index.html")
+-                    .orElse(null),
++                baseUrl + str(reportsDir.resolve(uuid.toString())) + "/index.html",
+                 uuid
+             );
+ 
+             // Generate new report with history
+             reportGenerator.generate(destination, resultDirsToGenerate);
++
+             log.info("Report '{}' generated according to results '{}'", destination, resultDirsToGenerate);
+         } finally {
+ 
+@@ -175,6 +165,17 @@ public class JpaReportService {
+             }
+         }
+ 
++        // New report entity
++        final ReportEntity newEntity = ReportEntity.builder()
++            .uuid(uuid)
++            .path(reportPath)
++            .createdDateTime(LocalDateTime.now())
++            .url(cfg.reportsPath() + reportPath)
++            .level(prevEntity.map(e -> e.getLevel() + 1).orElse(0L))
++            .active(true)
++            .size(ReportEntity.sizeKB(destination))
++            .build();
++
+         // Add request mapping
+         redirection.mapRequestTo(newEntity.getPath(), reportsDir.resolve(uuid.toString()).toString());
+ 
+@@ -237,9 +238,14 @@ public class JpaReportService {
+         }
+     }
+ 
+-    private void addExecutionInfo(Path resultPathWithInfo, @Nullable ExecutorInfo executor, String prevReportUrl, UUID uuid)
+-        throws IOException {
++    private void addExecutionInfo(Path resultPathWithInfo,
++                                  ExecutorInfo executor,
++                                  String reportUrl,
++                                  UUID uuid) throws IOException {
++
+         var executorInfo = Optional.ofNullable(executor).orElse(new ExecutorInfo());
++        executorInfo.setReportUrl(reportUrl);
++
+         if (StringUtils.isBlank(executorInfo.getName())) {
+             executorInfo.setName("Remote executor");
+         }
+@@ -249,9 +255,6 @@ public class JpaReportService {
+         if (StringUtils.isBlank(executorInfo.getReportName())) {
+             executorInfo.setName("Allure server generated " + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+         }
+-        if (StringUtils.isNotBlank(prevReportUrl)) {
+-            executorInfo.setReportUrl(prevReportUrl); // Support history moving
+-        }
+         if (StringUtils.isBlank(executorInfo.getReportName())) {
+             executorInfo.setReportName(uuid.toString());
+         }
+diff --git a/src/test/java/ru/iopump/qa/allure/entity/ReportEntityTest.java b/src/test/java/ru/iopump/qa/allure/entity/ReportEntityTest.java
+new file mode 100644
+index 0000000..4593052
+--- /dev/null
++++ b/src/test/java/ru/iopump/qa/allure/entity/ReportEntityTest.java
+@@ -0,0 +1,14 @@
++package ru.iopump.qa.allure.entity;
++
++import org.junit.Test;
++
++public class ReportEntityTest {
++
++    @Test
++    public void sizeKB() {
++    }
++
++    @Test
++    public void checkUrl() {
++    }
++}
+\ No newline at end of file
+diff --git a/src/test/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelperTest.java b/src/test/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelperTest.java
+index a83203d..e813888 100644
+--- a/src/test/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelperTest.java
++++ b/src/test/java/ru/iopump/qa/allure/helper/OldReportsFormatConverterHelperTest.java
+@@ -13,9 +13,7 @@ public class OldReportsFormatConverterHelperTest {
+     @Test
+     public void convertFirstOldFormat() throws IOException {
+         Resource resource = new ClassPathResource("old/allure/reports");
+-        OldReportsFormatConverterHelper helper = new OldReportsFormatConverterHelper(resource.getFile().toPath(),
+-            "reports",
+-            "http://localhost");
++        OldReportsFormatConverterHelper helper = new OldReportsFormatConverterHelper(resource.getFile().toPath(), "reports");
+         Collection<ReportEntity> collection = helper.convertOldFormat();
+         Assertions.assertThat(collection).hasSizeGreaterThanOrEqualTo(4);
+ 
+@@ -25,14 +23,11 @@ public class OldReportsFormatConverterHelperTest {
+     public void hasOldFormatReports() throws IOException {
+         Resource resource = new ClassPathResource("old/allure/reports");
+         OldReportsFormatConverterHelper helper = new OldReportsFormatConverterHelper(resource.getFile().toPath(),
+-            "reports",
+-            "http://localhost");
++            "reports");
+         Assertions.assertThat(helper.hasOldFormatReports()).isTrue();
+ 
+         resource = new ClassPathResource("new");
+-        helper = new OldReportsFormatConverterHelper(resource.getFile().toPath(),
+-            "reports",
+-            "http://localhost");
++        helper = new OldReportsFormatConverterHelper(resource.getFile().toPath(), "reports");
+         Assertions.assertThat(helper.hasOldFormatReports()).isFalse();
+ 
+     }
+

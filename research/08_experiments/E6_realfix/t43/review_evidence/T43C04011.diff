@@ -1,0 +1,244 @@
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/annotations/ValidConsentBody.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/annotations/ValidConsentBody.java
+index 4e34ba74c..647721675 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/annotations/ValidConsentBody.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/annotations/ValidConsentBody.java
+@@ -18,7 +18,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
+ @Documented
+ public @interface ValidConsentBody {
+ 
+-    String message() default "{hibernate-validation.invalid-consent-message}";
++    String message() default "{de.adorsys.opba.protocol.xs2a.service.xs2a.validation.AccountAccessBodyValidator.message}";
+ 
+     Class<?>[] groups() default {};
+ 
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AccountAccessType.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AccountAccessType.java
+new file mode 100644
+index 000000000..1083398c9
+--- /dev/null
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AccountAccessType.java
+@@ -0,0 +1,27 @@
++package de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent;
++
++import java.util.Arrays;
++import java.util.HashMap;
++import java.util.Map;
++
++public enum AccountAccessType {
++    ALL_ACCOUNTS("ALL_ACCOUNTS"),
++    ALL_ACCOUNTS_WITH_BALANCES("ALL_ACCOUNTS_WITH_BALANCES");
++
++    private static Map<String, AccountAccessType> container = new HashMap<>();
++
++    static {
++        Arrays.stream(values())
++                .forEach(aat -> container.put(aat.getDescription(), aat));
++    }
++
++    private String description;
++
++    AccountAccessType(String description) {
++        this.description = description;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++}
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBody.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBody.java
+index 4d0818885..dd8120fb2 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBody.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBody.java
+@@ -33,6 +33,8 @@ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;
+ import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;
+ import static de.adorsys.opba.protocol.api.dto.codes.ScopeObject.AIS_CONSENT;
+ import static de.adorsys.opba.protocol.api.dto.codes.ScopeObject.AIS_CONSENT_SCOPE;
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS;
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS_WITH_BALANCES;
+ 
+ @Getter
+ @Setter
+@@ -99,7 +101,7 @@ public class AisConsentInitiateBody {
+         }
+ 
+         default AccountAccess.AvailableAccountsEnum accounts(String availableAccounts) {
+-            if ("ALL_ACCOUNTS".equals(availableAccounts)) {
++            if (ALL_ACCOUNTS.getDescription().equals(availableAccounts)) {
+                 return AccountAccess.AvailableAccountsEnum.ALLACCOUNTS;
+             }
+ 
+@@ -107,7 +109,7 @@ public class AisConsentInitiateBody {
+         }
+ 
+         default AccountAccess.AvailableAccountsWithBalance accountsWithBalance(String availableAccounts) {
+-            if ("ALL_ACCOUNTS_WITH_BALANCES".equals(availableAccounts)) {
++            if (ALL_ACCOUNTS_WITH_BALANCES.getDescription().equals(availableAccounts)) {
+                 return AccountAccess.AvailableAccountsWithBalance.ALLACCOUNTS;
+             }
+ 
+@@ -115,7 +117,7 @@ public class AisConsentInitiateBody {
+         }
+ 
+         default AccountAccess.AllPsd2Enum allPsd2(String allPsd2) {
+-            if ("ALL_ACCOUNTS".equals(allPsd2)) {
++            if (ALL_ACCOUNTS.getDescription().equals(allPsd2)) {
+                 return AccountAccess.AllPsd2Enum.ALLACCOUNTS;
+             }
+ 
+diff --git a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidator.java b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidator.java
+index e3274591e..259b281f9 100644
+--- a/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidator.java
++++ b/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidator.java
+@@ -8,6 +8,9 @@ import org.springframework.util.StringUtils;
+ import javax.validation.ConstraintValidator;
+ import javax.validation.ConstraintValidatorContext;
+ 
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS;
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS_WITH_BALANCES;
++
+ public class AccountAccessBodyValidator implements ConstraintValidator<ValidConsentBody, AisConsentInitiateBody.AccountAccessBody> {
+ 
+     @Override
+@@ -34,14 +37,15 @@ public class AccountAccessBodyValidator implements ConstraintValidator<ValidCons
+ 
+         boolean validDedicatedWithoutAccounts = isEmptyAccountInfo(body)
+                                                         && StringUtils.isEmpty(body.getAllPsd2())
+-                                                        && "allAccounts".equals(body.getAvailableAccounts());
++                                                        && (ALL_ACCOUNTS.getDescription().equals(body.getAvailableAccounts())
++                                                                    || ALL_ACCOUNTS_WITH_BALANCES.getDescription().equals(body.getAvailableAccounts()));
+ 
+         return validDedicatedWithAccounts || validDedicatedWithoutAccounts;
+     }
+ 
+     private boolean isValidGlobalConsent(AisConsentInitiateBody.AccountAccessBody body) {
+         return isEmptyAccountInfo(body)
+-                       && "allAccounts".equals(body.getAllPsd2())
++                       && ALL_ACCOUNTS.getDescription().equals(body.getAllPsd2())
+                        && StringUtils.isEmpty(body.getAvailableAccounts());
+     }
+ 
+diff --git a/opba-protocols/xs2a-protocol/src/main/resources/ValidationMessages.properties b/opba-protocols/xs2a-protocol/src/main/resources/ValidationMessages.properties
+new file mode 100644
+index 000000000..07c3cac9f
+--- /dev/null
++++ b/opba-protocols/xs2a-protocol/src/main/resources/ValidationMessages.properties
+@@ -0,0 +1 @@
++de.adorsys.opba.protocol.xs2a.service.xs2a.validation.AccountAccessBodyValidator.message=Account consent body structure is invalid
+diff --git a/opba-protocols/xs2a-protocol/src/main/resources/application.yml b/opba-protocols/xs2a-protocol/src/main/resources/application.yml
+index 1890eb417..d47c7b05a 100644
+--- a/opba-protocols/xs2a-protocol/src/main/resources/application.yml
++++ b/opba-protocols/xs2a-protocol/src/main/resources/application.yml
+@@ -46,5 +46,3 @@ pkcs12:
+ flowable:
+   process-definition-location-prefix: classpath*:/processes/**/
+ 
+-hibernate-validation:
+-  invalid-consent-message: Account consent body structure is invalid
+diff --git a/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBodyToXs2aApiTest.java b/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBodyToXs2aApiTest.java
+index e7afd89ac..90a4a463d 100644
+--- a/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBodyToXs2aApiTest.java
++++ b/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/consent/AisConsentInitiateBodyToXs2aApiTest.java
+@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.boot.test.context.SpringBootTest;
+ 
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS;
++import static de.adorsys.opba.protocol.xs2a.service.xs2a.dto.consent.AccountAccessType.ALL_ACCOUNTS_WITH_BALANCES;
+ import static org.assertj.core.api.Assertions.assertThat;
+ 
+ @SpringBootTest(classes = MapperTestConfig.class)
+@@ -41,7 +43,7 @@ public class AisConsentInitiateBodyToXs2aApiTest {
+     @SneakyThrows
+     public void accountsTest_success() {
+         // Given
+-        String mappingInput = "ALL_ACCOUNTS";
++        String mappingInput = ALL_ACCOUNTS.getDescription();
+         AccountAccess.AvailableAccountsEnum expected = AccountAccess.AvailableAccountsEnum.ALLACCOUNTS;
+ 
+         // When
+@@ -69,7 +71,7 @@ public class AisConsentInitiateBodyToXs2aApiTest {
+     @SneakyThrows
+     public void accountsWithBalanceTest_success() {
+         // Given
+-        String mappingInput = "ALL_ACCOUNTS_WITH_BALANCES";
++        String mappingInput = ALL_ACCOUNTS_WITH_BALANCES.getDescription();
+         AccountAccess.AvailableAccountsWithBalance expected = AccountAccess.AvailableAccountsWithBalance.ALLACCOUNTS;
+ 
+         // When
+@@ -97,7 +99,7 @@ public class AisConsentInitiateBodyToXs2aApiTest {
+     @SneakyThrows
+     public void allPsd2Test_success() {
+         // Given
+-        String mappingInput = "ALL_ACCOUNTS";
++        String mappingInput = ALL_ACCOUNTS.getDescription();
+         AccountAccess.AllPsd2Enum expected = AccountAccess.AllPsd2Enum.ALLACCOUNTS;
+ 
+         // When
+diff --git a/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidatorTest.java b/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidatorTest.java
+index 27e8226b1..036059f34 100644
+--- a/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidatorTest.java
++++ b/opba-protocols/xs2a-protocol/src/test/java/de/adorsys/opba/protocol/xs2a/service/xs2a/validation/AccountAccessBodyValidatorTest.java
+@@ -34,9 +34,21 @@ class AccountAccessBodyValidatorTest {
+     }
+ 
+     @Test
+-    void dedicate_consent_without_accounts_test() {
++    void dedicate_consent_without_accounts_with_balances_test() {
+         // Given
+-        AisConsentInitiateBody.AccountAccessBody mappingInput = fixtureProvider.getFromFile(PATH_PREFIX + "dedicated_without_accounts_consent.json", AisConsentInitiateBody.AccountAccessBody.class);
++        AisConsentInitiateBody.AccountAccessBody mappingInput = fixtureProvider.getFromFile(PATH_PREFIX + "dedicated_without_accounts_consent_with_balances.json", AisConsentInitiateBody.AccountAccessBody.class);
++
++        // When
++        boolean actual = validator.isValid(mappingInput, null);
++
++        // Then
++        assertThat(actual).isTrue();
++    }
++
++    @Test
++    void dedicate_consent_without_accounts_without_balances_test() {
++        // Given
++        AisConsentInitiateBody.AccountAccessBody mappingInput = fixtureProvider.getFromFile(PATH_PREFIX + "dedicated_without_accounts_consent_without_balances.json", AisConsentInitiateBody.AccountAccessBody.class);
+ 
+         // When
+         boolean actual = validator.isValid(mappingInput, null);
+diff --git a/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_with_balances.json b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_with_balances.json
+new file mode 100644
+index 000000000..4b1dcec14
+--- /dev/null
++++ b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_with_balances.json
+@@ -0,0 +1,6 @@
++{
++  "accounts": [],
++  "balances": [],
++  "transactions": [],
++  "availableAccounts": "ALL_ACCOUNTS_WITH_BALANCES"
++}
+\ No newline at end of file
+diff --git a/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent.json b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_without_balances.json
+similarity index 61%
+rename from opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent.json
+rename to opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_without_balances.json
+index d33e7c2ab..5fee38c7a 100644
+--- a/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent.json
++++ b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/dedicated_without_accounts_consent_without_balances.json
+@@ -2,5 +2,5 @@
+   "accounts": [],
+   "balances": [],
+   "transactions": [],
+-  "availableAccounts": "allAccounts"
++  "availableAccounts": "ALL_ACCOUNTS"
+ }
+\ No newline at end of file
+diff --git a/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/global_consent.json b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/global_consent.json
+index 615dac950..b4e04d6cd 100644
+--- a/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/global_consent.json
++++ b/opba-protocols/xs2a-protocol/src/test/resources/validator-test-fixtures/global_consent.json
+@@ -2,5 +2,5 @@
+   "accounts": [],
+   "balances": [],
+   "transactions": [],
+-  "allPsd2": "allAccounts"
++  "allPsd2": "ALL_ACCOUNTS"
+ }
+\ No newline at end of file
+

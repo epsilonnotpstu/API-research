@@ -1,0 +1,72 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsDTOValidator.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsDTOValidator.java
+index 7c5eba25..82b65f32 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsDTOValidator.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsDTOValidator.java
+@@ -67,13 +67,20 @@ public final class CwmsDTOValidator {
+ 
+     public void validateRequiredFields(CwmsDTO cwmsDTO) {
+         Class<? extends CwmsDTO> type = cwmsDTO.getClass();
++        while (CwmsDTO.class.isAssignableFrom(type)) {
++            validateFieldsInClass(cwmsDTO, type);
++            type = (Class<? extends CwmsDTO>) type.getSuperclass();
++        }
++    }
++
++    private void validateFieldsInClass(CwmsDTO cwmsDTO, Class<? extends CwmsDTO> type) {
+         Field[] fields = type.getDeclaredFields();
+         try {
+             for (Field field : fields) {
+                 JsonProperty annotation = field.getAnnotation(JsonProperty.class);
+                 if (annotation != null && annotation.required()) {
+                     boolean accessible = field.isAccessible();
+-                    synchronized (type) {
++                    synchronized (CwmsDTO.class) {
+                         try {
+                             if (!accessible) {
+                                 field.setAccessible(true);
+@@ -93,8 +100,7 @@ public final class CwmsDTOValidator {
+                 }
+             }
+         } catch (IllegalAccessException e) {
+-            LOGGER.atWarning().withCause(e).log("Unable to validate required fields are non-null in DTO: " +
+-                type);
++            LOGGER.atWarning().withCause(e).log("Unable to validate required fields are non-null in DTO: " + type);
+         }
+     }
+ 
+diff --git a/cwms-data-api/src/main/java/cwms/cda/data/dto/location/kind/PhysicalStructureChange.java b/cwms-data-api/src/main/java/cwms/cda/data/dto/location/kind/PhysicalStructureChange.java
+index 5f89ff3f..bacef82a 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/data/dto/location/kind/PhysicalStructureChange.java
++++ b/cwms-data-api/src/main/java/cwms/cda/data/dto/location/kind/PhysicalStructureChange.java
+@@ -160,8 +160,9 @@ public abstract class PhysicalStructureChange<T extends Setting> extends CwmsDTO
+         private Double tailwaterElevation;
+         private String elevationUnits;
+         private String notes;
+-        private Set<T> settings;
+         private Instant changeDate;
++        private final Set<T> settings = new TreeSet<>(comparing(Setting::getLocationId,
++            comparing(CwmsId::getOfficeId).thenComparing(CwmsId::getName)));;
+ 
+ 
+         public B withProjectId(CwmsId projectId) {
+@@ -226,13 +227,12 @@ public abstract class PhysicalStructureChange<T extends Setting> extends CwmsDTO
+         }
+ 
+         public B withSettings(List<T> settings) {
+-            this.settings = new TreeSet<>(comparing(Setting::getLocationId,
+-                comparing(CwmsId::getOfficeId).thenComparing(CwmsId::getName)));
+-            boolean receivedDuplicates = this.settings.addAll(settings);
+-            if(receivedDuplicates) {
+-                throw new FormattingException(
+-                    "Received duplicate settings. Only a single setting per location per timestep is supported");
+-            }
++            settings.forEach(s -> {
++                if (!this.settings.add(s)) {
++                    throw new FormattingException(
++                        "Received duplicate settings. Only a single setting per location per timestep is supported");
++                }
++            });
+             return self();
+         }
+         
+

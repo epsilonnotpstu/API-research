@@ -1,0 +1,56 @@
+diff --git a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/services/BillableUsageService.java b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/services/BillableUsageService.java
+index b2e857e92..104292689 100644
+--- a/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/services/BillableUsageService.java
++++ b/swatch-billable-usage/src/main/java/com/redhat/swatch/billable/usage/services/BillableUsageService.java
+@@ -154,6 +154,14 @@ public class BillableUsageService {
+     return usage;
+   }
+ 
++  protected double getTotalRemitted(BillableUsage billableUsage) {
++    var filter = BillableUsageRemittanceFilter.fromUsage(billableUsage);
++    return billableUsageRemittanceRepository.getRemittanceSummaries(filter).stream()
++        .map(RemittanceSummaryProjection::getTotalRemittedPendingValue)
++        .reduce(Double::sum)
++        .orElse(0.0);
++  }
++
+   /**
+    * Find the latest remitted value and billing factor used for that remittance in the database.
+    * Convert it to use the billing factor that's currently listed in the
+@@ -198,14 +206,6 @@ public class BillableUsageService {
+         .build();
+   }
+ 
+-  private double getTotalRemitted(BillableUsage billableUsage) {
+-    var filter = BillableUsageRemittanceFilter.fromUsage(billableUsage);
+-    return billableUsageRemittanceRepository.getRemittanceSummaries(filter).stream()
+-        .findFirst()
+-        .map(RemittanceSummaryProjection::getTotalRemittedPendingValue)
+-        .orElse(0.0);
+-  }
+-
+   private void createRemittance(BillableUsage usage, BillableUsageCalculation usageCalc) {
+     var newRemittance =
+         BillableUsageRemittanceEntity.builder()
+diff --git a/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/services/BillableUsageServiceTest.java b/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/services/BillableUsageServiceTest.java
+index 9d9e1b26c..40d3f8d68 100644
+--- a/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/services/BillableUsageServiceTest.java
++++ b/swatch-billable-usage/src/test/java/com/redhat/swatch/billable/usage/services/BillableUsageServiceTest.java
+@@ -471,7 +471,6 @@ class BillableUsageServiceTest {
+   // See SWATCH-2494
+   void testGetTotalRemittedConsidersAllStatuses() {
+     record RemittanceTuple(double value, RemittanceStatus status, OffsetDateTime date) {}
+-    ;
+ 
+     OffsetDateTime startOfUsage = CLOCK.startOfCurrentMonth().plusDays(4);
+     var t1 = new RemittanceTuple(1.0, RemittanceStatus.SUCCEEDED, startOfUsage);
+@@ -492,7 +491,7 @@ class BillableUsageServiceTest {
+     when(remittanceRepo.getRemittanceSummaries(any())).thenReturn(summaries);
+ 
+     BillableUsage usage = billable(CLOCK.endOfCurrentMonth(), 0.0);
+-    var result = controller.getTotalRemitted(usage);
++    var result = service.getTotalRemitted(usage);
+     assertEquals(36.0, result);
+   }
+ 
+

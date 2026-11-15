@@ -1,0 +1,92 @@
+diff --git a/cwms-data-api/src/main/java/cwms/cda/formatters/OutputFormatter.java b/cwms-data-api/src/main/java/cwms/cda/formatters/OutputFormatter.java
+index 2002d7d0..9ce99c52 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/formatters/OutputFormatter.java
++++ b/cwms-data-api/src/main/java/cwms/cda/formatters/OutputFormatter.java
+@@ -6,19 +6,18 @@ import java.util.List;
+ import cwms.cda.data.dto.CwmsDTOBase;
+ 
+ public interface OutputFormatter {
++    String DESERIALIZE_CONTENT_MESSAGE = "Could not deserialize: %s of type: %s";
++    String UNSUPPORTED_MESSAGE = "Unable to process your request. Deserialization of %s not yet supported.";
+     String getContentType();
+     String format(CwmsDTOBase dto);
+     String format(List<? extends CwmsDTOBase> dtoList);
+     default <T extends CwmsDTOBase> T parseContent(String content, Class<T> type) {
+-        throw new UnsupportedOperationException("Unable to process your request. Deserialization of "
+-                + getContentType() + " not yet supported.");
++        throw new UnsupportedOperationException(String.format(UNSUPPORTED_MESSAGE, getContentType()));
+     }
+     default <T extends CwmsDTOBase> List<T> parseContentList(String content, Class<T> type) {
+-        throw new UnsupportedOperationException("Unable to process your request. Deserialization of "
+-            + getContentType() + " not yet supported.");
++        throw new UnsupportedOperationException(String.format(UNSUPPORTED_MESSAGE, getContentType()));
+     }
+     default <T extends CwmsDTOBase> T parseContent(InputStream content, Class<T> type) {
+-        throw new UnsupportedOperationException("Unable to process your request. Deserialization of "
+-                + getContentType() + " not yet supported.");
++        throw new UnsupportedOperationException(String.format(UNSUPPORTED_MESSAGE, getContentType()));
+     }
+ }
+diff --git a/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV1.java b/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV1.java
+index fd3070e9..f755bf57 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV1.java
++++ b/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV1.java
+@@ -81,7 +81,7 @@ public class JsonV1 implements OutputFormatter {
+         try {
+             return om.readValue(content, type);
+         } catch (JsonProcessingException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ 
+@@ -90,7 +90,7 @@ public class JsonV1 implements OutputFormatter {
+         try {
+             return om.readValue(content, type);
+         } catch (IOException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ 
+@@ -99,7 +99,7 @@ public class JsonV1 implements OutputFormatter {
+         try {
+             return om.readValue(content, om.getTypeFactory().constructCollectionType(List.class, type));
+         } catch (IOException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ 
+diff --git a/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV2.java b/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV2.java
+index f65722ea..2decd11b 100644
+--- a/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV2.java
++++ b/cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV2.java
+@@ -95,7 +95,7 @@ public class JsonV2 implements OutputFormatter {
+         try {
+             return om.readValue(content, type);
+         } catch (JsonProcessingException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ 
+@@ -104,7 +104,7 @@ public class JsonV2 implements OutputFormatter {
+         try {
+             return om.readValue(content, type);
+         } catch (IOException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ 
+@@ -113,7 +113,7 @@ public class JsonV2 implements OutputFormatter {
+         try {
+             return om.readValue(content, om.getTypeFactory().constructCollectionType(List.class, type));
+         } catch (IOException e) {
+-            throw new FormattingException("Could not deserialize:" + content, e);
++            throw new FormattingException(String.format(DESERIALIZE_CONTENT_MESSAGE, content, type), e);
+         }
+     }
+ }
+

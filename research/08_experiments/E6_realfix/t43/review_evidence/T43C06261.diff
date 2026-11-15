@@ -1,0 +1,110 @@
+diff --git a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+index f98f7b6..36f16a9 100644
+--- a/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
++++ b/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java
+@@ -97,19 +97,16 @@ public class HttpBridge extends AbstractVerticle {
+                 routerFactory.addHandlerByOperationId(HttpOpenApiOperations.SEEK_TO_BEGINNING.toString(), this::seekToBeginning);
+                 routerFactory.addHandlerByOperationId(HttpOpenApiOperations.SEEK_TO_END.toString(), this::seekToEnd);
+ 
+-                routerFactory.addFailureHandlerByOperationId(HttpOpenApiOperations.SEND.toString(), this::send);
+-                routerFactory.addFailureHandlerByOperationId(HttpOpenApiOperations.SEND_TO_PARTITION.toString(), this::sendToPartition);
+-
+                 this.router = routerFactory.getRouter();
+ 
+-                this.router.errorHandler(404, r -> {
+-                    HttpBridgeError error = new HttpBridgeError(
+-                            HttpResponseStatus.BAD_REQUEST.code(),
+-                            null
+-                    );
+-                    HttpUtils.sendResponse(r.response(), HttpResponseStatus.BAD_REQUEST.code(),
+-                            BridgeContentType.KAFKA_JSON, error.toJson().toBuffer());
+-                });
++                // handling validation errors and not existing endpoints
++                // note: not using the errorHandler method directly and the routingContext.statusCode()
++                //       due to following issue I opened on Vert.x Web component.
++                //       https://github.com/vert-x3/vertx-web/issues/1295
++                this.router.errorHandler(HttpResponseStatus.BAD_REQUEST.code(),
++                    r -> this.errorHandler(HttpResponseStatus.BAD_REQUEST.code(), r));
++                this.router.errorHandler(HttpResponseStatus.NOT_FOUND.code(),
++                    r -> this.errorHandler(HttpResponseStatus.NOT_FOUND.code(), r));
+ 
+                 log.info("Starting HTTP-Kafka bridge verticle...");
+                 this.httpBridgeContext = new HttpBridgeContext();
+@@ -306,6 +303,15 @@ public class HttpBridge extends AbstractVerticle {
+         source.handle(new HttpEndpoint(routingContext));
+     }
+ 
++    private void errorHandler(int statusCode, RoutingContext routingContext) {
++        HttpBridgeError error = new HttpBridgeError(
++                statusCode,
++                routingContext.failure() != null ? routingContext.failure().getMessage() : null
++        );
++        HttpUtils.sendResponse(routingContext.response(), statusCode,
++                BridgeContentType.KAFKA_JSON, error.toJson().toBuffer());
++    }
++
+     private void processConnection(HttpConnection httpConnection) {
+         httpConnection.closeHandler(close -> {
+             closeConnectionEndpoint(httpConnection);
+diff --git a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+index 7855cb7..3050ef1 100644
+--- a/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
++++ b/src/test/java/io/strimzi/kafka/bridge/http/HttpBridgeTest.java
+@@ -1520,7 +1520,7 @@ class HttpBridgeTest extends KafkaClusterTestBase {
+     }
+ 
+     @Test
+-    void invalidRequestTest(VertxTestContext context) {
++    void postToNonexistentEndpoint(VertxTestContext context) {
+ 
+         postRequest("/not-existing-endpoint")
+                 .as(BodyCodec.jsonObject())
+@@ -1529,8 +1529,8 @@ class HttpBridgeTest extends KafkaClusterTestBase {
+                         assertTrue(ar.succeeded());
+                         HttpResponse<JsonObject> response = ar.result();
+                         HttpBridgeError error = HttpBridgeError.fromJson(response.body());
+-                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.statusCode());
+-                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), error.getCode());
++                        assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.statusCode());
++                        assertEquals(HttpResponseStatus.NOT_FOUND.code(), error.getCode());
+                     });
+                     context.completeNow();
+                 });
+@@ -3007,4 +3007,36 @@ class HttpBridgeTest extends KafkaClusterTestBase {
+         delete.get(TEST_TIMEOUT, TimeUnit.SECONDS);
+         context.completeNow();
+     }
++
++    @Test
++    void sendMessageLackingRequiredProperty(VertxTestContext context) throws Throwable {
++        String topic = "sendMessageWithNoRequiredProperty";
++        kafkaCluster.createTopic(topic, 1, 1);
++
++        String key = "my-key";
++
++        JsonArray records = new JsonArray();
++        JsonObject json = new JsonObject();
++        json.put("key", key);
++        records.add(json);
++
++        JsonObject root = new JsonObject();
++        root.put("records", records);
++
++        postRequest("/topics/" + topic)
++                .putHeader("Content-length", String.valueOf(root.toBuffer().length()))
++                .putHeader("Content-Type", BridgeContentType.KAFKA_JSON_JSON)
++                .as(BodyCodec.jsonObject())
++                .sendJsonObject(root, ar -> {
++                    context.verify(() -> {
++                        assertTrue(ar.succeeded());
++                        HttpResponse<JsonObject> response = ar.result();
++                        HttpBridgeError error = HttpBridgeError.fromJson(response.body());
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.statusCode());
++                        assertEquals(HttpResponseStatus.BAD_REQUEST.code(), error.getCode());
++                        assertEquals("$.records[0].value: is missing but it is required", error.getMessage());
++                        context.completeNow();
++                    });
++                });
++    }
+ }
+

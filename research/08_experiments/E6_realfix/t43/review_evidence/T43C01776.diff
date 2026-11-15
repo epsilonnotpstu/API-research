@@ -1,0 +1,276 @@
+diff --git a/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/data/TaxGroupData.java b/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/data/TaxGroupData.java
+index 5f9804536f..d99926f644 100644
+--- a/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/data/TaxGroupData.java
++++ b/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/data/TaxGroupData.java
+@@ -19,6 +19,7 @@
+ package org.apache.fineract.portfolio.tax.data;
+ 
+ import java.io.Serializable;
++import java.time.LocalDate;
+ import java.util.Collection;
+ import lombok.AllArgsConstructor;
+ import lombok.Getter;
+@@ -35,21 +36,28 @@ public final class TaxGroupData implements Serializable {
+     @SuppressWarnings("unused")
+     private final Collection<TaxComponentData> taxComponents;
+ 
++    // System business date, exposed so clients can validate a new tax component's start date client-side
++    private final LocalDate businessDate;
++
+     public static TaxGroupData lookup(final Long id, final String name) {
+         final Collection<TaxComponentData> taxComponents = null;
+         final Collection<TaxGroupMappingsData> taxAssociations = null;
+-        return new TaxGroupData(id, name, taxAssociations, taxComponents);
++        return new TaxGroupData(id, name, taxAssociations, taxComponents, null);
+     }
+ 
+     public static TaxGroupData template(final Collection<TaxComponentData> taxComponents) {
+         final Long id = null;
+         final String name = null;
+         final Collection<TaxGroupMappingsData> taxAssociations = null;
+-        return new TaxGroupData(id, name, taxAssociations, taxComponents);
++        return new TaxGroupData(id, name, taxAssociations, taxComponents, null);
+     }
+ 
+     public static TaxGroupData template(final TaxGroupData taxGroupData, final Collection<TaxComponentData> taxComponents) {
+-        return new TaxGroupData(taxGroupData.id, taxGroupData.name, taxGroupData.taxAssociations, taxComponents);
++        return new TaxGroupData(taxGroupData.id, taxGroupData.name, taxGroupData.taxAssociations, taxComponents, taxGroupData.businessDate);
++    }
++
++    public static TaxGroupData withBusinessDate(final TaxGroupData taxGroupData, final LocalDate businessDate) {
++        return new TaxGroupData(taxGroupData.id, taxGroupData.name, taxGroupData.taxAssociations, taxGroupData.taxComponents, businessDate);
+     }
+ 
+ }
+diff --git a/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/request/TaxGroupComponent.java b/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/request/TaxGroupComponent.java
+index 258b719ffe..ee92fffbaa 100644
+--- a/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/request/TaxGroupComponent.java
++++ b/fineract-core/src/main/java/org/apache/fineract/portfolio/tax/request/TaxGroupComponent.java
+@@ -32,6 +32,9 @@ public class TaxGroupComponent implements Serializable {
+     @Serial
+     private static final long serialVersionUID = 1L;
+ 
++    private Long id;
+     private Long taxComponentId;
+     private String startDate;
++    private String endDate;
++
+ }
+diff --git a/fineract-provider/src/main/java/org/apache/fineract/portfolio/tax/service/TaxReadPlatformServiceImpl.java b/fineract-provider/src/main/java/org/apache/fineract/portfolio/tax/service/TaxReadPlatformServiceImpl.java
+index 9c4bc698a0..c93ac8e520 100644
+--- a/fineract-provider/src/main/java/org/apache/fineract/portfolio/tax/service/TaxReadPlatformServiceImpl.java
++++ b/fineract-provider/src/main/java/org/apache/fineract/portfolio/tax/service/TaxReadPlatformServiceImpl.java
+@@ -22,6 +22,7 @@ import java.util.Collection;
+ import java.util.List;
+ import lombok.RequiredArgsConstructor;
+ import org.apache.fineract.accounting.common.AccountingDropdownReadPlatformService;
++import org.apache.fineract.infrastructure.core.service.DateUtils;
+ import org.apache.fineract.portfolio.tax.data.TaxComponentData;
+ import org.apache.fineract.portfolio.tax.data.TaxGroupData;
+ import org.apache.fineract.portfolio.tax.domain.TaxComponentRepository;
+@@ -65,7 +66,8 @@ public class TaxReadPlatformServiceImpl implements TaxReadPlatformService {
+ 
+     @Override
+     public TaxGroupData retrieveTaxGroupData(final Long id) {
+-        return taxGroupMapper.map(taxGroupRepositoryWrapper.findOneWithNotFoundDetection(id));
++        final TaxGroupData taxGroupData = taxGroupMapper.map(taxGroupRepositoryWrapper.findOneWithNotFoundDetection(id));
++        return TaxGroupData.withBusinessDate(taxGroupData, DateUtils.getBusinessLocalDate());
+     }
+ 
+     @Override
+diff --git a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/api/TaxGroupApiResourceSwagger.java b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/api/TaxGroupApiResourceSwagger.java
+index fbd67ae75d..1369725665 100644
+--- a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/api/TaxGroupApiResourceSwagger.java
++++ b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/api/TaxGroupApiResourceSwagger.java
+@@ -61,6 +61,8 @@ final class TaxGroupApiResourceSwagger {
+         @Schema(example = "tax group 1")
+         public String name;
+         public Set<GetTaxesGroupTaxAssociations> taxAssociations;
++        @Schema(example = "[2016, 4, 11]")
++        public LocalDate businessDate;
+     }
+ 
+     @Schema(description = "PostTaxesGroupRequest")
+@@ -135,8 +137,8 @@ final class TaxGroupApiResourceSwagger {
+ 
+                 private PutTaxesGroupModifiedComponents() {}
+ 
+-                @Schema(example = "Apr 22, 2016 12:00:00 AM")
+-                public String endDate;
++                @Schema(example = "[2016, 4, 22]")
++                public LocalDate endDate;
+                 @Schema(example = "7")
+                 public Long taxComponentId;
+             }
+diff --git a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/domain/TaxGroup.java b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/domain/TaxGroup.java
+index b03ceae25a..0e75a75171 100644
+--- a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/domain/TaxGroup.java
++++ b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/domain/TaxGroup.java
+@@ -29,6 +29,7 @@ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Objects;
+ import java.util.Set;
+ import org.apache.commons.lang3.StringUtils;
+ import org.apache.fineract.infrastructure.core.api.JsonCommand;
+@@ -75,6 +76,7 @@ public class TaxGroup extends AbstractAuditableCustom {
+         for (TaxGroupMappings groupMappings : taxGroupMappings) {
+             TaxGroupMappings mappings = findOneBy(groupMappings);
+             if (mappings == null) {
++                groupMappings.setTaxGroup(this);
+                 this.taxGroupMappings.add(groupMappings);
+                 taxComponentList.add(groupMappings.getTaxComponent().getId());
+             } else {
+@@ -93,15 +95,17 @@ public class TaxGroup extends AbstractAuditableCustom {
+     }
+ 
+     public TaxGroupMappings findOneBy(final TaxGroupMappings groupMapping) {
+-        if (groupMapping.getId() != null) {
+-            for (TaxGroupMappings groupMappings : this.taxGroupMappings) {
+-                if (groupMappings.getId().equals(groupMapping.getId())) {
+-                    return groupMappings;
+-                }
++        if (groupMapping.getId() == null) {
++            return null;
++        }
++
++        for (TaxGroupMappings existing : this.taxGroupMappings) {
++            if (Objects.equals(existing.getId(), groupMapping.getId())) {
++                return existing;
+             }
+-            throw new TaxMappingNotFoundException(groupMapping.getId());
+         }
+-        return null;
++
++        throw new TaxMappingNotFoundException(groupMapping.getId());
+     }
+ 
+     public Set<TaxGroupMappings> getTaxGroupMappings() {
+diff --git a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/mapper/TaxGroupMapper.java b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/mapper/TaxGroupMapper.java
+index 3edadeef55..3ed8965f24 100644
+--- a/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/mapper/TaxGroupMapper.java
++++ b/fineract-tax/src/main/java/org/apache/fineract/portfolio/tax/mapper/TaxGroupMapper.java
+@@ -30,6 +30,7 @@ public interface TaxGroupMapper {
+ 
+     @Mapping(target = "taxAssociations", source = "taxGroup.taxGroupMappings")
+     @Mapping(target = "taxComponents", ignore = true)
++    @Mapping(target = "businessDate", ignore = true)
+     TaxGroupData map(TaxGroup taxGroup);
+ 
+     List<TaxGroupData> map(List<TaxGroup> taxGroups);
+diff --git a/integration-tests/src/test/java/org/apache/fineract/integrationtests/TaxGroupMixedComponentUpdateTest.java b/integration-tests/src/test/java/org/apache/fineract/integrationtests/TaxGroupMixedComponentUpdateTest.java
+new file mode 100644
+index 0000000000..12d0509ac7
+--- /dev/null
++++ b/integration-tests/src/test/java/org/apache/fineract/integrationtests/TaxGroupMixedComponentUpdateTest.java
+@@ -0,0 +1,108 @@
++/**
++ * Licensed to the Apache Software Foundation (ASF) under one
++ * or more contributor license agreements. See the NOTICE file
++ * distributed with this work for additional information
+[REDACTED attribution]
++ * to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance
++ * with the License. You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied. See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.apache.fineract.integrationtests;
++
++import static org.apache.fineract.client.feign.util.FeignCalls.ok;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++import java.time.LocalDate;
++import java.util.Arrays;
++import java.util.HashSet;
++import java.util.Set;
++import org.apache.fineract.client.feign.FineractFeignClient;
++import org.apache.fineract.client.models.GetTaxesGroupResponse;
++import org.apache.fineract.client.models.GetTaxesGroupTaxAssociations;
++import org.apache.fineract.client.models.PostTaxesComponentsRequest;
++import org.apache.fineract.client.models.PostTaxesGroupRequest;
++import org.apache.fineract.client.models.PostTaxesGroupTaxComponents;
++import org.apache.fineract.client.models.PutTaxesGroupTaxComponents;
++import org.apache.fineract.client.models.PutTaxesGroupTaxGroupIdRequest;
++import org.apache.fineract.integrationtests.common.BusinessDateHelper;
++import org.apache.fineract.integrationtests.common.FineractFeignClientHelper;
++import org.apache.fineract.integrationtests.common.Utils;
++import org.apache.fineract.integrationtests.common.accounting.Account;
++import org.apache.fineract.integrationtests.common.accounting.AccountHelper;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++public class TaxGroupMixedComponentUpdateTest {
++
++    private FineractFeignClient fineractClient;
++
++    @BeforeEach
++    public void setup() {
++        fineractClient = FineractFeignClientHelper.getFineractFeignClient();
++    }
++
++    @Test
++    void updateTaxGroup_addsNewComponentsWhileUpdatingAnExistingOne() {
++        BusinessDateHelper.runAt("01 January 2024", () -> {
++            for (int attempt = 0; attempt < 5; attempt++) {
++                final Long existingComponentId = createTaxComponent();
++                final Long taxGroupId = createTaxGroup(existingComponentId, "01 January 2023");
++                final Long mappingId = association(taxGroupId, existingComponentId).getId();
++
++                ok(() -> fineractClient.taxGroup().updateTaxGroup(taxGroupId, updateRequest(
++                        new PutTaxesGroupTaxComponents().taxComponentId(createTaxComponent()),
++                        new PutTaxesGroupTaxComponents().taxComponentId(createTaxComponent()),
++                        new PutTaxesGroupTaxComponents().taxComponentId(createTaxComponent()),
++                        new PutTaxesGroupTaxComponents().id(mappingId).taxComponentId(existingComponentId).endDate("31 December 2024"))));
++
++                final GetTaxesGroupResponse taxGroup = ok(() -> fineractClient.taxGroup().retrieveOneTaxGroup(taxGroupId));
++                assertEquals(4, taxGroup.getTaxAssociations().size());
++                assertEquals(mappingId, association(taxGroupId, existingComponentId).getId());
++            }
++        });
++    }
++
++    @Test
++    void retrieveTaxGroup_exposesBusinessDate() {
++        BusinessDateHelper.runAt("01 January 2024", () -> {
++            final Long taxGroupId = createTaxGroup(createTaxComponent(), "01 January 2023");
++            final GetTaxesGroupResponse taxGroup = ok(() -> fineractClient.taxGroup().retrieveOneTaxGroup(taxGroupId));
++            assertEquals(LocalDate.of(2024, 1, 1), taxGroup.getBusinessDate());
++        });
++    }
++
++    private Long createTaxComponent() {
++        final Account glAccount = AccountHelper.createLiabilityGlAccount("taxComponent");
++        final PostTaxesComponentsRequest request = new PostTaxesComponentsRequest().name(Utils.randomStringGenerator("TAX_CMP_", 6))
++                .percentage(5.0f).startDate("01 January 2023").creditAccountType(Integer.valueOf(glAccount.getAccountType().toString()))
++                .creditAccountId(glAccount.getAccountID().longValue()).dateFormat(Utils.DATE_FORMAT).locale(Utils.LOCALE);
++        return ok(() -> fineractClient.taxComponents().createTaxComponent(request)).getResourceId();
++    }
++
++    private Long createTaxGroup(final Long taxComponentId, final String startDate) {
++        final PostTaxesGroupRequest request = new PostTaxesGroupRequest().name(Utils.randomStringGenerator("TAX_GRP_", 6))
++                .taxComponents(Set.of(new PostTaxesGroupTaxComponents().taxComponentId(taxComponentId).startDate(startDate)))
++                .dateFormat(Utils.DATE_FORMAT).locale(Utils.LOCALE);
++        return ok(() -> fineractClient.taxGroup().createTaxGroup(request)).getResourceId();
++    }
++
++    private GetTaxesGroupTaxAssociations association(final Long taxGroupId, final Long taxComponentId) {
++        final GetTaxesGroupResponse taxGroup = ok(() -> fineractClient.taxGroup().retrieveOneTaxGroup(taxGroupId));
++        return taxGroup.getTaxAssociations().stream().filter(a -> taxComponentId.equals(a.getTaxComponent().getId())).findFirst()
++                .orElseThrow();
++    }
++
++    private PutTaxesGroupTaxGroupIdRequest updateRequest(final PutTaxesGroupTaxComponents... taxComponents) {
++        return new PutTaxesGroupTaxGroupIdRequest().taxComponents(new HashSet<>(Arrays.asList(taxComponents))).dateFormat(Utils.DATE_FORMAT)
++                .locale(Utils.LOCALE);
++    }
++}
+

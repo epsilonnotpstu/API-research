@@ -1,0 +1,125 @@
+diff --git a/src/main/java/com/zufar/onlinestore/cart/api/ProductsQuantityItemUpdater.java b/src/main/java/com/zufar/onlinestore/cart/api/ProductQuantityItemUpdater.java
+similarity index 80%
+rename from src/main/java/com/zufar/onlinestore/cart/api/ProductsQuantityItemUpdater.java
+rename to src/main/java/com/zufar/onlinestore/cart/api/ProductQuantityItemUpdater.java
+index 73b25bde..f74631ec 100644
+--- a/src/main/java/com/zufar/onlinestore/cart/api/ProductsQuantityItemUpdater.java
++++ b/src/main/java/com/zufar/onlinestore/cart/api/ProductQuantityItemUpdater.java
+@@ -2,7 +2,7 @@ package com.zufar.onlinestore.cart.api;
+ 
+ import com.zufar.onlinestore.cart.dto.ShoppingSessionDto;
+ import com.zufar.onlinestore.cart.entity.ShoppingSessionItem;
+-import com.zufar.onlinestore.cart.exception.InvalidItemProductsQuantityException;
++import com.zufar.onlinestore.cart.exception.InvalidItemProductQuantityException;
+ import com.zufar.onlinestore.cart.exception.InvalidShoppingSessionIdException;
+ import com.zufar.onlinestore.cart.exception.ShoppingSessionItemNotFoundException;
+ import com.zufar.onlinestore.cart.exception.ShoppingSessionNotFoundException;
+@@ -24,7 +24,7 @@ import java.util.UUID;
+ @Slf4j
+ @Service
+ @RequiredArgsConstructor
+-public class ProductsQuantityItemUpdater {
++public class ProductQuantityItemUpdater {
+ 
+     private final ShoppingSessionItemRepository shoppingSessionItemRepository;
+     private final ShoppingSessionProvider shoppingSessionProvider;
+@@ -33,14 +33,14 @@ public class ProductsQuantityItemUpdater {
+     @Retryable(retryFor = OptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 100))
+     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED)
+     public ShoppingSessionDto update(final UUID shoppingSessionItemId,
+-                                     final int productsQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
++                                     final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException {
+         ShoppingSessionItem item = getShoppingSessionItem(shoppingSessionItemId);
+-        ShoppingSessionItem updatedItem = updateItemProductQuantity(shoppingSessionItemId, productsQuantityChange, item);
++        ShoppingSessionItem updatedItem = updateItemProductQuantity(shoppingSessionItemId, productQuantityChange, item);
+         ShoppingSessionDto shoppingSession = getShoppingSession();
+ 
+         if (shoppingSession.id() != updatedItem.getShoppingSession().getId()) {
+             log.warn("Failed to update the productQuantity with the change = {} in the shoppingSessionItem with id: {} of the shoppingSession with the id = {}.",
+-                    productsQuantityChange, shoppingSessionItemId, shoppingSession.id());
++                    productQuantityChange, shoppingSessionItemId, shoppingSession.id());
+             throw new InvalidShoppingSessionIdException(shoppingSession.id());
+         }
+         return shoppingSession;
+@@ -55,12 +55,16 @@ public class ProductsQuantityItemUpdater {
+     }
+ 
+     private ShoppingSessionItem updateItemProductQuantity(final UUID shoppingSessionItemId,
+-                                                          int productsQuantityChange,
++                                                          int productQuantityChange,
+                                                           ShoppingSessionItem item) {
+-        int newQuantity = item.getProductQuantity() + productsQuantityChange;
++        int newQuantity = item.getProductQuantity() + productQuantityChange;
+         if (newQuantity < 0) {
+             log.warn("Attempted to set negative products quantity for item with id: {}.", shoppingSessionItemId);
+-            throw new InvalidItemProductsQuantityException(newQuantity);
++            throw new InvalidItemProductQuantityException(newQuantity);
++        }
++        if (productQuantityChange == 0) {
++            log.warn("productQuantityChange for item with id: {} must be not equal to zero.", shoppingSessionItemId);
++            throw new InvalidItemProductQuantityException(newQuantity);
+         }
+         item.setProductQuantity(newQuantity);
+ 
+diff --git a/src/main/java/com/zufar/onlinestore/cart/api/ShoppingCartManager.java b/src/main/java/com/zufar/onlinestore/cart/api/ShoppingCartManager.java
+index 9e149317..d0402327 100644
+--- a/src/main/java/com/zufar/onlinestore/cart/api/ShoppingCartManager.java
++++ b/src/main/java/com/zufar/onlinestore/cart/api/ShoppingCartManager.java
+@@ -20,7 +20,7 @@ import java.util.UUID;
+ public class ShoppingCartManager implements CartApi {
+ 
+     private final AddItemsToShoppingSessionHelper addItemsToShoppingSessionHelper;
+-    private final ProductsQuantityItemUpdater productsQuantityItemUpdater;
++    private final ProductQuantityItemUpdater productQuantityItemUpdater;
+     private final ShoppingSessionProvider shoppingSessionProvider;
+     private final ShoppingSessionItemsDeleter shoppingSessionItemsDeleter;
+ 
+@@ -42,6 +42,6 @@ public class ShoppingCartManager implements CartApi {
+     @Override
+     public ShoppingSessionDto updateProductQuantityInShoppingSessionItem(final UUID shoppingSessionItemId,
+                                                                           final int productQuantityChange) throws ShoppingSessionNotFoundException, ShoppingSessionItemNotFoundException, InvalidShoppingSessionIdException {
+-        return productsQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange);
++        return productQuantityItemUpdater.update(shoppingSessionItemId, productQuantityChange);
+     }
+ }
+diff --git a/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductQuantityException.java b/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductQuantityException.java
+new file mode 100644
+index 00000000..4e8e6d09
+--- /dev/null
++++ b/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductQuantityException.java
+@@ -0,0 +1,14 @@
++package com.zufar.onlinestore.cart.exception;
++
++import lombok.Getter;
++
++@Getter
++public class InvalidItemProductQuantityException extends RuntimeException {
++
++    private final Integer itemProductQuantity;
++
++    public InvalidItemProductQuantityException(final Integer itemProductQuantity) {
++        super(String.format("Invalid product quantity = %s or product quantity without changes", itemProductQuantity));
++        this.itemProductQuantity = itemProductQuantity;
++    }
++}
+diff --git a/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductsQuantityException.java b/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductsQuantityException.java
+deleted file mode 100644
+index 408c64d8..00000000
+--- a/src/main/java/com/zufar/onlinestore/cart/exception/InvalidItemProductsQuantityException.java
++++ /dev/null
+@@ -1,14 +0,0 @@
+-package com.zufar.onlinestore.cart.exception;
+-
+-import lombok.Getter;
+-
+-@Getter
+-public class InvalidItemProductsQuantityException extends RuntimeException {
+-
+-    private final Integer itemProductsQuantity;
+-
+-    public InvalidItemProductsQuantityException(final Integer itemProductsQuantity) {
+-        super(String.format("Invalid products quantity = %s", itemProductsQuantity));
+-        this.itemProductsQuantity = itemProductsQuantity;
+-    }
+-}
+

@@ -1,0 +1,76 @@
+diff --git a/build.gradle b/build.gradle
+index 3b72ddc08..198fd58ba 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -70,7 +70,7 @@ dependencies {
+     } else {
+         compile 'com.github.reportportal:commons-dao:c7def320'
+         compile 'com.github.reportportal:commons-rules:5.0.0-BETA-6'
+-        compile 'com.github.reportportal:commons-model:c56ac54'
++        compile 'com.github.reportportal:commons-model:6a76dd5'
+         compile 'com.github.reportportal:commons:5.0.0-BETA-2'
+         compile 'com.github.reportportal:plugin-api:40d7f90'
+     }
+diff --git a/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
+index 8830bb152..f264d6a24 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/item/impl/StartTestItemHandlerImpl.java
+@@ -180,7 +180,7 @@ class StartTestItemHandlerImpl implements StartTestItemHandler {
+ 	 * @param launch         {@link Launch}
+ 	 */
+ 	private void validate(ReportPortalUser user, ReportPortalUser.ProjectDetails projectDetails, StartTestItemRQ rq, Launch launch) {
+-		if (user.getUserRole() != UserRole.ADMINISTRATOR) {
++		if (UserRole.ADMINISTRATOR != user.getUserRole()) {
+ 			expect(projectDetails.getProjectId(), equalTo(launch.getProjectId())).verify(ACCESS_DENIED);
+ 		}
+ 		expect(rq.getStartTime(), Preconditions.sameTimeOrLater(launch.getStartTime())).verify(CHILD_START_TIME_EARLIER_THAN_PARENT,
+@@ -206,7 +206,8 @@ class StartTestItemHandlerImpl implements StartTestItemHandler {
+ 			expect(rq.isHasStats(), equalTo(Boolean.FALSE)).verify(ErrorType.BAD_REQUEST_ERROR,
+ 					Suppliers.formattedSupplier("Unable to add a not nested step item, because parent item with ID = '{}' is a nested step",
+ 							parent.getItemId()
+-					).get()
++					)
++							.get()
+ 			);
+ 		}
+ 
+diff --git a/src/main/java/com/epam/ta/reportportal/core/launch/StartLaunchHandler.java b/src/main/java/com/epam/ta/reportportal/core/launch/StartLaunchHandler.java
+index 69bb1ce58..3d5ae5257 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/launch/StartLaunchHandler.java
++++ b/src/main/java/com/epam/ta/reportportal/core/launch/StartLaunchHandler.java
+@@ -53,7 +53,7 @@ public interface StartLaunchHandler {
+ 	 */
+ 	default void validateRoles(ReportPortalUser.ProjectDetails projectDetails, StartLaunchRQ startLaunchRQ) {
+ 		expect(
+-				startLaunchRQ.getMode() == Mode.DEBUG && projectDetails.getProjectRole() == ProjectRole.CUSTOMER,
++				Mode.DEBUG.equals(startLaunchRQ.getMode()) && ProjectRole.CUSTOMER.equals(projectDetails.getProjectRole()),
+ 				Predicate.isEqual(false)
+ 		).verify(ErrorType.FORBIDDEN_OPERATION);
+ 	}
+diff --git a/src/main/java/com/epam/ta/reportportal/core/launch/impl/DeleteLaunchHandlerImpl.java b/src/main/java/com/epam/ta/reportportal/core/launch/impl/DeleteLaunchHandlerImpl.java
+index ac1a35603..1e65d1aca 100644
+--- a/src/main/java/com/epam/ta/reportportal/core/launch/impl/DeleteLaunchHandlerImpl.java
++++ b/src/main/java/com/epam/ta/reportportal/core/launch/impl/DeleteLaunchHandlerImpl.java
+@@ -135,18 +135,16 @@ public class DeleteLaunchHandlerImpl implements DeleteLaunchHandler {
+ 	 * @param projectDetails {@link ReportPortalUser.ProjectDetails}
+ 	 */
+ 	private void validate(Launch launch, ReportPortalUser user, ReportPortalUser.ProjectDetails projectDetails) {
+-		expect(launch, not(l -> l.getStatus().equals(StatusEnum.IN_PROGRESS))).verify(LAUNCH_IS_NOT_FINISHED,
++		expect(launch, not(l -> StatusEnum.IN_PROGRESS.equals(l.getStatus()))).verify(LAUNCH_IS_NOT_FINISHED,
+ 				formattedSupplier("Unable to delete launch '{}' in progress state", launch.getId())
+ 		);
+-		if (user.getUserRole() != UserRole.ADMINISTRATOR) {
++		if (UserRole.ADMINISTRATOR != user.getUserRole()) {
+ 			expect(launch.getProjectId(), equalTo(projectDetails.getProjectId())).verify(FORBIDDEN_OPERATION,
+ 					formattedSupplier("Target launch '{}' not under specified project '{}'", launch.getId(), projectDetails.getProjectId())
+ 			);
+ 			/* Only PROJECT_MANAGER roles could delete launches */
+ 			if (projectDetails.getProjectRole().lowerThan(PROJECT_MANAGER)) {
+-				expect(user.getUserId(), Predicate.isEqual(launch.getUserId())).verify(ACCESS_DENIED,
+-						"You are not launch owner."
+-				);
++				expect(user.getUserId(), Predicate.isEqual(launch.getUserId())).verify(ACCESS_DENIED, "You are not launch owner.");
+ 			}
+ 		}
+ 	}
+

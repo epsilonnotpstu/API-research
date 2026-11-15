@@ -1,0 +1,394 @@
+diff --git a/.helm/allure-server/values.yaml b/.helm/allure-server/values.yaml
+index 59bed49..6c23d62 100644
+--- a/.helm/allure-server/values.yaml
++++ b/.helm/allure-server/values.yaml
+@@ -78,11 +78,11 @@ ingress:
+ 
+ resources:
+   limits:
+-    cpu: 800m
+-    memory: 800Mi
++    cpu: 500m
++    memory: 512Mi
+   requests:
+-    cpu: 400m
+-    memory: 400Mi
++    cpu: 250m
++    memory: 384Mi
+ 
+ autoscaling:
+   enabled: false
+diff --git a/Dockerfile b/Dockerfile
+index 858b8c5..a207fd1 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,9 +1,9 @@
+-FROM gradle:6.8.0-jdk11 as build
++FROM gradle:6.9.2-jdk11-alpine as build
+ COPY . .
+ ARG RELEASE_VERSION=${RELEASE_VERSION:-0.0.0}
+ RUN gradle -Pversion=docker --no-daemon -PnodeVersion=12.16.3 vaadinPrepareFrontend vaadinBuildFrontend bootJar
+ 
+-FROM openjdk:11-jre-slim as production
++FROM openjdk:11.0.15-jre11.0.15-jre-slim-bullseye as production
+ COPY --from=build /home/gradle/build/libs/allure-server-docker.jar /allure-server-docker.jar
+ # Set port
+ EXPOSE ${PORT:-8080}
+diff --git a/build.gradle b/build.gradle
+index d74031b..f3fc906 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -6,11 +6,12 @@ plugins {
+     id 'checkstyle'
+ 
+     id 'com.github.spotbugs' version '4.6.0'
+-    id 'io.freefair.lombok' version '5.3.0'
+-    id 'com.github.ben-manes.versions' version '0.36.0'
++    id 'io.freefair.lombok' version '5.3.3.3'
++    id 'com.github.ben-manes.versions' version '0.42.0'
+ 
+-    id 'org.springframework.boot' version '2.4.2'
+-    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
++    // https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html
++    id 'org.springframework.boot' version '2.7.1'
++    id 'io.spring.dependency-management' version '1.0.12.RELEASE'
+ 
+     id "com.vaadin" version "0.7.0"
+ }
+@@ -37,7 +38,7 @@ java {
+ }
+ wrapper {
+     distributionType = Wrapper.DistributionType.ALL
+-    gradleVersion = '6.6'
++    gradleVersion = '6.9.2'
+     doLast {
+         delete "$projectDir/gradlew.bat", "$projectDir/gradlew"
+     }
+diff --git a/gradle/dependencies.gradle b/gradle/dependencies.gradle
+index 0c35d07..aa95534 100644
+--- a/gradle/dependencies.gradle
++++ b/gradle/dependencies.gradle
+@@ -4,22 +4,10 @@ repositories {
+ ext {
+     qaLibVersion = '1.2.0'
+     vaadinVersion = '14.2.0'
+-    junit4Version = '4.13.1'
+-    mockitoVersion = '3.3.3'
+-    assertjVersion = '3.18.1'
+-    slf4jVersion = '1.7.30'
+-    commonsLangVersion = '3.9'
+-    classgraphVersion = '4.8.65'
+-    joorVersion = '0.9.12'
+-    guavaVersion = '30.1-jre'
+-    logbackVersion = '1.2.3'
+-    apacheIoVersion = '2.8.0'
+-    openApiVersion = '1.5.2'
+-    allureVersion = '2.13.8'
+-    h2Version = '1.4.200'
+-    joorVersion = '0.9.13'
+-    jsr303 = '7.0.0.Final'
+-    postgresqlVersion = '42.2.18'
++    guavaVersion = '31.1-jre'
++    apacheIoVersion = '2.11.0'
++    openApiVersion = '1.6.9'
++    allureVersion = '2.18.1'
+ }
+ configurations {
+     developmentOnly
+@@ -29,9 +17,10 @@ configurations {
+ }
+ dependencyManagement {
+     imports {
+-        mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
++        mavenBom "com.vaadin:vaadin-bom:$vaadinVersion"
+     }
+ }
++
+ dependencies {
+     /* Allure Generator */
+     implementation "io.qameta.allure:allure-plugin-api:$allureVersion"
+@@ -46,10 +35,10 @@ dependencies {
+     implementation('org.springframework.boot:spring-boot-starter-web') { exclude group: 'ch.qos.logback' }
+     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+-    implementation "org.hibernate:hibernate-validator:$jsr303"
+-    implementation "org.springframework.boot:spring-boot-starter-security"
++    implementation 'org.hibernate:hibernate-validator:6.2.3.Final'
++    implementation 'org.springframework.boot:spring-boot-starter-security'
+ 
+-    implementation "org.jooq:joor:$joorVersion"
++    implementation 'org.jooq:joor:0.9.14'
+ 
+     implementation('com.vaadin:vaadin-spring-boot-starter') {
+         ["com.vaadin.webjar",
+@@ -63,15 +52,14 @@ dependencies {
+ 
+     implementation "commons-io:commons-io:$apacheIoVersion"
+     /* Logging API*/
+-    implementation "org.slf4j:slf4j-api:$slf4jVersion"
+-
++    implementation 'org.slf4j:slf4j-api'
+     /* Logging IMPL*/
+-    runtimeOnly "ch.qos.logback:logback-classic:$logbackVersion"
+-    runtimeOnly "com.h2database:h2:$h2Version"
+-    runtimeOnly "org.postgresql:postgresql:$postgresqlVersion"
++    runtimeOnly 'ch.qos.logback:logback-classic'
++    runtimeOnly 'com.h2database:h2:1.4.200'
++    runtimeOnly 'org.postgresql:postgresql'
+     /* Testing */
+-    testImplementation("junit:junit:$junit4Version") { transitive = false }
+-    testImplementation "org.assertj:assertj-core:$assertjVersion"
++    testImplementation('junit:junit') { transitive = false }
++    testImplementation 'org.assertj:assertj-core'
+     testImplementation('org.springframework.boot:spring-boot-starter-test') {
+         exclude group: 'org.junit.vintage'
+         exclude group: 'org.junit.jupiter'
+diff --git a/src/main/java/ru/iopump/qa/allure/config/RedirectConfiguration.java b/src/main/java/ru/iopump/qa/allure/config/RedirectConfiguration.java
+index cb1f726..3a217ad 100644
+--- a/src/main/java/ru/iopump/qa/allure/config/RedirectConfiguration.java
++++ b/src/main/java/ru/iopump/qa/allure/config/RedirectConfiguration.java
+@@ -12,33 +12,40 @@ import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+ import org.springframework.web.servlet.resource.PathResourceResolver;
+ import org.springframework.web.servlet.resource.ResourceResolverChain;
+-import ru.iopump.qa.allure.helper.Util;
+ import ru.iopump.qa.allure.properties.AllureProperties;
+ 
+ import javax.annotation.Nonnull;
++import javax.servlet.ServletContext;
+ import javax.servlet.http.HttpServletRequest;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.util.List;
+ 
++import static ru.iopump.qa.allure.helper.Util.join;
++
+ @Configuration
+ @Slf4j
+ public class RedirectConfiguration implements WebMvcConfigurer {
+ 
+     private final String swaggerPath;
+     private final AllureProperties cfg;
++    private final ServletContext servletContext;
+ 
+-    public RedirectConfiguration(@Value("${springdoc.swagger-ui.path}") String swaggerPath, AllureProperties cfg) {
++    public RedirectConfiguration(@Value("${springdoc.swagger-ui.path}") String swaggerPath,
++                                 ServletContext servletContext,
++                                 AllureProperties cfg) {
+         this.swaggerPath = swaggerPath;
++        this.servletContext = servletContext;
+         this.cfg = cfg;
+     }
+ 
+     @Override
+     public void addViewControllers(ViewControllerRegistry registry) {
+-        registry.addRedirectViewController("/swagger", swaggerPath); // Will redirect to UI
+-        registry.addRedirectViewController("/api", swaggerPath);
+-        registry.addRedirectViewController("/", "/ui"); // To Vaadin UI
++        String ctxPath = servletContext.getContextPath();
++        registry.addRedirectViewController("swagger", swaggerPath); // Will redirect to UI
++        registry.addRedirectViewController("api", swaggerPath);
++        registry.addRedirectViewController("/", "ui"); // To Vaadin UI
+     }
+ 
+     @Override
+@@ -49,7 +56,7 @@ public class RedirectConfiguration implements WebMvcConfigurer {
+     @Override
+     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+         registry
+-                .addResourceHandler(Util.join("/", cfg.reports().dir(), "**"))
++                .addResourceHandler(join("/", cfg.reports().dir(), "**"))
+                 .addResourceLocations("file:" + cfg.reports().dir())
+                 .resourceChain(true)
+                 .addResolver(new PathResourceResolver() {
+diff --git a/src/main/java/ru/iopump/qa/allure/gui/view/SwaggerView.java b/src/main/java/ru/iopump/qa/allure/gui/view/SwaggerView.java
+index 7afba57..a8dfce5 100644
+--- a/src/main/java/ru/iopump/qa/allure/gui/view/SwaggerView.java
++++ b/src/main/java/ru/iopump/qa/allure/gui/view/SwaggerView.java
+@@ -1,7 +1,5 @@
+ package ru.iopump.qa.allure.gui.view;
+ 
+-import static ru.iopump.qa.allure.gui.MainLayout.ALLURE_SERVER;
+-
+ import com.vaadin.flow.component.Tag;
+ import com.vaadin.flow.component.html.IFrame;
+ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+@@ -10,15 +8,21 @@ import com.vaadin.flow.router.Route;
+ import lombok.extern.slf4j.Slf4j;
+ import ru.iopump.qa.allure.gui.MainLayout;
+ 
++import javax.servlet.ServletContext;
++
++import static ru.iopump.qa.allure.gui.MainLayout.ALLURE_SERVER;
++import static ru.iopump.qa.allure.helper.Util.concatParts;
++
+ @Tag("swagger-view")
+ @PageTitle("Swagger | " + ALLURE_SERVER)
+ @Route(value = "swagger", layout = MainLayout.class)
+ @Slf4j
+ public class SwaggerView extends VerticalLayout {
++
+     private static final long serialVersionUID = 5822077036734476962L;
+ 
+-    public SwaggerView() {
+-        var frame = new IFrame("/swagger");
++    public SwaggerView(ServletContext context) {
++        var frame = new IFrame(concatParts(context.getContextPath(), "swagger"));
+         frame.setSizeFull();
+         add(frame);
+     }
+diff --git a/src/main/java/ru/iopump/qa/allure/helper/ServeRedirectHelper.java b/src/main/java/ru/iopump/qa/allure/helper/ServeRedirectHelper.java
+index 6436430..745a2e4 100644
+--- a/src/main/java/ru/iopump/qa/allure/helper/ServeRedirectHelper.java
++++ b/src/main/java/ru/iopump/qa/allure/helper/ServeRedirectHelper.java
+@@ -14,6 +14,8 @@ import ru.iopump.qa.allure.properties.AllureProperties;
+ import javax.servlet.http.HttpServletRequest;
+ import java.util.Map;
+ 
++import static ru.iopump.qa.allure.helper.Util.concatParts;
++
+ @RequiredArgsConstructor
+ @Controller
+ @Slf4j
+@@ -29,8 +31,9 @@ public class ServeRedirectHelper {
+         final String to = redirectReportPaths.get(from);
+ 
+         if (to != null) {
+-            log.info("Redirect evaluated: '{}' -> '{}'", from, to);
+-            return new RedirectView(to, false);
++            String redirectTo = concatParts(request.getServletContext().getContextPath(), to);
++            log.info("Redirect evaluated: '{}' -> '{}'", from, redirectTo);
++            return new RedirectView(redirectTo, false);
+         }
+ 
+         log.info("Redirect NOT evaluated: '{}'", from);
+diff --git a/src/main/java/ru/iopump/qa/allure/helper/Util.java b/src/main/java/ru/iopump/qa/allure/helper/Util.java
+index 5e8cf5c..4f6282c 100644
+--- a/src/main/java/ru/iopump/qa/allure/helper/Util.java
++++ b/src/main/java/ru/iopump/qa/allure/helper/Util.java
+@@ -22,6 +22,12 @@ public class Util {
+         }
+     }
+ 
++    public static String concatParts(@Nullable String... part) {
++        return StreamUtil.stream(part)
++                .collect(Collectors.joining("/"))
++                .replaceAll("/{2,}", "/");
++    }
++
+     public static String join(@Nullable Object... part) {
+         return StreamUtil.stream(part)
+                 .map(Str::toStr)
+diff --git a/src/main/java/ru/iopump/qa/allure/service/CleanUpServiceConfiguration.java b/src/main/java/ru/iopump/qa/allure/service/CleanUpServiceConfiguration.java
+index ff825de..d42a816 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/CleanUpServiceConfiguration.java
++++ b/src/main/java/ru/iopump/qa/allure/service/CleanUpServiceConfiguration.java
+@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Lazy;
+ import org.springframework.scheduling.annotation.EnableScheduling;
+ import org.springframework.scheduling.annotation.SchedulingConfigurer;
+ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+-import org.springframework.transaction.annotation.Transactional;
+ import ru.iopump.qa.allure.entity.ReportEntity;
+ import ru.iopump.qa.allure.properties.AllureProperties;
+ import ru.iopump.qa.allure.properties.CleanUpProperties;
+@@ -31,7 +30,6 @@ import static org.apache.commons.io.FileUtils.deleteQuietly;
+ @Configuration
+ @Lazy(false)
+ @Slf4j
+-@Transactional
+ @RequiredArgsConstructor
+ @EnableScheduling
+ public class CleanUpServiceConfiguration implements SchedulingConfigurer {
+@@ -73,6 +71,18 @@ public class CleanUpServiceConfiguration implements SchedulingConfigurer {
+             final Collection<ReportEntity> candidatesCleanUp = repository
+                     .findAllByCreatedDateTimeIsBefore(cleanUpProperties.getClosestEdgeDate());
+ 
++            if (log.isDebugEnabled()) {
++                log.debug("CleanUp. All reports: " + repository.findAll().stream()
++                        .map(e -> e.getUuid() + " " + e.getPath() + " " + e.getCreatedDateTime())
++                        .collect(Collectors.joining(", ", "[", "]"))
++                );
++
++                log.debug("CleanUp. Candidates to clean up: " + candidatesCleanUp.stream()
++                        .map(e -> e.getUuid() + " " + e.getPath() + " " + e.getCreatedDateTime())
++                        .collect(Collectors.joining(", ", "[", "]"))
++                );
++            }
++
+             final Collection<Pair<ReportEntity, Boolean>> processedReports = candidatesCleanUp.stream()
+                     .map(report ->
+                             cleanUpProperties.getPaths().stream()
+diff --git a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+index 165b6bd..b8837c6 100644
+--- a/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
++++ b/src/main/java/ru/iopump/qa/allure/service/JpaReportService.java
+@@ -14,7 +14,6 @@ import org.apache.commons.io.FileUtils;
+ import org.apache.commons.lang3.StringUtils;
+ import org.springframework.data.domain.Sort;
+ import org.springframework.stereotype.Component;
+-import org.springframework.transaction.annotation.Transactional;
+ import ru.iopump.qa.allure.entity.ReportEntity;
+ import ru.iopump.qa.allure.helper.AllureReportGenerator;
+ import ru.iopump.qa.allure.helper.OldReportsFormatConverterHelper;
+@@ -24,6 +23,7 @@ import ru.iopump.qa.allure.repo.JpaReportRepository;
+ 
+ import javax.annotation.Nullable;
+ import javax.annotation.PostConstruct;
++import javax.transaction.Transactional;
+ import javax.validation.constraints.NotNull;
+ import java.io.IOException;
+ import java.io.InputStream;
+@@ -177,7 +177,7 @@ public class JpaReportService {
+ 
+         // Persist
+         handleMaxHistory(newEntity);
+-        repository.save(newEntity);
++        repository.saveAndFlush(newEntity);
+ 
+         // Disable prev report
+         prevEntity.ifPresent(e -> e.setActive(false));
+@@ -269,7 +269,7 @@ public class JpaReportService {
+ 
+         // Persist
+         handleMaxHistory(newEntity);
+-        repository.save(newEntity);
++        repository.saveAndFlush(newEntity);
+ 
+         // Disable prev report
+         prevEntity.ifPresent(e -> e.setActive(false));
+diff --git a/src/main/resources/application.yaml b/src/main/resources/application.yaml
+index 87c2261..755b3b6 100644
+--- a/src/main/resources/application.yaml
++++ b/src/main/resources/application.yaml
+@@ -1,4 +1,7 @@
+ ### Internal Spring Configuration
++#server:
++#  servlet:
++#    context-path: "/server"
+ spring:
+   servlet:
+     multipart.max-file-size: 100MB
+@@ -50,4 +53,5 @@ allure:
+     ageDays: 90
+     paths:
+       - path: "manual_uploaded"
+-        ageDays: 30
+\ No newline at end of file
++        ageDays: 30
++  server-base-url:
+\ No newline at end of file
+diff --git a/src/main/resources/logback.xml b/src/main/resources/logback.xml
+index 830df70..32c728f 100644
+--- a/src/main/resources/logback.xml
++++ b/src/main/resources/logback.xml
+@@ -17,6 +17,8 @@
+         <appender-ref ref="STDOUT"/>
+     </logger>
+ 
++    <logger name="ru.iopump.qa.allure.service" level="DEBUG"/>
++
+     <root level="INFO">
+         <appender-ref ref="STDOUT"/>
+     </root>
+
