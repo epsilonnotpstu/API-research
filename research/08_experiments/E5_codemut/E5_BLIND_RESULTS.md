@@ -108,3 +108,56 @@
 - n=9। Labeller সব একই model family-র। একই package নকশা।
 - C1/C2 আর B1/B2 আলাদা session। তাই পার্থক্যের কিছু অংশ session-এর এলোমেলোতা হতে পারে। তবে v0.4-এ দুজনেই একই নিয়ম (§10.7) উল্লেখ করেছিল, আর v0.5-এ দুজনেই §11 উল্লেখ করেছে। কাজেই নিয়মের প্রভাবই প্রধান কারণ বলে মনে হয়।
 - Labeller-রা জানত item-গুলো fuzzing violation, আর package-এ ত্রুটি থাকতে পারে।
+
+# v3 — codebook v0.6 (§11.4 intent-evidence search), held-out মূল্যায়ন (2026-11-15)
+**Pre-registration:** `E5_BLIND_V3_PLAN.md`, লেখা labelling শুরুর আগে।
+- Package freeze `blind_v3_package_freeze.sha256` scoring-এর সময় যাচাই করা হয়েছে: সব OK।
+- Labeller D1, D2: নতুন Codex session, xhigh।
+- Item: 38টি (17 target, 21 decoy), 12টি package।
+- Score: `e5_blind_v3_scores.csv`।
+
+### Pre-registered ফল
+| মাপ | D1 | D2 | v2 C1 | v2 C2 |
+|---|---|---|---|---|
+| Primary (n=11) IMPL* | 8 | 8 | — | — |
+| Primary-তে misattribution (SPEC/SPEC_PARTIAL/TEST) | **0** | **0** | — | — |
+| Primary-তে UNDECIDABLE (+both) | 3 (3) | 3 (3) | — | — |
+| v2-comparable (n=9) IMPL* | 7 | 7 | 7 | 6 |
+| Intent-looking (n=4) IMPL* | 2 | 2 | 2 | 1 |
+| Primary-তে search status | complete 8, not_run 3 | একই | — | — |
+
+- **S1 (safety) পূরণ:** misattribution দুই labeller-এরই 0।
+- **S2 (benefit) পূরণ, তবে সামান্য:** intent-looking subset-এ কোনো labeller কমেনি, একটি বেড়েছে (C2 1 → 2)। Pairing যেভাবেই করা হোক, ফল একই।
+- **S3 পূরণ:** 7, 7 ≥ 6।
+- **Labeller-দের মধ্যে মিল:** D1–D2 L1 agreement 35/38; target-এ 17/17।
+
+### Item-স্তরে
+- **wrong-status (market E027, scout E029):** দুটোতেই দুই labeller IMPL দিয়েছে।
+  - Tool-এর raw `supports_spec` আর স্বাধীন প্রমাণ মিলে এই সিদ্ধান্ত। Market-এ প্রমাণ হলো packaged REST operation table (E-DOC), scout-এ resolved integration test (E-TEST)।
+  - এটা ঠিক §12.1 Q1-এর mapping (`supports_spec` → IMPL)।
+  - v2-তে C2 market-এ UNDECIDABLE দিয়েছিল।
+- **response-field WRITE_ONLY (petstore E009, E014):** দুজনেই UNDECIDABLE + both।
+  - Petstore source-এ স্বাধীন প্রমাণ নেই: test class খালি, README generic।
+  - এখানে §11.4 সঠিকভাবে বিরত থেকেছে। আর IMPL পাওয়া সম্ভব নয়, প্রমাণই নেই।
+- **petstore-reject-valid-v3 (E016, নতুন):** দুজনেই UNDECIDABLE + both।
+  - কারণ, শুধু একটা username guard আছে; আর guard-গুলো একই controller-এ।
+  - এটা T36-এর P043/P021/P019 সিদ্ধান্তের সঙ্গে সঙ্গত: guard-only হলে UNDECIDABLE।
+- **market-response-field-v2 (E008, নতুন):** দুজনেই IMPL।
+- **E026 (v1_comparable_only):** দুজনেই TEST দিয়েছে। উদাহরণ exchange-টা int64 overflow (v2 plan-এ আগেই উল্লেখ করা), তাই এটা আসলে সঠিক TEST। Pre-registered ভাবে primary-র বাইরে।
+
+### ব্যাখ্যা
+- §11.4 **নিরাপদ**: ভুল দিকে attribution 0। এর **লাভ নির্ভর করে source-এ স্বাধীন intent-প্রমাণ আছে কিনা তার ওপর।**
+  - Test বা doc থাকলে IMPL উদ্ধার হয় (wrong-status)।
+  - না থাকলে বিরতি থাকে (WRITE_ONLY, guard)।
+- এই n-এ লাভ ছোট: মাত্র 1টি item-এ বদল। Procedure-টা মূলত **ভুল দিক রোধ করে আর সিদ্ধান্তকে নথিভুক্ত করে**। Recall বাড়ানো এর প্রধান কাজ নয়।
+
+### Boundary incident (labeller report থেকে)
+- দুজনেই শুরুতে `09_collab`-এর ভেতরে path probe করেছে। কোনো content বা board পড়া হয়নি।
+- `intent_evidence.py` ancestor Git repo (research repo) খুঁজে পেয়ে `git log` চালিয়েছে।
+  - Package-এর relative path research repo-তে নেই (K*/ gitignored), তাই history hit 0।
+  - Claude যাচাই করেছে: 72টি raw search file-এ history hit 0, আর কোনো sensitive শব্দ নেই।
+  - Leak হয়নি, তবে tool-এর আচরণ ঠিক করা দরকার (T38)।
+
+### সীমা
+- একই model family। n=11। Ground truth শুধু IMPL, তাই SPEC recall মাপা যায় না।
+- Decoy-তে দুজনেই 1টি করে SPEC দিয়েছে। Decoy-র ground truth নেই।

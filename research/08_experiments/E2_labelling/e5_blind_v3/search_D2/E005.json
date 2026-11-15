@@ -1,0 +1,152 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/pet/{petId}"
+  },
+  "observed_status": 200,
+  "field": "name",
+  "spec": {
+    "file": "./K03/spec.json",
+    "path": "/pet/{petId}",
+    "statuses": [
+      "200",
+      "400",
+      "404",
+      "default"
+    ],
+    "field_policy": [
+      "present"
+    ],
+    "field": "name",
+    "locator": "#/paths/~1pet~1{petId}/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:71",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 71,
+      "snippet": "public ResponseContext getPetById(final RequestContext request, final Long petId) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/pet/{petId}",
+      "methods": [
+        "GET"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "./K03/spec.json",
+      "operation_id": "getPetById",
+      "controller": "io.swagger.petstore.controller.PetController",
+      "inflector_config": "inflector.yaml"
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:76",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 76,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/PetController.java:89",
+      "file": "src/main/java/io/swagger/petstore/controller/PetController.java",
+      "line": 89,
+      "snippet": "return new ResponseContext().status(Response.Status.NOT_FOUND).entity(\"Pet not found\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        404
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/model/Pet.java:54",
+      "file": "src/main/java/io/swagger/petstore/model/Pet.java",
+      "line": 54,
+      "snippet": "@XmlElement(name = \"name\")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; response DTO link and serialization are lexical inferences; XML annotation does not establish JSON presence",
+      "field": "name",
+      "field_behavior": null,
+      "independent": false
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:4",
+      "file": "README.md",
+      "line": 4,
+      "snippet": "This is the pet store sample hosted at https://petstore3.swagger.io. For other versions, check the branches.",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README.md:35",
+      "file": "README.md",
+      "line": 35,
+      "snippet": "docker run  --name swaggerapi-petstore3 -d -p 8080:8080 swaggerapi/petstore3:unstable",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "name",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "not inside a git work tree"
+  },
+  "scan": {
+    "text_files": 29,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

@@ -1,0 +1,317 @@
+{
+  "item_id": "E020",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/pet/{petId}",
+    "scenario": "Existing pet response omits required name; determine response name presence obligation.",
+    "observed_status": 200,
+    "field": "name",
+    "direction": "Existing pet response omits required name; determine response name presence obligation."
+  },
+  "search_mandatory": true,
+  "search_mandatory_reason": "Intent-dependent conflict; codebook §11.4.1(a)/(b)/(c).",
+  "review_start_time": "2026-11-15T02:34:19.840505+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "location": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:71",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java",
+        "start_line": 61,
+        "end_line": 81
+      }
+    },
+    {
+      "index": 1,
+      "category": "HANDLER",
+      "location": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:75",
+      "disposition": "context",
+      "reason": "This explicit status expression is a different error branch from the target success response; handler code is context only in any case.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java",
+        "start_line": 65,
+        "end_line": 85
+      }
+    },
+    {
+      "index": 2,
+      "category": "HANDLER",
+      "location": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:88",
+      "disposition": "context",
+      "reason": "This explicit status expression is a different error branch from the target success response; handler code is context only in any case.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java",
+        "start_line": 78,
+        "end_line": 98
+      }
+    },
+    {
+      "index": 3,
+      "category": "HANDLER",
+      "location": "K08/source/src/main/java/io/swagger/petstore/model/Pet.java:54",
+      "disposition": "context",
+      "reason": "XML mapping identifies a field but establishes neither JSON field presence nor JSON type policy; the model is implementation context, not independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/src/main/java/io/swagger/petstore/model/Pet.java",
+        "start_line": 44,
+        "end_line": 64
+      }
+    },
+    {
+      "index": 4,
+      "category": "E-DOC",
+      "location": "K08/source/README.md:4",
+      "disposition": "reject",
+      "reason": "The complete README describes project setup, hosting and Docker commands. Incidental pet, name or image terminology states no target field, input or branch obligation.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/README.md",
+        "start_line": 1,
+        "end_line": 14
+      }
+    },
+    {
+      "index": 5,
+      "category": "E-DOC",
+      "location": "K08/source/README.md:35",
+      "disposition": "reject",
+      "reason": "The complete README describes project setup, hosting and Docker commands. Incidental pet, name or image terminology states no target field, input or branch obligation.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K08/source/README.md",
+        "start_line": 25,
+        "end_line": 44
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K08/source/src/main/java/io/swagger/petstore/model/Pet.java:54",
+        "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:81"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K08/r1/exchanges.jsonl:421"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K08/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3"
+      ],
+      "disposition": "context",
+      "reason": "The only package test class has no methods or assertions. Absence of a test is not positive evidence for implementation intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K08/source/README.md:3",
+        "K08/source/README.md:39"
+      ],
+      "disposition": "reject",
+      "reason": "Full setup/overview/UI paragraphs do not state the target obligation; the separately bundled OpenAPI is contract context, not independent prose.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 1,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "A stored pet is returned without required name. Ordinary nullable-bean serialization explains the absence, but no independent response-presence test or normative prose establishes attribution.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": null,
+    "evidence_types": "E-CODE-INTENT"
+  },
+  "review_end_time": "2026-11-15T02:49:23.918541+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-swagger-petstore:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "RESPONSE_SCHEMA",
+        "method": "GET",
+        "template": "/pet/{petId}",
+        "status": 200,
+        "pointer": "/required",
+        "message": "'name' is a required property"
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K08/r1/exchanges.jsonl",
+    "exchange_index_0_based": 420,
+    "line_1_based": 421,
+    "method": "GET",
+    "path": "/api/v3/pet/-5",
+    "observed_status": 200
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "complete",
+  "intent_search_verdict": "none_found",
+  "intent_review_verdict": "none_found",
+  "search_execution": {
+    "stdout": "search_D1/E020.json",
+    "stderr": "search_D1/E020.stderr",
+    "exit_code_file": "search_D1/E020.exitcode",
+    "exit_code": 0,
+    "scan_complete": true,
+    "warnings": [],
+    "command_argv": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K08/source",
+      "K08/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/pet/{petId}",
+      "--status",
+      "200",
+      "--field",
+      "name",
+      "--json"
+    ]
+  },
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "available"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K08/source",
+    "procedure": "Read selected handler and linked DTO/superclass/configuration; inspect authored tests/docs with explicit package paths; resolve test method, helper and route constants; reject vendor assets and annotation/spec repetition. No external lookup or package execution.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "both_candidate_evidence": {
+    "meaning": "Competing spec/implementation attribution remains open; this flag does not claim both defects are established.",
+    "implementation_context": [
+      "K08/source/src/main/java/io/swagger/petstore/model/Pet.java:54",
+      "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:81"
+    ],
+    "contract_context": [
+      "K08/spec.json#/paths/~1pet~1{petId}/get",
+      "K08/spec.json#/components/schemas/Pet/required"
+    ],
+    "independent_intent": "none_found"
+  },
+  "evidence_locators": [
+    "K08/r1/exchanges.jsonl:421",
+    "K08/source/src/main/java/io/swagger/petstore/model/Pet.java:54",
+    "K08/source/src/main/java/io/swagger/petstore/controller/PetController.java:81",
+    "K08/spec.json#/paths/~1pet~1{petId}/get",
+    "K08/spec.json#/components/schemas/Pet/required"
+  ]
+}

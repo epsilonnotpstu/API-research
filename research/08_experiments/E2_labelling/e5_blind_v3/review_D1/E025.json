@@ -1,0 +1,232 @@
+{
+  "item_id": "E025",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/categories",
+    "scenario": "Missing optional group query receives 400; determine intended requiredness.",
+    "observed_status": 400,
+    "field": "group",
+    "direction": "Missing optional group query receives 400; determine intended requiredness."
+  },
+  "search_mandatory": true,
+  "search_mandatory_reason": "Intent-dependent conflict; codebook §11.4.1(a)/(b)/(c).",
+  "review_start_time": "2026-11-15T02:34:19.840725+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "location": "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:42",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java",
+        "start_line": 32,
+        "end_line": 52
+      }
+    },
+    {
+      "index": 1,
+      "category": "E-DOC",
+      "location": "K09/source/api/src/main/resources/assets/docs/lib/underscore-min.map:1",
+      "disposition": "reject",
+      "reason": "The package README identifies this subtree as copied Swagger UI assets. CSS/DOM id names and minified source-map symbols are vendor UI data, not API scenario requirements.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K09/source/api/src/main/resources/assets/docs/lib/underscore-min.map",
+        "start_line": 1,
+        "end_line": 1
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+        "K09/source/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:44",
+        "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+        "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+        "K09/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:102"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K09/r1/exchanges.jsonl:4304"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K09/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:79",
+        "K09/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:102",
+        "K09/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:108"
+      ],
+      "disposition": "accept",
+      "reason": "Separate DAO tests call find with null group and assert filtered results. These do not directly assert HTTP status; handler linkage is through TagResource.all -> dao.find. They corroborate optional-group policy only.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": "supports_spec_behavior"
+    },
+    {
+      "category": "E-CROSS",
+      "locators": [
+        "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+        "K09/source/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:44",
+        "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+        "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+        "K09/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:48"
+      ],
+      "disposition": "accept",
+      "reason": "⚠️ The v1 categories override directly delegates the same four arguments to the concrete tags list method. Its absence-of-group branch is therefore the same tested policy path. This is E-CROSS with resolved inheritance, not a direct categories HTTP test; confidence is 2.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": "supports_spec_behavior"
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-REJECT-VALID",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "⚠️ Categories delegates unchanged to the tags handler. Independent unfiltered-tags and null-group DAO tests establish optional filtering in that shared path; the added guard rejects it. No direct categories integration assertion exists.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": null,
+    "evidence_types": "E-TEST;E-CROSS;E-CODE-INTENT"
+  },
+  "review_end_time": "2026-11-15T02:49:23.921825+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-scout-api:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "VALID_REJECTED",
+        "method": "GET",
+        "template": "/v1/categories",
+        "status": 400,
+        "pointer": "",
+        "message": ""
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K09/r1/exchanges.jsonl",
+    "exchange_index_0_based": 4303,
+    "line_1_based": 4304,
+    "method": "GET",
+    "path": "/api/v1/categories",
+    "observed_status": 400
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "complete",
+  "intent_search_verdict": "none_found",
+  "intent_review_verdict": "supports_spec_behavior",
+  "search_execution": {
+    "stdout": "search_D1/E025.json",
+    "stderr": "search_D1/E025.stderr",
+    "exit_code_file": "search_D1/E025.exitcode",
+    "exit_code": 0,
+    "scan_complete": true,
+    "warnings": [],
+    "command_argv": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K09/source",
+      "K09/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/categories",
+      "--status",
+      "400",
+      "--field",
+      "group",
+      "--json"
+    ]
+  },
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "available"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K09/source",
+    "procedure": "Read selected handler and linked DTO/superclass/configuration; inspect authored tests/docs with explicit package paths; resolve test method, helper and route constants; reject vendor assets and annotation/spec repetition. No external lookup or package execution.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "evidence_locators": [
+    "K09/r1/exchanges.jsonl:4304",
+    "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+    "K09/source/api/src/main/java/se/devscout/scoutapi/resource/TagResource.java:44",
+    "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+    "K09/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+    "K09/source/data-access/src/test/java/se/devscout/scoutapi/dao/TagDaoTest.java:102",
+    "K09/spec.json#/paths/~1v1~1categories/get",
+    "K09/spec.json#/paths/~1v1~1categories/get/parameters/0"
+  ]
+}

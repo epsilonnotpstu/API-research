@@ -1,0 +1,170 @@
+{
+  "item_id": "E037",
+  "target_proposition": {
+    "side": "request",
+    "method": "DELETE",
+    "path_template": "/store/order/{orderId}",
+    "scenario": "VALID_REJECTED: ",
+    "observed_status": 400,
+    "field": null,
+    "direction": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT."
+  },
+  "search_mandatory": false,
+  "search_mandatory_reason": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT.",
+  "review_start_time": "2026-11-15T02:34:19.841278+00:00",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:77"
+      ],
+      "disposition": "context",
+      "reason": "Followed the listed binding, linked model, superclass or DAO to explain observed behavior; implementation structure alone is not independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K03/r1/exchanges.jsonl:1062"
+      ],
+      "disposition": "context",
+      "reason": "Representative traffic confirms the target scenario; observation is not independent normative intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K03/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3"
+      ],
+      "disposition": "context",
+      "reason": "This package test class has no assertions; absence of tests does not support either side.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K03/source/README.md:3",
+        "K03/source/README.md:39"
+      ],
+      "disposition": "reject",
+      "reason": "Read the setup/UI README paragraphs. They contain no target response-type requirement.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CODE-INTENT",
+      "locators": [
+        "../../tools/conformance.py:25",
+        "../../tools/conformance.py:39",
+        "K03/r1/exchanges.jsonl:1062"
+      ],
+      "disposition": "context",
+      "reason": "Recorded path integer exceeds 2**63-1. Current checker suppresses VALID_REJECTED while INT_FORMATS=False reproduces it.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "TEST",
+    "L2": "NA",
+    "proposed_L2": "T-ORACLE-FORMAT",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "The order ID is outside signed int64, so Long conversion correctly rejects it. Disabling integer-format validation reproduces this historical VALID_REJECTED false positive.",
+    "evidence_types": "E-CODE-INTENT",
+    "unit": "Only the listed violation fingerprint, not unrelated messages on the same representative exchange.",
+    "deterministic_rule": "Integer outside signed int64 is invalid: §10.5 T-ORACLE-FORMAT."
+  },
+  "review_end_time": "2026-11-15T02:49:23.927968+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-swagger-petstore:8080",
+    "int_formats": true,
+    "representative_matches_item": false,
+    "violations": [],
+    "legacy_int_formats_false_violations": [
+      {
+        "kind": "VALID_REJECTED",
+        "method": "DELETE",
+        "template": "/store/order/{orderId}",
+        "status": 400,
+        "pointer": "",
+        "message": ""
+      }
+    ]
+  },
+  "traffic_evidence": {
+    "file": "K03/r1/exchanges.jsonl",
+    "exchange_index_0_based": 1061,
+    "line_1_based": 1062,
+    "method": "DELETE",
+    "path": "/api/v3/store/order/150297332117151923664279083626680624782",
+    "observed_status": 400
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "not_run",
+  "intent_search_verdict": "NA",
+  "intent_review_verdict": "not_applicable",
+  "search_execution": null,
+  "history_review": {
+    "decision": "No package history is supplied. No E-HISTORY hit exists or is used; enclosing-worktree metadata is excluded.",
+    "raw_tool_availability": "not_run"
+  },
+  "evidence_locators": [
+    "K03/r1/exchanges.jsonl:1062",
+    "K03/source/src/main/java/io/swagger/petstore/controller/OrderController.java:77",
+    "K03/spec.json#/paths/~1store~1order~1{orderId}/delete",
+    "K03/spec.json#/paths/~1store~1order~1{orderId}/delete/parameters/0/schema/format"
+  ],
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K03/source",
+    "procedure": "Check deterministic rule against local schema, source and captured exchange.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  }
+}

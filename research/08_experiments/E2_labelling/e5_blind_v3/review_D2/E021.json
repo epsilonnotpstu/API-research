@@ -1,0 +1,885 @@
+{
+  "item_id": "E021",
+  "review_started_at": "2026-11-15T02:33:34.659037+00:00",
+  "target_proposition": {
+    "side": "request and response",
+    "method": "POST",
+    "path_template": "/version/v1/registrationToken",
+    "scenario": "Empty registration-token create body omits key/keyType, which the spec allows; decide required-key intent and 500 handling independently.",
+    "field": "keyType",
+    "observed_status": 500,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": true,
+  "search_requirement_reason": "§11.4.1(b): deterministic 500 establishes IMPL, but optional create-key spec omission is a §10.6 both_candidate and requires independent review.",
+  "history_scope": "unavailable",
+  "tool_hits_review": [
+    {
+      "hit_index": 0,
+      "category": "HANDLER",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:81",
+      "disposition": "context",
+      "reason": "Handler/model return, guard, or annotation establishes mechanics only; it is not independent intent evidence.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 1,
+      "category": "HANDLER",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:120",
+      "disposition": "context",
+      "reason": "Handler/model return, guard, or annotation establishes mechanics only; it is not independent intent evidence.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 2,
+      "category": "HANDLER",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:123",
+      "disposition": "context",
+      "reason": "Handler/model return, guard, or annotation establishes mechanics only; it is not independent intent evidence.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 3,
+      "category": "E-DOC",
+      "source_locator": "K11/source/docs/architecture-overview.md:187",
+      "disposition": "context",
+      "reason": "Registration-token paragraph:184-198 describes keyed creation, but does not assert the empty-body branch. Its 400 concerns invalid teleTAN verification. Null-key tests found manually are more directly linked.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 4,
+      "category": "E-DOC",
+      "source_locator": "K11/source/docs/architecture-overview.md:194",
+      "disposition": "context",
+      "reason": "Registration-token paragraph:184-198 describes keyed creation, but does not assert the empty-body branch. Its 400 concerns invalid teleTAN verification. Null-key tests found manually are more directly linked.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 5,
+      "category": "E-DOC",
+      "source_locator": "K11/source/docs/architecture-overview.md:269",
+      "disposition": "reject",
+      "reason": "Architecture paragraph:264-277 concerns POST /tan, a different operation. Its 400/201 cannot establish this missing-key registration-token scenario.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 6,
+      "category": "E-DOC",
+      "source_locator": "K11/source/docs/architecture-overview.md:274",
+      "disposition": "reject",
+      "reason": "Architecture paragraph:264-277 concerns POST /tan, a different operation. Its 400/201 cannot establish this missing-key registration-token scenario.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 7,
+      "category": "E-DOC",
+      "source_locator": "K11/source/docs/architecture-overview.md:277",
+      "disposition": "reject",
+      "reason": "Architecture paragraph:264-277 concerns POST /tan, a different operation. Its 400/201 cannot establish this missing-key registration-token scenario.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 8,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:63",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 9,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:64",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 10,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:65",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 11,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:66",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 12,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:67",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 13,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:68",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 14,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:69",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 15,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:70",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 16,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:71",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 17,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:72",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 18,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:73",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 19,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:74",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    },
+    {
+      "hit_index": 20,
+      "category": "E-DOC",
+      "source_locator": "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:75",
+      "disposition": "context",
+      "reason": "Controller Javadoc and ApiResponse repeat the handler/generated contract; no independent normative basis for missing keyType is supplied.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      },
+      "applies_to_attempts": [
+        "bounded"
+      ]
+    }
+  ],
+  "manual_additions": [
+    {
+      "locators": [
+        "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91",
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:534",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:552",
+        "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:51",
+        "K11/source/src/test/java/app/coronawarn/verification/TestUtils.java:122"
+      ],
+      "disposition": "accept",
+      "reason": "Tool misses tests with concatenated route constants. PREFIX_API_VERSION=/version/v1 and REGISTRATION_TOKEN_URI=/registrationToken resolve exact POST route. JSON requests with null keyType and null key separately assert 400. They establish invalid-key handling; the exact combined empty-object response is still classified by deterministic R1.",
+      "evidence_type": "E-TEST",
+      "support": "supports_spec_behavior",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    },
+    {
+      "locators": [
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+        "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59",
+        "K11/spec.json#/components/schemas/RegistrationTokenRequest"
+      ],
+      "disposition": "accept",
+      "reason": "Independent request DTO requires non-null key and keyType; the supplied schema has no required list. Together with keyed-creation docs and null-key tests this supports a create-key spec omission under §10.6.",
+      "evidence_type": "E-CONSIST",
+      "support": "supports_impl_behavior",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": true
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": true
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": true
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": true,
+    "intent_review_verdict": "supports_spec_behavior",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Missing keyType reaches a null switch and returns 500. Null-key tests require 400; optional create keys also justify a spec-defect candidate under §10.6.",
+    "evidence_types": [
+      "E-CODE-INTENT",
+      "E-CONV",
+      "E-TEST",
+      "E-CONSIST"
+    ],
+    "evidence_locators": [
+      "K11/r1/exchanges.jsonl:132",
+      "K11/spec.json#/paths/~1version~1v1~1registrationToken/post",
+      "K11/source/src/main/java/app/coronawarn/verification/controller/ExternalTokenController.java:91",
+      "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:47",
+      "K11/source/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:59",
+      "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:540",
+      "K11/source/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:558",
+      "K11/spec.json#/components/schemas/RegistrationTokenRequest",
+      "K11/r1/compose.log:10355"
+    ],
+    "components": [
+      {
+        "item_kind": "SERVER_ERROR",
+        "L1": "IMPL",
+        "L2": "I-CRASH"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §11.4.1(b): deterministic 500 establishes IMPL, but optional create-key spec omission is a §10.6 both_candidate and requires independent review.",
+    "verdict_explanation": "Independent tests support the response-side 400 error behavior rather than the observed 500. The same tests and a separate @NotNull DTO corroborate required create keys, exposing the spec omission separately. These are compatible obligations, not conflicting intent. Primary IMPL follows R1; both_candidate follows §10.6."
+  },
+  "review_ended_at": "2026-11-15T02:43:58.369771+00:00",
+  "target_refined_at": "2026-11-15T02:37:53.747902+00:00",
+  "search_execution": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "./K11/source",
+      "./K11/spec.json",
+      "--method",
+      "POST",
+      "--path",
+      "/version/v1/registrationToken",
+      "--status",
+      "500",
+      "--field",
+      "keyType",
+      "--json"
+    ],
+    "environment_override": {
+      "GIT_CEILING_DIRECTORIES": "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e5_blind_v3"
+    }
+  },
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "supports_spec",
+  "search_status": "complete",
+  "scan_review": {
+    "tool_scan": {
+      "text_files": 67,
+      "skipped_binary_or_encoding": 0,
+      "skipped_large": 0,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "resolution": "All target routes and relevant source/test/doc files were readable; binary/vendor/large UI assets are irrelevant to these obligations. Manual fallback resolves lexical misses. No package history is available."
+  },
+  "representative_exchange": {
+    "file": "K11/r1/exchanges.jsonl",
+    "zero_based_index": 131,
+    "physical_line_one_based": 132
+  },
+  "manual_fallback_complete": true
+}

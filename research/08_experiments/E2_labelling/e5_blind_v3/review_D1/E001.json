@@ -1,0 +1,234 @@
+{
+  "item_id": "E001",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/activities",
+    "scenario": "Empty random query is accepted despite integer schema; determine intended empty-value coercion.",
+    "observed_status": 200,
+    "field": "random",
+    "direction": "Empty random query is accepted despite integer schema; determine intended empty-value coercion."
+  },
+  "search_mandatory": true,
+  "search_mandatory_reason": "Intent-dependent conflict; codebook §11.4.1(a)/(b)/(c).",
+  "review_start_time": "2026-11-15T02:34:19.839512+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "location": "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:73",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java",
+        "start_line": 63,
+        "end_line": 83
+      }
+    },
+    {
+      "index": 1,
+      "category": "E-TEST",
+      "location": "K09/source/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:146",
+      "disposition": "reject",
+      "reason": "Resolved ActivitiesIntegrationTest:143-149 request is GET /api/v1/favourites. Its 200/list-ID assertions concern a different operation, not this malformed query/path scenario.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K09/source/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java",
+        "start_line": 136,
+        "end_line": 156
+      }
+    },
+    {
+      "index": 2,
+      "category": "E-DOC",
+      "location": "K09/source/api/src/main/resources/assets/docs/lib/underscore-min.map:1",
+      "disposition": "reject",
+      "reason": "The package README identifies this subtree as copied Swagger UI assets. CSS/DOM id names and minified source-map symbols are vendor UI data, not API scenario requirements.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K09/source/api/src/main/resources/assets/docs/lib/underscore-min.map",
+        "start_line": 1,
+        "end_line": 1
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:70"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K09/r2/exchanges.jsonl:3585"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K09/source/api/src/main/resources/assets/docs/README.md:1"
+      ],
+      "disposition": "reject",
+      "reason": "This README explicitly says the subtree is copied Swagger UI. Incidental field names in CSS/HTML/source maps cannot support API intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "Empty random reaches a primitive integer parameter. The tool's 200 assertion concerns favourites, not empty random; no independent evidence settles empty-value acceptance.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": null,
+    "evidence_types": "E-CODE-INTENT"
+  },
+  "review_end_time": "2026-11-15T02:49:23.904538+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-scout-api:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "INVALID_ACCEPTED",
+        "method": "GET",
+        "template": "/v1/activities",
+        "status": 200,
+        "pointer": "/parameters/query/random/type",
+        "message": "'' is not of type 'integer'"
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K09/r2/exchanges.jsonl",
+    "exchange_index_0_based": 3584,
+    "line_1_based": 3585,
+    "method": "GET",
+    "path": "/api/v1/activities",
+    "observed_status": 200
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "complete",
+  "intent_search_verdict": "supports_code",
+  "intent_review_verdict": "none_found",
+  "search_execution": {
+    "stdout": "search_D1/E001.json",
+    "stderr": "search_D1/E001.stderr",
+    "exit_code_file": "search_D1/E001.exitcode",
+    "exit_code": 0,
+    "scan_complete": true,
+    "warnings": [],
+    "command_argv": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K09/source",
+      "K09/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/v1/activities",
+      "--status",
+      "200",
+      "--field",
+      "random",
+      "--json"
+    ]
+  },
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "available"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K09/source",
+    "procedure": "Read selected handler and linked DTO/superclass/configuration; inspect authored tests/docs with explicit package paths; resolve test method, helper and route constants; reject vendor assets and annotation/spec repetition. No external lookup or package execution.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "both_candidate_evidence": {
+    "meaning": "Competing spec/implementation attribution remains open; this flag does not claim both defects are established.",
+    "implementation_context": [
+      "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:70"
+    ],
+    "contract_context": [
+      "K09/spec.json#/paths/~1v1~1activities/get",
+      "K09/spec.json#/paths/~1v1~1activities/get/parameters/14"
+    ],
+    "independent_intent": "none_found"
+  },
+  "evidence_locators": [
+    "K09/r2/exchanges.jsonl:3585",
+    "K09/source/api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:70",
+    "K09/spec.json#/paths/~1v1~1activities/get",
+    "K09/spec.json#/paths/~1v1~1activities/get/parameters/14"
+  ]
+}

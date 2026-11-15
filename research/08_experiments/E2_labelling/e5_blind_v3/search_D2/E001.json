@@ -1,0 +1,110 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/v1/activities"
+  },
+  "observed_status": 200,
+  "field": "random",
+  "spec": {
+    "file": "./K09/spec.json",
+    "path": "/v1/activities",
+    "statuses": [
+      "default"
+    ],
+    "field_policy": [],
+    "field": "random",
+    "locator": "#/paths/~1v1~1activities/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "supports_code",
+  "evidence_types_found": [
+    "E-TEST",
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java:73",
+      "file": "api/src/main/java/se/devscout/scoutapi/resource/v1/ActivityResourceV1.java",
+      "line": 73,
+      "snippet": "@QueryParam(\"favourites\") int favourites) {",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/v1/activities",
+      "methods": [
+        "GET"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:146",
+      "file": "api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java",
+      "line": 146,
+      "snippet": "assertThat(responseUserFavs.getStatus()).isEqualTo(HttpURLConnection.HTTP_OK);",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "api/src/main/resources/assets/docs/lib/underscore-min.map:1",
+      "file": "api/src/main/resources/assets/docs/lib/underscore-min.map",
+      "line": 1,
+      "snippet": "{\"version\":3,\"file\":\"underscore-min.js\",\"sources\":[\"underscore.js\"],\"names\":[\"createReduce\",\"dir\",\"iterator\",\"obj\",\"iteratee\",\"memo\",\"keys\",\"index\",\"length\",\"cu",
+      "module": "api",
+      "module_build_file": "api/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "random",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "not inside a git work tree"
+  },
+  "scan": {
+    "text_files": 130,
+    "skipped_binary_or_encoding": 12,
+    "skipped_large": 1,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "item_id": "E017",
+  "review_started_at": "2026-11-15T02:33:34.658830+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/user/login",
+    "scenario": "Login with absent username and password crashes with 500.",
+    "field": "status",
+    "observed_status": 500,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": false,
+  "search_requirement_reason": "§9.3 non-gateway 5xx / R1",
+  "history_scope": "unavailable",
+  "tool_hits_review": [],
+  "manual_additions": [
+    {
+      "locators": [
+        "K08/source/src/main/java/io/swagger/petstore/controller/UserController.java:104"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "An ordinary login request without query parameters returns application 500. The non-gateway 5xx rule establishes implementation attribution.",
+    "evidence_types": [
+      "E-CODE-INTENT",
+      "E-CONV"
+    ],
+    "evidence_locators": [
+      "K08/r1/exchanges.jsonl:1278",
+      "K08/spec.json#/paths/~1user~1login/get",
+      "K08/source/src/main/java/io/swagger/petstore/controller/UserController.java:104"
+    ],
+    "components": [
+      {
+        "item_kind": "SERVER_ERROR",
+        "L1": "IMPL",
+        "L2": "I-CRASH"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §9.3 non-gateway 5xx / R1"
+  },
+  "review_ended_at": "2026-11-15T02:43:14.088504+00:00",
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "scan_review": {
+    "resolution": "Intent-free deterministic rule; see search_requirement_reason and decision."
+  },
+  "representative_exchange": {
+    "file": "K08/r1/exchanges.jsonl",
+    "zero_based_index": 1277,
+    "physical_line_one_based": 1278
+  },
+  "manual_fallback_complete": true,
+  "limitations": [
+    "Matching response error ID/stack trace is absent from compose.log; explicit guard mechanics are context, while the captured application 500 independently establishes R1 attribution."
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "item_id": "E036",
+  "review_started_at": "2026-11-15T02:33:34.659801+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "GET",
+    "path_template": "/pet/{petId}",
+    "scenario": "GET nonexistent pet 13 causes application 500.",
+    "field": "status",
+    "observed_status": 500,
+    "direction": "Decide whether observed behavior or the conflicting documented constraint/presence/status obligation is intended."
+  },
+  "search_mandatory": false,
+  "search_requirement_reason": "§9.3 non-gateway 5xx / R1; §10.6 missing resource",
+  "history_scope": "unavailable",
+  "tool_hits_review": [],
+  "manual_additions": [
+    {
+      "locators": [
+        "K03/source/src/main/java/io/swagger/petstore/controller/PetController.java:72"
+      ],
+      "disposition": "context",
+      "reason": "Reviewed the deployed code path and relevant model. The disputed statement alone is not independent intent evidence.",
+      "evidence_type": "E-CODE-INTENT",
+      "support": null,
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "passes": false
+        },
+        "b": {
+          "criterion": "Same operation/method/scenario/branch, or independently established policy linkage",
+          "passes": false
+        },
+        "c": {
+          "criterion": "Basis is separate from the disputed line and input spec",
+          "passes": false
+        },
+        "d": {
+          "criterion": "Evidence belongs to this packaged revision and applies to its route",
+          "passes": true
+        },
+        "e": {
+          "criterion": "Opposing evidence and all later categories were reviewed",
+          "passes": true
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "NA",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "history_scope": "unavailable",
+    "rationale": "GET pet 13 returns application 500. The non-gateway 5xx rule establishes implementation attribution even though its matching stack trace is absent from compose.log.",
+    "evidence_types": [
+      "E-CODE-INTENT",
+      "E-CONV"
+    ],
+    "evidence_locators": [
+      "K03/r1/exchanges.jsonl:409",
+      "K03/spec.json#/paths/~1pet~1{petId}/get",
+      "K03/source/src/main/java/io/swagger/petstore/controller/PetController.java:72"
+    ],
+    "components": [
+      {
+        "item_kind": "SERVER_ERROR",
+        "L1": "IMPL",
+        "L2": "I-CRASH"
+      }
+    ],
+    "rule": "CODEBOOK_v0.6.md §§9–11.4; §9.3 non-gateway 5xx / R1; §10.6 missing resource"
+  },
+  "review_ended_at": "2026-11-15T02:43:14.107310+00:00",
+  "tool_hit_index_base": 0,
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "scan_review": {
+    "resolution": "Intent-free deterministic rule; see search_requirement_reason and decision."
+  },
+  "representative_exchange": {
+    "file": "K03/r1/exchanges.jsonl",
+    "zero_based_index": 408,
+    "physical_line_one_based": 409
+  },
+  "manual_fallback_complete": true,
+  "limitations": [
+    "No stack trace matching the response error ID occurs in the supplied compose.log; attribution relies on captured application 500 and R1. Source contains a positive-ID rejection guard but that guard is not assumed to explain the 500 without a trace."
+  ]
+}

@@ -1,0 +1,271 @@
+{
+  "item_id": "E013",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/pet/findByTags",
+    "scenario": "Missing optional tags query receives 400; determine intended requiredness.",
+    "observed_status": 400,
+    "field": "tags",
+    "direction": "Missing optional tags query receives 400; determine intended requiredness."
+  },
+  "search_mandatory": true,
+  "search_mandatory_reason": "Intent-dependent conflict; codebook §11.4.1(a)/(b)/(c).",
+  "review_start_time": "2026-11-15T02:34:19.840196+00:00",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "location": "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:233",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java",
+        "start_line": 223,
+        "end_line": 243
+      }
+    },
+    {
+      "index": 1,
+      "category": "HANDLER",
+      "location": "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:237",
+      "disposition": "context",
+      "reason": "Selected handler/DTO establishes observed implementation context only; its return, guard or serialization annotation is the disputed behavior, not independent intent evidence.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java",
+        "start_line": 227,
+        "end_line": 247
+      }
+    },
+    {
+      "index": 2,
+      "category": "HANDLER",
+      "location": "K10/source/src/main/java/io/swagger/petstore/model/Pet.java:75",
+      "disposition": "context",
+      "reason": "XML mapping identifies a field but establishes neither JSON field presence nor JSON type policy; the model is implementation context, not independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "independent_after_review": false,
+      "support_after_review": null,
+      "reviewed_context": {
+        "file": "K10/source/src/main/java/io/swagger/petstore/model/Pet.java",
+        "start_line": 65,
+        "end_line": 85
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "HANDLER",
+      "locators": [
+        "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:234",
+        "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:51"
+      ],
+      "disposition": "context",
+      "reason": "Manually followed the relevant binding, superclass, DTO, factory, validator or serializer link. These lines explain runtime behavior; they are not automatically independent intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K10/r2/exchanges.jsonl:403"
+      ],
+      "disposition": "context",
+      "reason": "Representative exchange confirms this item's concrete scenario. Repeated traffic is observation, not an independent policy statement.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-TEST",
+      "locators": [
+        "K10/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3"
+      ],
+      "disposition": "context",
+      "reason": "The only package test class has no methods or assertions. Absence of a test is not positive evidence for implementation intent.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-DOC",
+      "locators": [
+        "K10/source/README.md:3",
+        "K10/source/README.md:39"
+      ],
+      "disposition": "reject",
+      "reason": "Full setup/overview/UI paragraphs do not state the target obligation; the separately bundled OpenAPI is contract context, not independent prose.",
+      "checklist": {
+        "a_expected_behavior_explicit": false,
+        "b_target_scenario_linked": false,
+        "c_basis_independent_of_disputed_line_or_spec": true,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    },
+    {
+      "category": "E-CONSIST",
+      "locators": [
+        "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:51",
+        "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:234"
+      ],
+      "disposition": "unresolved",
+      "reason": "Potential null-rejection analogy exists only among methods of the same controller; whether those count as independent sites is unresolved. Apply §11.4.2 same_class_policy and keep UNDECIDABLE.",
+      "checklist": {
+        "a_expected_behavior_explicit": true,
+        "b_target_scenario_linked": true,
+        "c_basis_independent_of_disputed_line_or_spec": false,
+        "d_applicable_revision": true,
+        "e_contrary_evidence_reviewed": true
+      },
+      "support_after_review": null
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "NA",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "same_class_policy",
+    "history_scope": "unavailable",
+    "rationale": "An explicit guard rejects absent optional tags. Similar null guards are inside the same controller; no independent test or guide resolves requiredness. Same-class policy independence needs adjudication.",
+    "unit": "Only the listed kind/pointer/message fingerprint; other violations on the representative exchange remain separate items.",
+    "deterministic_rule": null,
+    "evidence_types": "E-CODE-INTENT"
+  },
+  "review_end_time": "2026-11-15T02:49:23.913746+00:00",
+  "history_scope": "unavailable",
+  "checker_verification": {
+    "checker": "../../tools/conformance.py",
+    "deploy_origin": "http://sut-swagger-petstore:8080",
+    "int_formats": true,
+    "representative_matches_item": true,
+    "violations": [
+      {
+        "kind": "VALID_REJECTED",
+        "method": "GET",
+        "template": "/pet/findByTags",
+        "status": 400,
+        "pointer": "",
+        "message": ""
+      }
+    ],
+    "legacy_int_formats_false_violations": null
+  },
+  "traffic_evidence": {
+    "file": "K10/r2/exchanges.jsonl",
+    "exchange_index_0_based": 402,
+    "line_1_based": 403,
+    "method": "GET",
+    "path": "/api/v3/pet/findByTags",
+    "observed_status": 400
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "intent_search_status": "complete",
+  "intent_search_verdict": "none_found",
+  "intent_review_verdict": "none_found",
+  "search_execution": {
+    "stdout": "search_D1/E013.json",
+    "stderr": "search_D1/E013.stderr",
+    "exit_code_file": "search_D1/E013.exitcode",
+    "exit_code": 0,
+    "scan_complete": true,
+    "warnings": [],
+    "command_argv": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "../../tools/intent_evidence.py",
+      "K10/source",
+      "K10/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/pet/findByTags",
+      "--status",
+      "400",
+      "--field",
+      "tags",
+      "--json"
+    ]
+  },
+  "history_review": {
+    "decision": "No package VCS history is supplied. No E-HISTORY hit exists or is used. Enclosing-worktree metadata reported by the authorized tool is excluded.",
+    "raw_tool_availability": "available"
+  },
+  "manual_fallback": {
+    "completed": true,
+    "scope": "K10/source",
+    "procedure": "Read selected handler and linked DTO/superclass/configuration; inspect authored tests/docs with explicit package paths; resolve test method, helper and route constants; reject vendor assets and annotation/spec repetition. No external lookup or package execution.",
+    "coverage_gaps": [],
+    "history_not_a_gap": true
+  },
+  "both_candidate_evidence": {
+    "meaning": "Competing spec/implementation attribution remains open; this flag does not claim both defects are established.",
+    "implementation_context": [
+      "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:234",
+      "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:51"
+    ],
+    "contract_context": [
+      "K10/spec.json#/paths/~1pet~1findByTags/get",
+      "K10/spec.json#/paths/~1pet~1findByTags/get/parameters/0"
+    ],
+    "independent_intent": "none_found"
+  },
+  "evidence_locators": [
+    "K10/r2/exchanges.jsonl:403",
+    "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:234",
+    "K10/source/src/main/java/io/swagger/petstore/controller/PetController.java:51",
+    "K10/spec.json#/paths/~1pet~1findByTags/get",
+    "K10/spec.json#/paths/~1pet~1findByTags/get/parameters/0"
+  ]
+}
