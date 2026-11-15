@@ -1,0 +1,71 @@
+item_id,divergence_kind,contract_specificity,confidence,rationale
+X01,DELIBERATE,GENERIC,3,⚠️ Inherited non-null validation explicitly requires the value; contract optionality follows absent required marking. Evidence: items.csv:X01.
+X02,DELIBERATE,SPECIFIC,2,⚠️ Request-field consumption targets the supplied value; readOnly explicitly constrains that field. Evidence: items.csv:X02.
+X03,DELIBERATE,SPECIFIC,2,⚠️ Returning a named wrapper is an explicit response-shape choice; contract names the 200 object. Evidence: items.csv:X03.
+X04,DELIBERATE,SPECIFIC,3,⚠️ Both parameters are explicitly required before retrieval; contract supplies dedicated default years. Evidence: items.csv:X04.
+X05,DELIBERATE,SPECIFIC,2,⚠️ Direct serialization of a single object selects the response shape; contract explicitly specifies a list wrapper. Evidence: items.csv:X05.
+X06,ACCIDENTAL,SPECIFIC,3,⚠️ Null dereference precedes validation; resulting 500 follows the ordering failure. Contract explicitly specifies required status and 400. Evidence: items.csv:X06.
+X07,DELIBERATE,SPECIFIC,3,⚠️ Code explicitly constructs bodyless 204; contract explicitly specifies 201 and a Subjects body. Evidence: items.csv:X07.
+X08,DELIBERATE,SPECIFIC,2,⚠️ Returning the search wrapper deliberately selects pagination and results; contract names another response model. Evidence: items.csv:X08.
+X09,DELIBERATE,GENERIC,3,⚠️ Handler registration explicitly declares GET and its required query; contract evidence is an undeclared operation. Evidence: items.csv:X09.
+X10,ACCIDENTAL,SPECIFIC,3,⚠️ Parsing before the guarded path lets the exception escape; contract explicitly assigns invalid configuration to 422. Evidence: items.csv:X10.
+X11,ACCIDENTAL,SPECIFIC,2,⚠️ Passing null defeats request-dependent URL derivation without evident targeting of failure; contract describes successful authorized sessions. Evidence: items.csv:X11.
+X12,DELIBERATE,SPECIFIC,2,⚠️ Selecting DevicePackages from the installed-package service targets that model; contract explicitly names DeviceSnapshots. Evidence: items.csv:X12.
+X13,ACCIDENTAL,GENERIC,1,⚠️ Nullable stream invocation lacks absence handling; optionality may derive from missing required marking rather than dedicated prose. Evidence: items.csv:X13.
+X14,DELIBERATE,SPECIFIC,2,⚠️ Integer-valued model property explicitly chooses the implementation type; contract explicitly assigns string to score. Evidence: items.csv:X14.
+X15,ACCIDENTAL,SPECIFIC,1,⚠️ Epoch-millisecond output plausibly follows default Date serialization; no explicit timestamp configuration is described. Contract explicitly specifies int32. Evidence: items.csv:X15.
+X16,DELIBERATE,SPECIFIC,3,⚠️ Nonempty-office validation explicitly targets mandatory input; contract supplies a session-derived default. Evidence: items.csv:X16.
+X17,ACCIDENTAL,SPECIFIC,3,⚠️ Missing input triggers an unhandled exception; no deliberate error response is described. Contract specifies 400 and JSON failure content. Evidence: items.csv:X17.
+X18,ACCIDENTAL,SPECIFIC,3,⚠️ Passing nullable Boolean to primitive boolean introduces implicit unboxing failure; contract explicitly permits null. Evidence: items.csv:X18.
+X19,DELIBERATE,SPECIFIC,3,⚠️ Successful creation explicitly returns bodyless 201; contract requires a JSON SubmodelElement body. Evidence: items.csv:X19.
+X20,ACCIDENTAL,SPECIFIC,3,⚠️ Reading clob-id for the blob override indicates a wrong parameter name; contract explicitly identifies blob-id. Evidence: items.csv:X20.
+X21,ACCIDENTAL,SPECIFIC,3,⚠️ Update branches omit submitted header metadata; the proposition describes missing propagation. Contract explicitly assigns those headers metadata meaning. Evidence: items.csv:X21.
+X22,ACCIDENTAL,SPECIFIC,3,⚠️ Duplicate errors lack conflict mapping and consequently produce 500; contract explicitly allows 409 for conflicting identities. Evidence: items.csv:X22.
+X23,ACCIDENTAL,SPECIFIC,3,⚠️ Optional.of on absent dates introduces null failure; contract explicitly permits omission for identified metrics products. Evidence: items.csv:X23.
+X24,DELIBERATE,SPECIFIC,2,⚠️ Serializing RecentValue objects selects an explicit representation; contract explicitly names an array of Tsv objects. Evidence: items.csv:X24.
+X25,ACCIDENTAL,SPECIFIC,2,⚠️ Duplicate acceptance plausibly follows missing existence handling; no dedicated duplicate-success branch is stated. Contract explicitly specifies existing-resource 409. Evidence: items.csv:X25.
+X26,DELIBERATE,SPECIFIC,3,⚠️ Exception-to-400 mapping explicitly targets that response; contract explicitly assigns the same exception to 500. Evidence: items.csv:X26.
+X27,DELIBERATE,SPECIFIC,3,⚠️ Serializing literal boolean true explicitly chooses the value and type; contract explicitly assigns string. Evidence: items.csv:X27.
+X28,DELIBERATE,SPECIFIC,3,⚠️ Unsuccessful descriptor branches explicitly return 204; contract explicitly assigns unavailable descriptor types to 404. Evidence: items.csv:X28.
+X29,ACCIDENTAL,SPECIFIC,1,⚠️ Unmatched enum conversion causes an exception without an explicit response choice; contract specifies enum membership and 400. Exception mapping remains unstated. Evidence: items.csv:X29.
+X30,DELIBERATE,SPECIFIC,2,⚠️ BigDecimal is an explicit serialized data-model type choice; contract explicitly assigns integer to annualInterestRate. Evidence: items.csv:X30.
+X31,ACCIDENTAL,SPECIFIC,3,⚠️ Unannotated getter naming yields links through serialization defaults; contract explicitly names _links. Evidence: items.csv:X31.
+X32,DELIBERATE,SPECIFIC,2,⚠️ GroupMemberEntity uses an explicit string-map model for roles; contract explicitly specifies a RoleEntity list. Evidence: items.csv:X32.
+X33,DELIBERATE,GENERIC,3,⚠️ Requiring a Secret body explicitly constrains requests; contract evidence is absence of a required request body. Evidence: items.csv:X33.
+X34,DELIBERATE,SPECIFIC,3,⚠️ Registered controller path explicitly selects water-user; contract explicitly declares water-users. Evidence: items.csv:X34.
+X35,DELIBERATE,SPECIFIC,3,⚠️ Returning 200 after update explicitly selects the success status; contract explicitly specifies 204. Evidence: items.csv:X35.
+X36,DELIBERATE,GENERIC,1,⚠️ Completing with Tan explicitly selects the body; DeferredResultResponseEntityTan plausibly reflects a generated framework-wrapper schema. Evidence: items.csv:X36.
+X37,DELIBERATE,SPECIFIC,3,⚠️ GUID success explicitly returns 201; contract explicitly specifies successful generation status 200. Evidence: items.csv:X37.
+X38,ACCIDENTAL,SPECIFIC,3,⚠️ Connection-level converter reuse retains the first request's format; contract explicitly permits per-request media-type selection. Evidence: items.csv:X38.
+X39,DELIBERATE,SPECIFIC,3,⚠️ Returning 200 after storage explicitly selects the upload success status; contract explicitly specifies 204. Evidence: items.csv:X39.
+X40,ACCIDENTAL,GENERIC,1,⚠️ Unconditional parsing omits nullable-input handling; optionality may reflect absent required marking. Evidence: items.csv:X40.
+X41,DELIBERATE,SPECIFIC,3,⚠️ Declared implementation routing explicitly selects /api/v1/rating/product; contract explicitly declares the creation route. Evidence: items.csv:X41.
+X42,DELIBERATE,SPECIFIC,3,⚠️ Singleton-list serialization explicitly constructs an array representation; contract explicitly specifies a single JSON basin object. Evidence: items.csv:X42.
+X43,DELIBERATE,SPECIFIC,3,⚠️ Exception-to-400 mapping explicitly targets that response; contract explicitly assigns the same exception to 500. Evidence: items.csv:X43.
+X44,DELIBERATE,SPECIFIC,2,⚠️ Void method explicitly chooses no return body; contract explicitly specifies 204 with a JSON RoleEntity. Evidence: items.csv:X44.
+X45,DELIBERATE,SPECIFIC,3,⚠️ Failed-record handling explicitly constructs error objects inside offsets; contract explicitly assigns OffsetRecordSent to entries. Evidence: items.csv:X45.
+X46,DELIBERATE,SPECIFIC,3,⚠️ Deserializing directly to Boolean selects an explicit input structure; contract explicitly specifies nested boolean maps. Evidence: items.csv:X46.
+X47,DELIBERATE,SPECIFIC,2,⚠️ Boolean processing explicitly selects permission value types; contract explicitly assigns string values. Evidence: items.csv:X47.
+X48,DELIBERATE,SPECIFIC,3,⚠️ Empty-tag handling explicitly returns bodyless 200; contract explicitly specifies a JSON DomainTagModelList response. Evidence: items.csv:X48.
+X49,DELIBERATE,SPECIFIC,2,⚠️ payment_id serialization indicates a naming choice; contract explicitly names paymentId. Annotation versus naming-default provenance is unstated. Evidence: items.csv:X49.
+X50,DELIBERATE,GENERIC,1,⚠️ Null Kafka values receive explicitly emitted null; schema non-nullability may follow the default absence of nullable permission. Evidence: items.csv:X50.
+X51,DELIBERATE,GENERIC,3,⚠️ Inherited non-null validation explicitly requires the value; contract optionality follows absent required marking. Evidence: items.csv:X51.
+X52,ACCIDENTAL,SPECIFIC,1,⚠️ Acceptance of a trailing line feed plausibly reflects validation oversight; no dedicated acceptance rule is stated. Contract explicitly describes SHA-256 keys. Evidence: items.csv:X52.
+X53,DELIBERATE,GENERIC,3,⚠️ Inherited non-null validation explicitly requires the value; contract optionality follows absent required marking. Evidence: items.csv:X53.
+X54,ACCIDENTAL,SPECIFIC,3,⚠️ Lowercasing before case-sensitive membership testing creates an ordering incompatibility; contract explicitly lists the affected allowed values. Evidence: items.csv:X54.
+X55,DELIBERATE,SPECIFIC,2,⚠️ Object-valued JSON-format records receive structured JSON output; contract explicitly assigns string to ConsumerRecord.value. Evidence: items.csv:X55.
+X56,ACCIDENTAL,SPECIFIC,3,⚠️ ZIP response omits media-type assignment; contract explicitly requires application/zip for format=zip. Evidence: items.csv:X56.
+X57,ACCIDENTAL,SPECIFIC,2,⚠️ Hard-coded false plausibly loses dryRun propagation in the existing-artifact branch; contract explicitly promises no persistence during dry runs. Evidence: items.csv:X57.
+X58,DELIBERATE,GENERIC,1,⚠️ Null-bound status explicitly receives 400; contract optionality may derive from absent required marking. Evidence: items.csv:X58.
+X59,DELIBERATE,SPECIFIC,3,⚠️ Validation explicitly accepts en or cy; contract explicitly enumerates ENGLISH and WELSH. Evidence: items.csv:X59.
+X60,ACCIDENTAL,SPECIFIC,3,⚠️ Reading designator instead of designator-mask indicates a wrong query-name lookup; contract explicitly defines the filter parameter. Evidence: items.csv:X60.
+X61,DELIBERATE,SPECIFIC,3,⚠️ CASE_INSENSITIVE explicitly widens accepted casing; contract explicitly specifies the lowercase state pattern. Evidence: items.csv:X61.
+X62,DELIBERATE,SPECIFIC,2,⚠️ Returning JsonGenericResponseMessage explicitly selects a generic response wrapper; contract explicitly names DeviceCommandOutput. Evidence: items.csv:X62.
+X63,DELIBERATE,SPECIFIC,3,⚠️ Declared implementation routing explicitly selects /api/v1/rating/product/{productId}; contract explicitly declares the lookup route. Evidence: items.csv:X63.
+X64,DELIBERATE,SPECIFIC,3,⚠️ Reading and updating value explicitly selects the numeric field name; contract explicitly names description. Evidence: items.csv:X64.
+X65,DELIBERATE,GENERIC,3,⚠️ Inherited non-null validation explicitly requires the value; contract optionality follows absent required marking. Evidence: items.csv:X65.
+X66,DELIBERATE,SPECIFIC,3,⚠️ Matching-identifier branch explicitly writes a single identity object; contract explicitly specifies an array listing response. Evidence: items.csv:X66.
+X67,ACCIDENTAL,SPECIFIC,3,⚠️ Query construction omits both sorting parameters; contract explicitly assigns them result-ordering behavior. Evidence: items.csv:X67.
+X68,DELIBERATE,SPECIFIC,2,⚠️ Direct entry conversion explicitly selects metadata-map structure; contract explicitly describes the nested ExternalMetadata representation. Evidence: items.csv:X68.
+X69,ACCIDENTAL,SPECIFIC,3,⚠️ Formatter output lacks corresponding response media-type assignment; contract explicitly requires the selected office representation type. Evidence: items.csv:X69.
+X70,ACCIDENTAL,SPECIFIC,3,⚠️ Sending scrape content omits Content-Type assignment; contract explicitly specifies text/plain. Evidence: items.csv:X70.
