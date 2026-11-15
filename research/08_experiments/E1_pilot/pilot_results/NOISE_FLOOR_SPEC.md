@@ -54,3 +54,40 @@
 - Replicate কম: cwa-তে প্রতি seed-এ 1টি, scout ও petstore-এর s2/s3-তে 2টি।
 - Replicate-গুলো আলাদা সময়ের batch থেকে। SUT-এর ভেতরের state প্রতিবার নতুন container-এ শুরু হয়, তবে ⚠️ host-এর load আলাদা হতে পারে।
 - NEW-এর হিসাব fingerprint স্তরে। একই op-এ ভিন্ন kind আলাদা গোনা হয়।
+
+## সংযোজন (2026-11-15): প্রত্যাশিত-kind সংকেত (collateral exposure বাদ দিয়ে)
+**কেন:** STRICT ablation (`STRICT_ABLATION.md`) দেখিয়েছে, mutated spec generator-কে SUT-এর **আগে থেকে থাকা** defect-এর পথে ঠেলে দিতে পারে। তখন mutated op-এ NEW আসে, কিন্তু kind spec mutation-এর প্রত্যাশিত kind নয়।
+
+**নিয়ম:** fault-এর mechanism থেকে প্রত্যাশিত kind আগে থেকে ঠিক করা (`fuzzer_compare.EXPECTED_KINDS`; per-kind ফল দেখার আগে):
+
+| Fault | প্রত্যাশিত kind |
+|---|---|
+| LOOSE | VALID_REJECTED |
+| STRICT | INVALID_ACCEPTED |
+| ORACLE | RESPONSE_SCHEMA, UNDOCUMENTED_STATUS |
+| METHOD_SEM | UNDOCUMENTED_OPERATION, UNDOCUMENTED_STATUS, VALID_REJECTED |
+
+একই filter সংকেত আর noise, দুই দিকেই। Run-সেট অপরিবর্তিত (61)। STRICT ablation run আর তাদের batch-এর baseline বাদ।
+
+| Fault | SUT | NEW > noise (raw) | প্রত্যাশিত kind > noise |
+|---|---|---|---|
+| METHOD_SEM | cwa, market, scout | 9/9 | 9/9 |
+| METHOD_SEM | petstore | 3/3 | **1/3** |
+| REQUEST_STRICT | scout, petstore, market | 9/9 | 9/9 |
+| REQUEST_STRICT | cwa | 0/3 | 0/3 |
+| RESPONSE_ORACLE | সব | 9/12 | 9/12 |
+| REQUEST_LOOSE | cwa | 3/3 | 3/3 |
+| REQUEST_LOOSE | scout | 5/6 | **3/6** |
+| REQUEST_LOOSE | petstore | 6/7 | **0/7** |
+| REQUEST_LOOSE | market | 1/9 | **0/9** |
+| **মোট** | | **45/61** | **34/61** |
+
+- Checkable filter একা (`*_UNCHECKABLE` বাদ) দিলে: 44/61।
+- **প্রায় সব পরিবর্তন REQUEST_LOOSE-এ।**
+  - petstore আর scout-এর LOOSE-এ "সংকেত" ছিল মূলত RESPONSE_SCHEMA আর INVALID_ACCEPTED, অর্থাৎ generator-এর বদলানো traffic-এ অন্য constraint-এর লঙ্ঘন।
+  - প্রত্যাশিত VALID_REJECTED এসেছে শুধু cwa-তে (3/3) আর scout p100-এ (3/3)।
+- **petstore METHOD_SEM:** raw NEW-এর একটা বড় অংশ REQUEST_UNCHECKABLE বা SERVER_ERROR।
+- **সংশোধিত উপসংহার:**
+  - Fresh mode-এ STRICT, ORACLE আর METHOD_SEM-এর প্রত্যাশিত সংকেত বেশিরভাগ ক্ষেত্রে noise ছাড়ায়।
+  - **REQUEST_LOOSE-এর ক্ষেত্রে ছাড়ায় না:** 6/25, মাত্র দুটো SUT-এ।
+  - আগের "51/61" উপসংহার kind-নিরপেক্ষ ছিল। তাতে collateral exposure-ও গোনা হয়েছিল।

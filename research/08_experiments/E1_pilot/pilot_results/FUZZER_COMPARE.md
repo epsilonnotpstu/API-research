@@ -84,6 +84,31 @@
   - Controlled ঘরে কোনো duplicate নেই (26 = 26)।
 - cwa REQUEST_LOOSE-এর তুলনা হয়নি: Schemathesis শুধু p100-এ আছে (সেখানে 3/3), আর EvoMaster p30-এ (2/3)।
 
+## ফল ৩: প্রত্যাশিত-kind সংকেত (2026-11-15; collateral exposure বাদ)
+- **নিয়ম:** `fuzzer_compare.EXPECTED_KINDS`। এটা mechanism থেকে আগে ঠিক করা, per-kind ফল দেখার আগে।
+
+  | Fault | প্রত্যাশিত kind |
+  |---|---|
+  | LOOSE | VALID_REJECTED |
+  | STRICT | INVALID_ACCEPTED |
+  | ORACLE | RESPONSE_SCHEMA, UNDOCUMENTED_STATUS |
+  | METHOD_SEM | UNDOCUMENTED_OPERATION, UNDOCUMENTED_STATUS, VALID_REJECTED |
+
+  Cross-seed reference-এও একই filter।
+- **Controlled ঘর (primary): EvoMaster 20/26, Schemathesis 20/26।** Checkable নিয়মে ছিল 20/26 বনাম 19/26।
+  - একমাত্র বদল petstore METHOD_SEM-এ Schemathesis 0/3 থেকে 1/3। s1-এ একটা VALID_REJECTED আছে, আর expected-kind reference 0।
+  - বাকি সব ঘর অপরিবর্তিত।
+- **Manifest আলাদা (primary): EvoMaster 10/19, Schemathesis 8/19।** Checkable নিয়মে ছিল 13/19 বনাম 11/19।
+  - **REQUEST_LOOSE-এর সব ঘর 0।** petstore, market আর scout, দুই fuzzer-এই।
+  - আগের LOOSE "সংকেত" ছিল collateral: RESPONSE_SCHEMA (petstore), INVALID_ACCEPTED (scout Schemathesis), UNDOCUMENTED_STATUS আর SERVER_ERROR (market/scout EvoMaster)।
+  - প্রত্যাশিত VALID_REJECTED এসেছে শুধু cwa LOOSE-এ: Schemathesis p100 3/3, EvoMaster p30 2/3। cwa এই তুলনার বাইরে, কারণ severity আলাদা।
+  - ORACLE অপরিবর্তিত।
+- **উপসংহার:**
+  - দুই fuzzer-এর তুলনা (controlled) kind filter-এ প্রায় অপরিবর্তিত।
+  - কিন্তু REQUEST_LOOSE-এর fresh সংকেত প্রায় পুরোটাই collateral ছিল।
+  - Kind-নিরপেক্ষ mapped-fingerprint মাপ fault class-এর detection বাড়িয়ে দেখায়, বিশেষত যখন mutation generator-এর trajectory বদলায়।
+- Per-run kind-বণ্টন: `fuzzer_compare.csv` (`fresh_mut_kinds`)। Run log: `09_collab/logs/kindfilter/`।
+
 ## Same-seed reference আর traffic trajectory (2026-11-15; T34 সংশোধিত)
 
 এই অংশ শুধু বর্ণনামূলক।
@@ -181,7 +206,7 @@
    - **cwa REQUEST_STRICT:** EvoMaster 1/3 (s2: fresh 2, replay 0), Schemathesis 0/3।
      - ⚠️ Baseline replay-তে ওই violation দেখা যায়নি। এর মানে input অনুপস্থিত ছিল কিনা, তা fingerprint দিয়ে বলা যায় না (T29 F6)।
    - **scout:** METHOD_SEM আর STRICT দুই fuzzer-এই 3/3।
-2. **REQUEST_LOOSE দুই fuzzer-এই দুর্বল (0–2/3–4)।**
+2. **REQUEST_LOOSE দুই fuzzer-এই দুর্বল (0–2/3–4); প্রত্যাশিত kind দিয়ে 0/3 প্রতিটি তুলনীয় ঘরে (ফল ৩)।**
    - এখানে সংকেত আসে তখনই, যখন loosened spec-এ বৈধ হয়ে যাওয়া request-কে SUT তবু reject করে (`VALID_REJECTED`)। সেটা ঘটে কেবল traffic ওই constraint ভাঙলে।
    - LOOSE-এর replay NEW সাধারণত 0, কিন্তু সবসময় নয় (T29 F4): cwa p100 s1–3 প্রতিটিতে 2, scout p100-এ 1, petstore-এর দ্বিতীয় s1 batch-এ 2।
 3. **RESPONSE_ORACLE দুই fuzzer-এই শক্তিশালী।** Response schema-র mutation যেকোনো 2xx body-তে ধরা পড়ে, generator-এর কৌশল যা-ই হোক।

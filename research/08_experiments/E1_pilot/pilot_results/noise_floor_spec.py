@@ -25,6 +25,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RUNS = HERE.parent / 'runs'
+sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[1] / 'tools'))
 import attribute  # noqa: E402
 import conformance as c  # noqa: E402
@@ -50,12 +51,21 @@ def violations(run, spec_path, sut):
     return _cache[key]
 
 
-def counts(rows):
+# 2026-11-15: checkable (*_UNCHECKABLE excluded, T29 F3) and mechanism-expected-kind counts
+# (fuzzer_compare.EXPECTED_KINDS; STRICT ablation collateral-exposure finding) are added next to the raw counts.
+from fuzzer_compare import EXPECTED_KINDS  # noqa: E402
+
+
+def counts(rows, expected=()):
     d = defaultdict(int)
     for r in rows:
         side = 'mut' if r['op_mutated'] else 'unmut'
         if r['status'] in ('NEW', 'VANISHED'):
             d[f'{side}_{r["status"]}'] += 1
+            if r['status'] == 'NEW' and not r['kind'].endswith('_UNCHECKABLE'):
+                d[f'{side}_NEW_checkable'] += 1
+            if r['status'] == 'NEW' and r['kind'] in expected:
+                d[f'{side}_NEW_expected'] += 1
         elif r['mutated_occurrences'] > r['baseline_occurrences']:
             d[f'{side}_INCREASED'] += 1
         elif r['mutated_occurrences'] < r['baseline_occurrences']:
@@ -65,16 +75,22 @@ def counts(rows):
 
 def main():
     c.INT_FORMATS = True
+    # Batches that ran the T37 STRICT keyword ablation: their mutated runs are excluded, and so are their baselines,
+    # to keep the replicate set identical to the original NOISE_FLOOR_SPEC analysis.
+    abl_batches = {m.parent.name.split('_mutated_')[0] for m in RUNS.glob('*/*mutated_*/run.json')
+                   if json.load(open(m)).get('strict_keywords')}
     baselines = defaultdict(list)
     for meta in sorted(RUNS.glob('*/*baseline_NONE*/run.json')):
         r = json.load(open(meta))
+        if meta.parent.name.split('_baseline_')[0] in abl_batches:
+            continue
         if r.get('complete') and r['sut'] in SERVICE and neg_data(meta.parent) and '_e5_' not in meta.parent.name:
             baselines[(r['sut'], r['seed'])].append(meta.parent.resolve())
     out = []
     for meta in sorted(RUNS.glob('*/*mutated_*/run.json')):
         run = meta.parent.resolve()
         r = json.load(open(meta))
-        if not r.get('complete') or r['sut'] not in SERVICE or not neg_data(run):
+        if not r.get('complete') or r['sut'] not in SERVICE or not neg_data(run) or r.get('strict_keywords'):
             continue
         inputs = [p for p in run.glob('analysis-*/inputs.txt') if not p.parent.name.endswith('-sut')]
         if not inputs:
@@ -87,8 +103,9 @@ def main():
         base_spec = next(paired.glob('spec.original.*'))
         mut_spec = next(run.glob('spec.test.*'))
         base_v = violations(paired, base_spec, r['sut'])
-        sig = counts(attribute.attribute(base_v, violations(run, mut_spec, r['sut']), manifest, 'fresh'))
-        noise = [counts(attribute.attribute(base_v, violations(b, next(b.glob('spec.original.*')), r['sut']), manifest, 'fresh'))
+        exp = EXPECTED_KINDS[r['fault']]
+        sig = counts(attribute.attribute(base_v, violations(run, mut_spec, r['sut']), manifest, 'fresh'), exp)
+        noise = [counts(attribute.attribute(base_v, violations(b, next(b.glob('spec.original.*')), r['sut']), manifest, 'fresh'), exp)
                  for b in reps]
         row = {'sut': r['sut'], 'fault': r['fault'], 'severity': r['severity'], 'seed': r['seed'], 'run': run.name,
                'n_replicates': len(reps), 'mutated_ops': len(manifest['mutations'])}
@@ -97,6 +114,11 @@ def main():
             row[f'noise_max_{k}'] = max(n[k] for n in noise)
             row[f'noise_mean_{k}'] = round(sum(n[k] for n in noise) / len(noise), 1)
         row['exceeds_noise_NEW'] = sig['mut_NEW'] > row['noise_max_mut_NEW']
+        for k in ('mut_NEW_checkable', 'mut_NEW_expected'):
+            row[f'signal_{k}'] = sig[k]
+            row[f'noise_max_{k}'] = max(n[k] for n in noise)
+        row['exceeds_noise_NEW_checkable'] = sig['mut_NEW_checkable'] > row['noise_max_mut_NEW_checkable']
+        row['exceeds_noise_NEW_expected'] = sig['mut_NEW_expected'] > row['noise_max_mut_NEW_expected']
         out.append(row)
         print(f"{r['sut']:<17} {r['fault']:<16} p{r['severity']:<3} s{r['seed']} reps={len(reps)} "
               f"mutNEW {sig['mut_NEW']} vs noise max {row['noise_max_mut_NEW']} | "

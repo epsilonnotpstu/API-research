@@ -4,6 +4,7 @@
 Reads fuzzer_noise_cross_seed.csv. Pairs EvoMaster and Schemathesis rows with the same (sut, fault, severity, seed).
 A pair is CONTROLLED when both runs carry an identical mutation set (manifest_sig); otherwise it is descriptive only.
 Signal = fresh mutated-op checkable NEW > observed cross-seed reference max (checkable), per run.
+Expected-kind signal (2026-11-15) = the same rule restricted to fuzzer_compare.EXPECTED_KINDS[fault] on both sides.
 Denominators (T34 F4):
 - PRIMARY = one pair per unique cell, using the earliest run (by run id = batch timestamp) of each fuzzer in that
   cell. This is a fixed tie-break rule, chosen without reference to outcomes, for the only duplicated cell:
@@ -41,22 +42,27 @@ def main():
                             'sch_fresh_checkable_NEW': s['fresh_mut_NEW_checkable'],
                             'sch_ref_max': s['noise_max_mut_NEW_checkable'],
                             'sch_signal': s['beyond_ref_NEW_checkable'] == 'True',
+                            'evo_signal_expected': e['beyond_ref_NEW_expected'] == 'True',
+                            'sch_signal_expected': s['beyond_ref_NEW_expected'] == 'True',
+                            'evo_kinds': e['fresh_mut_kinds'], 'sch_kinds': s['fresh_mut_kinds'],
                             'evo_replay_NEW': e['replay_mut_NEW'], 'sch_replay_NEW': s['replay_mut_NEW'],
                             'evo_exchanges': e['mutated_exchanges'], 'sch_exchanges': s['mutated_exchanges']})
     with open(HERE / 'fuzzer_controlled_cells.csv', 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(out[0]))
         w.writeheader()
         w.writerows(out)
-    for prim, ctl in ((True, True), (True, False), (False, True), (False, False)):
+    for prim, ctl, exp in ((True, True, False), (True, False, False), (False, True, False), (False, False, False),
+                           (True, True, True), (True, False, True)):
         agg = defaultdict(lambda: [0, 0, 0])
         for r in out:
             if r['controlled'] is ctl and (r['primary'] or not prim):
                 a = agg[(r['sut'], r['fault'])]
-                a[0] += r['evo_signal']
-                a[1] += r['sch_signal']
+                a[0] += r['evo_signal_expected' if exp else 'evo_signal']
+                a[1] += r['sch_signal_expected' if exp else 'sch_signal']
                 a[2] += 1
         print(('== PRIMARY (unique cells) ' if prim else '== SECONDARY (all pair-instances) ') +
-              ('controlled (identical manifest)' if ctl else 'manifest differs (descriptive only)'))
+              ('controlled (identical manifest)' if ctl else 'manifest differs (descriptive only)') +
+              (' — EXPECTED-KIND signal' if exp else ' — checkable signal'))
         te = ts = tn = 0
         for k in sorted(agg):
             e, s, n = agg[k]
