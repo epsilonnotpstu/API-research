@@ -1,6 +1,22 @@
 # E4 — Triage মূল্যায়ন (RQ2): SPEC-দিকের held-out blind set ও পদ্ধতি-তুলনা — pre-registration খসড়া (Claude, 2026-11-15)
 
-**অবস্থা:** খসড়া। এটা চূড়ান্ত (FROZEN) হবে package তৈরির পরে, কিন্তু **labelling শুরুর আগে**। Freeze-এর পরে measure বা মানদণ্ড বদলানো যাবে না; বদলালে সেটা আলাদা "post-hoc" অংশে যাবে।
+**অবস্থা: FROZEN, 2026-11-15, labelling শুরুর আগে।**
+- Package তৈরি করেছে T40 (`09_collab/reports/T40_report.md`)।
+- Package, task, scorer আর key-এর hash আছে `E4_triage/e4_package_freeze.sha256`-এ।
+- Scorer `E4_triage/score_e4.py` labelling-এর আগে লেখা, আর synthetic self-test-এ যাচাই করা।
+- এখন থেকে কোনো measure বা মানদণ্ড বদলালে সেটা আলাদা "post-hoc" অংশে যাবে।
+
+**চূড়ান্ত item set:**
+- 50টি item: 28 injected (SPEC truth) আর 22 decoy।
+- Injected-এর ভাগ: STRICT 9, METHOD_SEM 10 (cwa থেকে 1), ORACLE 9, LOOSE 0 (positive-only traffic)।
+- Decoy-র final label: BOTH 6, SPEC 5, IMPL 5, TEST 3, UNDECIDABLE 2, SPEC_PARTIAL 1।
+- Source থেকে বাদ: original-spec copy দুটি। একটি cwa `api-docs.json` (হুবহু copy), অন্যটি petstore `src/main/webapp/openapi.yaml` (প্রায়-একই)।
+- Two-direction-এর IMPL দিক: E5 v3 primary, n=11।
+
+**Labeller (নতুন Codex session):**
+- M2: F1, F2 (E4; xhigh)। IMPL দিকে এদের জুড়ি D1, D2 (E5 v3, আগে করা)।
+- M1: Z1 (E4; high) আর Z2 (E5 v3; high), `TASK_M1.md` অনুযায়ী।
+- M0: synthetic।
 
 ## কেন (সৎ review থেকে)
 1. **SPEC recall কখনো মাপা হয়নি।** E5-এর ground truth শুধু IMPL। তাই "সব IMPL বা UNDECIDABLE" বলা একটা procedure-ও সেখানে পাস করে।
