@@ -1,0 +1,5 @@
+item_id,field,value,rationale
+X17,divergence_kind,ACCIDENTAL,"Y is the unhandled escape of requireNotNull's IllegalArgumentException past the typed-error fold (UtilityApi.kt:76-86); the guard targets rejection, not an unhandled exception; instrument lists unhandled exception as ACCIDENTAL."
+X28,divergence_kind,DELIBERATE,"Y (204) is what the code does: explicit Response.noContent() in both version-miss branches (ToolsApiServiceImpl.java:924,941); contract declares only 200/404; explicit status construction = DELIBERATE. Proposition mapping to descriptor-type 404 is loose (confidence 2)."
+X27,contract_specificity,SPECIFIC,"KeycloakConfig is referenced only by GetKeycloakConfig (yaml:651) and gives public-client an explicit type string with dedicated description (yaml:1304-1307); not a shared or generator-default schema."
+X66,contract_specificity,SPECIFIC,"components/responses/listIdentities is referenced only by listIdentities (api.json:3252) and explicitly declares an array of identity; operation-dedicated response schema (same rule as X27). Silent on the identifier case specifically (confidence 2)."
