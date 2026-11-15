@@ -1,10 +1,11 @@
 # RESEARCH_STATE
 
-**শেষ হালনাগাদ:** 2026-11-15 (Claude)
+**শেষ হালনাগাদ:** 2026-11-16 (Claude)
 **বর্তমান phase:** Literature phase A–E সম্পন্ন। এখন R1-এর execution চলছে (§9)।
 - E0, E1, E2 সম্পন্ন, আর code-mutation ground truth (E5_codemut)-ও।
 - **Roadmap E4 (triage মূল্যায়ন, RQ2):** কৃত্রিম fault-এ (E4) আর আসল developer fix-এ (E6) মূল্যায়ন সম্পন্ন। দুটোতেই zero-shot > codebook v0.6 (`08_experiments/E6_realfix/E6_RESULTS.md`)।
-- **পরের ধাপ:** developer-এর repair direction নিয়ে বড় empirical corpus (T45), যাতে K21/K22-এর hypothesis পরীক্ষা করা যায়।
+- **E7 (repair direction, ৪৫টি নতুন fix):** H-E7-1 আর H-E7-2 দুটোই PASS। তবে proposition-only control দেখিয়েছে, divergence_kind-এর সংকেত proposition-এর ভাষাতেই আছে (`08_experiments/E7_repairdir/E7_RESULTS.md`)।
+- **পরের ধাপ:** E8, direction-blind proposition দিয়ে H-E7-1 আবার পরীক্ষা।
 
 ---
 
@@ -134,8 +135,9 @@
 | E3 Respector spec তুলনা | ⏭️ হয়নি | — |
 | **E4 triage মূল্যায়ন (RQ2)** | ▶️ প্রথম ধাপ সম্পন্ন: SPEC-দিকের held-out set। macro-F1: M1 zero-shot 0.94 > M2 codebook 0.66–0.70 > M0 0.22; P2 ব্যর্থ। পরের ধাপ: আসল, developer-confirmed defect। | `08_experiments/E4_triage/E4_PLAN.md`, `E4_RESULTS.md` |
 | **E6 আসল fix-এ triage (RQ2)** | ✅ n=18 (IMPL 10 / SPEC 8)। macro-F1: M1 0.86–0.88 > M2 0.70–0.72 > M0 0.36। Q1 PASS, Q2 M1 > M2, Q3 FAIL। | `08_experiments/E6_realfix/E6_PLAN.md`, `E6_RESULTS.md` |
-| Repair-direction corpus (K21/K22 hypothesis) | ▶️ T45 | `08_experiments/E6_realfix/` |
+| **E7 repair direction** (K21/K22 hypothesis) | ✅ ৪৫টি নতুন + ২৫টি exploratory item; blind C1/C2 coding (κ 0.94)। Deliberate → SPEC 26/33, accidental → SPEC 0/11, p < 0.0001। Generic-contract → SPEC 15/18 বনাম 11/26। ⚠️ Proposition-only control κ = 1.0 (A3)। | `08_experiments/E7_repairdir/E7_PLAN.md`, `E7_RESULTS.md`, `E7_mining/` |
+| E8 direction-blind propositions | ⏳ পরিকল্পনা | — |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
-- সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`।
+- সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।
 - Board: `09_collab/COLLAB_BOARD.md`।
