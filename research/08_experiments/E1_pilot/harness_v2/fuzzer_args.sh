@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 # Pure argv builders. The caller supplies validated run settings; no subprocesses.
+build_strict_args() {
+    strict_args=()
+    [[ -n ${STRICT_KEYWORDS:-} ]] || return 0
+    [[ $1 == REQUEST_STRICT ]] || { echo 'STRICT_KEYWORDS requires REQUEST_STRICT' >&2; return 2; }
+    local pattern='^(maximum|maxLength|required|param_required)(,(maximum|maxLength|required|param_required))*$'
+    [[ $STRICT_KEYWORDS =~ $pattern ]] || { echo 'Invalid STRICT_KEYWORDS' >&2; return 2; }
+    local keyword seen=,
+    local -a keywords
+    IFS=, read -r -a keywords <<< "$STRICT_KEYWORDS"
+    for keyword in "${keywords[@]}"; do
+        [[ $seen != *",$keyword,"* ]] || { echo 'Invalid STRICT_KEYWORDS' >&2; return 2; }
+        seen+="$keyword,"
+    done
+    strict_args=(--strict-keywords "$STRICT_KEYWORDS")
+}
+
 build_schemathesis_argv() {
     schema_cmd=(run "/work/$(basename "$test_spec")" --base-url "http://mitmproxy:8080$BASE_PATH" \
         --checks "$SCHEMA_CHECKS" --hypothesis-seed "$seed" --hypothesis-max-examples "$MAX_EXAMPLES" \

@@ -1,4 +1,4 @@
-# R1 Triage Codebook — v0.6 (খসড়া; v0.4–v0.6 সংযোজন §10–§12)
+# R1 Triage Codebook — v0.6.1 (খসড়া; v0.4–v0.6.1 সংযোজন §10–§12)
 
 **তারিখ:** 2026-11-09 · **উদ্দেশ্য:** OpenAPI conformance failure-কে **উৎস (attribution)** অনুযায়ী label করার নিয়ম।
 - Manual labelling (বাস্তব failure) ও injected ground truth (§5) — দুটোতেই একই scheme।
@@ -300,3 +300,33 @@ Baseline-এর সব S-STATUS label (`E2_labelling/*_adjudication.csv`) §11.1
 ### 12.2 কার্যকর হওয়ার পরিধি
 - **নতুন labelling-এ প্রযোজ্য:** T36 pilot আর E5 v3 blind labelling।
 - **পুরোনো চূড়ান্ত label:** স্বয়ংক্রিয়ভাবে বদলাবে না। T36 pilot যেখানে ভিন্ন সিদ্ধান্ত দেখাবে, সেগুলো review proposal হিসেবে আসবে (§11.4.1 শেষ সারি)।
+
+### 12.3 v0.6.1 — T36 non-blind pilot থেকে procedure সংশোধন (Claude, supervisor-delegated, 2026-11-15)
+উৎস: `09_collab/reports/T36_report.md`। 28টি item; exact agreement 17/28, BOTH-কর্তৃত্ব মেলালে 23/28।
+1. **Target proposition বাধ্যতামূলক।** Search-এর আগে লিখতে হবে কোন side (request/response), কোন status, কোন field আর কোন দিক (presence বা absence, constraint আঁটসাঁট বা শিথিল)। Status-only search দিয়ে body বা field-presence obligation-এর সিদ্ধান্ত নেওয়া যাবে না।
+2. **Branch আর helper linkage।** একই route-এর পাশের success assertion error-branch-এর intent নয়। Test helper আর call-chain resolve করতে হবে। Positive test-এর অনুপস্থিতি implementation intent-এর প্রমাণ নয়।
+3. **Comparison-এ কর্তৃত্ব আলাদা।** Labeller দেয় `primary_L1` + `both_candidate`; `adjudicated_L1` শুধু adjudicator দেন। Agreement দুইভাবে জানাতে হবে: exact, আর compatible (final BOTH ↔ primary + flag)।
+4. **UNDECIDABLE + TEST aggregation** (§10.4-এর সম্পূরক): কোনো cluster-এর intent-নির্ভর component unsupported হলে, আর বাকি অংশ শুধু TEST হলে, cluster label হবে **UNDECIDABLE**, `components=UNDECIDABLE;TEST`, both_candidate প্রযোজ্য মতো। Majority occurrence দিয়ে SPEC তৈরি করা যাবে না।
+5. **Same-class handoff (§12.1 Q3):**
+   - Labeller দেয় `L1=UNDECIDABLE`, `adjudication_flag=same_class_policy`।
+   - Claude-এর provisional সিদ্ধান্ত যায় `E2_labelling/v06_revisions.csv`-এ, basis সহ।
+   - Supervisor-এর পরবর্তী সিদ্ধান্ত ওই file-এর `decision` column-এ join হবে।
+6. **History scope আর deferral:**
+   - `history_scope` ∈ {`full`, `local_shallow`, `unavailable`}।
+   - Shallow বা unavailable history নিজে coverage gap নয়। Gap ধরা হবে কেবল যখন একটা নির্দিষ্ট, প্রাসঙ্গিক fix বা commit-এর অস্তিত্ব জানা কিন্তু পড়া যায় না।
+   - Deferred item-এ `L1=DEFERRED`। Agreement-এর denominator থেকে এগুলো বাদ যাবে, আর আলাদাভাবে গোনা হবে।
+7. **Retrieval boundary:**
+   - Search command-এ সবসময় explicit path দিতে হবে। Empty path list নিয়ে `rg`/`grep` চালানো নিষিদ্ধ, কারণ তাতে workspace root scan হয় (T36 incident)।
+   - Source-window printing-এ credential-redaction filter বাধ্যতামূলক।
+   - প্রতিটি item-এর review শুরু ও শেষের সময় রেকর্ড করতে হবে।
+
+### 12.4 পুরোনো label-এর v0.6 sensitivity view (Claude, supervisor-delegated, 2026-11-15)
+- T36-এর পাঁচটি proposal-এর সিদ্ধান্ত, কারণ সহ, আছে `E2_labelling/v06_revisions.csv`-এ।
+  - **গৃহীত 4টি:** C005, P043, P021, P019 → UNDECIDABLE।
+  - **প্রত্যাখ্যাত 1টি:** P013, IMPL বহাল। এখানে deliberate-looking code নেই, শুধু validation অনুপস্থিত।
+- **মূল `final_labels_baseline_s1.csv` অপরিবর্তিত, আর সেটাই primary।**
+  - P043, P021 আর P019 supervisor-এর 2026-11-14 Q2 সিদ্ধান্ত। এগুলো শুধু `final_labels_baseline_s1_v06.csv`-এর sensitivity view-এ বদলেছে।
+- **Distribution:**
+  - Primary: SPEC 40, SPEC_PARTIAL 4, UNDECIDABLE 20; decidable 115, BOTH 26.1%।
+  - v0.6 view: SPEC 39, SPEC_PARTIAL 1, UNDECIDABLE 24; decidable 111, BOTH 27.0%।
+- ⚠️ শুধু 28টি নমুনা দেখা হয়েছে। নমুনার বাইরে guard-ভিত্তিক অন্য SPEC label-ও v0.6-এ বদলাতে পারে। তাই এই view আংশিক।

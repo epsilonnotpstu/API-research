@@ -1,0 +1,228 @@
+{
+  "n": 28,
+  "exact_agreement": 17,
+  "primary_flag_compatible": 23,
+  "per_stratum": {
+    "SPEC": {
+      "n": 6,
+      "exact_agreement": 5,
+      "primary_flag_compatible": 5,
+      "non_scout": 1,
+      "items": [
+        "B068",
+        "B005",
+        "C005",
+        "B037",
+        "B042",
+        "B017"
+      ]
+    },
+    "SPEC_PARTIAL": {
+      "n": 4,
+      "exact_agreement": 1,
+      "primary_flag_compatible": 1,
+      "non_scout": 4,
+      "items": [
+        "P043",
+        "P021",
+        "C002",
+        "P019"
+      ]
+    },
+    "UNDECIDABLE": {
+      "n": 6,
+      "exact_agreement": 6,
+      "primary_flag_compatible": 6,
+      "non_scout": 1,
+      "items": [
+        "B012",
+        "B043",
+        "B091",
+        "B032",
+        "B027",
+        "P039"
+      ]
+    },
+    "BOTH": {
+      "n": 6,
+      "exact_agreement": 0,
+      "primary_flag_compatible": 6,
+      "non_scout": 3,
+      "items": [
+        "M002",
+        "B094",
+        "B040",
+        "B098",
+        "P018",
+        "M013"
+      ]
+    },
+    "IMPL": {
+      "n": 6,
+      "exact_agreement": 5,
+      "primary_flag_compatible": 5,
+      "non_scout": 2,
+      "items": [
+        "B066",
+        "P035",
+        "B023",
+        "B071",
+        "B087",
+        "P013"
+      ]
+    }
+  },
+  "disagreements": [
+    {
+      "item_id": "C005",
+      "final_L1": "SPEC",
+      "pilot_L1": "UNDECIDABLE",
+      "both_candidate": true,
+      "adjudication_flag": "same_class_policy",
+      "comparison_kind": "substantive-review-proposal",
+      "rationale": "⚠️ Missing 404 body is the actual constraint. Tests and architecture prose establish 404, not an empty body. Bodyless methods in one exception-handler class need Claude’s provisional same-class policy review.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/C005.json:1",
+      "existing_adjudication_note": ""
+    },
+    {
+      "item_id": "P043",
+      "final_L1": "SPEC_PARTIAL",
+      "pilot_L1": "UNDECIDABLE",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "substantive-review-proposal",
+      "rationale": "⚠️ Missing body is rejected by one controller guard; no independent requirement was found. The other exchange exceeds int32 userStatus. UNDECIDABLE+TEST has no supported SPEC component; conservatively abstain.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/P043.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 Q2: majority SPEC + minority TEST occurrences -> SPEC_PARTIAL (codebook §10.4)"
+    },
+    {
+      "item_id": "P021",
+      "final_L1": "SPEC_PARTIAL",
+      "pilot_L1": "UNDECIDABLE",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "substantive-review-proposal",
+      "rationale": "⚠️ Missing upload body is rejected by one code guard; no independent required-body policy was found. Two requests exceed petId int64. Remaining intent is unresolved; no supported SPEC component.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/P021.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 Q2: majority SPEC + minority TEST occurrences -> SPEC_PARTIAL (codebook §10.4)"
+    },
+    {
+      "item_id": "P019",
+      "final_L1": "SPEC_PARTIAL",
+      "pilot_L1": "UNDECIDABLE",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "substantive-review-proposal",
+      "rationale": "⚠️ Optional name is rejected by a single explicit guard; README is incidental and the test class is empty. Three petId overflows are TEST. Independent required-name intent remains absent.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/P019.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 Q2: majority SPEC + minority TEST occurrences -> SPEC_PARTIAL (codebook §10.4)"
+    },
+    {
+      "item_id": "M002",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ Saved array _links produces HAL parse failure and generic 500. R1 determines primary IMPL; §10.6 supplies the separate schema-shape candidate. Success docs/UI tests do not establish parse-error intent.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/M002.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 (accepted all Claude recommendations) group4: spec _links type wrong + code maps parse error to 500"
+    },
+    {
+      "item_id": "B094",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ R1 determines primary IMPL. Optional create body and omitted NOT NULL fields cause saved crashes; §10.6 supports a separate SPEC candidate. Final BOTH requires adjudication (§10.1).",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/B094.json:1",
+      "existing_adjudication_note": "rule §10.6 applied by Claude (both labellers flagged BOTH; not individually reviewed by supervisor): create body / required id list"
+    },
+    {
+      "item_id": "B040",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ R1 determines primary IMPL. Optional create body and omitted NOT NULL fields cause saved crashes; §10.6 supports a separate SPEC candidate. Final BOTH requires adjudication (§10.1).",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/B040.json:1",
+      "existing_adjudication_note": "rule §10.6 applied by Claude (both labellers flagged BOTH; not individually reviewed by supervisor): create body / required id list"
+    },
+    {
+      "item_id": "B098",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ Missing id list triggers null dereference and 500. Spec also declares a required path id on a template without {id}, and omits body/list requirements. Keep primary IMPL and request BOTH adjudication.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/B098.json:1",
+      "existing_adjudication_note": "rule §10.6 applied by Claude (both labellers flagged BOTH; not individually reviewed by supervisor): create body / required id list"
+    },
+    {
+      "item_id": "P018",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ Request status has no enum, response Pet.status does; saved response contains the supplied out-of-enum value. Apply the specific internal-inconsistency rule §10.6: primary IMPL, BOTH candidate.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/P018.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 (accepted all Claude recommendations) group2: primary IMPL; spec param lacks enum + code stores invalid"
+    },
+    {
+      "item_id": "M013",
+      "final_L1": "BOTH",
+      "pilot_L1": "IMPL",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "primary-versus-final-authority",
+      "rationale": "⚠️ Saved array _links produces HAL parse failure and generic 500. R1 determines primary IMPL; §10.6 supplies the separate schema-shape candidate. Success docs/UI tests do not establish parse-error intent.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/M013.json:1",
+      "existing_adjudication_note": "supervisor 2026-11-14 (accepted all Claude recommendations) group4: spec _links type wrong + code maps parse error to 500"
+    },
+    {
+      "item_id": "P013",
+      "final_L1": "IMPL",
+      "pilot_L1": "UNDECIDABLE",
+      "both_candidate": true,
+      "adjudication_flag": "none",
+      "comparison_kind": "substantive-review-proposal",
+      "rationale": "⚠️ One response member lacks required photoUrls. Field default/setter and XML annotations do not independently establish JSON presence intent; tests are empty and local import history is non-normative. Abstain under §11.2.",
+      "review_locator": "08_experiments/E2_labelling/pilot_v06/review/P013.json:1",
+      "existing_adjudication_note": ""
+    }
+  ],
+  "pilot_L1_counts": {
+    "SPEC": 5,
+    "UNDECIDABLE": 11,
+    "SPEC_PARTIAL": 1,
+    "IMPL": 11
+  },
+  "search_status_counts": {
+    "complete": 24,
+    "not_run": 4
+  },
+  "raw_verdict_counts": {
+    "supports_spec": 5,
+    "conflicting": 2,
+    "none_found": 17,
+    "NA": 4
+  },
+  "review_verdict_counts": {
+    "supports_impl_behavior": 6,
+    "none_found": 18,
+    "not_applicable": 4
+  },
+  "both_candidate_count": 17,
+  "same_class_policy_items": [
+    "C005"
+  ],
+  "joined_utc": "2026-11-15T02:12:03.110054+00:00",
+  "decision_frozen_utc": "2026-11-15T02:11:25.365395+00:00",
+  "labels_sha256": "5d7544dd6bf6f0f1437047140bb1d29e4417e4a91bb42d63e014e228fc961edf",
+  "final_labels_sha256": "51c6849b299dcb1d97dfefade420e3c551bb64d4734c9c0821911c7d36cbd8ba",
+  "not_accuracy": "Final labels are adjudicated comparisons, not ground truth; compatibility is only a transparent authority/format reconciliation, not a second label decision."
+}

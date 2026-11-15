@@ -39,6 +39,7 @@ case $PILOT_FUZZER in
     *) echo 'Invalid FUZZER: use schemathesis or evomaster' >&2; exit 2;;
 esac
 source "$HERE/fuzzer_args.sh"
+build_strict_args "$fault"
 for tool in docker curl java timeout flock git sha256sum grep /usr/bin/python3; do command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 1; }; done
 docker compose version >/dev/null
 export PILOT_UID=$(id -u) PILOT_GID=$(id -g)
@@ -185,7 +186,7 @@ if [[ $mode == mutated ]]; then
         only_args=(--only-ops "$run_dir/only-ops.json")
     fi
     /usr/bin/python3 -I -B "$TOOLS_DIR/specmut.py" "$original_spec" --fault "$fault" --severity "$severity" \
-        --seed "$seed" "${only_args[@]}" --out "$run_dir/mutation" >"$run_dir/specmut.log" 2>&1
+        --seed "$seed" "${only_args[@]}" "${strict_args[@]}" --out "$run_dir/mutation" >"$run_dir/specmut.log" 2>&1
     shopt -s nullglob
     manifests=("$run_dir"/mutation/*.manifest.json)
     [[ ${#manifests[@]} == 1 ]] || { echo 'Expected exactly one mutation manifest' >&2; exit 1; }
@@ -227,7 +228,7 @@ if [[ $mode == mutated ]]; then
     # => same operations selected) to obtain the generator input.
     /usr/bin/python3 -I -B "$HERE/derecurse.py" "$original_spec" "$run_dir/spec.derecursed.json" >"$run_dir/derecurse-cuts.json"
     /usr/bin/python3 -I -B "$TOOLS_DIR/specmut.py" "$run_dir/spec.derecursed.json" --fault "$fault" --severity "$severity" \
-        --seed "$seed" "${only_args[@]}" --out "$run_dir/mutation_gen" >"$run_dir/specmut_gen.log" 2>&1
+        --seed "$seed" "${only_args[@]}" "${strict_args[@]}" --out "$run_dir/mutation_gen" >"$run_dir/specmut_gen.log" 2>&1
     gen=("$run_dir"/mutation_gen/*.manifest.json)
     [[ ${#gen[@]} == 1 ]] || { echo 'Expected one generator mutation manifest' >&2; exit 1; }
     /usr/bin/python3 -I -B -c 'import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:3]); k=lambda m: sorted((x["path"],x["method"]) for x in m["mutations"]); sys.exit(0 if k(a)==k(b) else "Generator mutation selected different operations")' "$run_dir/manifest.json" "${gen[0]}"

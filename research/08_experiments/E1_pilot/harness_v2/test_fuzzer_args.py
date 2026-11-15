@@ -30,19 +30,19 @@ def settings(**updates):
     # Synthetic headers only; inherited real credentials never enter a subprocess.
     for key in ('AUTH_HEADER', 'PILOT_AUTH_REDACT', 'DATA_GEN', 'FUZZER', 'PILOT_FUZZER', 'ONLY_OPS',
                 'EVOMASTER_SCHEMA_ORACLES', 'PILOT_EVOMASTER_SCHEMA_ORACLES',
-                'EVOMASTER_INPUT', 'PILOT_EVOMASTER_INPUT'):
+                'EVOMASTER_INPUT', 'PILOT_EVOMASTER_INPUT', 'STRICT_KEYWORDS'):
         values.pop(key, None)
     values.update({'BASE_PATH': '/api', 'SCHEMA_CHECKS': 'all', 'seed': '7', 'budget': '300',
                    'MAX_EXAMPLES': '100', 'REQUEST_TIMEOUT_MS': '10000',
                    'PILOT_HYPOTHESIS_PHASES': 'explicit,generate', 'AUTH_HEADER': '',
-                   'test_spec': '/synthetic/spec.test.json', 'HERE': str(HERE), 'mode': 'baseline'})
+                   'test_spec': '/synthetic/spec.test.json', 'HERE': str(HERE), 'mode': 'baseline', 'fault': 'NONE'})
     values.update(updates)
     return values
 
 
 def selection_block():
     source = (HERE / 'run_pilot.sh').read_text()
-    return source[source.index('export PILOT_FUZZER='):source.index('source "$HERE/fuzzer_args.sh"')]
+    return source[source.index('export PILOT_FUZZER='):source.index('for tool in docker')]
 
 
 def build(fuzzer, **updates):
@@ -73,7 +73,7 @@ class ArgvTests(unittest.TestCase):
 
     def test_unset_and_explicit_default_selection(self):
         source = (HERE / 'run_pilot.sh').read_text()
-        block = source[source.index('export PILOT_FUZZER='):source.index('source "$HERE/fuzzer_args.sh"')]
+        block = selection_block()
         for value in (None, '', 'schemathesis', 'evomaster', 'other'):
             with self.subTest(value=value):
                 values = settings()
@@ -218,7 +218,9 @@ class ArgvTests(unittest.TestCase):
             with self.subTest(fragment=name):
                 begin = source.index(item['start'])
                 end = source.index(item['end'], begin)
-                self.assertEqual(hashlib.sha256(source[begin:end].encode()).hexdigest(), item['sha256'])
+                # Empty array expansion contributes no argv; pin all other original bytes.
+                fragment = source[begin:end].replace(' "${strict_args[@]}"', '')
+                self.assertEqual(hashlib.sha256(fragment.encode()).hexdigest(), item['sha256'])
 
     def test_pipeline_status_is_saved_before_if_completion(self):
         source = (HERE / 'run_pilot.sh').read_text()
@@ -256,7 +258,7 @@ class GeneratorInputTests(unittest.TestCase):
                     (run / 'spec.test.json').write_bytes(test_spec.read_bytes())
                     oracle = (run / 'spec.test.json').read_bytes()
                     result = subprocess.run(['bash', '-euc', 'shopt -s nullglob\nonly_args=()\n'
-                        'source "$HERE/fuzzer_args.sh"\n' + function + generation],
+                        'source "$HERE/fuzzer_args.sh"\nbuild_strict_args "$fault"\n' + function + generation],
                         env=settings(FUZZER=fuzzer, PILOT_FUZZER=fuzzer, PILOT_EVOMASTER_INPUT=setting,
                             PILOT_EVOMASTER_SCHEMA_ORACLES='true', run_dir=directory, mode=mode,
                             original_spec=str(original), test_spec=str(test_spec), TOOLS_DIR=str(tools),
@@ -376,7 +378,7 @@ class RedactionTests(unittest.TestCase):
 
 
 class MetadataTests(unittest.TestCase):
-    def metadata(self, fuzzer, code, schema_oracles=None, generator_input=None):
+    def metadata(self, fuzzer, code, schema_oracles=None, generator_input=None, strict_keywords=None):
         with tempfile.TemporaryDirectory(prefix='t27-metadata-') as directory:
             root = Path(directory)
             run, emb = root / 'run', root / '_external/emb'
@@ -394,6 +396,8 @@ class MetadataTests(unittest.TestCase):
                       'PILOT_AUTH_SOURCE': 'none', 'MITM_MAX_BODY': '65536', 'HOST_PORT': '127.0.0.1:18080',
                       'JACOCO_PORT': '127.0.0.1:16300', 'PILOT_EVOMASTER_IMAGE': 'synthetic@sha256:123',
                       'PILOT_EVOMASTER_VERSION': '6.2.0'}
+            if strict_keywords is not None:
+                values['STRICT_KEYWORDS'] = strict_keywords
             if generator_input is not None:
                 values['PILOT_EVOMASTER_INPUT'] = generator_input
             if schema_oracles is not None:
@@ -453,10 +457,168 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual(data['generator_input_sha256'],
                          hashlib.sha256(b'synthetic derecursed input\n').hexdigest())
 
+    def test_strict_keywords_metadata_present_only_when_nonempty_for_both_fuzzers(self):
+        for fuzzer in ('schemathesis', 'evomaster'):
+            for value in (None, '', 'required', 'maximum,maxLength'):
+                data = self.metadata(fuzzer, '0', strict_keywords=value)
+                if value:
+                    self.assertEqual(data['strict_keywords'], sorted(value.split(',')))
+                else:
+                    self.assertNotIn('strict_keywords', data)
+
     def test_timeout_metadata_is_incomplete(self):
         data = self.metadata('evomaster', '124')
         self.assertEqual(data['evomaster_exit'], '124')
         self.assertFalse(data['complete'])
+
+
+
+class StrictHarnessTests(unittest.TestCase):
+    def test_validation_and_unchanged_fuzzer_argv_for_unset_empty_and_valid_keywords(self):
+        for fuzzer in ('schemathesis', 'evomaster'):
+            default = build(fuzzer)
+            self.assertEqual(build(fuzzer, STRICT_KEYWORDS=''), default)
+            for keywords in ('required', 'maximum,maxLength', 'param_required,required,maximum,maxLength'):
+                self.assertEqual(build(fuzzer, STRICT_KEYWORDS=keywords, fault='REQUEST_STRICT', mode='mutated'), default)
+                result = subprocess.run(['bash', '-euc', selection_block() +
+                    '\nprintf "%s\\0" "${strict_args[@]}"'], capture_output=True,
+                    env=settings(FUZZER=fuzzer, STRICT_KEYWORDS=keywords, fault='REQUEST_STRICT', mode='mutated'))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, b'--strict-keywords\0' + keywords.encode() + b'\0')
+
+    def test_invalid_keywords_and_non_strict_faults_fail_before_external_commands(self):
+        source = HERE.parents[1] / '_external/emb/openapi-swagger/market.json'
+        for fuzzer in ('schemathesis', 'evomaster'):
+            for value in ('synthetic-private-value', 'Maximum', 'required,required', 'maximum,',
+                          ',required', 'maximum,,required', 'maximum, required', 'maximum\n', ' '):
+                result = subprocess.run(['bash', str(HERE / 'run_pilot.sh'), 'market', str(source),
+                    'mutated', 'REQUEST_STRICT', '30', '1', '300'], capture_output=True,
+                    env=settings(FUZZER=fuzzer, STRICT_KEYWORDS=value))
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(b'Invalid STRICT_KEYWORDS', result.stderr)
+                self.assertEqual(result.stderr, b'Invalid STRICT_KEYWORDS\n')
+                if value.strip():
+                    self.assertNotIn(value.encode(), result.stdout + result.stderr)
+            for mode, fault, severity in (('baseline', 'NONE', '0'), ('mutated', 'REQUEST_LOOSE', '30'),
+                                         ('mutated', 'RESPONSE_ORACLE', '30'), ('mutated', 'METHOD_SEM', '30')):
+                result = subprocess.run(['bash', str(HERE / 'run_pilot.sh'), 'market', str(source),
+                    mode, fault, severity, '1', '300'], capture_output=True,
+                    env=settings(FUZZER=fuzzer, STRICT_KEYWORDS='required'))
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(b'STRICT_KEYWORDS requires REQUEST_STRICT', result.stderr)
+
+    def test_batch_rejects_invalid_or_mixed_faults_before_creating_outputs(self):
+        for keywords, faults in (('synthetic-private-value', 'REQUEST_STRICT'),
+                                ('required,required', 'REQUEST_STRICT'), ('required', None),
+                                ('required', ''), ('required', ' '),
+                                ('required', 'REQUEST_STRICT REQUEST_LOOSE'),
+                                ('required', 'RESPONSE_ORACLE'),
+                                ('required', 'REQUEST_STRICT REQUEST_STRICT')):
+            env = settings(STRICT_KEYWORDS=keywords)
+            env.pop('FAULTS', None)
+            if faults is not None:
+                env['FAULTS'] = faults
+            result = subprocess.run(['bash', str(HERE / 'run_batch.sh'), 'market', '1'],
+                                    env=env, capture_output=True)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn(b'STRICT_KEYWORDS', result.stderr)
+            if keywords.startswith('synthetic'):
+                self.assertNotIn(keywords.encode(), result.stdout + result.stderr)
+        source = (HERE / 'run_batch.sh').read_text()
+        block = source[source.index('# Non-empty STRICT_KEYWORDS'):source.index('spec="$EMB_DIR/')]
+        for keywords, faults in (('', 'REQUEST_LOOSE REQUEST_STRICT'), ('required', 'REQUEST_STRICT'),
+                                ('maximum,maxLength', ' REQUEST_STRICT ')):
+            result = subprocess.run(['bash', '-euc', block], env=settings(STRICT_KEYWORDS=keywords, FAULTS=faults),
+                                    capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_batch_clears_knob_for_baseline_and_keeps_it_for_mutation(self):
+        source = (HERE / 'run_batch.sh').read_text()
+        function = source[source.index('run_one() {'):source.index('for seed in "${seeds[@]}"; do\n    run_one')]
+        with tempfile.TemporaryDirectory(prefix='t37-batch-') as directory:
+            root = Path(directory)
+            stub = root / 'run_pilot.sh'
+            stub.write_text('#!/usr/bin/env bash\nprintf "%s|%s|%s\\n" "${STRICT_KEYWORDS:-}" "$3" "$4" >> "$CAPTURE"\n')
+            stub.chmod(0o755)
+            env = settings(HERE=directory, STRICT_KEYWORDS='maximum,maxLength', CAPTURE=str(root / 'calls'),
+                           runs=directory, batch_dir=directory, batch_id='synthetic', sut='market', spec='synthetic.json')
+            result = subprocess.run(['bash', '-euc', function +
+                '\nrun_one baseline NONE 0 1\nrun_one mutated REQUEST_STRICT 30 1'], env=env, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((root / 'calls').read_text().splitlines(),
+                             ['|baseline|NONE', 'maximum,maxLength|mutated|REQUEST_STRICT'])
+
+    def test_actual_oracle_and_generator_specmut_argv_and_manifest_propagation(self):
+        source = (HERE / 'run_pilot.sh').read_text()
+        start = source.index('if [[ $mode == mutated ]]; then\n    # Optional candidate pool')
+        oracle = source[start:source.index('# Keep both the effective compose', start)]
+        preparation = source[source.index('build_derecursed_generator_input() {'):source.index('phase=startup')]
+        generation = source[source.index('phase=generation'):source.index('metadata pending\nset +e')]
+        # Replay the real two specmut call sites, using our own Python tools only.
+        document = {'swagger': '2.0', 'paths': {'/x': {'post': {'parameters': [
+            {'in': 'query', 'name': 'q', 'type': 'string'},
+            {'in': 'body', 'name': 'body', 'schema': {'type': 'object', 'properties': {
+                's': {'type': 'string'}, 'n': {'type': 'integer'}}}}],
+            'responses': {'200': {'description': 'ok'}}}}}}
+        tools = HERE.parents[1] / 'tools'
+        for fuzzer, generator_mode in (('schemathesis', ''), ('evomaster', 'spec'), ('evomaster', 'derecursed')):
+            for keywords in (None, '', 'required', 'maximum,maxLength', 'param_required'):
+                with self.subTest(fuzzer=fuzzer, generator_mode=generator_mode, keywords=keywords), \
+                        tempfile.TemporaryDirectory(prefix='t37-propagate-') as directory:
+                    run = Path(directory)
+                    original = run / 'spec.original.json'
+                    original.write_text(json.dumps(document))
+                    pool = run / 'pool.json'
+                    pool.write_text(json.dumps({'operations': [['/x', 'post']]}))
+                    env = settings(FUZZER=fuzzer, mode='mutated', fault='REQUEST_STRICT', severity='100',
+                        run_dir=directory, original_spec=str(original), TOOLS_DIR=str(tools), ONLY_OPS=str(pool))
+                    if keywords is not None:
+                        env['STRICT_KEYWORDS'] = keywords
+                    env['EVOMASTER_INPUT'] = generator_mode
+                    env['test_spec'] = str(original)
+                    # Record actual specmut argv while delegating only to our own
+                    # Python tools. No Docker/generator orchestration is replayed.
+                    recorder = '''t37_python() {
+    if [[ ${3:-} == */specmut.py ]]; then
+        printf '%s\\0' "$@" >> "$run_dir/specmut-argv.bin"
+        printf '\\0' >> "$run_dir/specmut-argv.bin"
+    fi
+    /usr/bin/python3 "$@"
+}
+'''
+                    script = selection_block() + '\n' + oracle + preparation + generation
+                    script = recorder + script.replace('/usr/bin/python3', 't37_python')
+                    result = subprocess.run(['bash', '-euc', script], env=env, capture_output=True)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    manifests = [json.loads((run / 'manifest.json').read_text())]
+                    derecursed = fuzzer == 'schemathesis' or generator_mode == 'derecursed'
+                    if derecursed:
+                        manifests.append(json.loads(next((run / 'mutation_gen').glob('*.manifest.json')).read_text()))
+                    for meta in manifests:
+                        if keywords:
+                            self.assertEqual(meta['strict_keywords'], sorted(keywords.split(',')))
+                        else:
+                            self.assertNotIn('strict_keywords', meta)
+                    if derecursed:
+                        self.assertEqual(manifests[0]['mutations'], manifests[1]['mutations'])
+                    argv = [[part.decode() for part in call.split(b'\0')] for call in
+                            (run / 'specmut-argv.bin').read_bytes().split(b'\0\0') if call]
+                    expected = []
+                    inputs = [(original, 'mutation')]
+                    if derecursed:
+                        inputs.append((run / 'spec.derecursed.json', 'mutation_gen'))
+                    for input_path, output_name in inputs:
+                        call = ['-I', '-B', str(tools / 'specmut.py'), str(input_path), '--fault',
+                                'REQUEST_STRICT', '--severity', '100', '--seed', '7', '--only-ops',
+                                str(run / 'only-ops.json')]
+                        if keywords:
+                            call += ['--strict-keywords', keywords]
+                        expected.append(call + ['--out', str(run / output_name)])
+                    self.assertEqual(argv, expected)
+        # Exact call text still matches the pre-T37 golden when the empty optional
+        # argument expansion is removed. Other preserved fragments stay pinned.
+        self.assertEqual(source.count('"${strict_args[@]}"'), 2)
+        self.assertEqual(source.count('"${only_args[@]}" "${strict_args[@]}" --out'), 2)
 
 
 if __name__ == '__main__':

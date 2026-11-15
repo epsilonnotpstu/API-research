@@ -1,0 +1,420 @@
+{
+  "item_id": "B098",
+  "created_utc": "2026-11-15T02:11:25.354963+00:00",
+  "decision_precedes_final_join": true,
+  "operation": {
+    "method": "POST",
+    "template": "/v1/favourites",
+    "status": 500
+  },
+  "target": {
+    "kind": "SERVER_ERROR",
+    "message": "SERVER_ERROR",
+    "violation_path": "",
+    "observed_field_direction": "not a response-field query",
+    "representative_exchange_locator": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/exchanges.jsonl:4604",
+    "all_exchange_lines": [
+      4604,
+      4605,
+      4606,
+      4607,
+      4608,
+      4609,
+      4610,
+      4611,
+      4612,
+      4613,
+      4614,
+      4615,
+      4616,
+      4617,
+      4618,
+      4619,
+      4620,
+      4622,
+      4623,
+      4624,
+      4625,
+      4626,
+      4627,
+      4628,
+      4630,
+      4631,
+      4632,
+      4633,
+      4634,
+      4635,
+      4636,
+      4637,
+      4638,
+      4639,
+      4640,
+      4641,
+      4642,
+      4645,
+      4646,
+      4647,
+      4648,
+      4649,
+      4650,
+      4653,
+      4654,
+      4658,
+      4659,
+      4660,
+      4661,
+      4662,
+      4663,
+      4664,
+      4665,
+      4666,
+      4667,
+      4668,
+      4669,
+      4670,
+      4671,
+      4672,
+      4673,
+      4674,
+      4675,
+      4677,
+      4683,
+      4685,
+      4693,
+      4694,
+      4695,
+      4696,
+      4698
+    ],
+    "observed_response_group_count": 71
+  },
+  "prior_exposure": {
+    "previous_baseline_labelling": "known (T15/T16/T18 same model family/task history)",
+    "previous_final_label": "possible from previous tasks; exact item final label not recalled before decision",
+    "stratum_order_leaks_label": true,
+    "T33_worked_example_excluded": true,
+    "other_incidents_locator": "09_collab/logs/T36_scratch/incident.json:1"
+  },
+  "manifest_locator": "09_collab/logs/T36_scratch/search/B098.manifest.json:1",
+  "search_mandatory": true,
+  "search_gate_rule": "§11.4.1 / §12.1 Q2: unresolved intent or intent-dependent spec-side candidate",
+  "search_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "source_root": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api",
+  "source_revision": "915859080da033fc36feae54bab3ad4a7b04e872",
+  "source_revision_locator": "08_experiments/E1_pilot/runs/scout-api/20261113T202103Z_baseline_NONE_p0_s1_1642810/run.json:$.emb_commit",
+  "spec_sha256": "c8a539fcd9b9beb41f7943a83de192688718be725d24511613ed606e3f6c6b08",
+  "tool_sha256": "0ecb3ebfaaaa0b922a74f9e469595979e0f70af713296eeaff603d99479c056f",
+  "coverage_inventory_locator": "09_collab/logs/T36_scratch/coverage_inventory.json:$.\"scout-api\"",
+  "raw_verdict": "none_found",
+  "hits": [
+    {
+      "hit_index": 0,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B098.json:$.hits[0]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:55",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "Implementation route/DTO/return is context only and cannot be its own independent intent evidence.",
+      "direction": "none",
+      "tool_independent_hypothesis": false,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Implementation route/DTO/return is context only and cannot be its own independent intent evidence."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Questioned code/spec, generated echo, or import history; not independent."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "97a02fbf0fbec52af5cf0f1e9e9ee3b5a2898fb5d9068de3172ad7a7e1e651b9",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:43-67"
+    },
+    {
+      "hit_index": 1,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B098.json:$.hits[1]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:116",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior.",
+      "direction": "none",
+      "tool_independent_hypothesis": true,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": false,
+          "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate test/doc basis, subject to scenario gate."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "56b7cca6d2ad85b52daaca0ac74d2be0596f0046916bee2f7377e96a0fc18882",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:104-128"
+    },
+    {
+      "hit_index": 2,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B098.json:$.hits[2]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:122",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior.",
+      "direction": "none",
+      "tool_independent_hypothesis": true,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": false,
+          "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate test/doc basis, subject to scenario gate."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "56b7cca6d2ad85b52daaca0ac74d2be0596f0046916bee2f7377e96a0fc18882",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:110-134"
+    },
+    {
+      "hit_index": 3,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B098.json:$.hits[3]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:134",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior.",
+      "direction": "none",
+      "tool_independent_hypothesis": true,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": false,
+          "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate test/doc basis, subject to scenario gate."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "56b7cca6d2ad85b52daaca0ac74d2be0596f0046916bee2f7377e96a0fc18882",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:122-146"
+    },
+    {
+      "hit_index": 4,
+      "raw_hit_locator": "09_collab/logs/T36_scratch/search/B098.json:$.hits[4]",
+      "source_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:146",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior.",
+      "direction": "none",
+      "tool_independent_hypothesis": true,
+      "tool_support": [],
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Explicit assertion/proposition exists in context."
+        },
+        "b_target_scenario": {
+          "passes": false,
+          "reason": "POST populated-list and GET success assertions establish normal operation only; they do not require omitted id list/body or establish missing-input behavior."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate test/doc basis, subject to scenario gate."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "source_file_sha256": "56b7cca6d2ad85b52daaca0ac74d2be0596f0046916bee2f7377e96a0fc18882",
+      "reviewed_context_locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:134-158"
+    }
+  ],
+  "manual_additions": [
+    {
+      "locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/main/java/se/devscout/scoutapi/resource/v1/FavouritesResourceV1.java:51-90",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "POST dereferences nullable properties.id; route has no {id} placeholder.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "POST dereferences nullable properties.id; route has no {id} placeholder."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Target constraint/scenario linkage reviewed: POST dereferences nullable properties.id; route has no {id} placeholder."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Implementation/context or unverified normative provenance; not an independent vote."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_8_maven/cs/rest/original/scout-api/api/src/test/java/se/devscout/scoutapi/ActivitiesIntegrationTest.java:112-146",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "Tests cover populated lists and success; they do not assert missing-list rejection.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Tests cover populated lists and success; they do not assert missing-list rejection."
+        },
+        "b_target_scenario": {
+          "passes": false,
+          "reason": "Target constraint/scenario linkage reviewed: Tests cover populated lists and success; they do not assert missing-list rejection."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Independent source or adopted adjudication precedent."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    },
+    {
+      "locator": "08_experiments/R1_triage_codebook.md:241-247",
+      "category": "RULE",
+      "disposition": "context",
+      "reason": "Required resource-key/create-input rule supports dual candidate; malformed in:path declaration is a separate structural witness.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Required resource-key/create-input rule supports dual candidate; malformed in:path declaration is a separate structural witness."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "Target constraint/scenario linkage reviewed: Required resource-key/create-input rule supports dual candidate; malformed in:path declaration is a separate structural witness."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Implementation/context or unverified normative provenance; not an independent vote."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      }
+    }
+  ],
+  "manual_fallback": {
+    "performed": true,
+    "manifest_locator": "09_collab/logs/T36_scratch/fallback_manifest.json:1",
+    "local_history": "Available shallow EMB import only; patches reviewed, not treated as fixes.",
+    "docs_scope": "No top-level Scout README/CHANGELOG; only explicit source paths used after discarded scope incident.",
+    "new_independent_evidence": false
+  },
+  "reviewed_verdict": "none_found",
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "confidence": 3,
+    "both_candidate": true,
+    "rationale": "⚠️ Missing id list triggers null dereference and 500. Spec also declares a required path id on a template without {id}, and omits body/list requirements. Keep primary IMPL and request BOTH adjudication.",
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "",
+    "root_cause_id": "SCOUT_FAVOURITES_REQUIREDNESS",
+    "message_decisions": [
+      {
+        "constraint": "non-gateway 500",
+        "L1": "IMPL"
+      },
+      {
+        "constraint": "missing key/body requiredness and path parameter without placeholder",
+        "L1": "SPEC_candidate"
+      }
+    ],
+    "documented_exception": "R1 primary plus §10.6/structural witness; no success test is misused as null-input intent.",
+    "coverage_gap_unresolved": false,
+    "coverage_decision": "All relevant local source/tests/docs/config and available local history reviewed. Binary UI assets/build output are irrelevant. Shallow history limits upstream intent knowledge; no missing local candidate patch remains."
+  },
+  "unresolved_hits_do_not_support_decisive_intent": false,
+  "effort": {
+    "tool_seconds": 0.7867806870053755,
+    "raw_hit_count": 5,
+    "manual_addition_count": 3,
+    "manual_active_seconds": null,
+    "timing_note": "Manual reasoning shared source-family context; per-item active time was not independently instrumented. Do not interpret generation time as review effort."
+  }
+}

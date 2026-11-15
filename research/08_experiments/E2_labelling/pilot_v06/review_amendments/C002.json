@@ -1,0 +1,290 @@
+{
+  "item_id": "C002",
+  "created_utc": "2026-11-15T02:23:51.594721+00:00",
+  "post_join": true,
+  "label_unchanged": "SPEC_PARTIAL",
+  "comparison_unchanged": true,
+  "reason": "Post-freeze semantic audit found the original explanatory count grouped all 62 non-header rejections as missing key/type. Forty-nine have missing fields; thirteen have invalid/unissued present keys. Additional independent tests were reviewed after the final join. This evidence extension is non-blind.",
+  "supersedes_annotations_only": [
+    "review/C002.json:$.decision.rationale",
+    "review/C002.json:$.decision.message_decisions",
+    "CSV C002 rationale/evidence_locators/intent_review_locator"
+  ],
+  "original_review_sha256": "80c6f2bfda51832a476b63064a505d3a5f66b52a8cb20258010bf08dffe7c4d6",
+  "manual_additions": [
+    {
+      "locator": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:616-632",
+      "category": "E-TEST",
+      "disposition": "accept",
+      "reason": "⚠️ Explicit invalid-hashed-GUID request asserts 400; the eleven GUID witnesses are non-64-hex strings allowed by the saved generic-string schema.",
+      "direction": "supports_impl_behavior",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "⚠️ Explicit invalid-hashed-GUID request asserts 400; the eleven GUID witnesses are non-64-hex strings allowed by the saved generic-string schema."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "⚠️ Same validation branch/policy traced through RegistrationTokenRequestValidator; sample values themselves are withheld."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate integration assertions, not the questioned validator."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "tool_miss": true,
+      "new_independent_discovery": true,
+      "source_file_sha256": "7985b4d69eb3382b6ff17b60b25e0e9dcb6efaebc1ee8241072b1768d32858fd"
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:596-613",
+      "category": "E-TEST",
+      "disposition": "accept",
+      "reason": "⚠️ Unissued/unknown TeleTAN is explicitly expected to receive 400. The two short TeleTAN witnesses cannot be issued by this ten-character generator; link uses the same validator/service policy, not an exact token match.",
+      "direction": "supports_impl_behavior",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "⚠️ Unissued/unknown TeleTAN is explicitly expected to receive 400. The two short TeleTAN witnesses cannot be issued by this ten-character generator; link uses the same validator/service policy, not an exact token match."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "⚠️ Same validation branch/policy traced through RegistrationTokenRequestValidator; sample values themselves are withheld."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate integration assertions, not the questioned validator."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "tool_miss": true,
+      "new_independent_discovery": true,
+      "source_file_sha256": "7985b4d69eb3382b6ff17b60b25e0e9dcb6efaebc1ee8241072b1768d32858fd"
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:55-69",
+      "category": "HANDLER",
+      "disposition": "context",
+      "reason": "Missing key/type returns false; GUID delegates to hashingService.isHashValid; TELETAN delegates to tanService.verifyTeleTan. This links the separate tests to actual validation and does not independently establish intent.",
+      "direction": "none",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Missing key/type returns false; GUID delegates to hashingService.isHashValid; TELETAN delegates to tanService.verifyTeleTan. This links the separate tests to actual validation and does not independently establish intent."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "⚠️ Same validation branch/policy traced through RegistrationTokenRequestValidator; sample values themselves are withheld."
+        },
+        "c_separate_basis": {
+          "passes": false,
+          "reason": "Validator is context only."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "tool_miss": false,
+      "new_independent_discovery": false,
+      "source_file_sha256": "bbecc96ab49643795b4eaa67d9adedc0104012b10cf789917de5248d1a3161f2"
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/service/TanServiceTest.java:65-72",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "Test-side generated-TeleTAN regex fixes length ten. Actual token literals are withheld; used only to establish that length-two/four witnesses were not issued by this generator.",
+      "direction": "supports_impl_behavior",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Test-side generated-TeleTAN regex fixes length ten. Actual token literals are withheld; used only to establish that length-two/four witnesses were not issued by this generator."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "⚠️ Same validation branch/policy traced through RegistrationTokenRequestValidator; sample values themselves are withheld."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate integration assertions, not the questioned validator."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "tool_miss": true,
+      "new_independent_discovery": true,
+      "source_file_sha256": "8619d870e78ffaa904502f2761ca33066e33594e4e238c022090fedfe962b9d7"
+    },
+    {
+      "locator": "08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/service/TanServiceTest.java:190-219",
+      "category": "E-TEST",
+      "disposition": "context",
+      "reason": "Generator output is tested against the test-side format, while invalid/unknown TeleTAN verification returns false; linked service context corroborates the integration rejection policy.",
+      "direction": "supports_impl_behavior",
+      "independence_checklist": {
+        "a_expected_behavior": {
+          "passes": true,
+          "reason": "Generator output is tested against the test-side format, while invalid/unknown TeleTAN verification returns false; linked service context corroborates the integration rejection policy."
+        },
+        "b_target_scenario": {
+          "passes": true,
+          "reason": "⚠️ Same validation branch/policy traced through RegistrationTokenRequestValidator; sample values themselves are withheld."
+        },
+        "c_separate_basis": {
+          "passes": true,
+          "reason": "Separate integration assertions, not the questioned validator."
+        },
+        "d_applicable_revision": {
+          "passes": true,
+          "reason": "Run metadata records EMB 915859080da033fc36feae54bab3ad4a7b04e872, also current shallow checkout; reviewed files are hashed in protected_before.json."
+        },
+        "e_contrary_evidence_reviewed": {
+          "passes": true,
+          "reason": "All raw hits and directed tests/docs/local-history fallback reviewed; contrary or adjacent-branch candidates retained with dispositions."
+        }
+      },
+      "tool_miss": true,
+      "new_independent_discovery": true,
+      "source_file_sha256": "8619d870e78ffaa904502f2761ca33066e33594e4e238c022090fedfe962b9d7"
+    }
+  ],
+  "message_decisions": [
+    {
+      "constraint": "missing_key_or_keyType",
+      "L1": "SPEC",
+      "count": 49,
+      "exchange_lines": [
+        162,
+        163,
+        165,
+        166,
+        168,
+        169,
+        170,
+        171,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        194,
+        195,
+        196,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        218,
+        219,
+        220,
+        221,
+        224,
+        225,
+        227,
+        228,
+        229,
+        230
+      ]
+    },
+    {
+      "constraint": "invalid_GUID",
+      "L1": "SPEC",
+      "count": 11,
+      "exchange_lines": [
+        167,
+        197,
+        198,
+        213,
+        214,
+        215,
+        216,
+        217,
+        222,
+        223,
+        226
+      ]
+    },
+    {
+      "constraint": "unissued_short_TELETAN",
+      "L1": "SPEC",
+      "count": 2,
+      "exchange_lines": [
+        172,
+        206
+      ]
+    },
+    {
+      "constraint": "invalid_HTTP_header",
+      "L1": "TEST",
+      "count": 7,
+      "exchange_lines": [
+        164,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193
+      ]
+    }
+  ],
+  "csv_annotation_changes": {
+    "rationale": {
+      "before": "⚠️ Independent missing-key/keyType tests support rejection, while saved schema has no required list. Seven invalid-control-header requests are TEST under §10.3. SPEC+TEST aggregates to SPEC_PARTIAL (§10.4).",
+      "after": "⚠️ Separate tests support 49 missing-key/type, 11 invalid-GUID and 2 unissued-TeleTAN rejections omitted from the saved input contract; 7 invalid-header requests are TEST. SPEC+TEST aggregates to SPEC_PARTIAL (§10.4)."
+    },
+    "evidence_locators": {
+      "before": "08_experiments/E1_pilot/runs/cwa-verification/20261114T084828Z_batch_118863_baseline_NONE_p0_s1/exchanges.jsonl:162;08_experiments/E1_pilot/runs/cwa-verification/20261114T084828Z_batch_118863_baseline_NONE_p0_s1/spec.original.json#/paths/~1version~1v1~1registrationToken/post;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:530-558;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/TestUtils.java:51-53;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:41-60;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/docs/architecture-overview.md:180-194;08_experiments/R1_triage_codebook.md:224-226",
+      "after": "08_experiments/E1_pilot/runs/cwa-verification/20261114T084828Z_batch_118863_baseline_NONE_p0_s1/exchanges.jsonl:162;08_experiments/E1_pilot/runs/cwa-verification/20261114T084828Z_batch_118863_baseline_NONE_p0_s1/spec.original.json#/paths/~1version~1v1~1registrationToken/post;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:530-558;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/TestUtils.java:51-53;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/model/RegistrationTokenRequest.java:41-60;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/docs/architecture-overview.md:180-194;08_experiments/R1_triage_codebook.md:224-226;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:616-632;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:596-613;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/main/java/app/coronawarn/verification/validator/RegistrationTokenRequestValidator.java:55-69;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/service/TanServiceTest.java:65-72;08_experiments/_external/emb/jdk_11_maven/cs/rest/cwa-verification-server/src/test/java/app/coronawarn/verification/service/TanServiceTest.java:190-219"
+    },
+    "intent_review_locator": {
+      "before": "08_experiments/E2_labelling/pilot_v06/review/C002.json:1",
+      "after": "08_experiments/E2_labelling/pilot_v06/review/C002.json:1;08_experiments/E2_labelling/pilot_v06/review_amendments/C002.json:1"
+    }
+  },
+  "effort_note": "Additional post-join source review is outside the original sample-to-decision-freeze timing interval."
+}

@@ -1,0 +1,198 @@
+{
+  "source_spec": "/home/afridi/Documents/API research/research/08_experiments/_external/emb/openapi-swagger/market.json",
+  "source_sha256": "cf51a9d511b970fd51bce1206eb9429024c11eb180ada58b43193bcb5883c3cd",
+  "format": "swagger2",
+  "fault": "REQUEST_STRICT",
+  "severity": 30,
+  "seed": 1,
+  "operations_total": 13,
+  "only_ops": null,
+  "operations_mutated": 2,
+  "mutations": [
+    {
+      "path": "/customer/cart/pay",
+      "method": "post",
+      "operationId": "payByCardUsingPOST",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1customer~1cart~1pay/post/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/CreditCardDTO",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1customer~1cart~1pay/post/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "ccNumber": {
+              "type": "string",
+              "pattern": "\\b(?:\\d[ -]*?){13,16}\\b"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1customer~1cart~1pay/post/parameters/0/schema/required",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": [
+            "ccNumber"
+          ]
+        },
+        {
+          "pointer": "/paths/~1customer~1cart~1pay/post/parameters/0/schema/title",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "CreditCardDTO"
+        },
+        {
+          "pointer": "/paths/~1customer~1cart~1pay/post/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    },
+    {
+      "path": "/customer/contacts",
+      "method": "put",
+      "operationId": "updateContactsUsingPUT",
+      "fault": "REQUEST_STRICT",
+      "expected_L1": "SPEC",
+      "expected_L2": "S-REQ-STRICT",
+      "edits": [
+        {
+          "pointer": "/paths/~1customer~1contacts/put/parameters/0/schema/$ref",
+          "op": "remove",
+          "before_exists": true,
+          "after_exists": false,
+          "before": "#/definitions/ContactsDTOReq",
+          "after": null
+        },
+        {
+          "pointer": "/paths/~1customer~1contacts/put/parameters/0/schema/properties",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": {
+            "_links": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "deprecation": {
+                    "type": "string"
+                  },
+                  "href": {
+                    "type": "string"
+                  },
+                  "hreflang": {
+                    "type": "string"
+                  },
+                  "media": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "profile": {
+                    "type": "string"
+                  },
+                  "rel": {
+                    "type": "object",
+                    "title": "LinkRelation"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "title": "Link",
+                "required": [
+                  "deprecation",
+                  "href",
+                  "hreflang",
+                  "media",
+                  "name",
+                  "profile",
+                  "rel",
+                  "title",
+                  "type"
+                ]
+              }
+            },
+            "address": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 100,
+              "pattern": "^[^#$%^*()']*$"
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 20,
+              "pattern": "^\\+[1-9][0-9]?[\\s]*\\(?\\d{3}\\)?[-\\s]?\\d{3}[-\\s]?\\d{2}[-\\s]?\\d{2}$"
+            }
+          }
+        },
+        {
+          "pointer": "/paths/~1customer~1contacts/put/parameters/0/schema/required",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": [
+            "_links",
+            "address",
+            "phone"
+          ]
+        },
+        {
+          "pointer": "/paths/~1customer~1contacts/put/parameters/0/schema/title",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "ContactsDTOReq"
+        },
+        {
+          "pointer": "/paths/~1customer~1contacts/put/parameters/0/schema/type",
+          "op": "add",
+          "before_exists": false,
+          "after_exists": true,
+          "before": null,
+          "after": "object"
+        }
+      ]
+    }
+  ],
+  "strict_keywords": [
+    "required"
+  ],
+  "selected_no_edit": [
+    [
+      "/products",
+      "get"
+    ],
+    [
+      "/products/{productId}",
+      "get"
+    ]
+  ]
+}

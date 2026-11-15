@@ -82,6 +82,10 @@ def main():
         meta = json.load(open(meta_path))
         if not meta.get('complete') or meta['sut'] not in SERVICE or not (run / 'exchanges.jsonl').is_file():
             continue
+        if meta.get('strict_keywords'):
+            continue  # T37 keyword-ablation runs are analysed separately (strict_ablation.py), never mixed in
+        if meta.get('code_mutation'):
+            continue  # E5 code mutants are not spec-mutation runs
         fz = fuzzer_of(run, meta)
         if fz is None:
             continue
