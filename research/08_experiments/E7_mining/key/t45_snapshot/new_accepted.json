@@ -1,0 +1,747 @@
+[
+  {
+    "repo": "basyx-java-server-sdk",
+    "fix_commit": "9cb702b1404ba73f114c1068dfa2a06a4855547c",
+    "parent_commit": "68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0",
+    "date": "2025-04-09",
+    "message_excerpt": "Fixes wrong status Code on putFileByPath (#696)",
+    "score": 31,
+    "stars": 84,
+    "surface_paths": [
+      "basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java",
+      "basyx.submodelservice/basyx.submodelservice-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/http/SubmodelServiceHTTPApiController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-authorization/src/test/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/authorization/TestAuthorizedSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-http/src/test/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositorySubmodelHTTPTestSuite.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/http/SubmodelServiceHTTPApiController.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-http/src/test/java/org/eclipse/digitaltwin/basyx/submodelservice/http/SubmodelServiceSubmodelElementsTestSuiteHTTP.java"
+      ]
+    ],
+    "rank": 5,
+    "candidate_id": "C01537",
+    "item_id": "N001",
+    "set": "new",
+    "operation": "PUT /submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment",
+    "proposition": "PUT /submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment: contract says a successful file upload returns 204; implementation does return 200 after storing the file",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_status",
+    "fix_family": "response_status.file_upload",
+    "proposition_check": "{\"contract\":[\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java:392\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java:405\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java:455\"],\"implementation\":[\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:140\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:145\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:174\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:222\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:227\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:246\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:248\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:265\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:286\",\"68a27a80a81bed9b1b73d0dc5673f3a5fcc31eb0:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:291\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java\": {\"parent_lines\": [392, 405, 455], \"parent_numbered_excerpt\": \"388: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Submodel’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"submodelIdentifier\\\") Base64UrlEncodedIdentifier submodelIdentifier,\\n389: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"IdShort path to the submodel element (dot-separated)\\\", required = true, schema = @Schema()) @PathVariable(\\\"idShortPath\\\") String idShortPath);\\n390: \\n391: \\t@Operation(summary = \\\"Uploads file content to an existing submodel element at a specified path within submodel elements hierarchy\\\", description = \\\"\\\", tags = { \\\"Asset Administration Shell API\\\" })\\n392: \\t@ApiResponses(value = { @ApiResponse(responseCode = \\\"204\\\", description = \\\"Submodel element updated successfully\\\"),\\n393: \\n394: \\t\\t\\t@ApiResponse(responseCode = \\\"400\\\", description = \\\"Bad Request, e.g. the request parameters of the format of the request body is wrong.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n395: \\n396: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n401: \\n402: \\t\\t\\t@ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal Server Error\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n403: \\n404: \\t\\t\\t@ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\\n405: \\t@RequestMapping(value = \\\"/submodels/{submodelIdentifier}/submodel-elements/{idShortPath}/attachment\\\", produces = { \\\"application/json\\\" }, consumes = { \\\"multipart/form-data\\\" }, method = RequestMethod.PUT)\\n406: \\tResponseEntity<Void> putFileByPath(\\n407: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Submodel’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"submodelIdentifier\\\") Base64UrlEncodedIdentifier submodelIdentifier,\\n408: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"IdShort path to the submodel element (dot-separated)\\\", required = true, schema = @Schema()) @PathVariable(\\\"idShortPath\\\") String idShortPath,\\n409: \\t\\t\\t@Parameter(in = ParameterIn.DEFAULT, description = \\\"\\\", required = true, schema = @Schema()) @RequestParam(value = \\\"fileName\\\", required = true) String fileName,\\n451: \\t\\t\\t@Parameter(in = ParameterIn.DEFAULT, description = \\\"Operation request object\\\", required = true, schema = @Schema()) @Valid @RequestBody OperationRequest body,\\n452: \\t\\t\\t@Parameter(in = ParameterIn.QUERY, description = \\\"Determines whether an operation invocation is performed asynchronously or synchronously\\\", schema = @Schema(defaultValue = \\\"false\\\")) @Valid @RequestParam(value = \\\"async\\\", required = false, defaultValue = \\\"false\\\") Boolean async);\\n453: \\n454: \\t@Operation(summary = \\\"Updates an existing submodel element at a specified path within submodel elements hierarchy\\\", description = \\\"\\\", tags = { \\\"Submodel Repository API\\\" })\\n455: \\t@ApiResponses(value = { @ApiResponse(responseCode = \\\"204\\\", description = \\\"Submodel element updated successfully\\\"),\\n456: \\n457: \\t\\t\\t@ApiResponse(responseCode = \\\"400\\\", description = \\\"Bad Request, e.g. the request parameters of the format of the request body is wrong.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n458: \\n459: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\"}, \"basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java\": {\"parent_lines\": [140, 145, 174, 222, 227, 246, 248, 265, 286, 291], \"parent_numbered_excerpt\": \"136: \\n137: \\t\\tpaginatedSubmodel.result(new ArrayList<>(cursorResult.getResult()));\\n138: \\t\\tpaginatedSubmodel.setPagingMetadata(new PagedResultPagingMetadata().cursor(encodedCursor));\\n139: \\n140: \\t\\treturn new ResponseEntity<PagedResult>(paginatedSubmodel, HttpStatus.OK);\\n141: \\t}\\n142: \\n143: \\t@Override\\n144: \\tpublic ResponseEntity<Submodel> getSubmodelById(Base64UrlEncodedIdentifier submodelIdentifier, @Valid String level, @Valid String extent) {\\n145: \\t\\treturn new ResponseEntity<Submodel>(repository.getSubmodel(submodelIdentifier.getIdentifier()), HttpStatus.OK);\\n146: \\t}\\n147: \\n148: \\t@Override\\n149: \\tpublic ResponseEntity<Void> putSubmodelById(Base64UrlEncodedIdentifier submodelIdentifier, @Valid Submodel body, @Valid String level) {\\n170: \\n171: \\t\\tpaginatedSubmodelElement.result(new ArrayList<>(cursorResult.getResult()));\\n172: \\t\\tpaginatedSubmodelElement.setPagingMetadata(new PagedResultPagingMetadata().cursor(encodedCursor));\\n173: \\n174: \\t\\treturn new ResponseEntity<PagedResult>(paginatedSubmodelElement, HttpStatus.OK);\\n175: \\t}\\n176: \\n177: \\t@Override\\n178: \\tpublic ResponseEntity<SubmodelElement> getSubmodelElementByPathSubmodelRepo(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath, @Valid String level, @Valid String extent) {\\n218: \\t}\\n219: \\n220: \\t@Override\\n221: \\tpublic ResponseEntity<SubmodelValueOnly> getSubmodelByIdValueOnly(Base64UrlEncodedIdentifier submodelIdentifier, @Valid String level, @Valid String extent) {\\n222: \\t\\treturn new ResponseEntity<SubmodelValueOnly>(repository.getSubmodelByIdValueOnly(submodelIdentifier.getIdentifier()), HttpStatus.OK);\\n223: \\t}\\n224: \\n225: \\t@Override\\n226: \\tpublic ResponseEntity<Submodel> getSubmodelByIdMetadata(Base64UrlEncodedIdentifier submodelIdentifier, @Valid String level) {\\n227: \\t\\treturn new ResponseEntity<Submodel>(repository.getSubmodelByIdMetadata(submodelIdentifier.getIdentifier()), HttpStatus.OK);\\n228: \\t}\\n229: \\n230: \\t@Override\\n231: \\tpublic ResponseEntity<Resource> getFileByPath(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath) {\\n242: \\tpublic ResponseEntity<Void> putFileByPath(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath, String fileName, @Valid MultipartFile file) {\\n243: \\t\\tInputStream fileInputstream = null;\\n244: \\t\\ttry {\\n245: \\t\\t\\tfileInputstream = file.getInputStream();\\n246: \\t\\t\\trepository.setFileValue(submodelIdentifier.getIdentifier(), idShortPath, fileName, fileInputstream);\\n247: \\t\\t\\tcloseInputStream(fileInputstream);\\n248: \\t\\t\\treturn new ResponseEntity<Void>(HttpStatus.OK);\\n249: \\t\\t} catch (ElementDoesNotExistException e) {\\n250: \\t\\t\\tcloseInputStream(fileInputstream);\\n251: \\t\\t\\treturn new ResponseEntity<Void>(HttpStatus.NOT_FOUND);\\n252: \\t\\t} catch (ElementNotAFileException e) {\\n261: \\t@Override\\n262: \\tpublic ResponseEntity<Void> deleteFileByPath(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath) {\\n263: \\t\\ttry {\\n264: \\t\\t\\trepository.deleteFileValue(submodelIdentifier.getIdentifier(), idShortPath);\\n265: \\t\\t\\treturn new ResponseEntity<Void>(HttpStatus.OK);\\n266: \\t\\t} catch (FileDoesNotExistException | ElementDoesNotExistException e) {\\n267: \\t\\t\\treturn new ResponseEntity<Void>(HttpStatus.NOT_FOUND);\\n268: \\t\\t} catch (ElementNotAFileException e) {\\n269: \\t\\t\\treturn new ResponseEntity<Void>(HttpStatus.PRECONDITION_FAILED);\\n282: \\t}\\n283: \\n284: \\tprivate ResponseEntity<SubmodelElementValue> handleSubmodelElementValueGetRequest(String submodelIdentifier, String idShortPath) {\\n285: \\t\\tSubmodelElementValue value = repository.getSubmodelElementValue(submodelIdentifier, idShortPath);\\n286: \\t\\treturn new ResponseEntity<SubmodelElementValue>(value, HttpStatus.OK);\\n287: \\t}\\n288: \\n289: \\tprivate ResponseEntity<SubmodelElement> handleSubmodelElementValueNormalGetRequest(String submodelIdentifier, String idShortPath) {\\n290: \\t\\tSubmodelElement submodelElement = repository.getSubmodelElement(submodelIdentifier, idShortPath);\\n291: \\t\\treturn new ResponseEntity<SubmodelElement>(submodelElement, HttpStatus.OK);\\n292: \\t}\\n293: \\n294: \\t@Override\\n295: \\tpublic ResponseEntity<OperationResult> invokeOperationSubmodelRepo(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath, @Valid OperationRequest body, @Valid Boolean async) {\"}}, \"patch\": \"key/review_evidence/C01537.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "basyx-java-server-sdk",
+    "fix_commit": "bb01310d911c83b81937dcef0fda780107442edd",
+    "parent_commit": "eab96b0bd6c3db5479a579eaa205383e77d57852",
+    "date": "2025-09-22",
+    "message_excerpt": "Fixes wrong status code for PUT AssetInformation (#865)",
+    "score": 31,
+    "stars": 84,
+    "surface_paths": [
+      "basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-feature-authorization/src/test/java/org/eclipse/digitaltwin/basyx/aasrepository/feature/authorization/TestAuthorizedAasRepository.java"
+      ],
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java"
+      ]
+    ],
+    "rank": 7,
+    "candidate_id": "C01539",
+    "item_id": "N002",
+    "set": "new",
+    "operation": "PUT /shells/{aasIdentifier}/asset-information",
+    "proposition": "PUT /shells/{aasIdentifier}/asset-information: contract says a successful Asset Information update returns 204; implementation does return 200 after setting the Asset Information",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_status",
+    "fix_family": "response_status.asset_information",
+    "proposition_check": "{\"contract\":[\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java:226\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java:239\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java:312\"],\"implementation\":[\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:87\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:108\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:138\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:162\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:177\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:181\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:182\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:183\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:197\",\"eab96b0bd6c3db5479a579eaa205383e77d57852:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:204\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java\": {\"parent_lines\": [226, 239, 312], \"parent_numbered_excerpt\": \"222: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"aasIdentifier\\\") Base64UrlEncodedIdentifier aasIdentifier,\\n223: \\t\\t\\t@Parameter(in = ParameterIn.DEFAULT, description = \\\"Asset Administration Shell object\\\", required = true, schema = @Schema()) @Valid @RequestBody AssetAdministrationShell body);\\n224: \\n225: \\t@Operation(summary = \\\"Updates the Asset Information\\\", description = \\\"\\\", tags = { \\\"Asset Administration Shell Repository API\\\" })\\n226: \\t@ApiResponses(value = { @ApiResponse(responseCode = \\\"204\\\", description = \\\"Asset Information updated successfully\\\"),\\n227: \\n228: \\t\\t\\t@ApiResponse(responseCode = \\\"400\\\", description = \\\"Bad Request, e.g. the request parameters of the format of the request body is wrong.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n229: \\n230: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n235: \\n236: \\t\\t\\t@ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal Server Error\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n237: \\n238: \\t\\t\\t@ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\\n239: \\t@RequestMapping(value = \\\"/shells/{aasIdentifier}/asset-information\\\", produces = { \\\"application/json\\\" }, consumes = { \\\"application/json\\\" }, method = RequestMethod.PUT)\\n240: \\tResponseEntity<Void> putAssetInformationAasRepository(\\n241: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"aasIdentifier\\\") Base64UrlEncodedIdentifier aasIdentifier,\\n242: \\t\\t\\t@Parameter(in = ParameterIn.DEFAULT, description = \\\"Asset Information object\\\", required = true, schema = @Schema()) @Valid @RequestBody AssetInformation body);\\n243: \\n308: \\n309: \\t\\t\\t@ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal Server Error\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n310: \\n311: \\t\\t\\t@ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\\n312: \\t@RequestMapping(value = \\\"/shells/{aasIdentifier}/asset-information/thumbnail\\\", produces = { \\\"application/json\\\" }, consumes = { \\\"multipart/form-data\\\" }, method = RequestMethod.PUT)\\n313: \\tResponseEntity<Void> putThumbnailAasRepository(\\n314: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"aasIdentifier\\\") Base64UrlEncodedIdentifier aasIdentifier,\\n315: \\t\\t\\t@Parameter(in = ParameterIn.DEFAULT, description = \\\"\\\", required = true, schema = @Schema()) @RequestParam(value = \\\"fileName\\\", required = true) String fileName,\\n316: \\t\\t\\t@Parameter(description = \\\"file detail\\\") @Valid @RequestPart(\\\"file\\\") MultipartFile file);\"}, \"basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java\": {\"parent_lines\": [87, 108, 138, 162, 177, 181, 182, 183, 197, 204], \"parent_numbered_excerpt\": \"83: \\n84: \\t@Override\\n85: \\tpublic ResponseEntity<AssetAdministrationShell> getAssetAdministrationShellById(\\n86: \\t\\t\\t@Parameter(in = ParameterIn.PATH, description = \\\"The Asset Administration Shell’s unique id (UTF8-BASE64-URL-encoded)\\\", required = true, schema = @Schema()) @PathVariable(\\\"aasIdentifier\\\") Base64UrlEncodedIdentifier aasIdentifier) {\\n87: \\t\\treturn new ResponseEntity<AssetAdministrationShell>(aasRepository.getAas(aasIdentifier.getIdentifier()), HttpStatus.OK);\\n88: \\t}\\n89: \\n90: \\t@Override\\n91: \\tpublic ResponseEntity<AssetAdministrationShell> postAssetAdministrationShell(\\n104: \\n105: \\t@Override\\n106: \\tpublic ResponseEntity<Void> deleteSubmodelReferenceByIdAasRepository(Base64UrlEncodedIdentifier aasIdentifier, Base64UrlEncodedIdentifier submodelIdentifier) {\\n107: \\t\\taasRepository.removeSubmodelReference(aasIdentifier.getIdentifier(), submodelIdentifier.getIdentifier());\\n108: \\t\\treturn new ResponseEntity<Void>(HttpStatus.OK);\\n109: \\t}\\n110: \\n111: \\t@Override\\n112: \\tpublic ResponseEntity<PagedResult> getAllAssetAdministrationShells(@Valid List<Base64UrlEncodedIdentifier> assetIds, @Valid String idShort, @Min(0) @Valid Integer limit, @Valid Base64UrlEncodedCursor cursor) {\\n134: \\n135: \\t\\tresult.setResult(paginatedAAS.getResult());\\n136: \\t\\tresult.setPagingMetadata(new PagedResultPagingMetadata().cursor(encodedCursor));\\n137: \\n138: \\t\\treturn new ResponseEntity<>(result, HttpStatus.OK);\\n139: \\t}\\n140: \\n141: \\t@Override\\n142: \\tpublic ResponseEntity<PagedResult> getAllSubmodelReferencesAasRepository(Base64UrlEncodedIdentifier aasIdentifier, @Min(0) @Valid Integer limit, @Valid Base64UrlEncodedCursor cursor) {\\n158: \\n159: \\t\\tresult.setResult(submodelReferences.getResult());\\n160: \\t\\tresult.setPagingMetadata(new PagedResultPagingMetadata().cursor(encodedCursor));\\n161: \\n162: \\t\\treturn new ResponseEntity<>(result, HttpStatus.OK);\\n163: \\t}\\n164: \\n165: \\t@Override\\n166: \\tpublic ResponseEntity<Reference> postSubmodelReferenceAasRepository(Base64UrlEncodedIdentifier aasIdentifier, @Valid Reference body) {\\n173: \\t}\\n174: \\n175: \\t@Override\\n176: \\tpublic ResponseEntity<AssetInformation> getAssetInformationAasRepository(Base64UrlEncodedIdentifier aasIdentifier) {\\n177: \\t\\treturn new ResponseEntity<AssetInformation>(aasRepository.getAssetInformation(aasIdentifier.getIdentifier()), HttpStatus.OK);\\n178: \\t}\\n179: \\n180: \\t@Override\\n181: \\tpublic ResponseEntity<Void> putAssetInformationAasRepository(Base64UrlEncodedIdentifier aasIdentifier, @Valid AssetInformation body) {\\n182: \\t\\taasRepository.setAssetInformation(aasIdentifier.getIdentifier(), body);\\n183: \\t\\treturn new ResponseEntity<Void>(HttpStatus.OK);\\n184: \\t}\\n185: \\n186: \\tprivate String getEncodedCursorFromCursorResult(CursorResult<?> cursorResult) {\\n187: \\t\\tif (cursorResult == null || cursorResult.getCursor() == null) {\\n193: \\n194: \\t@Override\\n195: \\tpublic ResponseEntity<Void> deleteThumbnailAasRepository(Base64UrlEncodedIdentifier aasIdentifier) {\\n196: \\t\\taasRepository.deleteThumbnail(aasIdentifier.getIdentifier());\\n197: \\t\\treturn new ResponseEntity<Void>(HttpStatus.OK);\\n198: \\t}\\n199: \\n200: \\t@Override\\n201: \\tpublic ResponseEntity<Resource> getThumbnailAasRepository(Base64UrlEncodedIdentifier aasIdentifier) {\\n202:         Resource resource = new FileSystemResource(aasRepository.getThumbnail(aasIdentifier.getIdentifier()));\\n203: \\n204:         return new ResponseEntity<>(resource, HttpStatus.OK);\\n205:     }\\n206: \\n207: \\t@Override\\n208: \\tpublic ResponseEntity<Void> putThumbnailAasRepository(Base64UrlEncodedIdentifier aasIdentifier, String fileName, @Valid MultipartFile file) {\"}}, \"patch\": \"key/review_evidence/C01539.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "basyx-java-server-sdk",
+    "fix_commit": "03405aacdcf4c02bb2066255855cec46b0dd6c62",
+    "parent_commit": "7e7edf3a49989e9cd0a7ae74e774cc29645b4f46",
+    "date": "2025-02-17",
+    "message_excerpt": "fix: Response body for post (#484)",
+    "score": 21,
+    "stars": 84,
+    "surface_paths": [
+      "basyx.submodelrepository/basyx.submodelrepository-backend/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/backend/CrudSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-client/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/client/ConnectedSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-core/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/SubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-feature-authorization/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/authorization/AuthorizedSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-feature-mqtt/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/mqtt/MqttSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-feature-operation-delegation/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/operation/delegation/OperationDelegationSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-feature-registry-integration/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/registry/integration/RegistryIntegrationSubmodelRepository.java",
+      "basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java",
+      "basyx.submodelservice/basyx.submodelservice-backend-inmemory/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/InMemorySubmodelService.java",
+      "basyx.submodelservice/basyx.submodelservice-backend-mongodb/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/MongoDBSubmodelService.java",
+      "basyx.submodelservice/basyx.submodelservice-client/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/client/ConnectedSubmodelService.java",
+      "basyx.submodelservice/basyx.submodelservice-core/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/SubmodelService.java",
+      "basyx.submodelservice/basyx.submodelservice-feature-mqtt/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/feature/mqtt/MqttSubmodelService.java",
+      "basyx.submodelservice/basyx.submodelservice-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/http/SubmodelServiceHTTPApiController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-backend/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/backend/CrudSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-client/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/client/ConnectedSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-core/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/SubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-core/src/test/java/org/eclipse/digitaltwin/basyx/submodelrepository/core/SubmodelRepositorySubmodelServiceWrapper.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-authorization/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/authorization/AuthorizedSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-mqtt/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/mqtt/MqttSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-mqtt/src/test/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/mqtt/TestMqttSubmodelObserver.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-operation-delegation/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/operation/delegation/OperationDelegationSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-feature-registry-integration/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/registry/integration/RegistryIntegrationSubmodelRepository.java"
+      ],
+      [
+        "M",
+        "basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-backend-inmemory/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/InMemorySubmodelService.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-backend-mongodb/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/MongoDBSubmodelService.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-client/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/client/ConnectedSubmodelService.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-core/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/SubmodelService.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-core/src/test/java/org/eclipse/digitaltwin/basyx/submodelservice/SubmodelServiceHelper.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-core/src/test/java/org/eclipse/digitaltwin/basyx/submodelservice/SubmodelServiceSuite.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-feature-mqtt/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/feature/mqtt/MqttSubmodelService.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-feature-mqtt/src/test/java/org/eclipse/digitaltwin/basyx/submodelrepository/feature/mqtt/TestMqttSubmodelObserver.java"
+      ],
+      [
+        "M",
+        "basyx.submodelservice/basyx.submodelservice-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelservice/http/SubmodelServiceHTTPApiController.java"
+      ]
+    ],
+    "rank": 10,
+    "candidate_id": "C01542",
+    "item_id": "N003",
+    "set": "new",
+    "operation": "POST /submodels/{submodelIdentifier}/submodel-elements",
+    "proposition": "POST /submodels/{submodelIdentifier}/submodel-elements: contract says 201 contains a JSON SubmodelElement; implementation does return a bodyless 201 after creating the element",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_body",
+    "fix_family": "response_body.created_submodel_element",
+    "proposition_check": "{\"contract\":[\"7e7edf3a49989e9cd0a7ae74e774cc29645b4f46:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java:307\",\"7e7edf3a49989e9cd0a7ae74e774cc29645b4f46:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java:333\"],\"implementation\":[\"7e7edf3a49989e9cd0a7ae74e774cc29645b4f46:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:181\",\"7e7edf3a49989e9cd0a7ae74e774cc29645b4f46:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:185\",\"7e7edf3a49989e9cd0a7ae74e774cc29645b4f46:basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java:187\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryHTTPApi.java\": {\"parent_lines\": [307, 333], \"parent_numbered_excerpt\": \"303: \\t\\t\\t@Parameter(in = ParameterIn.QUERY, description = \\\"Determines the structural depth of the respective resource content\\\", schema = @Schema(allowableValues = {\\n304: \\t\\t\\t\\t\\t\\\"core\\\" }, defaultValue = \\\"core\\\")) @Valid @RequestParam(value = \\\"level\\\", required = false, defaultValue = \\\"core\\\") String level);\\n305: \\n306: \\t@Operation(summary = \\\"Creates a new submodel element at a specified path within submodel elements hierarchy\\\", description = \\\"\\\", tags = { \\\"Submodel Repository API\\\" })\\n307: \\t@ApiResponses(value = { @ApiResponse(responseCode = \\\"201\\\", description = \\\"Submodel element created successfully\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = SubmodelElement.class))),\\n308: \\n309: \\t\\t\\t@ApiResponse(responseCode = \\\"400\\\", description = \\\"Bad Request, e.g. the request parameters of the format of the request body is wrong.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n310: \\n311: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n329: \\t\\t\\t@Parameter(in = ParameterIn.QUERY, description = \\\"Determines to which extent the resource is being serialized\\\", schema = @Schema(allowableValues = { \\\"withBlobValue\\\",\\n330: \\t\\t\\t\\t\\t\\\"withoutBlobValue\\\" }, defaultValue = \\\"withoutBlobValue\\\")) @Valid @RequestParam(value = \\\"extent\\\", required = false, defaultValue = \\\"withoutBlobValue\\\") String extent);\\n331: \\n332: \\t@Operation(summary = \\\"Creates a new submodel element\\\", description = \\\"\\\", tags = { \\\"Submodel Repository API\\\" })\\n333: \\t@ApiResponses(value = { @ApiResponse(responseCode = \\\"201\\\", description = \\\"Submodel element created successfully\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = SubmodelElement.class))),\\n334: \\n335: \\t\\t\\t@ApiResponse(responseCode = \\\"400\\\", description = \\\"Bad Request, e.g. the request parameters of the format of the request body is wrong.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n336: \\n337: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\"}, \"basyx.submodelrepository/basyx.submodelrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/submodelrepository/http/SubmodelRepositoryApiHTTPController.java\": {\"parent_lines\": [181, 185, 187], \"parent_numbered_excerpt\": \"177: \\n178: \\t@Override\\n179: \\tpublic ResponseEntity<SubmodelElement> postSubmodelElementByPathSubmodelRepo(Base64UrlEncodedIdentifier submodelIdentifier, String idShortPath, @Valid SubmodelElement body, @Valid String level, @Valid String extent) {\\n180: \\t\\trepository.createSubmodelElement(submodelIdentifier.getIdentifier(), idShortPath, body);\\n181: \\t\\treturn new ResponseEntity<SubmodelElement>(HttpStatus.CREATED);\\n182: \\t}\\n183: \\n184: \\t@Override\\n185: \\tpublic ResponseEntity<SubmodelElement> postSubmodelElementSubmodelRepo(Base64UrlEncodedIdentifier submodelIdentifier, @Valid SubmodelElement body) {\\n186: \\t\\trepository.createSubmodelElement(submodelIdentifier.getIdentifier(), body);\\n187: \\t\\treturn new ResponseEntity<SubmodelElement>(HttpStatus.CREATED);\\n188: \\t}\\n189: \\n190: \\t@Override\\n191: \\tpublic ResponseEntity<Void> putSubmodelElementByPathSubmodelRepo(\"}}, \"patch\": \"key/review_evidence/C01542.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "basyx-java-server-sdk",
+    "fix_commit": "179792bd3e834e2c7bbb289fd6886cd712616592",
+    "parent_commit": "664073b2482a807236efad4b50716c9dfc2a6891",
+    "date": "2023-11-08",
+    "message_excerpt": "Fixes treatment of optional attribute (assetIds) as mandatory (#133)",
+    "score": 21,
+    "stars": 84,
+    "surface_paths": [
+      "basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApiController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApiController.java"
+      ],
+      [
+        "M",
+        "basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-tck/src/test/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/tck/AasDiscoveryServiceTestDefinedURL.java"
+      ]
+    ],
+    "rank": 15,
+    "candidate_id": "C01547",
+    "item_id": "N004",
+    "set": "new",
+    "operation": "GET /lookup/shells",
+    "proposition": "GET /lookup/shells: contract says assetIds is optional; implementation does call stream on the nullable assetIds argument",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "optional_query_parameter",
+    "fix_family": "optional_query_parameter.asset_ids",
+    "proposition_check": "{\"contract\":[\"664073b2482a807236efad4b50716c9dfc2a6891:basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApi.java:82\"],\"implementation\":[\"664073b2482a807236efad4b50716c9dfc2a6891:basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApiController.java:80\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApi.java\": {\"parent_lines\": [82], \"parent_numbered_excerpt\": \"78:         @ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\\n79:     @RequestMapping(value = \\\"/lookup/shells\\\",\\n80:         produces = { \\\"application/json\\\" }, \\n81:         method = RequestMethod.GET)\\n82:     ResponseEntity<PagedResult> getAllAssetAdministrationShellIdsByAssetLink(@Parameter(in = ParameterIn.QUERY, description = \\\"A list of specific Asset identifiers. Each Asset identifier is a base64-url-encoded [SpecificAssetId](https://api.swaggerhub.com/domains/Plattform_i40/Part1-MetaModel-Schemas/V3.0.1#/components/schemas/SpecificAssetId)\\\" ,schema=@Schema()) @Valid @RequestParam(value = \\\"assetIds\\\", required = false) List<Base64UrlEncodedIdentifier> assetIds, @Min(1)@Parameter(in = ParameterIn.QUERY, description = \\\"The maximum number of elements in the response array\\\" ,schema=@Schema(allowableValues={ \\\"1\\\" }, minimum=\\\"1\\\"\\n83: )) @Valid @RequestParam(value = \\\"limit\\\", required = false) Integer limit, @Parameter(in = ParameterIn.QUERY, description = \\\"A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue\\\" ,schema=@Schema()) @Valid @RequestParam(value = \\\"cursor\\\", required = false) String cursor);\\n84: \\n85: \\n86:     @Operation(summary = \\\"Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content\\\", description = \\\"\\\", tags={ \\\"Asset Administration Shell <redacted> API\\\" })\"}, \"basyx.aasdiscoveryservice/basyx.aasdiscoveryservice-http/src/main/java/org/eclipse/digitaltwin/basyx/aasdiscoveryservice/http/LookupApiController.java\": {\"parent_lines\": [80], \"parent_numbered_excerpt\": \"76: \\t\\t\\tcursor = \\\"\\\";\\n77: \\n78: \\t\\tPaginationInfo pInfo = new PaginationInfo(limit, cursor);\\n79: \\t\\t\\n80: \\t\\tList<String> decodedAssetIds = assetIds.stream().map(assetId -> assetId.getIdentifier()).collect(Collectors.toList());\\n81: \\n82: \\t\\tCursorResult<List<String>> filteredResult = aasDiscoveryService.getAllAssetAdministrationShellIdsByAssetLink(pInfo, decodedAssetIds);\\n83: \\n84: \\t\\tInlineResponse200 paginatedAasIds = new InlineResponse200();\"}}, \"patch\": \"key/review_evidence/C01547.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "basyx-java-server-sdk",
+    "fix_commit": "625c98be5ca360c13b5f93d293972352c773a11c",
+    "parent_commit": "45f2d52396dd29b7d93eef40f9fc493cde439200",
+    "date": "2024-08-22",
+    "message_excerpt": "Fixes 'same Submodel Reference can be applied to same AAS again without throwing 409' (#388)",
+    "score": 21,
+    "stars": 84,
+    "surface_paths": [
+      "basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java",
+      "basyx.common/basyx.core/src/main/java/org/eclipse/digitaltwin/basyx/core/exceptions/CollidingSubmodelReferenceException.java",
+      "basyx.common/basyx.core/src/main/java/org/eclipse/digitaltwin/basyx/core/exceptions/MissingKeyTypeException.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-core/src/test/java/org/eclipse/digitaltwin/basyx/aasrepository/AasRepositorySuite.java"
+      ],
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-feature-authorization/src/test/java/org/eclipse/digitaltwin/basyx/aasrepository/feature/authorization/TestAuthorizedAasRepository.java"
+      ],
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java"
+      ],
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-http/src/test/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPSuite.java"
+      ],
+      [
+        "M",
+        "basyx.aasrepository/basyx.aasrepository-http/src/test/resources/PaginatedSingleSMReference.json"
+      ],
+      [
+        "R055",
+        "basyx.aasrepository/basyx.aasrepository-feature-authorization/src/test/resources/authorization/SingleSubmodelReference.json",
+        "basyx.aasrepository/basyx.aasrepository-http/src/test/resources/SingleSubmodelReference_1.json"
+      ],
+      [
+        "R055",
+        "basyx.aasrepository/basyx.aasrepository-http/src/test/resources/SingleSubmodelReference.json",
+        "basyx.aasrepository/basyx.aasrepository-http/src/test/resources/SingleSubmodelReference_2.json"
+      ],
+      [
+        "M",
+        "basyx.aasservice/basyx.aasservice-backend-inmemory/src/main/java/org/eclipse/digitaltwin/basyx/aasservice/backend/InMemoryAasService.java"
+      ],
+      [
+        "M",
+        "basyx.aasservice/basyx.aasservice-client/src/main/java/org/eclipse/digitaltwin/basyx/aasservice/client/ConnectedAasService.java"
+      ],
+      [
+        "M",
+        "basyx.aasservice/basyx.aasservice-core/src/test/java/org/eclipse/digitaltwin/basyx/aasservice/AasServiceSuite.java"
+      ],
+      [
+        "A",
+        "basyx.common/basyx.core/src/main/java/org/eclipse/digitaltwin/basyx/core/exceptions/CollidingSubmodelReferenceException.java"
+      ],
+      [
+        "A",
+        "basyx.common/basyx.core/src/main/java/org/eclipse/digitaltwin/basyx/core/exceptions/MissingKeyTypeException.java"
+      ]
+    ],
+    "rank": 27,
+    "candidate_id": "C01559",
+    "item_id": "N005",
+    "set": "new",
+    "operation": "POST /shells/{aasIdentifier}/submodel-refs",
+    "proposition": "POST /shells/{aasIdentifier}/submodel-refs: contract says creating an already existing resource receives 409; implementation does append a duplicate submodel reference and return 201",
+    "truth_direction": "IMPL",
+    "confidence": 2,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_status",
+    "fix_family": "response_status.duplicate_submodel_reference",
+    "proposition_check": "{\"contract\":[\"45f2d52396dd29b7d93eef40f9fc493cde439200:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java:177\",\"45f2d52396dd29b7d93eef40f9fc493cde439200:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java:197\"],\"implementation\":[\"45f2d52396dd29b7d93eef40f9fc493cde439200:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:159\",\"45f2d52396dd29b7d93eef40f9fc493cde439200:basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java:160\",\"45f2d52396dd29b7d93eef40f9fc493cde439200:basyx.aasservice/basyx.aasservice-backend-inmemory/src/main/java/org/eclipse/digitaltwin/basyx/aasservice/backend/InMemoryAasService.java:97\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryHTTPApi.java\": {\"parent_lines\": [177, 197], \"parent_numbered_excerpt\": \"173: \\t\\t\\t@ApiResponse(responseCode = \\\"401\\\", description = \\\"Unauthorized, e.g. the server refused the authorization attempt.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n174: \\n175: \\t\\t\\t@ApiResponse(responseCode = \\\"403\\\", description = \\\"Forbidden\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n176: \\n177: \\t\\t\\t@ApiResponse(responseCode = \\\"409\\\", description = \\\"Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n178: \\n179: \\t\\t\\t@ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal Server Error\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n180: \\n181: \\t\\t\\t@ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\\n193: \\t\\t\\t@ApiResponse(responseCode = \\\"403\\\", description = \\\"Forbidden\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n194: \\n195: \\t\\t\\t@ApiResponse(responseCode = \\\"404\\\", description = \\\"Not Found\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n196: \\n197: \\t\\t\\t@ApiResponse(responseCode = \\\"409\\\", description = \\\"Conflict, a resource which shall be created exists already. Might be thrown if a Submodel or SubmodelElement with the same ShortId is contained in a POST request.\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n198: \\n199: \\t\\t\\t@ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal Server Error\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))),\\n200: \\n201: \\t\\t\\t@ApiResponse(responseCode = \\\"200\\\", description = \\\"Default error handling for unmentioned status codes\\\", content = @Content(mediaType = \\\"application/json\\\", schema = @Schema(implementation = Result.class))) })\"}, \"basyx.aasrepository/basyx.aasrepository-http/src/main/java/org/eclipse/digitaltwin/basyx/aasrepository/http/AasRepositoryApiHTTPController.java\": {\"parent_lines\": [159, 160], \"parent_numbered_excerpt\": \"155: \\t}\\n156: \\n157: \\t@Override\\n158: \\tpublic ResponseEntity<Reference> postSubmodelReferenceAasRepository(Base64UrlEncodedIdentifier aasIdentifier, @Valid Reference body) {\\n159: \\t\\taasRepository.addSubmodelReference(aasIdentifier.getIdentifier(), body);\\n160: \\t\\treturn new ResponseEntity<Reference>(body, HttpStatus.CREATED);\\n161: \\t}\\n162: \\n163: \\t@Override\\n164: \\tpublic ResponseEntity<AssetInformation> getAssetInformationAasRepository(Base64UrlEncodedIdentifier aasIdentifier) {\"}, \"basyx.aasservice/basyx.aasservice-backend-inmemory/src/main/java/org/eclipse/digitaltwin/basyx/aasservice/backend/InMemoryAasService.java\": {\"parent_lines\": [97], \"parent_numbered_excerpt\": \"93: \\n94: \\n95: \\t@Override\\n96: \\tpublic void addSubmodelReference(Reference submodelReference) {\\n97: \\t\\taas.getSubmodels().add(submodelReference);\\n98: \\t}\\n99: \\n100: \\t@Override\\n101: \\tpublic void removeSubmodelReference(String submodelId) {\"}}, \"patch\": \"key/review_evidence/C01559.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "cwms-data-api",
+    "fix_commit": "8f0afff5ae4683af458c94abaa3cd1236b7fae02",
+    "parent_commit": "1d110ad1b4c8a95be128f0d521f441a5390b2850",
+    "date": "2026-09-10",
+    "message_excerpt": "Fixed incorrect path in Water Contract controller openapi annotations (#1921)",
+    "score": 31,
+    "stars": "30",
+    "surface_paths": [
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractController.java"
+      ]
+    ],
+    "rank": 8,
+    "candidate_id": "C01631",
+    "item_id": "N006",
+    "set": "new",
+    "operation": "GET /projects/{office}/{project-id}/water-user/{water-user}/contracts/{contract-name}",
+    "proposition": "GET /projects/{office}/{project-id}/water-user/{water-user}/contracts/{contract-name}: contract says the resource path contains water-users; implementation does register the controller under a path containing water-user",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "operation_path",
+    "fix_family": "operation_path.water_contract",
+    "proposition_check": "{\"contract\":[\"1d110ad1b4c8a95be128f0d521f441a5390b2850:cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractController.java:90\"],\"implementation\":[\"1d110ad1b4c8a95be128f0d521f441a5390b2850:cwms-data-api/src/main/java/cwms/cda/ApiServletRouteConfiguration.java:342\",\"1d110ad1b4c8a95be128f0d521f441a5390b2850:cwms-data-api/src/main/java/cwms/cda/ApiServletRouteConfiguration.java:537\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractController.java\": {\"parent_lines\": [90], \"parent_numbered_excerpt\": \"86:         security = {\\n87:             @OpenApiSecurity(name = \\\"gets overridden allows lock icon.\\\")\\n88:         },\\n89:         description = \\\"Return a specified water contract\\\",\\n90:         path = \\\"/projects/{office}/{project-id}/water-users/{water-user}/contracts/{contract-name}\\\",\\n91:         method = HttpMethod.GET,\\n92:         tags = {TAG}\\n93:     )\\n94: \"}, \"cwms-data-api/src/main/java/cwms/cda/ApiServletRouteConfiguration.java\": {\"parent_lines\": [342, 537], \"parent_numbered_excerpt\": \"338: \\n339:         post(format(\\\"/projects/status-update/{%s}\\\", NAME), new ProjectPublishStatusUpdate(metrics), requiredRoles);\\n340: \\n341:         addWaterUserHandlers(format(\\\"/projects/{%s}/{%s}/water-user\\\", OFFICE, PROJECT_ID), requiredRoles, metrics);\\n342:         addWaterContractHandlers(format(\\\"/projects/{%s}/{%s}/water-user/{%s}/contracts\\\", OFFICE, PROJECT_ID,\\n343:                 WATER_USER), requiredRoles, metrics);\\n344:         addAccountingHandlers(format(\\\"/projects/{%s}/{%s}/water-user/{%s}\\\"\\n345:                 + \\\"/contracts/{%s}/accounting\\\", OFFICE, PROJECT_ID, WATER_USER, CONTRACT_NAME), requiredRoles, metrics);\\n346:         delete(format(\\\"/projects/{%s}/{%s}/water-user/{%s}/contracts/{%s}/pumps/{%s}\\\", OFFICE, PROJECT_ID,\\n533:         delete(path + format(\\\"/{%s}\\\", WATER_USER), new WaterUserDeleteController(metrics), requiredRoles);\\n534:     }\\n535: \\n536:     private static void addWaterContractHandlers(String path, RouteRole[] requiredRoles, MetricRegistry metrics) {\\n537:         get(path + format(\\\"/{%s}\\\", CONTRACT_NAME), new WaterContractController(metrics), requiredRoles);\\n538:         get(path, new WaterContractCatalogController(metrics), requiredRoles);\\n539:         post(path, new WaterContractCreateController(metrics), requiredRoles);\\n540:         patch(path + format(\\\"/{%s}\\\", CONTRACT_NAME), new WaterContractUpdateController(metrics), requiredRoles);\\n541:         delete(path + format(\\\"/{%s}\\\", CONTRACT_NAME), new WaterContractDeleteController(metrics), requiredRoles);\"}}, \"patch\": \"key/review_evidence/C01631.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterSupplyControllerBase.java"
+    ],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "cwms-data-api",
+    "fix_commit": "9d4268c8bd8c357c4c21fae78274e85b050d5830",
+    "parent_commit": "56afa3e3bb263980fa3e6da9d597dca961745aae",
+    "date": "2026-01-08",
+    "message_excerpt": "Fix wrong query parameter name for blob. (#1498)",
+    "score": 31,
+    "stars": "30",
+    "surface_paths": [
+      ".github/workflows/release.yml",
+      "cwms-data-api/src/main/java/cwms/cda/api/BlobController.java"
+    ],
+    "changes": [
+      [
+        "M",
+        ".github/workflows/release.yml"
+      ],
+      [
+        "M",
+        "cwms-data-api/src/main/java/cwms/cda/api/BlobController.java"
+      ]
+    ],
+    "rank": 9,
+    "candidate_id": "C01632",
+    "item_id": "N007",
+    "set": "new",
+    "operation": "GET /blobs/{blob-id}",
+    "proposition": "GET /blobs/{blob-id}: contract says the blob-id query parameter overrides the path identifier; implementation does read clob-id to choose the overriding identifier",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "query_parameter_name",
+    "fix_family": "query_parameter_name.blob_id",
+    "proposition_check": "{\"contract\":[\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:134\",\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:225\",\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:277\"],\"implementation\":[\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:154\",\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:238\",\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/BlobController.java:290\"],\"route\":[\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:86\",\"56afa3e3bb263980fa3e6da9d597dca961745aae:cwms-data-api/src/main/java/cwms/cda/api/Controllers.java:87\"]}",
+    "evidence": "{\"parent\": {\"cwms-data-api/src/main/java/cwms/cda/api/BlobController.java\": {\"parent_lines\": [154, 238, 290], \"parent_numbered_excerpt\": \"150:     @Override\\n151:     public void getOne(@NotNull Context ctx, @NotNull String blobId) {\\n152: \\n153:         try (final Timer.Context ignored = markAndTime(GET_ONE)) {\\n154:             String idQueryParam = ctx.queryParam(CLOB_ID);\\n155:             if (idQueryParam != null) {\\n156:                 blobId = idQueryParam;\\n157:             }\\n158:             DSLContext dsl = getDslContext(ctx);\\n234:     )\\n235:     @Override\\n236:     public void update(@NotNull Context ctx, @NotNull String blobId) {\\n237:         try (final Timer.Context ignored = markAndTime(UPDATE)) {\\n238:             String idQueryParam = ctx.queryParam(CLOB_ID);\\n239:             if (idQueryParam != null) {\\n240:                 blobId = idQueryParam;\\n241:             }\\n242:             DSLContext dsl = getDslContext(ctx);\\n286:     )\\n287:     @Override\\n288:     public void delete(@NotNull Context ctx, @NotNull String blobId) {\\n289:         try (Timer.Context ignored = markAndTime(DELETE)) {\\n290:             String idQueryParam = ctx.queryParam(CLOB_ID);\\n291:             if (idQueryParam != null) {\\n292:                 blobId = idQueryParam;\\n293:             }\\n294:             DSLContext dsl = getDslContext(ctx);\"}, \"cwms-data-api/src/main/java/cwms/cda/api/Controllers.java\": {\"parent_lines\": [86, 87], \"parent_numbered_excerpt\": \"82:     public static final String LOCATION_GROUP_LIKE = \\\"location-group-like\\\";\\n83: \\n84:     public static final String TIMESERIES_GROUP_LIKE = \\\"timeseries-group-like\\\";\\n85:     public static final String ACCEPT = \\\"Accept\\\";\\n86:     public static final String CLOB_ID = \\\"clob-id\\\";\\n87:     public static final String BLOB_ID = \\\"blob-id\\\";\\n88:     public static final String INCLUDE_VALUES = \\\"include-values\\\";\\n89:     public static final String FAIL_IF_EXISTS = \\\"fail-if-exists\\\";\\n90:     public static final String IGNORE_NULLS = \\\"ignore-nulls\\\";\\n91:     public static final String EFFECTIVE_DATE = \\\"effective-date\\\";\"}}, \"patch\": \"key/review_evidence/C01632.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "ditto",
+    "fix_commit": "75e508329d64c55198d2cba359f0b1ec8bc056b1",
+    "parent_commit": "d7da7ab12553b128ee44f2d1f9360ec49a456f0a",
+    "date": "2018-05-16",
+    "message_excerpt": "align swagger documentation with actual implementation: for policies, when putting \"list properties\" such as subjects, always status 204 is returned even when t",
+    "score": 31,
+    "stars": 952,
+    "surface_paths": [
+      "documentation/src/main/resources/openapi/ditto-api-2.yml"
+    ],
+    "changes": [
+      [
+        "M",
+        "documentation/src/main/resources/openapi/ditto-api-2.yml"
+      ]
+    ],
+    "rank": 22,
+    "candidate_id": "C01956",
+    "item_id": "N008",
+    "set": "new",
+    "operation": "PUT /policies/{policyId}/entries/{label}/subjects",
+    "proposition": "PUT /policies/{policyId}/entries/{label}/subjects: contract says creating Subjects receives 201 with a Subjects body; implementation does construct a bodyless 204 response for successful Subjects modification",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "spec_file",
+    "mismatch_type": "response_status",
+    "fix_family": "response_status.subjects_creation",
+    "proposition_check": "{\"contract\":[\"d7da7ab12553b128ee44f2d1f9360ec49a456f0a:documentation/src/main/resources/openapi/ditto-api-2.yml:1984\"],\"implementation\":[\"d7da7ab12553b128ee44f2d1f9360ec49a456f0a:signals/commands/policies/src/main/java/org/eclipse/ditto/signals/commands/policies/modify/ModifySubjectsResponse.java:77\",\"d7da7ab12553b128ee44f2d1f9360ec49a456f0a:services/policies/persistence/src/main/java/org/eclipse/ditto/services/policies/persistence/actors/policy/PolicyPersistenceActor.java:1165\"],\"route\":[\"d7da7ab12553b128ee44f2d1f9360ec49a456f0a:services/gateway/endpoints/src/main/java/org/eclipse/ditto/services/gateway/endpoints/routes/policies/PolicyEntriesRoute.java:188\"]}",
+    "evidence": "{\"parent\": {\"documentation/src/main/resources/openapi/ditto-api-2.yml\": {\"parent_lines\": [1984], \"parent_numbered_excerpt\": \"1980:           schema:\\n1981:             $ref: '#/definitions/Subjects'\\n1982:       responses:\\n1983:         '201':\\n1984:           description: The Subjects were successfully created.\\n1985:           headers:\\n1986:             Location:\\n1987:               description: The location of the created Subjects\\n1988:               type: string\"}, \"signals/commands/policies/src/main/java/org/eclipse/ditto/signals/commands/policies/modify/ModifySubjectsResponse.java\": {\"parent_lines\": [77], \"parent_numbered_excerpt\": \"73:      */\\n74:     public static ModifySubjectsResponse of(final String policyId, final Label label,\\n75:             final DittoHeaders dittoHeaders) {\\n76: \\n77:         return new ModifySubjectsResponse(policyId, label, HttpStatusCode.NO_CONTENT, dittoHeaders);\\n78:     }\\n79: \\n80:     /**\\n81:      * Creates a response to a {@code ModifySubjects} command from a JSON string.\"}, \"services/policies/persistence/src/main/java/org/eclipse/ditto/services/policies/persistence/actors/policy/PolicyPersistenceActor.java\": {\"parent_lines\": [1165], \"parent_numbered_excerpt\": \"1161:                     final SubjectsModified subjectsModified =\\n1162:                             SubjectsModified.of(policyId, label, subjects, getNextRevision(), getEventTimestamp(),\\n1163:                                     command.getDittoHeaders());\\n1164:                     processEvent(subjectsModified,\\n1165:                             event -> notifySender(ModifySubjectsResponse.of(policyId, label, dittoHeaders)));\\n1166:                 } else {\\n1167:                     policyEntryInvalid(label, validator.getReason().orElse(null), dittoHeaders);\\n1168:                 }\\n1169:             } else {\"}, \"services/gateway/endpoints/src/main/java/org/eclipse/ditto/services/gateway/endpoints/routes/policies/PolicyEntriesRoute.java\": {\"parent_lines\": [188], \"parent_numbered_excerpt\": \"184:                                         put(() -> // PUT /entries/<label>/subjects\\n185:                                                 extractDataBytes(payloadSource ->\\n186:                                                         handlePerRequest(ctx, dittoHeaders,\\n187:                                                                 payloadSource, subjectsJson ->\\n188:                                                                         ModifySubjects.of(policyId,\\n189:                                                                                 Label.of(label),\\n190:                                                                                 PoliciesModelFactory.newSubjects(\\n191:                                                                                         JsonFactory.newObject(\\n192:                                                                                                 subjectsJson)),\"}}, \"patch\": \"key/review_evidence/C01956.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "eudi-srv-verifier-endpoint",
+    "fix_commit": "d74c971f3524e9aa4bea236aaa0ffab4b41be45f",
+    "parent_commit": "07ba13696742182524f4e52ca0315e81d52a67af",
+    "date": "2026-09-01",
+    "message_excerpt": "Answer 400 when a required form field is missing from a utility endpoint (#610)",
+    "score": 11,
+    "stars": "66",
+    "surface_paths": [
+      "src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt",
+      "src/main/resources/public/openapi.json"
+    ],
+    "changes": [
+      [
+        "M",
+        "src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt"
+      ],
+      [
+        "M",
+        "src/main/resources/public/openapi.json"
+      ],
+      [
+        "A",
+        "src/test/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApiTest.kt"
+      ]
+    ],
+    "rank": 16,
+    "candidate_id": "C03315",
+    "item_id": "N009",
+    "set": "new",
+    "operation": "POST /utilities/validations/msoMdoc/deviceResponse",
+    "proposition": "POST /utilities/validations/msoMdoc/deviceResponse: contract says bad requests receive 400 with a JSON validation-failure body; implementation does throw an unhandled IllegalArgumentException when device_response is absent",
+    "truth_direction": "BOTH",
+    "confidence": 2,
+    "contract_kind": "spec_file",
+    "mismatch_type": "required_form_field",
+    "fix_family": "required_form_field.error_response",
+    "proposition_check": "{\"contract\":[\"07ba13696742182524f4e52ca0315e81d52a67af:src/main/resources/public/openapi.json:482\",\"07ba13696742182524f4e52ca0315e81d52a67af:src/main/resources/public/openapi.json:1766\"],\"implementation\":[\"07ba13696742182524f4e52ca0315e81d52a67af:src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt:80\",\"07ba13696742182524f4e52ca0315e81d52a67af:src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt:86\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"src/main/resources/public/openapi.json\": {\"parent_lines\": [482, 1766], \"parent_numbered_excerpt\": \"478:             \\\"description\\\": \\\"Bad request\\\",\\n479:             \\\"content\\\": {\\n480:               \\\"application/json\\\": {\\n481:                 \\\"schema\\\": {\\n482:                   \\\"$ref\\\": \\\"#/components/schemas/MsoMdocDeviceResponseValidationFailure\\\"\\n483:                 },\\n484:                 \\\"examples\\\": {\\n485:                   \\\"MsoMdocDeviceResponseValidationFailureDecodingFailure\\\": {\\n486:                     \\\"$ref\\\": \\\"#/components/examples/MsoMdocDeviceResponseValidationFailureDecodingFailure\\\"\\n1762:           \\\"type\\\"\\n1763:         ],\\n1764:         \\\"additionalProperties\\\": false\\n1765:       },\\n1766:       \\\"MsoMdocDeviceResponseValidationFailure\\\": {\\n1767:         \\\"oneOf\\\": [\\n1768:           {\\n1769:             \\\"$ref\\\": \\\"#/components/schemas/MsoMdocDeviceResponseValidationFailureDecodingFailure\\\"\\n1770:           },\"}, \"src/main/kotlin/eu/europa/ec/eudi/verifier/endpoint/adapter/input/web/UtilityApi.kt\": {\"parent_lines\": [80, 86], \"parent_numbered_excerpt\": \"76:             val deviceResponse =\\n77:                 form[\\\"device_response\\\"]\\n78:                     ?.firstOrNull { it.isNotBlank() }\\n79:                     .let {\\n80:                         requireNotNull(it) { \\\"device_response must be provided\\\" }\\n81:                     }\\n82:             val issuerChain = form.issuerChain()\\n83:             validateMsoMdocDeviceResponse(deviceResponse = deviceResponse, issuerChain = issuerChain)\\n84:         }.fold(\\n85:             transform = { documents -> ok().json().bodyValueAndAwait(documents) },\\n86:             recover = { error -> badRequest().json().bodyValueAndAwait(error) },\\n87:         )\\n88: \\n89:     private suspend fun handleValidateSdJwtVc(request: ServerRequest): ServerResponse =\\n90:         effect {\"}}, \"patch\": \"key/review_evidence/C03315.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "fineract",
+    "fix_commit": "9f5044b35814257e8933fc0403dfcde9899d582d",
+    "parent_commit": "d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2",
+    "date": "2024-06-25",
+    "message_excerpt": "FINERACT-2081: Fix wrong type in Swagger getLoanIdResponse type",
+    "score": 31,
+    "stars": "2627",
+    "surface_paths": [
+      "fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResourceSwagger.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResourceSwagger.java"
+      ]
+    ],
+    "rank": 24,
+    "candidate_id": "C03339",
+    "item_id": "N010",
+    "set": "new",
+    "operation": "GET /loans/{loanId}",
+    "proposition": "GET /loans/{loanId}: contract says annualInterestRate is an integer; implementation does represent annualInterestRate with a BigDecimal in the serialized loan data",
+    "truth_direction": "SPEC",
+    "confidence": 2,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_type",
+    "fix_family": "response_type.annual_interest_rate",
+    "proposition_check": "{\"contract\":[\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResourceSwagger.java:1094\"],\"implementation\":[\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/data/LoanAccountData.java:113\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:422\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:450\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:491\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:519\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:526\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:595\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:638\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:659\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:672\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:712\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:856\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1132\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1148\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1156\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1198\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1207\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1230\",\"d7ee5d62aada09f71cb9aeb6cc37d4da0d92dcb2:fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java:1240\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResourceSwagger.java\": {\"parent_lines\": [1094], \"parent_numbered_excerpt\": \"1090:         @Schema(example = \\\"24\\\")\\n1091:         public BigDecimal interestRatePerPeriod;\\n1092:         public GetLoansLoanIdInterestRateFrequencyType interestRateFrequencyType;\\n1093:         @Schema(example = \\\"24\\\")\\n1094:         public Integer annualInterestRate;\\n1095:         @Schema(example = \\\"false\\\")\\n1096:         public Boolean isFloatingInterestRate;\\n1097:         public GetLoansLoanIdAmortizationType amortizationType;\\n1098:         @Schema(example = \\\"5.5\\\")\"}, \"fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/data/LoanAccountData.java\": {\"parent_lines\": [113], \"parent_numbered_excerpt\": \"109:     private EnumOptionData repaymentFrequencyNthDayType;\\n110:     private EnumOptionData repaymentFrequencyDayOfWeekType;\\n111:     private BigDecimal interestRatePerPeriod;\\n112:     private EnumOptionData interestRateFrequencyType;\\n113:     private BigDecimal annualInterestRate;\\n114:     // TODO: avoid prefix \\\"is\\\"\\n115:     private boolean isFloatingInterestRate;\\n116:     private BigDecimal interestRateDifferential;\\n117: \"}, \"fineract-provider/src/main/java/org/apache/fineract/portfolio/loanaccount/api/LoansApiResource.java\": {\"parent_lines\": [422, 450, 491, 519, 526, 595, 638, 659, 672, 712, 856, 1132, 1148, 1156, 1198, 1207, 1230, 1240], \"parent_numbered_excerpt\": \"418:                 .retrieveTemplates(StatusEnum.CREATE.getCode().longValue(), EntityTables.LOAN.getName(), productId);\\n419:         newLoanAccount.setDatatables(datatableTemplates);\\n420: \\n421:         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());\\n422:         return this.toApiJsonSerializer.serialize(settings, newLoanAccount, LOAN_DATA_PARAMETERS);\\n423:     }\\n424: \\n425:     private Collection<PortfolioAccountData> getAccountLinkingOptions(final LoanAccountData newLoanAccount, final Long clientId,\\n426:             final Long groupId) {\\n446:             + \\\"Example Requests:\\\\n\\\" + \\\"\\\\n\\\" + \\\"loans/1\\\\n\\\" + \\\"\\\\n\\\" + \\\"\\\\n\\\" + \\\"loans/1?fields=id,principal,annualInterestRate\\\\n\\\" + \\\"\\\\n\\\" + \\\"\\\\n\\\"\\n447:             + \\\"loans/1?associations=all\\\\n\\\" + \\\"\\\\n\\\" + \\\"loans/1?associations=all&exclude=guarantors\\\\n\\\" + \\\"\\\\n\\\" + \\\"\\\\n\\\"\\n448:             + \\\"loans/1?fields=id,principal,annualInterestRate&associations=repaymentSchedule,transactions\\\")\\n449:     @ApiResponses({\\n450:             @ApiResponse(responseCode = \\\"200\\\", description = \\\"OK\\\", content = @Content(schema = @Schema(implementation = LoansApiResourceSwagger.GetLoansLoanIdResponse.class))) })\\n451:     public String retrieveLoan(@PathParam(\\\"loanId\\\") @Parameter(description = \\\"loanId\\\", required = true) final Long loanId,\\n452:             @DefaultValue(\\\"false\\\") @QueryParam(\\\"staffInSelectedOfficeOnly\\\") @Parameter(description = \\\"staffInSelectedOfficeOnly\\\") final boolean staffInSelectedOfficeOnly,\\n453:             @DefaultValue(\\\"all\\\") @QueryParam(\\\"associations\\\") @Parameter(in = ParameterIn.QUERY, name = \\\"associations\\\", description = \\\"Loan object relations to be included in the response\\\", required = false, examples = {\\n454:                     @ExampleObject(value = \\\"all\\\"), @ExampleObject(value = \\\"repaymentSchedule,transactions\\\") }) final String associations,\\n487: \\n488:         final Page<LoanAccountData> loanBasicDetails = this.loanReadPlatformService.retrieveAll(searchParameters);\\n489: \\n490:         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());\\n491:         return this.toApiJsonSerializer.serialize(settings, loanBasicDetails, LOAN_DATA_PARAMETERS);\\n492:     }\\n493: \\n494:     @POST\\n495:     @Consumes({ MediaType.APPLICATION_JSON })\\n515: \\n516:             final LoanScheduleModel loanSchedule = this.calculationPlatformService.calculateLoanSchedule(query, true);\\n517: \\n518:             final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());\\n519:             return this.loanScheduleToApiJsonSerializer.serialize(settings, loanSchedule.toData(), new HashSet<>());\\n520:         }\\n521: \\n522:         final CommandWrapper commandRequest = new CommandWrapperBuilder().createLoanApplication().withJson(apiRequestBodyAsJson).build();\\n523: \\n524:         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);\\n525: \\n526:         return this.toApiJsonSerializer.serialize(result);\\n527:     }\\n528: \\n529:     @PUT\\n530:     @Path(\\\"{loanId}\\\")\\n591:     public String getGlimRepaymentTemplate(@PathParam(\\\"glimId\\\") final Long glimId, @Context final UriInfo uriInfo) {\\n592:         this.context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSIONS);\\n593:         Collection<GlimRepaymentTemplate> glimRepaymentTemplate = this.glimAccountInfoReadPlatformService.findglimRepaymentTemplate(glimId);\\n594:         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());\\n595:         return this.glimTemplateToApiJsonSerializer.serialize(settings, glimRepaymentTemplate, GLIM_ACCOUNTS_DATA_PARAMETERS);\\n596:     }\\n597: \\n598:     @POST\\n599:     @Path(\\\"glimAccount/{glimId}\\\")\\n634:             throw new UnrecognizedQueryParamException(\\\"command\\\", commandParam);\\n635:         }\\n636:         CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);\\n637: \\n638:         return this.toApiJsonSerializer.serialize(result);\\n639:     }\\n640: \\n641:     @GET\\n642:     @Path(\\\"repayments/downloadtemplate\\\")\\n655:             @FormDataParam(\\\"file\\\") FormDataContentDisposition fileDetail, @FormDataParam(\\\"locale\\\") final String locale,\\n656:             @FormDataParam(\\\"dateFormat\\\") final String dateFormat) {\\n657:         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.LOANS.toString(), uploadedInputStream,\\n658:                 fileDetail, locale, dateFormat);\\n659:         return this.toApiJsonSerializer.serialize(importDocumentId);\\n660:     }\\n661: \\n662:     @POST\\n663:     @Path(\\\"repayments/uploadtemplate\\\")\\n668:             @FormDataParam(\\\"file\\\") FormDataContentDisposition fileDetail, @FormDataParam(\\\"locale\\\") final String locale,\\n669:             @FormDataParam(\\\"dateFormat\\\") final String dateFormat) {\\n670:         final Long importDocumentId = this.bulkImportWorkbookService.importWorkbook(GlobalEntityType.LOAN_TRANSACTIONS.toString(),\\n671:                 uploadedInputStream, fileDetail, locale, dateFormat);\\n672:         return this.toApiJsonSerializer.serialize(importDocumentId);\\n673:     }\\n674: \\n675:     @GET\\n676:     @Path(\\\"{loanId}/delinquencytags\\\")\\n708:             + \\\"loans/external-id/7dd80a7c-ycba-a446-t378-91eb6f53e854?associations=all\\\\n\\\" + \\\"\\\\n\\\"\\n709:             + \\\"loans/external-id/7dd80a7c-ycba-a446-t378-91eb6f53e854?associations=all&exclude=guarantors\\\\n\\\" + \\\"\\\\n\\\" + \\\"\\\\n\\\"\\n710:             + \\\"loans/external-id/7dd80a7c-ycba-a446-t378-91eb6f53e854?fields=id,principal,annualInterestRate&associations=repaymentSchedule,transactions\\\")\\n711:     @ApiResponses({\\n712:             @ApiResponse(responseCode = \\\"200\\\", description = \\\"OK\\\", content = @Content(schema = @Schema(implementation = LoansApiResourceSwagger.GetLoansLoanIdResponse.class))) })\\n713:     public String retrieveLoan(\\n714:             @PathParam(\\\"loanExternalId\\\") @Parameter(description = \\\"loanExternalId\\\", required = true) final String loanExternalId,\\n715:             @DefaultValue(\\\"false\\\") @QueryParam(\\\"staffInSelectedOfficeOnly\\\") @Parameter(description = \\\"staffInSelectedOfficeOnly\\\") final boolean staffInSelectedOfficeOnly,\\n716:             @DefaultValue(\\\"all\\\") @QueryParam(\\\"associations\\\") @Parameter(in = ParameterIn.QUERY, name = \\\"associations\\\", description = \\\"Loan object relations to be included in the response\\\", required = false, examples = {\\n852:             loanApprovalTemplate = this.loanReadPlatformService.retrieveApprovalTemplate(resolvedLoanId);\\n853:         }\\n854: \\n855:         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters());\\n856:         return this.loanApprovalDataToApiJsonSerializer.serialize(settings, loanApprovalTemplate, LOAN_APPROVAL_DATA_PARAMETERS);\\n857:     }\\n858: \\n859:     private String retrieveLoan(final Long loanId, final String loanExternalIdStr, boolean staffInSelectedOfficeOnly, final String exclude,\\n860:             final UriInfo uriInfo) {\\n1128:                 LoanScheduleType.getValuesAsEnumOptionDataList(), LoanScheduleProcessingType.getValuesAsEnumOptionDataList());\\n1129: \\n1130:         final ApiRequestJsonSerializationSettings settings = this.apiRequestParameterHelper.process(uriInfo.getQueryParameters(),\\n1131:                 mandatoryResponseParameters);\\n1132:         return this.toApiJsonSerializer.serialize(settings, loanAccount, LOAN_DATA_PARAMETERS);\\n1133:     }\\n1134: \\n1135:     private String modifyLoanApplication(final Long loanId, final String loanExternalIdStr, final String commandParam,\\n1136:             final String apiRequestBodyAsJson) {\\n1144:             commandRequest = builder.updateLoanApplication(resolvedLoanId).build();\\n1145:         }\\n1146: \\n1147:         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);\\n1148:         return this.toApiJsonSerializer.serialize(result);\\n1149:     }\\n1150: \\n1151:     private String deleteLoanApplication(final Long loanId, final String loanExternalIdStr) {\\n1152:         ExternalId loanExternalId = ExternalIdFactory.produce(loanExternalIdStr);\\n1153:         Long resolvedLoanId = getResolvedLoanId(loanId, loanExternalId);\\n1154:         final CommandWrapper commandRequest = new CommandWrapperBuilder().deleteLoanApplication(resolvedLoanId).build();\\n1155:         final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);\\n1156:         return this.toApiJsonSerializer.serialize(result);\\n1157:     }\\n1158: \\n1159:     private String stateTransitions(final Long loanId, final String loanExternalIdStr, final String commandParam,\\n1160:             final String apiRequestBodyAsJson) {\\n1194:             throw new UnrecognizedQueryParamException(\\\"command\\\", commandParam);\\n1195:         }\\n1196:         CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);\\n1197: \\n1198:         return this.toApiJsonSerializer.serialize(result);\\n1199:     }\\n1200: \\n1201:     private String getDelinquencyTagHistory(final Long loanId, final String loanExternalIdStr, final UriInfo uriInfo) {\\n1202:         context.authenticatedUser().validateHasReadPermission(\\\"DELINQUENCY_TAGS\\\");\\n1203:         ExternalId loanExternalId = ExternalIdFactory.produce(loanExternalIdStr);\\n1204:         Long resolvedLoanId = getResolvedLoanId(loanId, loanExternalId);\\n1205:         final Collection<LoanDelinquencyTagHistoryData> loanDelinquencyTagHistoryData = this.delinquencyReadPlatformService\\n1206:                 .retrieveDelinquencyRangeHistory(resolvedLoanId);\\n1207:         return this.jsonSerializerTagHistory.serialize(loanDelinquencyTagHistoryData);\\n1208:     }\\n1209: \\n1210:     private Long getResolvedLoanId(final Long loanId, final ExternalId loanExternalId) {\\n1211:         Long resolvedLoanId = loanId;\\n1226: \\n1227:         final Collection<LoanDelinquencyAction> delinquencyActions = this.delinquencyReadPlatformService\\n1228:                 .retrieveLoanDelinquencyActions(resolvedLoanId);\\n1229:         List<LoanDelinquencyActionData> result = delinquencyActions.stream().map(LoanDelinquencyActionData::new).toList();\\n1230:         return this.jsonSerializerTagHistory.serialize(result);\\n1231:     }\\n1232: \\n1233:     private String createLoanDelinquencyAction(Long loanId, ExternalId loanExternalId, String apiRequestBodyAsJson) {\\n1234:         context.authenticatedUser().validateHasCreatePermission(RESOURCE_NAME_FOR_DELINQUENCY_ACTION_PERMISSIONS);\\n1236: \\n1237:         CommandWrapperBuilder builder = new CommandWrapperBuilder().createDelinquencyAction(resolvedLoanId);\\n1238:         builder.withJson(apiRequestBodyAsJson);\\n1239:         CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(builder.build());\\n1240:         return delinquencyActionSerializer.serialize(result);\\n1241:     }\\n1242: \\n1243: }\"}}, \"patch\": \"key/review_evidence/C03339.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "gravitee-api-management",
+    "fix_commit": "38d18690a8c7d959ca5e058db6d1ce2ee38b042e",
+    "parent_commit": "af3525d533d69a036fdf8c0c90d6d2f3f842ef09",
+    "date": "2023-08-02",
+    "message_excerpt": "fix: remove wrong swagger doc for RoleResource#deleteRole Swagger annotation was indicating a response content description but the method is void. This was caus",
+    "score": 31,
+    "stars": 470,
+    "surface_paths": [
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java"
+      ]
+    ],
+    "rank": 20,
+    "candidate_id": "C03943",
+    "item_id": "N011",
+    "set": "new",
+    "operation": "DELETE /organizations/{organizationId}/configuration/rolescopes/{scope}/roles/{role}",
+    "proposition": "DELETE /organizations/{organizationId}/configuration/rolescopes/{scope}/roles/{role}: contract says 204 carries an application/json RoleEntity; implementation does complete the role deletion through a void method",
+    "truth_direction": "SPEC",
+    "confidence": 2,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_body",
+    "fix_family": "response_body.role_deletion",
+    "proposition_check": "{\"contract\":[\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:63\",\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:84\",\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:101\",\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:103\"],\"implementation\":[\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:108\",\"af3525d533d69a036fdf8c0c90d6d2f3f842ef09:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java:111\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/organization/RoleResource.java\": {\"parent_lines\": [108, 111], \"parent_numbered_excerpt\": \"104:     )\\n105:     @ApiResponse(responseCode = \\\"404\\\", description = \\\"Role not found\\\")\\n106:     @ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal server error\\\")\\n107:     @Permissions({ @Permission(value = RolePermission.ORGANIZATION_ROLE, acls = RolePermissionAction.DELETE) })\\n108:     public void deleteRole(@PathParam(\\\"scope\\\") RoleScope scope, @PathParam(\\\"role\\\") String role) {\\n109:         roleService\\n110:             .findByScopeAndName(scope, role, GraviteeContext.getCurrentOrganization())\\n111:             .ifPresent(roleToDelete -> roleService.delete(GraviteeContext.getExecutionContext(), roleToDelete.getId()));\\n112:     }\\n113: \\n114:     @Path(\\\"/users\\\")\\n115:     public RoleUsersResource getRoleUsersResource() {\"}}, \"patch\": \"key/review_evidence/C03943.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "kapua",
+    "fix_commit": "6aaf6ec385ee64af9621003939c5f9bfbdefa8dc",
+    "parent_commit": "4ae5564418f2d3adc1543c488f21a72bb778e744",
+    "date": "2019-09-10",
+    "message_excerpt": "Fix wrong Swagger Response Objects for Requests and Packages",
+    "score": 31,
+    "stars": 247,
+    "surface_paths": [
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequests.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java"
+      ],
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequests.java"
+      ],
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java"
+      ]
+    ],
+    "rank": 17,
+    "candidate_id": "C15799",
+    "item_id": "N012",
+    "set": "new",
+    "operation": "GET /{scopeId}/devices/{deviceId}/packages",
+    "proposition": "GET /{scopeId}/devices/{deviceId}/packages: contract says the response model is DeviceSnapshots; implementation does return DevicePackages from the installed-package service",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_model",
+    "fix_family": "response_model.device_packages",
+    "proposition_check": "{\"contract\":[\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java:63\"],\"implementation\":[\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java:64\",\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java:68\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java\": {\"parent_lines\": [64, 68], \"parent_numbered_excerpt\": \"60:      */\\n61:     @GET\\n62:     @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })\\n63:     @ApiOperation(nickname = \\\"devicePackageGet\\\", value = \\\"Gets a list of packages\\\", notes = \\\"Returns the list of all the packages installed on the device.\\\", response = DeviceSnapshots.class)\\n64:     public DevicePackages get(\\n65:             @ApiParam(value = \\\"The ScopeId of the Device\\\", required = true, defaultValue = DEFAULT_SCOPE_ID) @PathParam(\\\"scopeId\\\") ScopeId scopeId,\\n66:             @ApiParam(value = \\\"The id of the device\\\", required = true) @PathParam(\\\"deviceId\\\") EntityId deviceId,\\n67:             @ApiParam(value = \\\"The timeout of the operation\\\", required = false) @QueryParam(\\\"timeout\\\") Long timeout) throws Exception {\\n68:         return packageService.getInstalled(scopeId, deviceId, timeout);\\n69:     }\\n70: \\n71:     /**\\n72:      * Download and optionally installs a package into the device.\"}}, \"patch\": \"key/review_evidence/C15799.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "kapua",
+    "fix_commit": "6aaf6ec385ee64af9621003939c5f9bfbdefa8dc",
+    "parent_commit": "4ae5564418f2d3adc1543c488f21a72bb778e744",
+    "date": "2019-09-10",
+    "message_excerpt": "Fix wrong Swagger Response Objects for Requests and Packages",
+    "score": 31,
+    "stars": 247,
+    "surface_paths": [
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequests.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementPackages.java"
+      ],
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequests.java"
+      ],
+      [
+        "M",
+        "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java"
+      ]
+    ],
+    "rank": 17,
+    "candidate_id": "C15799",
+    "item_id": "N013",
+    "set": "new",
+    "operation": "POST /{scopeId}/devices/{deviceId}/requests",
+    "proposition": "POST /{scopeId}/devices/{deviceId}/requests: contract says the JSON response model is DeviceCommandOutput; implementation does return a JsonGenericResponseMessage wrapping the generic device response",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_model",
+    "fix_family": "response_model.device_request",
+    "proposition_check": "{\"contract\":[\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java:66\"],\"implementation\":[\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java:67\",\"4ae5564418f2d3adc1543c488f21a72bb778e744:rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java:103\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequestsJson.java\": {\"parent_lines\": [67, 103], \"parent_numbered_excerpt\": \"63:     @POST\\n64:     @Consumes({ MediaType.APPLICATION_JSON })\\n65:     @Produces({ MediaType.APPLICATION_JSON })\\n66:     @ApiOperation(nickname = \\\"deviceRequestSend\\\", value = \\\"Sends a request\\\", notes = \\\"Sends a request message to a device\\\", response = DeviceCommandOutput.class)\\n67:     public JsonGenericResponseMessage sendRequest(\\n68:             @ApiParam(value = \\\"The ScopeId of the device\\\", required = true, defaultValue = DEFAULT_SCOPE_ID) @PathParam(\\\"scopeId\\\") ScopeId scopeId,\\n69:             @ApiParam(value = \\\"The id of the device\\\", required = true) @PathParam(\\\"deviceId\\\") EntityId deviceId,\\n70:             @ApiParam(value = \\\"The timeout of the request execution\\\") @QueryParam(\\\"timeout\\\") Long timeout,\\n71:             @ApiParam(value = \\\"The input request\\\", required = true) JsonGenericRequestMessage jsonGenericRequestMessage) throws Exception {\\n99:         genericRequestMessage.setPayload(kapuaDataPayload);\\n100: \\n101:         GenericResponseMessage genericResponseMessage = DEVICE_MANAGEMENT_REQUESTS.sendRequest(scopeId, deviceId, timeout, genericRequestMessage);\\n102: \\n103:         return new JsonGenericResponseMessage(genericResponseMessage);\\n104:     }\\n105: }\"}}, \"patch\": \"key/review_evidence/C15799.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DeviceManagementRequests.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/model/device/management/JsonGenericResponseMessage.java",
+      "rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/model/device/management/JsonGenericRequestMessage.java"
+    ],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "nessie",
+    "fix_commit": "85734908c52beebb61c114c1e21860f0bd50d950",
+    "parent_commit": "d49df5f31fb42545a1a4c120a9c21463461a46c3",
+    "date": "2023-03-06",
+    "message_excerpt": "V2 REST declares wrong response types in OpenAPI spec (#6211)",
+    "score": 31,
+    "stars": 1531,
+    "surface_paths": [
+      "model/src/main/java/org/projectnessie/api/v2/http/HttpTreeApi.java",
+      "model/src/main/java/org/projectnessie/model/SingleReferenceResponse.java",
+      "model/src/main/resources/META-INF/openapi.yaml"
+    ],
+    "changes": [
+      [
+        "M",
+        "model/src/main/java/org/projectnessie/api/v2/http/HttpTreeApi.java"
+      ],
+      [
+        "M",
+        "model/src/main/java/org/projectnessie/model/SingleReferenceResponse.java"
+      ],
+      [
+        "M",
+        "model/src/main/resources/META-INF/openapi.yaml"
+      ]
+    ],
+    "rank": 4,
+    "candidate_id": "C17990",
+    "item_id": "N014",
+    "set": "new",
+    "operation": "GET /v2/trees/{ref}",
+    "proposition": "GET /v2/trees/{ref}: contract says 200 contains a Reference object; implementation does return a SingleReferenceResponse wrapping the reference property",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "response_body",
+    "fix_family": "response_body.reference_wrapper",
+    "proposition_check": "{\"contract\":[\"d49df5f31fb42545a1a4c120a9c21463461a46c3:model/src/main/java/org/projectnessie/api/v2/http/HttpTreeApi.java:132\",\"d49df5f31fb42545a1a4c120a9c21463461a46c3:model/src/main/java/org/projectnessie/api/v2/http/HttpTreeApi.java:180\"],\"implementation\":[\"d49df5f31fb42545a1a4c120a9c21463461a46c3:servers/rest-services/src/main/java/org/projectnessie/services/rest/RestV2TreeResource.java:157\",\"d49df5f31fb42545a1a4c120a9c21463461a46c3:servers/rest-services/src/main/java/org/projectnessie/services/rest/RestV2TreeResource.java:161\",\"d49df5f31fb42545a1a4c120a9c21463461a46c3:model/src/main/java/org/projectnessie/model/SingleReferenceResponse.java:34\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"model/src/main/java/org/projectnessie/api/v2/http/HttpTreeApi.java\": {\"parent_lines\": [132, 180], \"parent_numbered_excerpt\": \"128:         content = {\\n129:           @Content(\\n130:               mediaType = MediaType.APPLICATION_JSON,\\n131:               examples = {@ExampleObject(ref = \\\"refObjNew\\\")},\\n132:               schema = @Schema(implementation = Reference.class))\\n133:         }),\\n134:     @APIResponse(responseCode = \\\"401\\\", description = \\\"Invalid credentials provided\\\"),\\n135:     @APIResponse(responseCode = \\\"403\\\", description = \\\"Not allowed to create reference\\\"),\\n136:     @APIResponse(\\n176:         content = {\\n177:           @Content(\\n178:               mediaType = MediaType.APPLICATION_JSON,\\n179:               examples = {@ExampleObject(ref = \\\"refObj\\\")},\\n180:               schema = @Schema(implementation = Reference.class))\\n181:         }),\\n182:     @APIResponse(responseCode = \\\"400\\\", description = \\\"Invalid input, ref name not valid\\\"),\\n183:     @APIResponse(responseCode = \\\"401\\\", description = \\\"Invalid credentials provided\\\"),\\n184:     @APIResponse(responseCode = \\\"403\\\", description = \\\"Not allowed to view the given reference\\\"),\"}, \"servers/rest-services/src/main/java/org/projectnessie/services/rest/RestV2TreeResource.java\": {\"parent_lines\": [157, 161], \"parent_numbered_excerpt\": \"153:   }\\n154: \\n155:   @JsonView(Views.V2.class)\\n156:   @Override\\n157:   public SingleReferenceResponse getReferenceByName(GetReferenceParams params)\\n158:       throws NessieNotFoundException {\\n159:     Reference reference = resolveRef(params.getRef());\\n160:     return SingleReferenceResponse.builder()\\n161:         .reference(tree().getReferenceByName(reference.getName(), params.fetchOption()))\\n162:         .build();\\n163:   }\\n164: \\n165:   @JsonView(Views.V2.class)\"}, \"model/src/main/java/org/projectnessie/model/SingleReferenceResponse.java\": {\"parent_lines\": [34], \"parent_numbered_excerpt\": \"30:   }\\n31: \\n32:   @NotNull\\n33:   @jakarta.validation.constraints.NotNull\\n34:   Reference getReference();\\n35: }\"}}, \"patch\": \"key/review_evidence/C17990.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "pay-publicapi",
+    "fix_commit": "060e24eb24c7dab6c6afaa56de420d91ab735d10",
+    "parent_commit": "5b4e07f34db158d64d6ba79b5dc3e09fbe6edd27",
+    "date": "2019-08-14",
+    "message_excerpt": "PP-5499 Fix search refunds endpoint",
+    "score": 21,
+    "stars": "49",
+    "surface_paths": [
+      "src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java"
+    ],
+    "changes": [
+      [
+        "M",
+        "src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java"
+      ]
+    ],
+    "rank": 7,
+    "candidate_id": "C18710",
+    "item_id": "N015",
+    "set": "new",
+    "operation": "GET /v1/refunds",
+    "proposition": "GET /v1/refunds: contract says the navigation property is named _links; implementation does expose navigation through the unannotated getLinks getter as links",
+    "truth_direction": "IMPL",
+    "confidence": 3,
+    "contract_kind": "annotations",
+    "mismatch_type": "semantic_property_name",
+    "fix_family": "semantic_property_name",
+    "proposition_check": "{\"contract\":[\"5b4e07f34db158d64d6ba79b5dc3e09fbe6edd27:src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java:21\"],\"implementation\":[\"5b4e07f34db158d64d6ba79b5dc3e09fbe6edd27:src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java:53\"],\"route\":[\"5b4e07f34db158d64d6ba79b5dc3e09fbe6edd27:src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java:44\"]}",
+    "evidence": "{\"parent\": {\"src/main/java/uk/gov/pay/api/model/search/card/SearchRefundsResults.java\": {\"parent_lines\": [53], \"parent_numbered_excerpt\": \"49:         return results;\\n50:     }\\n51: \\n52:     @Override\\n53:     public SearchNavigationLinks getLinks() {\\n54:         return links;\\n55:     }\\n56: }\"}, \"src/main/java/uk/gov/pay/api/resources/SearchRefundsResource.java\": {\"parent_lines\": [44], \"parent_numbered_excerpt\": \"40:     }\\n41: \\n42:     @GET\\n43:     @Timed\\n44:     @Path(\\\"/v1/refunds\\\")\\n45:     @Produces(APPLICATION_JSON)\\n46:     @ApiOperation(\\n47:             nickname = \\\"Search refunds\\\",\\n48:             value = \\\"Search refunds\\\",\"}}, \"patch\": \"key/review_evidence/C18710.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [
+      "src/main/java/uk/gov/pay/api/model/links/SearchNavigationLinks.java"
+    ],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  },
+  {
+    "repo": "strimzi-kafka-bridge",
+    "fix_commit": "33907eed5e6ecffa61b895adcaa2f4ca6f2ca764",
+    "parent_commit": "82c4e333f5253ab97f006d56a1e7c41ed19fc284",
+    "date": "2023-04-26",
+    "message_excerpt": "Fixed OpenAPI 3.0 OffsetRecordSentList component schema (#790)",
+    "score": 21,
+    "stars": "346",
+    "surface_paths": [
+      "src/main/resources/openapi.json"
+    ],
+    "changes": [
+      [
+        "M",
+        "CHANGELOG.md"
+      ],
+      [
+        "M",
+        "src/main/resources/openapi.json"
+      ]
+    ],
+    "rank": 13,
+    "candidate_id": "C20049",
+    "item_id": "N016",
+    "set": "new",
+    "operation": "POST /topics/{topicname}",
+    "proposition": "POST /topics/{topicname}: contract says offsets entries use the OffsetRecordSent schema; implementation does put error_code and message objects into offsets for failed records",
+    "truth_direction": "SPEC",
+    "confidence": 3,
+    "contract_kind": "spec_file",
+    "mismatch_type": "response_schema",
+    "fix_family": "response_schema.producer_error_entry",
+    "proposition_check": "{\"contract\":[\"82c4e333f5253ab97f006d56a1e7c41ed19fc284:src/main/resources/openapi.json:1545\"],\"implementation\":[\"82c4e333f5253ab97f006d56a1e7c41ed19fc284:src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java:162\",\"82c4e333f5253ab97f006d56a1e7c41ed19fc284:src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java:195\",\"82c4e333f5253ab97f006d56a1e7c41ed19fc284:src/main/java/io/strimzi/kafka/bridge/http/model/HttpBridgeError.java:50\",\"82c4e333f5253ab97f006d56a1e7c41ed19fc284:src/main/java/io/strimzi/kafka/bridge/http/model/HttpBridgeError.java:51\"],\"route\":[]}",
+    "evidence": "{\"parent\": {\"src/main/resources/openapi.json\": {\"parent_lines\": [1545], \"parent_numbered_excerpt\": \"1541:                 \\\"properties\\\": {\\n1542:                     \\\"offsets\\\": {\\n1543:                         \\\"type\\\": \\\"array\\\",\\n1544:                         \\\"items\\\": {\\n1545:                             \\\"$ref\\\": \\\"#/components/schemas/OffsetRecordSent\\\"\\n1546:                         }\\n1547:                     }\\n1548:                 },\\n1549:                 \\\"example\\\": {\"}, \"src/main/java/io/strimzi/kafka/bridge/http/HttpSourceBridgeEndpoint.java\": {\"parent_lines\": [162, 195], \"parent_numbered_excerpt\": \"158:                             } else {\\n159:                                 String msg = ex.getMessage();\\n160:                                 int code = handleError(ex);\\n161:                                 log.error(\\\"Failed to deliver record {}\\\", record, ex);\\n162:                                 results.add(new HttpBridgeResult<>(new HttpBridgeError(code, msg)));\\n163:                             }\\n164:                             return metadata;\\n165:                         });\\n166:                 promises.add(sendHandler.toCompletableFuture());\\n191:                         .put(\\\"partition\\\", metadata.partition())\\n192:                         .put(\\\"offset\\\", metadata.offset());\\n193:             } else if (result.getResult() instanceof HttpBridgeError) {\\n194:                 HttpBridgeError error = (HttpBridgeError) result.getResult();\\n195:                 offset = error.toJson();\\n196:             }\\n197:             offsets.add(offset);\\n198:         }\\n199:         jsonResponse.put(\\\"offsets\\\", offsets);\"}, \"src/main/java/io/strimzi/kafka/bridge/http/model/HttpBridgeError.java\": {\"parent_lines\": [50, 51], \"parent_numbered_excerpt\": \"46:      * @return a JSON representation of the error with code and message\\n47:      */\\n48:     public ObjectNode toJson() {\\n49:         ObjectNode json = JsonUtils.createObjectNode();\\n50:         json.put(\\\"error_code\\\", this.code);\\n51:         json.put(\\\"message\\\", this.message);\\n52:         return json;\\n53:     }\\n54: \\n55:     /**\"}}, \"patch\": \"key/review_evidence/C20049.diff\", \"gate\": \"Manual static parent contract and implementation comparison; corresponding patch resolves this proposition; no runtime execution.\"}",
+    "helper_paths": [
+      "src/main/java/io/strimzi/kafka/bridge/http/model/HttpBridgeResult.java",
+      "src/main/java/io/strimzi/kafka/bridge/http/HttpUtils.java"
+    ],
+    "inference_notes": "⚠️ Static framework/library semantics inferred; no upstream code or runtime traffic executed."
+  }
+]
