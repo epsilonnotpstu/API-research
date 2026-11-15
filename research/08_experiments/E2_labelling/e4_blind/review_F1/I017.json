@@ -1,0 +1,117 @@
+{
+  "item_id": "I017",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.759741+00:00",
+  "end_time": "2026-11-15T05:58:35.265826+00:00",
+  "target_proposition": {
+    "side": "operation_presence",
+    "method": "GET",
+    "path_template": "/v1/system/ping",
+    "scenario": "GET system ping returns 204; should operation be documented?",
+    "observed_status": 204,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:34",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "testPing issues GET system/ping with the helper default /api/v1 prefix and asserts 204 at 36. The Java @Path independently resolves the same operation.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "testPing issues GET system/ping with the helper default /api/v1 prefix and asserts 204 at 36. The Java @Path independently resolves the same operation."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "testPing issues GET system/ping with the helper default /api/v1 prefix and asserts 204 at 36. The Java @Path independently resolves the same operation."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "testPing issues GET system/ping with the helper default /api/v1 prefix and asserts 204 at 36. The Java @Path independently resolves the same operation."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-METHOD",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "The ping handler returns 204 and the exact route is independently asserted by SystemIntegrationTest. The public operation is absent from the contract.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K01/source",
+    "K01/spec.json",
+    "--method",
+    "GET",
+    "--path",
+    "/v1/system/ping",
+    "--status",
+    "204",
+    "--json"
+  ],
+  "search_finished_time": "2026-11-15T05:42:25.015136+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "NA",
+  "raw_result": "search_F1/I017.json",
+  "tool_exitcode": 2,
+  "coverage_resolution": "Manual fallback resolves Java mapping and relevant test/doc coverage after the tool rejects the absent spec operation.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/SystemResource.java:23",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:34",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/SystemIntegrationTest.java:36",
+    "K01/spec.json:#/paths/~1v1~1system~1ping/get",
+    "K01/r1/exchanges.jsonl:2003"
+  ]
+}

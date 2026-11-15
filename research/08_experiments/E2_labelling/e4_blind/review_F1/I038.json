@@ -1,0 +1,157 @@
+{
+  "item_id": "I038",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.760972+00:00",
+  "end_time": "2026-11-15T05:58:35.286240+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/v1/categories",
+    "scenario": "GET categories without min_activities_count returns 200; must query parameter be required?",
+    "observed_status": 200,
+    "field": "min_activities_count",
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [
+    {
+      "raw_result": "search_F1/I038.json",
+      "hit_index": 0,
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:42",
+      "disposition": "context",
+      "review_verdict": "none_found",
+      "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "The integration helper sends GET /api/v2/tags with no query and asserts 200 at 56; testTagCRUD expects five results at 23. The /v1/categories alias delegates to this exact all method and same DAO, proving the common filter is optional.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "The integration helper sends GET /api/v2/tags with no query and asserts 200 at 56; testTagCRUD expects five results at 23. The /v1/categories alias delegates to this exact all method and same DAO, proving the common filter is optional."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "The integration helper sends GET /api/v2/tags with no query and asserts 200 at 56; testTagCRUD expects five results at 23. The /v1/categories alias delegates to this exact all method and same DAO, proving the common filter is optional."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "The integration helper sends GET /api/v2/tags with no query and asserts 200 at 56; testTagCRUD expects five results at 23. The /v1/categories alias delegates to this exact all method and same DAO, proving the common filter is optional."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-REQ-STRICT",
+    "proposed_L2": "",
+    "confidence": 2,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "⚠️ The category alias shares the tag-list handler. Its independent integration test omits filters and asserts 200 with five tags, supporting an optional minimum-count filter.",
+    "inference_marked": true,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K01/source",
+    "K01/spec.json",
+    "--method",
+    "GET",
+    "--path",
+    "/v1/categories",
+    "--status",
+    "200",
+    "--json",
+    "--field",
+    "min_activities_count"
+  ],
+  "search_finished_time": "2026-11-15T05:42:28.277309+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "none_found",
+  "raw_result": "search_F1/I038.json",
+  "tool_exitcode": 0,
+  "coverage_resolution": "Manual handler and field review supplements the lexical scan.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/v1/CategoryResource.java:43",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:54",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:56",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/TagsIntegrationTest.java:23",
+    "K01/spec.json:#/paths/~1v1~1categories/get/parameters/2/required",
+    "K01/r1/exchanges.jsonl:4304"
+  ]
+}

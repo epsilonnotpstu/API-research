@@ -1,0 +1,766 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/version/v1/tan/teletan"
+  },
+  "observed_status": 201,
+  "field": "Authorization",
+  "spec": {
+    "file": "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K03/spec.json",
+    "path": "/version/v1/tan/teletan",
+    "statuses": [
+      "201",
+      "400",
+      "500"
+    ],
+    "field_policy": [],
+    "field": "Authorization",
+    "locator": "#/paths/~1version~1v1~1tan~1teletan/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "supports_code",
+  "evidence_types_found": [
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:143",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 143,
+      "snippet": "@RequestHeader(value = TELE_TAN_TYPE_HEADER, required = false) @Valid TeleTanType teleTanType) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/version/v1/tan/teletan",
+      "methods": [
+        "POST"
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:158",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 158,
+      "snippet": "return ResponseEntity.status(HttpStatus.CREATED).body(new TeleTan(teleTan));",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        201
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:160",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 160,
+      "snippet": "throw new VerificationServerException(HttpStatus.TOO_MANY_REQUESTS, \"Rate Limit exceed. Try again later.\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        429
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:163",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 163,
+      "snippet": "throw new VerificationServerException(HttpStatus.UNAUTHORIZED, \"JWT is invalid.\");",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        401
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:792",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java",
+      "line": 792,
+      "snippet": ".andExpect(status().isNotFound());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        404
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java:805",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationExternalTest.java",
+      "line": 805,
+      "snippet": ".andExpect(status().isNotFound());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        404
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": null,
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java:111",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java",
+      "line": 111,
+      "snippet": ".andExpect(status().isCreated());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        201
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": "handler_class_reference",
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java:131",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java",
+      "line": 131,
+      "snippet": ".andExpect(status().isUnauthorized());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        401
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": "handler_class_reference",
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java:269",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java",
+      "line": 269,
+      "snippet": ".andExpect(status().isNotFound());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        404
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": "handler_class_reference",
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java:278",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java",
+      "line": 278,
+      "snippet": ".andExpect(status().isCreated());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        201
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": "handler_class_reference",
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-TEST",
+      "location": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java:283",
+      "file": "src/test/java/app/coronawarn/verification/VerificationApplicationInternalTest.java",
+      "line": 283,
+      "snippet": ".andExpect(status().isTooManyRequests());",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent test; path within ±10 lines; verify scenario and assertion; weaker suffix match; helper-added prefix is not verified",
+      "asserted_values": [
+        429
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": true,
+      "counts_toward_verdict": true,
+      "module_scope": "handler_module",
+      "module_link_reason": "handler_class_reference",
+      "match": "suffix",
+      "matched_literal": "/tan/teletan",
+      "suffix_segments": 2,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:24",
+      "file": "docs/architecture-overview.md",
+      "line": 24,
+      "snippet": "Proof is represented by a Transaction Authorization Number (TAN), which is not bound to a specific transaction.",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "Authorization",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:30",
+      "file": "docs/architecture-overview.md",
+      "line": 30,
+      "snippet": "|GUID|\tIdentifier for a SARS-CoV-2 Test. This component will deal only with hashed instances of the GUID. For the details of the hashing see Used cryptographic ",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        128,
+        152
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:31",
+      "file": "docs/architecture-overview.md",
+      "line": 31,
+      "snippet": "|TAN|\tIs a proof that the user has a SARS-CoV-2 Test with status positive. Depending on the context the TAN has a different length. Has a default length of 128 ",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        128
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:34",
+      "file": "docs/architecture-overview.md",
+      "line": 34,
+      "snippet": "|Registration Token|\tIdentifies a long term session between a mobile app and the Verification Server. The Registration Token has a length of 128 Bit.\t|",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        128
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:230",
+      "file": "docs/architecture-overview.md",
+      "line": 230,
+      "snippet": "-\tAuthorization: JWT, the roles attribute contains one of the roles",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "Authorization",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:365",
+      "file": "docs/architecture-overview.md",
+      "line": 365,
+      "snippet": "###\tAuthorization of users",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "Authorization",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "docs/architecture-overview.md:366",
+      "file": "docs/architecture-overview.md",
+      "line": 366,
+      "snippet": "|Role|\tAuthorization|\tComment|",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "Authorization",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:126",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 126,
+      "snippet": "/**",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:127",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 127,
+      "snippet": "* This method generates a valid teleTAN.",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:128",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 128,
+      "snippet": "*",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:129",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 129,
+      "snippet": "* @param authorization auth",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:130",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 130,
+      "snippet": "* @return a created teletan",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:131",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 131,
+      "snippet": "*/",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:132",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 132,
+      "snippet": "@Operation(",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:133",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 133,
+      "snippet": "summary = \"Request generation of a teleTAN\",",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:134",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 134,
+      "snippet": "description = \"A teleTAN is a human readable TAN with 7 characters which is supposed to be issued via call line\"",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:135",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 135,
+      "snippet": ")",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:136",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 136,
+      "snippet": "@ApiResponses(value = {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:137",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 137,
+      "snippet": "@ApiResponse(responseCode = \"201\", description = \"TeleTan created\")})",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java:146",
+      "file": "src/main/java/app/coronawarn/verification/controller/ExternalTanController.java",
+      "line": 146,
+      "snippet": "ResponseEntity.status(HttpStatus.CREATED).body(returnTan)),",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 2,
+      "site_class": "ExternalTanController",
+      "pattern": [
+        "status",
+        "201"
+      ],
+      "statuses": [
+        201
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    },
+    {
+      "category": "E-CONSIST",
+      "location": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java:158",
+      "file": "src/main/java/app/coronawarn/verification/controller/InternalTanController.java",
+      "line": 158,
+      "snippet": "return ResponseEntity.status(HttpStatus.CREATED).body(new TeleTan(teleTan));",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent class sites; analogy of situations requires review",
+      "independent": true,
+      "independent_sites": 2,
+      "site_class": "InternalTanController",
+      "pattern": [
+        "status",
+        "201"
+      ],
+      "statuses": [
+        201
+      ],
+      "field_behavior": null,
+      "code_agreement": [
+        "agrees"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_code"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 67,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

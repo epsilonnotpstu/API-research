@@ -1,0 +1,100 @@
+{
+  "item_id": "I050",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.761622+00:00",
+  "end_time": "2026-11-15T05:58:35.298801+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "POST",
+    "path_template": "/version/v1/tan/teletan",
+    "scenario": "REQUEST_UNCHECKABLE addresses unsupported parameter serialization (§10.5), not server intent.",
+    "observed_status": 201,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "REQUEST_UNCHECKABLE addresses unsupported parameter serialization (§10.5), not server intent."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-AUX",
+      "location": "../../tools/conformance.py:359",
+      "disposition": "accept",
+      "review_verdict": "not_applicable",
+      "reason": "Object or content-based parameters are explicitly appended to uncheckable at 359–360. REQUEST_UNCHECKABLE at 466–467 concerns unsupported serialization, not the token validity or the 201 response.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "Object or content-based parameters are explicitly appended to uncheckable at 359–360. REQUEST_UNCHECKABLE at 466–467 concerns unsupported serialization, not the token validity or the 201 response."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "Object or content-based parameters are explicitly appended to uncheckable at 359–360. REQUEST_UNCHECKABLE at 466–467 concerns unsupported serialization, not the token validity or the 201 response."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "Object or content-based parameters are explicitly appended to uncheckable at 359–360. REQUEST_UNCHECKABLE at 466–467 concerns unsupported serialization, not the token validity or the 201 response."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "TEST",
+    "L2": "",
+    "proposed_L2": "T-ORACLE-COVERAGE",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "rationale": "The checker cannot deserialize the object-valued Authorization parameter. This item is an explicit oracle coverage limitation under §10.5; the observed 201 does not establish a separate conformance defect.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": false,
+    "scope": {
+      "source": "K03/source",
+      "spec": "K03/spec.json",
+      "exchanges": "K03/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "The item is decided by the deterministic rule recorded in mandatory_search.reason; source, contract and the selected exchange were inspected. No independent-intent claim is made.",
+    "gap_resolved": false,
+    "remaining_gap": null
+  },
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "raw_result": null,
+  "tool_exitcode": null,
+  "coverage_resolution": null,
+  "evidence_locators": [
+    "K03/source/src/main/java/app/coronawarn/verification/controller/InternalTanController.java:138",
+    "../../tools/conformance.py:359",
+    "K03/spec.json:#/paths/~1version~1v1~1tan~1teletan/post/parameters/0/schema",
+    "K03/r1/exchanges.jsonl:231"
+  ]
+}

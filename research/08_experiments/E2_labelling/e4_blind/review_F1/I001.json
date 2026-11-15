@@ -1,0 +1,117 @@
+{
+  "item_id": "I001",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.758587+00:00",
+  "end_time": "2026-11-15T05:58:35.244086+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "PUT",
+    "path_template": "/v1/media_files/{id}",
+    "scenario": "unknown JSON members trigger 400; is 400 intended and omitted from responses?",
+    "observed_status": 400,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [
+    {
+      "raw_result": "search_F1/I001.json",
+      "hit_index": 0,
+      "category": "HANDLER",
+      "location": "api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:291",
+      "disposition": "context",
+      "review_verdict": "none_found",
+      "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": false,
+          "reason": "Handler, status, guard, DTO or serialization site explains implementation behavior; it is not independent intent evidence for this target."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "manual_additions": [],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "",
+    "proposed_L2": "S-STATUS",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "rationale": "Unknown-member JSON yields undocumented 400. The open request schema and binding behavior conflict; no independent evidence establishes the intended rejection or status policy.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K01/source",
+    "K01/spec.json",
+    "--method",
+    "PUT",
+    "--path",
+    "/v1/media_files/{id}",
+    "--status",
+    "400",
+    "--json"
+  ],
+  "search_finished_time": "2026-11-15T05:42:24.074984+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "MediaFileResource.update and MediaFile model were inspected; there is no explicit 400 handler. An unknown-property body is rejected before update. Independent media CRUD success tests do not decide unknown-member binding; §10.2 applies.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "none_found",
+  "raw_result": "search_F1/I001.json",
+  "tool_exitcode": 0,
+  "coverage_resolution": "Manual handler and field review supplements the lexical scan.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:291",
+    "K01/spec.json:#/paths/~1v1~1media_files~1{id}/put/responses",
+    "K01/r1/exchanges.jsonl:1013"
+  ]
+}

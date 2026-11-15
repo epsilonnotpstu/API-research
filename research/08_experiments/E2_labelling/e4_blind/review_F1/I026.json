@@ -1,0 +1,65 @@
+{
+  "item_id": "I026",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.760411+00:00",
+  "end_time": "2026-11-15T05:58:35.277251+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "PUT",
+    "path_template": "/user/{username}",
+    "scenario": "Non-gateway 500: §9.3 R1; form/update path will be checked manually.",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": false,
+    "reason": "Non-gateway 500: §9.3 R1; form/update path will be checked manually."
+  },
+  "hits": [],
+  "manual_additions": [],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "not_applicable",
+    "adjudication_flag": "none",
+    "rationale": "⚠️ The user-update request returns a non-gateway 500. User lookup dereferences stored usernames, which earlier empty-user creation can leave null; the crash rule establishes attribution without needing that causal inference.",
+    "inference_marked": true,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": false,
+    "scope": {
+      "source": "K04/source",
+      "spec": "K04/spec.json",
+      "exchanges": "K04/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Observed 500 is decisive. UserData.findUserByName dereferences stored user.getUsername() at 55. Earlier POST /user empty object can add a null username; no matching exception ID was present in supplied compose.log, so that causal sequence is explicitly an inference.",
+    "gap_resolved": false,
+    "remaining_gap": null
+  },
+  "search_status": "not_run",
+  "raw_tool_verdict": "NA",
+  "raw_result": null,
+  "tool_exitcode": null,
+  "coverage_resolution": null,
+  "evidence_locators": [
+    "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:152",
+    "K04/source/src/main/java/io/swagger/petstore/data/UserData.java:55",
+    "K04/spec.json:#/paths/~1user~1{username}/put/requestBody",
+    "K04/r1/exchanges.jsonl:1256"
+  ]
+}

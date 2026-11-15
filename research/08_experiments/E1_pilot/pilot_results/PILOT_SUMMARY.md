@@ -155,6 +155,13 @@
      - Schemathesis-এ required edit নিরপেক্ষ: মিলানো settings-এ required-only 0/3, no-required 3/3। Settings-অমিলের `[checks=all]` run-এ, যেখানে baseline ছোট, required-only 3/3 "সংকেত" সবই ছিল SUT-এর আগে থেকে থাকা defect-এর collateral 500। অর্থাৎ collateral exposure নির্ভর করে baseline coverage-এর ওপর।
      - ⇒ Fresh-mode সংকেত fault class-এর প্রত্যাশিত kind দিয়ে আলাদা করতে হবে। STRICT-কে keyword family অনুযায়ী চালাতে হবে।
 
+10. **[H10, E4/RQ2] Zero-shot LLM (source-access সহ) evidence-conservative codebook procedure-এর চেয়ে বেশি কার্যকর। Codebook procedure নিরাপদ, কিন্তু কম coverage দেয়।** উৎস: `../../E4_triage/E4_RESULTS.md`।
+   - Pre-registered দুই-দিকের macro-F1: M1 zero-shot 0.94, M2 codebook v0.6 0.66–0.70, M0 0.22।
+   - M2: precision 1.00/0.80, coverage 54–59%।
+   - **P2 (M2 > M1) ব্যর্থ।** Roadmap-এর H2 এই benchmark-এ সমর্থিত নয়।
+   - ⚠️ কৃত্রিম fault-গুলো "অস্বাভাবিক" দেখায়, আর তাতে zero-shot-এর plausibility heuristic সুবিধা পায়। তবে আসল decoy-তেও (n=22) zero-shot এগিয়ে: 15/22 বনাম 12/22।
+   - পরের মূল্যায়ন হতে হবে developer-confirmed আসল defect-এ।
+
 ## 6. সীমা (threats to validity)
 - **External validity:**
   - চারটিই Java/Spring/Dropwizard SUT; budget 300 s; seed 3টি।

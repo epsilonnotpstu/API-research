@@ -1,0 +1,81 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/user/createWithList"
+  },
+  "observed_status": 400,
+  "field": null,
+  "spec": {
+    "file": "K04/spec.json",
+    "path": "/user/createWithList",
+    "statuses": [
+      "200",
+      "default"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1user~1createWithList/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:87",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 87,
+      "snippet": "public ResponseContext createUsersWithListInput(final RequestContext request, final User[] users) {",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; lexical method/path match; configured tag/controller convention requires review",
+      "route": "/user/createWithList",
+      "methods": [
+        "POST"
+      ],
+      "independent": false,
+      "routing": "swagger_inflector",
+      "routing_basis": "inflector-config-tag-convention",
+      "routing_source": "K04/spec.json",
+      "operation_id": "createUsersWithListInput",
+      "controller": "io.swagger.petstore.controller.UserController",
+      "inflector_config": "inflector.yaml"
+    },
+    {
+      "category": "HANDLER",
+      "location": "src/main/java/io/swagger/petstore/controller/UserController.java:90",
+      "file": "src/main/java/io/swagger/petstore/controller/UserController.java",
+      "line": 90,
+      "snippet": ".status(Response.Status.BAD_REQUEST)",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        400
+      ],
+      "independent": false
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 28,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

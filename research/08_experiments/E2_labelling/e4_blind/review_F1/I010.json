@@ -1,0 +1,118 @@
+{
+  "item_id": "I010",
+  "labeller": "F1",
+  "start_time": "2026-11-15T05:42:22.759247+00:00",
+  "end_time": "2026-11-15T05:58:35.257245+00:00",
+  "target_proposition": {
+    "side": "operation_presence",
+    "method": "GET",
+    "path_template": "/v1/media_files/{id}",
+    "scenario": "GET media metadata operation absent from spec; oversized ID returns 404; is route public?",
+    "observed_status": 404,
+    "field": null,
+    "direction": "Evaluate the explicit presence/absence, constraint, route or status obligation described in scenario."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "§11.4.1(a–c): intent or a competing spec/implementation attribution requires independent scenario-matched evidence."
+  },
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "location": "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:165",
+      "disposition": "accept",
+      "review_verdict": "supports_impl_behavior",
+      "reason": "GET metadata for a created ID is asserted 200 at line 167. IntegrationTest.createRequest resolves the default v1 prefix at 44–57. This establishes public route presence, not oversized-ID behavior.",
+      "checklist": {
+        "a": {
+          "criterion": "Expected behavior is explicit for the target obligation",
+          "satisfied": true,
+          "reason": "GET metadata for a created ID is asserted 200 at line 167. IntegrationTest.createRequest resolves the default v1 prefix at 44–57. This establishes public route presence, not oversized-ID behavior."
+        },
+        "b": {
+          "criterion": "Linked to the same method, operation, scenario and branch",
+          "satisfied": true,
+          "reason": "GET metadata for a created ID is asserted 200 at line 167. IntegrationTest.createRequest resolves the default v1 prefix at 44–57. This establishes public route presence, not oversized-ID behavior."
+        },
+        "c": {
+          "criterion": "Independent basis from the disputed line and supplied spec",
+          "satisfied": true,
+          "reason": "GET metadata for a created ID is asserted 200 at line 167. IntegrationTest.createRequest resolves the default v1 prefix at 44–57. This establishes public route presence, not oversized-ID behavior."
+        },
+        "d": {
+          "criterion": "Applicable supplied revision and interface scope",
+          "satisfied": true,
+          "reason": "Supplied package revision; scope limitations are stated in reason."
+        },
+        "e": {
+          "criterion": "Opposing evidence and other branches examined",
+          "satisfied": true,
+          "reason": "Full raw hit list, branch differences, directed source/tests/docs and spec conflict were reviewed."
+        }
+      }
+    }
+  ],
+  "decision": {
+    "L1": "SPEC",
+    "L2": "S-METHOD",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": false,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "The metadata GET route is explicitly mapped and independently exercised by the CRUD integration test. Its omission is a specification defect; the oversized-ID 404 is separate from route-presence attribution.",
+    "inference_marked": false,
+    "history_scope": "unavailable"
+  },
+  "history_scope": "unavailable",
+  "search_command": [
+    "/usr/bin/python3",
+    "-I",
+    "-B",
+    "../../tools/intent_evidence.py",
+    "K01/source",
+    "K01/spec.json",
+    "--method",
+    "GET",
+    "--path",
+    "/v1/media_files/{id}",
+    "--status",
+    "404",
+    "--json"
+  ],
+  "search_finished_time": "2026-11-15T05:42:24.393293+00:00",
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "hit_index_base": 0,
+  "manual_fallback": {
+    "performed": true,
+    "scope": {
+      "source": "K01/source",
+      "spec": "K01/spec.json",
+      "exchanges": "K01/r1/exchanges.jsonl",
+      "tests_and_docs": "Package-local test directories, README/API prose and linked DTO/service/serialization files only."
+    },
+    "notes": "Source route, exact observed scenario, independent test/doc candidates and competing branches were inspected; accepted additions are listed separately.",
+    "gap_resolved": true,
+    "remaining_gap": null
+  },
+  "search_status": "complete",
+  "raw_tool_verdict": "NA",
+  "raw_result": "search_F1/I010.json",
+  "tool_exitcode": 2,
+  "coverage_resolution": "Manual fallback resolves Java mapping and relevant test/doc coverage after the tool rejects the absent spec operation.",
+  "evidence_locators": [
+    "K01/source/api/src/main/java/se/devscout/scoutapi/resource/MediaFileResource.java:238",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:165",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/MediaFilesIntegrationTest.java:167",
+    "K01/source/api/src/test/java/se/devscout/scoutapi/IntegrationTest.java:57",
+    "K01/spec.json:#/paths/~1v1~1media_files~1{id}/get",
+    "K01/r1/exchanges.jsonl:928"
+  ]
+}

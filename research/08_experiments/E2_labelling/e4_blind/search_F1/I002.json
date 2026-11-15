@@ -1,0 +1,392 @@
+{
+  "operation": {
+    "method": "POST",
+    "path": "/register"
+  },
+  "observed_status": 500,
+  "field": "_links",
+  "spec": {
+    "file": "K02/spec.json",
+    "path": "/register",
+    "statuses": [
+      "201",
+      "401",
+      "403",
+      "404"
+    ],
+    "field_policy": [
+      "optional"
+    ],
+    "field": "_links",
+    "locator": "#/paths/~1register/post"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "none_found",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:51",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 51,
+      "snippet": "@ResponseStatus(HttpStatus.CREATED)",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ context only; explicit status expression, not runtime proof",
+      "statuses": [
+        201
+      ],
+      "independent": false
+    },
+    {
+      "category": "HANDLER",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:52",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 52,
+      "snippet": "public UserDTO createCustomer(@RequestBody @Valid UserDTO user) {",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/register",
+      "methods": [
+        "POST"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:44",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 44,
+      "snippet": "/**",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:45",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 45,
+      "snippet": "* New customer registration.",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:46",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 46,
+      "snippet": "*",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:47",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 47,
+      "snippet": "* @return newly created account, already authenticated",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:48",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 48,
+      "snippet": "* @throws EmailExistsException if the account with the specified email already exists",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/CustomerRestController.java:49",
+      "file": "market-rest/src/main/java/market/rest/CustomerRestController.java",
+      "line": 49,
+      "snippet": "*/",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:40",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 40,
+      "snippet": "<pre style=\"width: 85%;\">{<br/>    \"productId\": 2,<br/>    \"distillery\": \"Balvenie\",<br/>    \"name\": \"12 y.o. Doublewood\",<br/>    \"price\": 4100,<br/>    \"age\":",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": "_links",
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:52",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 52,
+      "snippet": "<p>Регистрация нового покупателя выполняется отправкой запроса <code>POST /register</code>:</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:53",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 53,
+      "snippet": "<pre style=\"width: 75%;\">заголовок:   Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                 \"email\": \"ivan.petrov@yandex.ru\",<br> ",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        123,
+        456
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:54",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 54,
+      "snippet": "<p>Ответ приложения при успешном создании аккаунта: <code>200 Ok</code>.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:57",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 57,
+      "snippet": "HTTP-состояние <code>406 Not Acceptable</code> с соответствующими пояснениями.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:60",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 60,
+      "snippet": "<pre style=\"width: 100%;\">{<br/>    \"message\": \"Ошибка валидации параметра\",<br/>    \"description\": \"uri=/register\",<br/>    \"entityName\": \"userDTO\",<br/>    \"f",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:163",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 163,
+      "snippet": "<td>POST /register</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:165",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 165,
+      "snippet": "<td>200 — покупатель зарегистрирован и возвращён в теле ответа,<br>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:166",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 166,
+      "snippet": "406 — некорректный формат данных или пользователь уже существует; пояснения в теле ответа",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 162,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "item_id": "I011",
+  "start_time": "2026-11-15T05:42:59.072702+00:00",
+  "target_proposition": {
+    "side": "response",
+    "method": "PUT",
+    "path_template": "/customer/cart",
+    "scenario": "PUT cart method absent from specification and _links array produces 500",
+    "observed_status": 500,
+    "field": null,
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "UNDOCUMENTED_OPERATION",
+    "violation_pointer": "",
+    "spec_obligation": "method not in spec",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [],
+  "manual_additions": [
+    {
+      "category": "E-DOC",
+      "locator": "K02/source/market-web/src/main/resources/templates/rest.html:126",
+      "disposition": "accept",
+      "proposition": "Whole PUT cart row, lines 126–130, documents adding a product. Class mapping at CartRestController:38 resolves the /cart shorthand; parse-error 500 is separately evaluated by R1.",
+      "support": "supports_impl_behavior",
+      "inference": true,
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": true,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "Whole PUT cart row, lines 126–130, documents adding a product. Class mapping at CartRestController:38 resolves the /cart shorthand; parse-error 500 is separately evaluated by R1."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "IMPL",
+    "L2": "I-CRASH",
+    "proposed_L2": "",
+    "confidence": 3,
+    "both_candidate": true,
+    "intent_review_verdict": "supports_impl_behavior",
+    "adjudication_flag": "none",
+    "rationale": "PUT cart is independently documented but absent from the contract. Its _links parse error becomes 500; the primary attribution follows the server-error rule, with the omitted operation flagged separately.",
+    "evidence_locators": [
+      "K02/source/market-rest/src/main/java/market/rest/CartRestController.java:75",
+      "K02/source/market-rest/src/main/java/market/rest/exception/RestExceptionHandler.java:37",
+      "K02/source/market-web/src/main/resources/templates/rest.html:126",
+      "K02/source/market-web/src/main/resources/templates/rest.html:128",
+      "K02/spec.json#/paths/~1customer~1cart/put",
+      "K02/r1/exchanges.jsonl:211",
+      "search_F2/I011.json",
+      "review_F2/I011.json"
+    ],
+    "secondary_defect": "S-METHOD: independently documented PUT route omitted",
+    "intent_verdict_scope": "The independently evidenced public operation only; the observed 500 remains an IMPL fault under R1, and no intent evidence excuses that 500.",
+    "both_candidate_meaning": "Independently evidenced second defect",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.923188+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K02/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K02/spec.json",
+      "--method",
+      "PUT",
+      "--path",
+      "/customer/cart",
+      "--status",
+      "500",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:42:59.072853+00:00",
+    "end_time": "2026-11-15T05:42:59.138149+00:00",
+    "exit_code": 2
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "NA",
+  "tool_coverage": {
+    "exit_code": 2,
+    "scan": null,
+    "warnings": [],
+    "stderr_file": "search_F2/I011.stderr",
+    "raw_stdout_file": "search_F2/I011.json",
+    "manual_gap_resolution": "Missing-operation tool precondition failed. Manually inspected handler routes, tests and documentation; annotated paths/constants or explicitly resolved helpers close the retrieval gap. No outside routing/history source was opened."
+  },
+  "manual_coverage": {
+    "handler_locators": [
+      "K02/source/market-rest/src/main/java/market/rest/CartRestController.java:75",
+      "K02/source/market-rest/src/main/java/market/rest/exception/RestExceptionHandler.java:37",
+      "K02/source/market-web/src/main/resources/templates/rest.html:126",
+      "K02/source/market-web/src/main/resources/templates/rest.html:128"
+    ],
+    "test_scope": "K02/source/market-core/src/test/java; K02/source/market-web/src/test/java (separate MVC module, not counted as REST route assertions)",
+    "doc_scope": "K02/source/market-web/src/main/resources/templates/rest.html; K02/source/README.adoc; README_RU.md marked legacy",
+    "status": "manually completed; no claim that failed tool returned none_found"
+  }
+}

@@ -1,0 +1,755 @@
+{
+  "operation": {
+    "method": "GET",
+    "path": "/customer/orders/{orderId}"
+  },
+  "observed_status": 500,
+  "field": null,
+  "spec": {
+    "file": "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K02/spec.json",
+    "path": "/customer/orders/{orderId}",
+    "statuses": [
+      "200",
+      "401",
+      "403",
+      "404"
+    ],
+    "field_policy": [],
+    "field": null,
+    "locator": "#/paths/~1customer~1orders~1{orderId}/get"
+  },
+  "code_field_behavior": [],
+  "independent_evidence": "supports_spec",
+  "evidence_types_found": [
+    "E-DOC"
+  ],
+  "hits": [
+    {
+      "category": "HANDLER",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:53",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 53,
+      "snippet": "public OrderDTO getOrder(Principal principal, @PathVariable long orderId) {",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ context only; lexical method/path match",
+      "route": "/customer/orders/{orderId}",
+      "methods": [
+        "GET"
+      ],
+      "independent": false
+    },
+    {
+      "category": "E-TEST",
+      "location": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java:152",
+      "file": "market-web/src/test/java/market/controller/frontend/CustomerControllerTest.java",
+      "line": 152,
+      "snippet": ".andExpect(status().isOk())",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ other_module context only; no handler-class or REST-base-path reference; candidate independent test; path within ±10 lines; verify scenario and assertion",
+      "asserted_values": [
+        200
+      ],
+      "field": null,
+      "field_behavior": null,
+      "independent": false,
+      "counts_toward_verdict": false,
+      "module_scope": "other_module",
+      "module_link_reason": null,
+      "match": "segments",
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:186",
+      "file": "README_RU.md",
+      "line": 186,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"us",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:193",
+      "file": "README_RU.md",
+      "line": 193,
+      "snippet": "<pre style=\"width: 95%;\">заголовок:   Status Code: 201 Created<br>             Location: http://46.101.111.55:8080/rest/customer/orders/13<br>             Conte",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        101,
+        111,
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:195",
+      "file": "README_RU.md",
+      "line": 195,
+      "snippet": "<code>/customer/orders</code>.</p>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:296",
+      "file": "README_RU.md",
+      "line": 296,
+      "snippet": "<td>200 — контактные данные возвращены в теле ответа</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:301",
+      "file": "README_RU.md",
+      "line": 301,
+      "snippet": "<td>200 — данные изменены, обновлённые возвращены в теле ответа,<br>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:302",
+      "file": "README_RU.md",
+      "line": 302,
+      "snippet": "406 — некорректный формат полученных данных; пояснения в теле ответа</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:305",
+      "file": "README_RU.md",
+      "line": 305,
+      "snippet": "<td>GET /customer/orders</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:307",
+      "file": "README_RU.md",
+      "line": 307,
+      "snippet": "<td>200 — перечень заказов возвращён в теле ответа</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:310",
+      "file": "README_RU.md",
+      "line": 310,
+      "snippet": "<td>GET /customer/orders/:id</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:312",
+      "file": "README_RU.md",
+      "line": 312,
+      "snippet": "<td>200 — заказ возвращён в теле ответа,<br>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "README_RU.md:313",
+      "file": "README_RU.md",
+      "line": 313,
+      "snippet": "404 — заказ с таким id у авторизованного пользователя не существует</td>",
+      "module": ".",
+      "module_build_file": "pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:46",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 46,
+      "snippet": "/**",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:47",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 47,
+      "snippet": "* View a single order.",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:48",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 48,
+      "snippet": "*",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:49",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 49,
+      "snippet": "* @return order of the specified customer",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:50",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 50,
+      "snippet": "* @throws UnknownEntityException if the order with the specified id doesn't exist",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-rest/src/main/java/market/rest/OrdersRestController.java:51",
+      "file": "market-rest/src/main/java/market/rest/OrdersRestController.java",
+      "line": 51,
+      "snippet": "*/",
+      "module": "market-rest",
+      "module_build_file": "market-rest/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/_layouts/frontend/template.html:65",
+      "file": "market-web/src/main/resources/templates/_layouts/frontend/template.html",
+      "line": 65,
+      "snippet": "<li><a th:href=\"@{/customer/orders}\">история заказов</a></li>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/checkout/confirmation.html:28",
+      "file": "market-web/src/main/resources/templates/checkout/confirmation.html",
+      "line": 28,
+      "snippet": "<a th:href=\"@{/customer/orders}\">история заказов</a>.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:71",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 71,
+      "snippet": "style=\"width: 100%;\">заголовок:   Status Code: 200 Ok<br>             Content-Type: application/json; charset=UTF-8<br>тело:        {<br>                \"user\":",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        100,
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees",
+        "contradicts"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:78",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 78,
+      "snippet": "<pre style=\"width: 100%;\">заголовок:   Status Code: 201 Created<br>             Location: /customer/orders/13<br>             Content-Type: application/json; ch",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        201
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:80",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 80,
+      "snippet": "<code>/customer/orders</code>.</p>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:185",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 185,
+      "snippet": "<td>200 — контактные данные возвращены в теле ответа</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:190",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 190,
+      "snippet": "<td>200 — данные изменены, обновлённые возвращены в теле ответа,<br>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:191",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 191,
+      "snippet": "406 — некорректный формат полученных данных; пояснения в теле ответа",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        406
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "contradicts"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:195",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 195,
+      "snippet": "<td>GET /customer/orders</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:197",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 197,
+      "snippet": "<td>200 — перечень заказов возвращён в теле ответа</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:200",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 200,
+      "snippet": "<td>GET /customer/orders/:id</td>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "unknown"
+      ],
+      "spec_agreement": [
+        "unknown"
+      ],
+      "support": []
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:202",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 202,
+      "snippet": "<td>200 — заказ возвращён в теле ответа,<br>",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        200
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    },
+    {
+      "category": "E-DOC",
+      "location": "market-web/src/main/resources/templates/rest.html:203",
+      "file": "market-web/src/main/resources/templates/rest.html",
+      "line": 203,
+      "snippet": "404 — заказ с таким id у авторизованного пользователя не существует",
+      "module": "market-web",
+      "module_build_file": "market-web/pom.xml",
+      "strength": "⚠️ candidate independent documentation; ±10-line proximity; verify scenario",
+      "statuses": [
+        404
+      ],
+      "field": null,
+      "independent": true,
+      "code_agreement": [
+        "contradicts"
+      ],
+      "spec_agreement": [
+        "agrees"
+      ],
+      "support": [
+        "supports_spec"
+      ]
+    }
+  ],
+  "history": {
+    "availability": "unavailable",
+    "reason": "enclosing repository outside source_dir",
+    "scope": "unavailable",
+    "toplevel_inside_source": false
+  },
+  "scan": {
+    "text_files": 162,
+    "skipped_binary_or_encoding": 0,
+    "skipped_large": 0,
+    "skipped_symlink": 0,
+    "skipped_dirs": 0,
+    "complete": true
+  },
+  "warnings": [],
+  "limitations": [
+    "Lexical candidate search; verify branch/scenario and DTO linkage before attribution.",
+    "Input specification is comparison context, never independent documentation.",
+    "Field mentions alone and git pickaxe matches do not establish intent.",
+    "No runtime field presence is supplied by --field; annotation behavior is tentative.",
+    "Files over 2 MB, symlinks, binaries, build/vendor directories are skipped."
+  ]
+}

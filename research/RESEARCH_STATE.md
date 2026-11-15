@@ -131,7 +131,7 @@
 | E2 pilot labelling | ✅ 161টি fingerprint, A–B κ 0.73, codebook v0.6.1 | `08_experiments/E2_labelling/FINAL_LABELS.md`, `08_experiments/R1_triage_codebook.md` |
 | (অতিরিক্ত) code-mutation GT + blind LLM labelling | ✅ v1–v3; v3 = codebook v0.6-এর held-out মূল্যায়ন | `08_experiments/E5_codemut/E5_RESULTS.md`, `E5_BLIND_RESULTS.md` |
 | E3 Respector spec তুলনা | ⏭️ হয়নি | — |
-| **E4 triage মূল্যায়ন (RQ2)** | ▶️ শুরু: SPEC-দিকের held-out set (T40), M0/M1/M2 পদ্ধতি | `08_experiments/E4_triage/E4_PLAN.md` |
+| **E4 triage মূল্যায়ন (RQ2)** | ▶️ প্রথম ধাপ সম্পন্ন: SPEC-দিকের held-out set। macro-F1: M1 zero-shot 0.94 > M2 codebook 0.66–0.70 > M0 0.22; P2 ব্যর্থ। পরের ধাপ: আসল, developer-confirmed defect। | `08_experiments/E4_triage/E4_PLAN.md`, `E4_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3), E6 scale-up | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`।

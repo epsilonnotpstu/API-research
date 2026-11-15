@@ -1,0 +1,142 @@
+{
+  "item_id": "I042",
+  "start_time": "2026-11-15T05:43:09.484419+00:00",
+  "target_proposition": {
+    "side": "request",
+    "method": "GET",
+    "path_template": "/user/login",
+    "scenario": "login omits required username and returns 200",
+    "observed_status": 200,
+    "field": "username",
+    "direction": "Determine whether the observed behavior or the specification obligation is intended; assess only the stated item component.",
+    "item_kind": "INVALID_ACCEPTED",
+    "violation_pointer": "/parameters/query/username/required",
+    "spec_obligation": "missing required query parameter username",
+    "inference_note": "Target is this item’s named violation component; additional observed defects are explicitly recorded separately."
+  },
+  "mandatory_search": {
+    "required": true,
+    "reason": "Codebook 11.4.1: intent-dependent attribution, undecidable candidate, or missing-operation intent."
+  },
+  "history_scope": "unavailable",
+  "hits": [
+    {
+      "index": 0,
+      "category": "HANDLER",
+      "locator": "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:103",
+      "disposition": "context",
+      "reason": "Matched implementation behavior/routing only; no independent intent. Any other-module handler match is not treated as target evidence.",
+      "checklist": {
+        "a_explicit_behavior": true,
+        "b_target_scenario_linkage": true,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": ""
+      }
+    }
+  ],
+  "manual_additions": [
+    {
+      "category": "E-TEST",
+      "locator": "K04/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3",
+      "disposition": "reject",
+      "proposition": "Empty test class has no scenario assertion; no independent intent is inferred from that absence.",
+      "support": null,
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "Empty test class has no scenario assertion; no independent intent is inferred from that absence."
+      }
+    },
+    {
+      "category": "E-DOC",
+      "locator": "K04/source/README.md:8",
+      "disposition": "reject",
+      "proposition": "Whole README overview and usage instructions do not specify this field, constraint or rejection scenario.",
+      "support": null,
+      "inference": false,
+      "checklist": {
+        "a_explicit_behavior": false,
+        "b_target_scenario_linkage": false,
+        "c_independent_basis": false,
+        "d_applicable_revision": true,
+        "e_opposing_evidence_reviewed": true,
+        "explanation": "Whole README overview and usage instructions do not specify this field, constraint or rejection scenario."
+      }
+    }
+  ],
+  "decision": {
+    "L1": "UNDECIDABLE",
+    "L2": "NA",
+    "proposed_L2": "S-REQ-STRICT",
+    "confidence": 2,
+    "both_candidate": true,
+    "intent_review_verdict": "none_found",
+    "adjudication_flag": "none",
+    "rationale": "The login handler ignores absent credentials and returns a session string. No independent test or normative documentation resolves whether permissive sample behavior or the required username contract is intended.",
+    "evidence_locators": [
+      "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:103",
+      "K04/source/src/main/java/io/swagger/petstore/controller/UserController.java:109",
+      "K04/source/src/test/java/ip/swagger/petstore/PetStoreTest.java:3",
+      "K04/spec.json#/paths/~1user~1login/get/parameters/0/required",
+      "K04/r1/exchanges.jsonl:1153",
+      "search_F2/I042.json",
+      "review_F2/I042.json"
+    ],
+    "secondary_defect": null,
+    "intent_verdict_scope": "The stated target component; raw status-only support is never used for a field or serialization obligation.",
+    "both_candidate_meaning": "Unresolved attribution under §11; not proof that both sides are defective",
+    "scope_note": "One item, one named violation; no aggregation with unrelated exchange messages."
+  },
+  "end_time": "2026-11-15T06:01:34.946252+00:00",
+  "search_run": {
+    "command": [
+      "/usr/bin/python3",
+      "-I",
+      "-B",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/../../tools/intent_evidence.py",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K04/source",
+      "/home/afridi/Documents/API research/research/08_experiments/E2_labelling/e4_blind/K04/spec.json",
+      "--method",
+      "GET",
+      "--path",
+      "/user/login",
+      "--status",
+      "200",
+      "--field",
+      "username",
+      "--json"
+    ],
+    "start_time": "2026-11-15T05:43:09.484582+00:00",
+    "end_time": "2026-11-15T05:43:09.729571+00:00",
+    "exit_code": 0
+  },
+  "review_order": [
+    "HANDLER",
+    "E-TEST",
+    "E-DOC",
+    "E-CONSIST",
+    "E-HISTORY"
+  ],
+  "raw_tool_verdict": "none_found",
+  "tool_coverage": {
+    "exit_code": 0,
+    "scan": {
+      "text_files": 28,
+      "skipped_binary_or_encoding": 0,
+      "skipped_large": 0,
+      "skipped_symlink": 0,
+      "skipped_dirs": 0,
+      "complete": true
+    },
+    "warnings": [],
+    "stderr_file": "search_F2/I042.stderr",
+    "raw_stdout_file": "search_F2/I042.json",
+    "manual_gap_resolution": "Raw scan completed. Directed manual fallback reviewed linked helpers/fixtures, full relevant prose, and independent class policy; no relevant unreadable file remained."
+  }
+}
