@@ -51,8 +51,10 @@
   - every other repository matches the HEAD table above;
   - cwa-verification-server (X36, X37, X52) and swagger-petstore (X58) are still unchecked, because their clones are elsewhere.
 
-## Decision (Claude, supervisor-delegated; provisional; **the user must confirm before any public release or submission**)
+## Decision (Claude, supervisor-delegated; **confirmed by the user on 2026-11-16**)
 **Revised after the commit-level re-check.** The first version excluded W01, W16 and W32.
+
+**User confirmation (2026-11-16):** the user approved the revised proposal below as written. That means W01, W16 and W32 under Apache-2.0, the MIT-era items with the MIT notice, W15 and the T48 item V14 (also CC BY-NC 4.0 at its parent commit) under CC BY-NC 4.0, and the repository anonymised in the paper. Still open before release: verify the licences of cwa-verification-server and swagger-petstore (X36, X37, X52, X58).
 1. **Replication package:**
    - Release W01, W16 and W32 under Apache-2.0, with that version's LICENSE and copyright notice and a note naming the source commit.
    - Release the MIT-era items (X11, X41, X54, X63, W24) with the MIT notice.
