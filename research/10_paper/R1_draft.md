@@ -1,6 +1,6 @@
 # Spec or Bug? Predicting Which Side Developers Repair When a REST API and Its Contract Disagree
 
-*Working draft v0.2 (2026-11-16). Numbers are taken from the frozen result files cited in brackets. Sections marked **[TODO]** need content that is not yet available. Sections marked **[E9]** are filled after E9 Part B is scored.*
+*Working draft v0.3 (2026-11-17). Numbers are taken from the frozen result files cited in brackets. Sections marked **[TODO]** need content that is not yet available. Sections marked **[E9]** are filled after E9 Part B is scored.*
 
 ---
 
@@ -20,6 +20,10 @@ When a REST implementation and its OpenAPI contract disagree, a test failure doe
    - The fallback lost to a forced-choice LLM.
    - The kind rule held at 0.77, and the kind × direction association replicated: 19/24 vs 2/13, p = 2.7 × 10⁻⁴.
    - LLM triage accuracy varies strongly between clustered samples. The divergence kind is the more stable signal.
+6. **The association replicates across model families and with fix capping.**
+   - Claude coders re-coded all 125 earlier confirmatory items: 67/81 vs 1/39, κ 0.96 against the GPT coders.
+   - On 36 new fix-capped items (E12) it held with both families: 17/17 vs 3/19 (GPT) and 17/17 vs 1/17 (Claude), with κ = 1.00 across families.
+   - On E12, the kind rule and the LLM labellers agreed on every item.
 
 All hypotheses were pre-registered with hash-frozen scorers. All coders were blind to the hypothesis and to the repair direction.
 
@@ -242,12 +246,13 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - E8 + E8b re-describes the E7 items and the T47 items.
   - The T47 row codes the same T47 items from the miner's text.
   - The E6 row is the exploratory set from which the hypothesis came.
-  - The E10 row is the only sample disjoint from all the others: new items mined by T48, coded by new coders C9 and C10. It is the first sample with accidental divergences repaired in the contract (2/13, from one fix).
-- **In every row, no accidental divergence was repaired in the contract.**
+  - The E10 row is disjoint from the earlier rows: new items mined by T48, coded by new coders C9 and C10. It is the first sample with accidental divergences repaired in the contract (2/13, from one fix).
+  - The two E12 rows are disjoint from all earlier rows: 36 new items mined by T49, at most 2 per fix. The two rows code the same items, once with GPT coders (C11/C12) and once with Claude coders (K3/K4).
+- **In the first four rows, no accidental divergence was repaired in the contract.** In E10 and E12, a few were: 2/13, 3/19 and 1/17.
 
 - **The rule's errors are asymmetric.**
-  - ACCIDENTAL → IMPL had precision 1.00 on every set.
-  - DELIBERATE → SPEC was wrong about one time in five.
+  - ACCIDENTAL → IMPL had precision 1.00 on the E7–E9 sets, 0.85 in E10 and 0.84 in E12 (GPT kinds).
+  - DELIBERATE → SPEC was wrong about one time in five before E12; it was right on all 17 items in E12.
 - **One post-hoc claim was not replicated.** E8 suggested that blind readers miss accidental divergences more often. The pre-registered E8b test gave p = 0.31, so we retract that claim.
 
 ### 4.4 RQ4: Hybrid triage [E9]
@@ -299,15 +304,36 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 
 **The association therefore does not depend on the coders' model family.** Both families read the same miner-written propositions, though, so this agreement cannot rule out a shared textual cue. E8b, with direction-blind propositions, and human coding address that cue.
 
+### 4.7 Fix-capped extension with two model families [E12]
+**Design:**
+- 36 new items (SPEC 20, IMPL 16) from 24 fixes in 6 repositories, mined by a hypothesis-blind miner with at most 2 operations per fix [`E12_PLAN.md`, `T49_report.md`].
+- The pool was exhausted below the 40-item target.
+- Two GPT coders and two Claude coders coded kind, and two GPT labellers (M1 and forced choice) labelled direction.
+
+| Result | Value |
+|---|---|
+| Kind × direction, GPT coders | 17/17 vs 3/19, p = 1.3 × 10⁻⁷. By cluster: 11/11 vs 2/13, p = 3.1 × 10⁻⁵ |
+| Kind × direction, Claude coders | 17/17 vs 1/17, p = 7.7 × 10⁻⁹ |
+| GPT vs Claude final kinds | 34/34, κ = 1.00 |
+| R vs forced-choice LLM | 0 discordant items (INSUFFICIENT) |
+| Macro-F1 | R 0.917 (GPT kinds) / 0.944 (Claude kinds; coverage 0.94); M1 0.917; M1F 0.917 |
+| Pooled E10 + E12 (76 items) | Kind × direction: 36/41 vs 5/32, p = 3.0 × 10⁻¹⁰; clusters 18/22 vs 3/22. Macro-F1: R 0.842, M1 0.751, M1F 0.828 |
+
+**Notes:**
+- **The association replicated a third time on new items,** with fix capping, by cluster and in both model families [`E12_RESULTS.md`].
+- **Exploratory:** R, M1 and M1F made identical predictions on all 36 items. The E10 advantage of the kind rule over the LLM did not recur, so E12 gives no evidence that kind is a better *triage* signal than a forced-choice LLM.
+- **R's three errors** were ACCIDENTAL → SPEC items from 2 fixes, so accidental → contract repair is no longer confined to one fix.
+
 ## 5. Discussion
 - **The default assumption is wrong for a large share of fixes.** Tools that assume "the implementation is wrong" would misroute a large share of real fixes. In our sample, developers repaired the contract in more than half of them.
-- **Accidental divergences can usually be routed to code.** In the first three confirmatory samples no accidental divergence was resolved by changing the contract. E10 found the first two, both from one fix. Routing accidental divergences to the code is therefore high-precision, not infallible.
+- **Accidental divergences can usually be routed to code.** In the first three confirmatory samples no accidental divergence was resolved by changing the contract. E10 found the first two, both from one fix, and E12 found three more, from two fixes (GPT kinds). Routing accidental divergences to the code is therefore high-precision, not infallible: pooled E10 + E12, 5 of 32 went to the contract.
 - **Deliberate divergences need a human decision.** They lean towards spec repair, but about one in five is still repaired in the code. This matches practitioner tools, where a human decides whether drift is intended.
 - **How reliable is LLM triage?**
   - In E9 the LLM seemed to recognise the deliberate/accidental distinction implicitly. It never needed the accidental override, and its errors were abstentions on deliberate divergences.
   - E10 shows that this picture is sample-dependent. On a new, more clustered sample the LLM confidently mislabelled deliberate divergences as implementation bugs.
   - The kind rule was the more stable of the two: macro-F1 0.85 in E9 and 0.77 in E10, against 0.90 and 0.58–0.64 for the LLM.
   - No single combination rule was best in both samples. Each sample's apparent winner (fallback in E9; kind rule first plus forced choice in E10, macro-F1 0.82) was found post hoc.
+  - On the fix-capped E12 sample, the LLM labellers and the kind rule agreed on every item (macro-F1 0.917 each). So the E10 gap was driven by particular clusters, not by a systematic LLM weakness.
   - The practical lesson: report LLM triage accuracy over many fixes and clusters, and use the divergence kind as an interpretable check on it.
 - **Implication for fuzzers.**
   - A runtime failure of the accidental kind (an unhandled exception, a 500, a missing header) is a strong signal of an implementation bug.
@@ -319,7 +345,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - The truth label is the developer's repair direction, not an objective fault location.
   - Some SPEC repairs may legitimise a bug.
 - **Same-model coders.**
-  - Until E11, every coder, labeller and judge was from one LLM family. E11 adds Claude coders, who agree with the GPT coders at κ 0.96. Both families are still LLMs reading the same text, so human validation remains necessary.
+  - Until E11, every coder, labeller and judge was from one LLM family. E11 and E12 add Claude coders, who agree with the GPT coders at κ 0.96 and 1.00. Both families are still LLMs reading the same text, so human validation remains necessary.
   - **[TODO]** Report the human spot-check: 20 items, coded by the author, with κ against the model codes.
 - **Proposition authorship.** Addressed by E8 and E8b. The remaining limits are a single writer and a single matcher.
 - **Sampling.**
@@ -327,6 +353,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - Items cluster by repository and fix.
   - The accidental arm is small (n = 10–24 per sample), so the odds-ratio CIs are very wide.
   - E10's 40 items come from 21 fixes, and one repository contributes 10 items from 2 fixes. Cluster-level analyses are reported alongside the item-level ones.
+  - E12 capped each fix at 2 items (36 items, 24 fixes), but it exhausted the frozen candidate pool. Larger samples need new repositories.
 - **Hypothesis origin and forking paths.**
   - H-E7-1 came from post-hoc coding of the E6 items, which are reported as exploratory only.
   - All amendments were frozen before use and are disclosed: E7 A1–A3 and E8 B1, the single further look.
@@ -336,7 +363,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 When an API and its contract disagree, the side developers repair is predictable from what kind of divergence it is.
 - **Deliberate divergences,** behaviour that the code explicitly produces, are mostly resolved by changing the contract.
 - **Accidental divergences,** side effects of omissions, are almost always resolved by changing the code.
-- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10). It held with direction-blind propositions, at the level of fix clusters, and with coders from a second model family (E11, κ 0.96 across families).
+- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10, E12). It held with direction-blind propositions, at the level of fix clusters, with at most two items per fix, and with coders from a second model family (E11 and E12, κ 0.96 and 1.00 across families).
 - **LLM triage is less stable.** A zero-shot LLM can match or beat explicit rules on one sample (E9) and fall well below them on another (E10). Neither pre-registered attempt to combine the LLM with the kind rule beat the LLM alone.
 
 Testing tools should therefore not assume that the implementation is wrong. They should surface the divergence kind as a first-class signal.

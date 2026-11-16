@@ -15,8 +15,14 @@
   - E9-এর post-hoc fallback-এর ফল replicate হয়নি।
   - বিস্তারিত: `08_experiments/E10_fallback/E10_RESULTS.md`।
 - **E11 (ভিন্ন পরিবারের মডেল, ১২৫টি item):** blind Claude coder দিয়েও H-E11-1 PASS: 67/81 বনাম 1/39, cluster ধরে 38/51 বনাম 1/30। H-E11-2 PASS: GPT আর Claude-এর মধ্যে κ 0.96 (`08_experiments/E11_crossfamily/E11_RESULTS.md`)।
-- **T49 / E12:** চলছে। Pre-registered (`08_experiments/E12_extend/E12_PLAN.md`)।
-- **Paper খসড়া v0.2:** `10_paper/R1_draft.md`। E10-এর ফল আর conclusion যোগ হয়েছে।
+- **T49 / E12 (৩৬টি নতুন item, প্রতি fix-এ সর্বোচ্চ ২টি):**
+  - H-E12-1 PASS (GPT coder): 17/17 বনাম 3/19, cluster ধরে 11/11 বনাম 2/13।
+  - H-E12-2 PASS (Claude coder): 17/17 বনাম 1/17।
+  - H-E12-3 PASS: দুই পরিবারের মধ্যে κ 1.00।
+  - H-E12-4 INSUFFICIENT: R, M1 আর M1F ৩৬টি item-এর সবকটিতে একই সিদ্ধান্ত দিয়েছে।
+  - Pool2 শেষ; আরও item-এর জন্য নতুন pool লাগবে।
+  - বিস্তারিত: `08_experiments/E12_extend/E12_RESULTS.md`।
+- **Paper খসড়া v0.3:** `10_paper/R1_draft.md`। E12 অংশ (§4.7) আর Figure 1-এর E12 row যোগ হয়েছে।
 - **পরের ধাপ:**
   - user-এর human spot-check (`09_collab/human_check/`);
   - Q1-এর জন্য বড় পরিসরে মানুষের validation আর বড় sample;
@@ -156,6 +162,7 @@
 | E9 hybrid triage (kind rule + M1) | ✅ Part A: discordant 0। Part B (৮৫টি নতুন item): discordant ১ → INSUFFICIENT। M1 macro-F1 0.90–0.91, R 0.845; override precision 24/24। Post-hoc fallback 0.976 (X)। | `08_experiments/E9_hybrid/E9_PLAN.md`, `E9_RESULTS.md` |
 | E10 fallback triage (T48, ৪০টি নতুন item) | ✅ H-E10-1 INSUFFICIENT (৬টি pair); H-E10-2 NOT_BETTER (forced choice > FB, cluster ধরে n.s.); **H-E10-3 PASS** (19/24 বনাম 2/13, p = 2.7e-4)। M1 0.58–0.64, R 0.77। | `08_experiments/E10_fallback/E10_PLAN.md`, `E10_ADDENDUM.md`, `E10_RESULTS.md` |
 | E11 ভিন্ন পরিবারের coding | ✅ H-E11-1 PASS (67/81 বনাম 1/39; cluster ধরে 38/51 বনাম 1/30); H-E11-2 PASS (κ 0.96) | `08_experiments/E11_crossfamily/E11_PLAN.md`, `E11_RESULTS.md` |
+| E12 fix-capped extension (T49, ৩৬টি item) | ✅ H-E12-1 PASS (17/17 বনাম 3/19; cluster ধরে 11/11 বনাম 2/13); H-E12-2 PASS (Claude: 17/17 বনাম 1/17); H-E12-3 PASS (κ 1.00); H-E12-4 INSUFFICIENT (discordant 0)। R = M1 = M1F (0.917) | `08_experiments/E12_extend/E12_PLAN.md`, `E12_DEVIATIONS.md`, `E12_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।
