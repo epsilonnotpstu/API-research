@@ -28,4 +28,4 @@
 
 **পরে আমি যা করব:** আপনার code আর model-এর code-এর মধ্যে Cohen's κ বের করব। κ ≥ 0.6 হলে model-এর coding মানুষের সাথে সামঞ্জস্যপূর্ণ বলে report করব। কম হলে সেটাও সীমাবদ্ধতা হিসেবে লিখব।
 
-Sheet freeze: `spotcheck_freeze.sha256`। Sampling: seed 20261116, ১০টি accidental + ১০টি deliberate (C1 = C2), ক্রম এলোমেলো করা।
+Sheet freeze: `spotcheck_freeze.sha256`। Sampling: seed 20261116, শুধু যেসব item-এ দুই coder একমত, সেখান থেকে; ক্রম এলোমেলো করা। (Strata-র বিবরণ: `08_experiments/E9_hybrid/`, পরে দেখবেন।)
