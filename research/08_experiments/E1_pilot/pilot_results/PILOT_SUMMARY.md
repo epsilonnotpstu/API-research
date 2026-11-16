@@ -168,7 +168,8 @@
    - M2-এর বাড়তি abstention (K02, K12, K14 …) পুরোটাই coverage-এর খরচ। M1 ভুল করেছে কিন্তু M2 সঠিক, এমন item একটিও নেই (post-hoc sign test p=0.125, প্রতি জোড়া)।
    - ⚠️ যৌথ ভুল K21/K22: contract উদার (optional/default), code কঠোর। LLM IMPL বলেছে, developer spec কঠোর করেছে। এটা "repair direction ≠ fault location"-এর উদাহরণ, আর REQUEST_LOOSE-ধাঁচের অমিলে প্রথাগত prior-এর প্রশ্ন তোলে (n=2, hypothesis)।
    - সীমা: n ছোট; একই model family; popularity ভাগ অর্থহীন (≥500 star-এর item মাত্র 2টি)।
-12. **[H12, E7/RQ2] কোন দিকে সারানো হবে, তা divergence-এর ধরন জোরালোভাবে আগাম বলে দেয়। তবে এই সংকেত proposition-এর ভাষাতেই ধরা আছে; code পড়ায় আসেনি।** উৎস: `../../E7_repairdir/E7_RESULTS.md`।
+12. **[H12, E7/E8b/RQ2] কোন দিকে সারানো হবে, তা divergence-এর ধরন জোরালোভাবে আগাম বলে দেয়: accidental → IMPL, deliberate → বেশিরভাগ SPEC। Direction না জানা লেখকের proposition-এও এটি টিকেছে (E8b pooled PASS)।** উৎস: `../../E7_repairdir/E7_RESULTS.md`, `../../E8_blindprop/E8_RESULTS.md`।
+   - (E7-এর মূল সতর্কতা ছিল: সংকেত proposition-এর ভাষাতেই ধরা আছে, κ 1.0। E8b এই সতর্কতা অনেকটা দূর করেছে।)
    - Pre-registered, ৪৫টি নতুন আসল fix (১৫টি repo):
      - Deliberate divergence → SPEC 26/33 (0.79)।
      - Accidental divergence → SPEC 0/11। সবগুলো code সারিয়ে ঠিক করা হয়েছে।
