@@ -45,18 +45,38 @@ All hypotheses were pre-registered with hash-frozen scorers. All coders were bli
 5. **A fully pre-registered, hash-frozen protocol** for LLM-coded empirical SE studies. Every amendment is disclosed.
 
 ## 2. Background and Related Work
-**[TODO]** This section needs a full literature pass. The sources are `06_final_recommendations/R1_novelty_check_E0.md` §2 and §7 and `04_paper_analysis/cross_paper_synthesis.md`.
+*Citation keys `[Pnnn]` refer to `02_screening/final_papers.md`. Items marked ⚠️ were verified only from the abstract, HTML or vendor documentation (`06_final_recommendations/R1_novelty_check_E0.md`). **[TODO]** Convert to BibTeX.*
 
-- **REST fuzzing and oracles:** EvoMaster, Schemathesis, RESTler, RESTest/P001. Schema conformance as the oracle.
-- **Spec quality and spec faults:**
-  - 2607.12101, fault injection in OpenAPI;
-  - SpecFix (P032), static spec repair;
-  - DualMine (2609.27806), runtime constraint reconciliation.
-- **Failure diagnosis:**
-  - FDRRestTest (ESEM 2026): request/test-side diagnosis and repair;
-  - RESTifAI (2512.08706): manual Bug / Enhancement / Invalid labels.
-- **Practitioner drift tools:** Beeceptor, api-drift-detector. These detect drift, and a human decides whether it is intended.
-- **Gap:** none of these predicts which artifact will be repaired, or evaluates such a prediction against developer fixes.
+### 2.1 The contract as oracle in REST testing
+- **Black-box and white-box REST fuzzers use the OpenAPI document as both input model and oracle.** Examples are RESTler [P006], EvoMaster [P011], Schemathesis and RESTest [P001]; surveys and tool comparisons are [P002, P003, P004].
+- **The usual oracles are 5xx responses and schema violations.** Their findings are often of doubtful severity [P015].
+- **Spec–response disconformity dominates what such tools report.**
+  - In fifteen days of online testing of 13 industrial APIs, 63% of failures and 50% of faults were disconformities between the specification and the response [P001].
+  - Nearly all of more than 1,000 public specifications showed mismatches [P004].
+  - Faulty or under-specified schemas are a main obstacle to fuzzer coverage [P003].
+- **Such a failure has two possible causes:** the implementation is wrong, or the contract is wrong. No tool says which.
+- **The RESTest authors name the gap.** They list automated classification of failures into faults as an open opportunity (replication package of [P001]).
+
+### 2.2 Contract quality, inference and repair
+- **Inference.** Static and path-sensitive analyses infer specifications from code [P018, P019]. They find many undocumented endpoints, parameters and responses, and developers confirmed some of the inconsistencies found [P018].
+- **Repair.** SpecFix repairs documentation-detectable spec defects for LLM-agent wrapping [P032]. These are authentication, base URL and undocumented headers, and it works statically only.
+- **Fault injection.** Mazhar et al. inject faults into OpenAPI documents to measure their effect on black-box fuzzers (arXiv 2607.12101). They hold the implementation fixed and do not attribute or repair failures.
+- **Runtime reconciliation (⚠️).** DualMine reconciles spec-derived constraints with runtime executions (arXiv 2609.27806). Its output is a constraint set, not a failure-origin label.
+- **Shared assumption.** All of this work treats the contract as the artifact to be improved. None asks whether the developer would instead change the code.
+
+### 2.3 Failure diagnosis and triage
+- **FDRRestTest (ESEM 2026)** diagnoses failed requests into seven categories and repairs the *test*: value substitution, prerequisite insertion, reordering. It does not attribute a failure to the spec or the implementation.
+- **Manual labelling elsewhere.** RESTifAI (arXiv 2512.08706) and LLM test-amplification studies label failing tests by hand as Bug, Enhancement or Invalid. Some "Invalid" cases are business rules missing from the contract, which shows that the distinction matters in practice and is still made manually.
+- **Practitioner drift tools (⚠️)** compare live traffic against the OpenAPI document and propose patches. Examples are Beeceptor contract drift and api-drift-detector. A human decides whether the drift is intended.
+- **Their question is ours.** Is the divergence deliberate, so the contract should follow, or accidental, so the code should be fixed?
+
+### 2.4 Gap
+We found no work that:
+1. predicts which artifact a developer will repair when contract and implementation disagree;
+2. evaluates such a prediction against real developer fixes;
+3. identifies an observable property of the divergence that predicts the repair direction.
+
+This paper addresses all three.
 
 ## 3. Study Design
 
