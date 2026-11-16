@@ -288,6 +288,17 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - So M1's errors here were confident wrong labels, not abstentions.
 - **Exploratory: the first accidental divergences repaired in the contract.** Two items from one fix.
 
+### 4.6 Cross-family replication of kind coding [E11]
+**Design:** all 125 confirmatory items were re-coded by two blind Claude coders, each started with a fresh context [`E11_PLAN.md`]. Until then every coder had been a GPT-family model.
+
+| Result | Value |
+|---|---|
+| Kind × direction | DELIBERATE → SPEC 67/81 vs ACCIDENTAL → SPEC 1/39 (Fisher one-sided p = 2.1 × 10⁻¹⁸). By cluster: 38/51 vs 1/30, p = 7.1 × 10⁻¹¹ |
+| Agreement between the two Claude coders | κ = 0.91 |
+| Agreement with the GPT final kinds | 116/118, κ = 0.96 |
+
+**The association therefore does not depend on the coders' model family.** Both families read the same miner-written propositions, though, so this agreement cannot rule out a shared textual cue. E8b, with direction-blind propositions, and human coding address that cue.
+
 ## 5. Discussion
 - **The default assumption is wrong for a large share of fixes.** Tools that assume "the implementation is wrong" would misroute a large share of real fixes. In our sample, developers repaired the contract in more than half of them.
 - **Accidental divergences can usually be routed to code.** In the first three confirmatory samples no accidental divergence was resolved by changing the contract. E10 found the first two, both from one fix. Routing accidental divergences to the code is therefore high-precision, not infallible.
@@ -308,7 +319,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - The truth label is the developer's repair direction, not an objective fault location.
   - Some SPEC repairs may legitimise a bug.
 - **Same-model coders.**
-  - Every coder, labeller and judge is from one LLM family, so high κ shows within-model consistency only.
+  - Until E11, every coder, labeller and judge was from one LLM family. E11 adds Claude coders, who agree with the GPT coders at κ 0.96. Both families are still LLMs reading the same text, so human validation remains necessary.
   - **[TODO]** Report the human spot-check: 20 items, coded by the author, with κ against the model codes.
 - **Proposition authorship.** Addressed by E8 and E8b. The remaining limits are a single writer and a single matcher.
 - **Sampling.**
@@ -325,7 +336,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 When an API and its contract disagree, the side developers repair is predictable from what kind of divergence it is.
 - **Deliberate divergences,** behaviour that the code explicitly produces, are mostly resolved by changing the contract.
 - **Accidental divergences,** side effects of omissions, are almost always resolved by changing the code.
-- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10). It held with direction-blind propositions, and it held at the level of fix clusters.
+- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10). It held with direction-blind propositions, at the level of fix clusters, and with coders from a second model family (E11, κ 0.96 across families).
 - **LLM triage is less stable.** A zero-shot LLM can match or beat explicit rules on one sample (E9) and fall well below them on another (E10). Neither pre-registered attempt to combine the LLM with the kind rule beat the LLM alone.
 
 Testing tools should therefore not assume that the implementation is wrong. They should surface the divergence kind as a first-class signal.

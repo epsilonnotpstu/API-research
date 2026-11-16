@@ -14,6 +14,8 @@
   - M1-এর macro-F1 নেমে 0.58–0.64, আর R 0.77।
   - E9-এর post-hoc fallback-এর ফল replicate হয়নি।
   - বিস্তারিত: `08_experiments/E10_fallback/E10_RESULTS.md`।
+- **E11 (ভিন্ন পরিবারের মডেল, ১২৫টি item):** blind Claude coder দিয়েও H-E11-1 PASS: 67/81 বনাম 1/39, cluster ধরে 38/51 বনাম 1/30। H-E11-2 PASS: GPT আর Claude-এর মধ্যে κ 0.96 (`08_experiments/E11_crossfamily/E11_RESULTS.md`)।
+- **T49 / E12:** চলছে। Pre-registered (`08_experiments/E12_extend/E12_PLAN.md`)।
 - **Paper খসড়া v0.2:** `10_paper/R1_draft.md`। E10-এর ফল আর conclusion যোগ হয়েছে।
 - **পরের ধাপ:**
   - user-এর human spot-check (`09_collab/human_check/`);
@@ -153,6 +155,7 @@
 | E8/E8b direction-blind propositions | ✅ E8 একা INSUFFICIENT। E8b pooled PASS: deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6। Miss-rate দাবি টেকেনি (p = 0.31)। | `08_experiments/E8_blindprop/E8_PLAN.md`, `E8_PLAN_AMENDMENTS.md`, `E8_RESULTS.md` |
 | E9 hybrid triage (kind rule + M1) | ✅ Part A: discordant 0। Part B (৮৫টি নতুন item): discordant ১ → INSUFFICIENT। M1 macro-F1 0.90–0.91, R 0.845; override precision 24/24। Post-hoc fallback 0.976 (X)। | `08_experiments/E9_hybrid/E9_PLAN.md`, `E9_RESULTS.md` |
 | E10 fallback triage (T48, ৪০টি নতুন item) | ✅ H-E10-1 INSUFFICIENT (৬টি pair); H-E10-2 NOT_BETTER (forced choice > FB, cluster ধরে n.s.); **H-E10-3 PASS** (19/24 বনাম 2/13, p = 2.7e-4)। M1 0.58–0.64, R 0.77। | `08_experiments/E10_fallback/E10_PLAN.md`, `E10_ADDENDUM.md`, `E10_RESULTS.md` |
+| E11 ভিন্ন পরিবারের coding | ✅ H-E11-1 PASS (67/81 বনাম 1/39; cluster ধরে 38/51 বনাম 1/30); H-E11-2 PASS (κ 0.96) | `08_experiments/E11_crossfamily/E11_PLAN.md`, `E11_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।

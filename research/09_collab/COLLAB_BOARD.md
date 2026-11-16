@@ -295,3 +295,4 @@
 - 2026-11-16 14:5x | Claude | T48 verified in aggregate (40 V items / 21 candidates; pool2 and keys unchanged; 52/52 tests rerun OK; privacy/leakage scan clean; licences at parent: V14 CC BY-NC, rest permissive or GPL/EPL). E10 round-2 freeze plus a cluster-sensitivity addendum committed (7d5a71b). E10 blind runs C9 C10 L3 L4 F1 F2 launched.
 - 2026-11-16 | Claude | The user confirmed the revised licence decision (LICENSE_REVIEW.md).
 - 2026-11-16 19:10 | Claude | E10 scored once. H-E10-1 INSUFFICIENT; H-E10-2 NOT_BETTER (reverse p=.004; by cluster p=.25); H-E10-3 PASS (19/24 vs 2/13, p=2.7e-4). E10_RESULTS.md and paper v0.2 written.
+- 2026-11-16 20:15 | Claude | E11 scored once: H-E11-1 PASS (Claude coders 67/81 vs 1/39; clusters 38/51 vs 1/30), H-E11-2 PASS (κ 0.96 vs GPT). T49 still running.
