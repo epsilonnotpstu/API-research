@@ -14,7 +14,7 @@
 | EPL-2.0 | ditto, kapua (EPL-2.0 with a GPL secondary licence) | Allowed as source under EPL-2.0, with the licence text. |
 | GPL-3.0 | rhsm-subscriptions | Allowed if the excerpts are released under GPL-3.0 with the licence text. That means the package needs per-directory licences. |
 | AGPL-3.0 | open-banking-gateway ⚠️ (T48 candidate) | Same as GPL: per-directory AGPL. |
-| Not checked locally | cwa-verification-server, swagger-petstore (E6 clones live elsewhere) | ⚠️ Expected to be Apache-2.0. Verify before release. |
+| Apache-2.0 (checked at each parent commit) | cwa-verification-server, swagger-petstore (clones in `08_experiments/_external/upstream/`) | Allowed, as for Apache-2.0 above. |
 | **Custom, restrictive** | **Iced-Latte** (see below) | **Depends on the commit date.** |
 
 ## Iced-Latte
@@ -54,7 +54,7 @@
 ## Decision (Claude, supervisor-delegated; **confirmed by the user on 2026-11-16**)
 **Revised after the commit-level re-check.** The first version excluded W01, W16 and W32.
 
-**User confirmation (2026-11-16):** the user approved the revised proposal below as written. That means W01, W16 and W32 under Apache-2.0, the MIT-era items with the MIT notice, W15 and the T48 item V14 (also CC BY-NC 4.0 at its parent commit) under CC BY-NC 4.0, and the repository anonymised in the paper. Still open before release: verify the licences of cwa-verification-server and swagger-petstore (X36, X37, X52, X58).
+**User confirmation (2026-11-16):** the user approved the revised proposal below as written. That means W01, W16 and W32 under Apache-2.0, the MIT-era items with the MIT notice, W15 and the T48 item V14 (also CC BY-NC 4.0 at its parent commit) under CC BY-NC 4.0, and the repository anonymised in the paper. **Closed later on 2026-11-16:** cwa-verification-server (X36, X37, X52) and swagger-petstore (X58) are Apache-2.0 at each parent commit. This was read with `git show <parent>:LICENSE` from `08_experiments/_external/upstream/`.
 1. **Replication package:**
    - Release W01, W16 and W32 under Apache-2.0, with that version's LICENSE and copyright notice and a note naming the source commit.
    - Release the MIT-era items (X11, X41, X54, X63, W24) with the MIT notice.
