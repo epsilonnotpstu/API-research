@@ -195,6 +195,11 @@
    - **ACCIDENTAL → IMPL override-এর precision 24/24।** তৃতীয় sample-এ accidental → SPEC শূন্য।
    - **M1-এর বাকি ভুল প্রায় সবই deliberate item-এ।** এর বেশিরভাগ SPEC-truth item-এ UNDECIDABLE (১২/১৩)।
    - **Post-hoc (X):** M1 abstain করলে R ব্যবহার করলে macro-F1 0.976 (দুই labeller-এ)। নতুন pre-registered পরীক্ষা (E10) দরকার।
+14. **[H14, E10/RQ2+RQ3] Fallback pipeline প্রমাণিত হয়নি, তবে kind × direction আবার replicate হয়েছে।** উৎস: `../../E10_fallback/E10_RESULTS.md`।
+    - H-E10-1 INSUFFICIENT: pair ৬টি।
+    - H-E10-2 NOT_BETTER: forced choice FB-কে হারিয়েছে; cluster ধরে n.s.
+    - H-E10-3 PASS: p = 2.7e-4।
+    - M1-এর accuracy sample-ভেদে অনেক বদলায়।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**

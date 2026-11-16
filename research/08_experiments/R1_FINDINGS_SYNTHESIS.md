@@ -27,7 +27,9 @@
 | Blind reader accidental অমিল বেশি miss করে | X → **টেকেনি** | E8-এ post-hoc দাবি; pre-registered E8b-তে p = 0.31 | `E8_RESULTS.md` |
 | Kind rule (accidental → IMPL override) zero-shot LLM-কে উন্নত করে না | C (INSUFFICIENT) | E9 Part B: ৮৫টি item-এ discordant ১; M1 accidental 24/24, 23/24 ঠিক; override precision 24/24 | `E9_hybrid/E9_RESULTS.md` |
 | Zero-shot LLM-এর ভুল deliberate item-এ কেন্দ্রীভূত, মূলত SPEC-truth item-এ abstention | P (pre-registered descriptive) | E6: deliberate 7/10; E9 Part B: deliberate 47/61, যার ১২টি UNDECIDABLE-SPEC | `E9_hybrid/E9_RESULTS.md` |
-| M1 abstain করলে R ব্যবহার → macro-F1 0.976 | X | E9 Part B post-hoc; দুই labeller-এ একই | `E9_hybrid/E9_RESULTS.md` |
+| M1 abstain করলে R ব্যবহার → macro-F1 0.976 | ✗ (replicate হয়নি) | E9 Part B post-hoc; দুই labeller-এ একই; E10-এ pre-registered FB 0.65–0.70, forced choice-এর কাছে হেরেছে | `E9_hybrid/E9_RESULTS.md` |
+| Kind × direction সম্পর্ক সম্পূর্ণ নতুন, আলাদা sample-এ replicate করে | P | E10 H-E10-3: 19/24 বনাম 2/13, p = 2.7e-4; cluster ধরে 7/11 বনাম 1/9, p = 0.025। প্রথমবার accidental → SPEC (২টি, একই fix থেকে) | `E10_fallback/E10_RESULTS.md` |
+| Zero-shot LLM triage-এর accuracy sample-ভেদে স্থিতিশীল নয় | X (descriptive) | M1 macro-F1: E9-এ 0.90, E10-এ 0.58–0.64; এর মূল কারণ এক repo-র ২টি fix থেকে আসা ১০টি item | `E10_fallback/E10_RESULTS.md` |
 
 ## Paper-এর সম্ভাব্য মূল বক্তব্য (এখনকার অবস্থা)
 1. **ক্লাসিক অনুমান উল্টে দেখা যায়।** স্বাভাবিক ধারণা হলো, spec আর code মিলছে না মানেই code-এ bug। কিন্তু developer-রা প্রায়ই spec সারায়। E6-এ সেটা ৮/১৮, E7-এর নতুন set-এ ২৬/৪৫।
@@ -49,6 +51,6 @@
 - **Forking path:** একাধিক amendment আছে (E7 A1–A3, E8 B1)। সবগুলো আগে থেকে hash করে commit করা, আর পরে নেওয়া সিদ্ধান্তগুলো খোলাখুলি লেখা।
 
 ## পরের কাজ
-1. E9 Part B: সম্পন্ন (INSUFFICIENT)। পরের ধাপ E10: fallback pipeline, নতুন item-এ pre-registered।
+1. E9 Part B: সম্পন্ন (INSUFFICIENT)। E10: সম্পন্ন। Fallback-এর সুবিধা দেখা যায়নি, তবে kind-এর ফল আবার replicate হয়েছে। পরের ধাপ: মানুষের validation আর অন্য পরিবারের মডেল।
 2. Human spot-check sheet: আমি তৈরি করব, আপনি সময়মতো যাচাই করবেন।
 3. Paper-এর খসড়া v0.1: `10_paper/R1_draft.md`।
