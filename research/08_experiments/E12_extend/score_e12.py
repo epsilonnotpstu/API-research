@@ -6,6 +6,7 @@ from pathlib import Path
 here = Path(__file__).resolve().parent
 sys.path.insert(0, str(here.parent / 'E10_fallback')); sys.path.insert(0, str(here.parent / 'E4_triage'))
 from score_e10 import fisher_one_sided, kappa  # noqa: E402
+csv.field_size_limit(sys.maxsize)  # deviation D1: accepted_full_t49.csv has fields >128 KiB (no logic change)
 
 DEC = ('SPEC', 'IMPL'); KINDS = ('DELIBERATE', 'ACCIDENTAL')
 
