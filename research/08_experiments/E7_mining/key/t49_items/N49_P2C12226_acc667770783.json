@@ -1,0 +1,41 @@
+{
+  "repo": "service-api",
+  "fix_commit": "64682832e4610c468a1be1b5b68a14e6b7819dd2",
+  "parent_commit": "a7b1435398435335927bf25c0a1c6acf7fc77f52",
+  "date": "2026-06-10",
+  "message_excerpt": "EPMRPP-116508 || fix endpoint mapping for user preferences (#2706)",
+  "stars": "54",
+  "changes": [
+    [
+      "M",
+      "src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java"
+  ],
+  "path_roles": {
+    "src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C12226",
+  "rank": 206,
+  "item_id": "N49_P2C12226_acc667770783",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /v1/project/{projectName}/preference/",
+  "proposition": "GET /v1/project/{projectName}/preference/: contract says the trailing-slash preference route returns HTTP 200 for a logged-in user; implementation does require a projectKey path variable although that route binds only projectName",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "path_binding",
+  "fix_family": "path_binding.preference-project-key",
+  "proposition_check": "{\"contract\":[\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:268\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:282\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:292\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:302\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:303\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:316\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:329\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:362\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:372\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:382\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:390\",\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:400\"],\"implementation\":[\"a7b1435398435335927bf25c0a1c6acf7fc77f52:src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java:305\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/java/com/epam/reportportal/base/ws/controller/ProjectController.java\": {\"parent_lines\": [305], \"parent_numbered_excerpt\": \"300: \\n301:   @Transactional(readOnly = true)\\n302:   @GetMapping({\\\"/{projectKey}/preference\\\", \\\"/{projectName}/preference/\\\"})\\n303:   @ResponseStatus(HttpStatus.OK)\\n304:   @Operation(summary = \\\"Load logged-in user preferences\\\", description = \\\"Only for logged-in user\\\")\\n305:   public PreferenceResource getUserPreference(@PathVariable String projectKey,\\n306:       @AuthenticationPrincipal ReportPortalUser user) {\\n307:     return getPreference.getPreference(projectExtractor.extractMembershipDetails(user, projectKey),\\n308:         user\\n309:     );\\n310:   }\"}}, \"patch\": \"key/t49_evidence/P2C12226.diff\", \"patch_sha256\": \"94366a327bff00f6d4d509a01853109cec65619000e7c77da223652a1df80669\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

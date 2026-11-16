@@ -1,0 +1,42 @@
+{
+  "repo": "harbor",
+  "fix_commit": "43fb6974846db37fca558f3f37e6096fc6ca4e79",
+  "parent_commit": "ae80747c678b6e09c34bd90a3c925e86e1c62bd9",
+  "date": "2016-05-12",
+  "message_excerpt": "fix error in swagger.yaml",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "docs/swagger.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.yaml"
+  ],
+  "path_roles": {
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09228",
+  "rank": 164,
+  "item_id": "N49_P2C09228_bee0f5045301",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /repositories/manifest",
+  "proposition": "GET /repositories/manifest: contract says the manifest retrieval operation uses the singular /repositories/manifest path under the API base path; implementation does register the manifest handler only at the plural /api/repositories/manifests path",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "request_path",
+  "fix_family": "request_path.repository-manifests-plural",
+  "proposition_check": "{\"contract\":[\"ae80747c678b6e09c34bd90a3c925e86e1c62bd9:docs/swagger.yaml:577\"],\"implementation\":[\"ae80747c678b6e09c34bd90a3c925e86e1c62bd9:ui/router.go:63\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [577], \"parent_numbered_excerpt\": \"572:       responses:\\n573:         200:\\n574:           description: Retrieved tags from a relevant repository successfully.\\n575:         500:\\n576:           description: Unexpected internal errors.\\n577:   /repositories/manifest:\\n578:     get:\\n579:       summary: Get manifests of a relevant repository.\\n580:       description: |\\n581:         This endpoint aims to retreive manifests from a relevant repository.\\n582:       parameters:\"}, \"ui/router.go\": {\"parent_lines\": [63], \"parent_numbered_excerpt\": \"58: \\tbeego.Router(\\\"/api/users\\\", &api.UserAPI{})\\n59: \\tbeego.Router(\\\"/api/users/?:id\\\", &api.UserAPI{})\\n60: \\tbeego.Router(\\\"/api/users/:id/password\\\", &api.UserAPI{}, \\\"put:ChangePassword\\\")\\n61: \\tbeego.Router(\\\"/api/repositories\\\", &api.RepositoryAPI{})\\n62: \\tbeego.Router(\\\"/api/repositories/tags\\\", &api.RepositoryAPI{}, \\\"get:GetTags\\\")\\n63: \\tbeego.Router(\\\"/api/repositories/manifests\\\", &api.RepositoryAPI{}, \\\"get:GetManifests\\\")\\n64: \\n65: \\t//external service that hosted on harbor process:\\n66: \\tbeego.Router(\\\"/service/notifications\\\", &service.NotificationHandler{})\\n67: \\tbeego.Router(\\\"/service/token\\\", &token.Handler{})\\n68: }\"}}, \"patch\": \"key/t49_evidence/P2C09228.diff\", \"patch_sha256\": \"60536ebd0ea49bc2f09f26c0481deb910bc51d64633d6a101d9c7682cac35149\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "api/repository.go"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

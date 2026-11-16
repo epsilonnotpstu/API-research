@@ -1,0 +1,81 @@
+{
+  "repo": "service-api",
+  "fix_commit": "bf019f62709dcecbb508d971a16261222c4ce9c9",
+  "parent_commit": "33d0b41c0beb305072131dc614acc32c0e4f2ce9",
+  "date": "2018-10-24",
+  "message_excerpt": "Integration builder refactoring. Compatibility fixes",
+  "stars": "54",
+  "changes": [
+    [
+      "M",
+      "build.gradle"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/IntegrationsHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/UpdateExternalSystemHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/configs/PluginConfiguration.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/configs/ReportPortalApp.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/converter/builders/BtsConstants.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/converter/builders/BugTrackingSystemBuilder.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/converter/converters/IntegrationConverter.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/IntegrationsHandler.java",
+    "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/UpdateExternalSystemHandler.java",
+    "src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java"
+  ],
+  "path_roles": {
+    "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/IntegrationsHandler.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/core/bts/handler/impl/UpdateExternalSystemHandler.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C12402",
+  "rank": 382,
+  "item_id": "N49_P2C12402_ea72952b799f",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "DELETE /{projectName}/external-system/{systemId}",
+  "proposition": "DELETE /{projectName}/external-system/{systemId}: contract says the project path variable is named projectName; implementation does request a required projectId path variable that is absent from the route",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "path_binding",
+  "fix_family": "path_binding.external-system-project-name",
+  "proposition_check": "{\"contract\":[\"33d0b41c0beb305072131dc614acc32c0e4f2ce9:src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java:48\"],\"implementation\":[\"33d0b41c0beb305072131dc614acc32c0e4f2ce9:src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java:91\"],\"route\":[\"33d0b41c0beb305072131dc614acc32c0e4f2ce9:src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java:78\",\"33d0b41c0beb305072131dc614acc32c0e4f2ce9:src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java:87\"]}",
+  "evidence": "{\"parent\": {\"src/main/java/com/epam/ta/reportportal/ws/controller/BugTrackingSystemController.java\": {\"parent_lines\": [78, 87], \"parent_numbered_excerpt\": \"73: \\t\\t\\t@PathVariable String projectName, @AuthenticationPrincipal ReportPortalUser user) {\\n74: \\t\\treturn integrationsHandler.createExternalSystem(createRQ, EntityUtils.normalizeId(projectName), user);\\n75: \\t}\\n76: \\n77: \\t@Transactional(readOnly = true)\\n78: \\t@GetMapping(value = \\\"/{systemId}\\\")\\n79: \\t@ResponseStatus(HttpStatus.OK)\\n80: \\t@ApiOperation(\\\"Get registered external system instance\\\")\\n81: \\tpublic IntegrationResource getExternalSystem(@PathVariable Long projectId, @PathVariable Long systemId,\\n82: \\t\\t\\t@AuthenticationPrincipal ReportPortalUser user) {\\n83: \\t\\treturn integrationsHandler.getIntegrationByID(projectId, systemId);\\n84: \\t}\\n85: \\n86: \\t@Transactional\\n87: \\t@DeleteMapping(value = \\\"/{systemId}\\\")\\n88: \\t@ResponseStatus(HttpStatus.OK)\\n89: \\t@ApiOperation(\\\"Delete registered external system instance\\\")\\n90: \\t//@PreAuthorize(PROJECT_MANAGER)\\n91: \\tpublic OperationCompletionRS deleteExternalSystem(@PathVariable Long projectId, @PathVariable Long systemId,\\n92: \\t\\t\\t@AuthenticationPrincipal ReportPortalUser user) {\"}}, \"patch\": \"key/t49_evidence/P2C12402.diff\", \"patch_sha256\": \"9550f459e7ea296205e15bb5a0e91a1cbb0199991c1502bc82d8bce1970608ce\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

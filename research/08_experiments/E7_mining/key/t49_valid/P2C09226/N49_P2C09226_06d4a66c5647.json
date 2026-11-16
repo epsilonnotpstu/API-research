@@ -1,0 +1,48 @@
+{
+  "repo": "harbor",
+  "fix_commit": "42d07dbaa76390ffeba067de9106ecf2e07c30ed",
+  "parent_commit": "d1bf0f092a66af682b3cca4b9aa02edf67feebd4",
+  "date": "2020-10-29",
+  "message_excerpt": "fix(preheat): add location when create instance and policy",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "api/v2.0/swagger.yaml"
+    ],
+    [
+      "M",
+      "src/server/v2.0/handler/preheat.go"
+    ]
+  ],
+  "surface_paths": [
+    "api/v2.0/swagger.yaml",
+    "src/server/v2.0/handler/preheat.go"
+  ],
+  "path_roles": {
+    "api/v2.0/swagger.yaml": [
+      "openapi_root"
+    ],
+    "src/server/v2.0/handler/preheat.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09226",
+  "rank": 162,
+  "item_id": "N49_P2C09226_06d4a66c5647",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "POST /p2p/preheat/instances",
+  "proposition": "POST /p2p/preheat/instances: contract says the success response contains the InstanceCreatedResp JSON object; implementation does return a success responder without setting a response payload",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "response_body",
+  "fix_family": "response_body.preheat-instance-success",
+  "proposition_check": "{\"contract\":[\"d1bf0f092a66af682b3cca4b9aa02edf67feebd4:api/v2.0/swagger.yaml:962\"],\"implementation\":[\"d1bf0f092a66af682b3cca4b9aa02edf67feebd4:src/server/v2.0/handler/preheat.go:71\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"api/v2.0/swagger.yaml\": {\"parent_lines\": [962], \"parent_numbered_excerpt\": \"957:             $ref: '#/definitions/Instance'\\n958:       responses:\\n959:         '201':\\n960:           description: Response to insatnce created\\n961:           schema:\\n962:             $ref: '#/definitions/InstanceCreatedResp'\\n963:         '400':\\n964:           $ref: '#/responses/400'\\n965:         '401':\\n966:           $ref: '#/responses/401'\\n967:         '403':\"}, \"src/server/v2.0/handler/preheat.go\": {\"parent_lines\": [71], \"parent_numbered_excerpt\": \"66: \\n67: \\t_, err = api.preheatCtl.CreateInstance(ctx, instance)\\n68: \\tif err != nil {\\n69: \\t\\treturn api.SendError(ctx, err)\\n70: \\t}\\n71: \\treturn operation.NewCreateInstanceCreated()\\n72: }\\n73: \\n74: func (api *preheatAPI) DeleteInstance(ctx context.Context, params operation.DeleteInstanceParams) middleware.Responder {\\n75: \\tif err := api.RequireSysAdmin(ctx); err != nil {\\n76: \\t\\treturn api.SendError(ctx, err)\"}}, \"patch\": \"key/t49_evidence/P2C09226.diff\", \"patch_sha256\": \"fe3e048830188dadc79008b0fe6e1a618d5a364063e321bf20a75f458fcabf25\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

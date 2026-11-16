@@ -1,0 +1,73 @@
+{
+  "repo": "service-api",
+  "fix_commit": "4fe5d8b72ccc51c7b9c9f8eb1303ec18f79028a9",
+  "parent_commit": "6b9a78b623614a857b936a5a9f5662b3622d123a",
+  "date": "2025-04-21",
+  "message_excerpt": "EPMRPP-102335 || fix api key deletion",
+  "stars": "54",
+  "changes": [
+    [
+      "M",
+      "build.gradle"
+    ],
+    [
+      "A",
+      "src/main/java/com/epam/ta/reportportal/auth/permissions/AllowedToUserItself.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/auth/permissions/Permissions.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/user/ApiKeyHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/epam/ta/reportportal/auth/permissions/AllowedToUserItself.java",
+    "src/main/java/com/epam/ta/reportportal/core/user/ApiKeyHandler.java",
+    "src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java",
+    "src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java"
+  ],
+  "path_roles": {
+    "src/main/java/com/epam/ta/reportportal/auth/permissions/AllowedToUserItself.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/core/user/ApiKeyHandler.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C12183",
+  "rank": 163,
+  "item_id": "N49_P2C12183_ff4931dff06b",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "DELETE /users/{userId}/api-keys/{keyId}",
+  "proposition": "DELETE /users/{userId}/api-keys/{keyId}: contract says the API-key deletion route identifies both userId and keyId; implementation does ignore userId and check existence and delete using keyId alone",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "resource_scope",
+  "fix_family": "resource_scope.user-api-key-owner",
+  "proposition_check": "{\"contract\":[\"6b9a78b623614a857b936a5a9f5662b3622d123a:src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java:95\",\"6b9a78b623614a857b936a5a9f5662b3622d123a:src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java:317\"],\"implementation\":[\"6b9a78b623614a857b936a5a9f5662b3622d123a:src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java:321\",\"6b9a78b623614a857b936a5a9f5662b3622d123a:src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java:94\",\"6b9a78b623614a857b936a5a9f5662b3622d123a:src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java:96\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/java/com/epam/ta/reportportal/ws/controller/UserController.java\": {\"parent_lines\": [321], \"parent_numbered_excerpt\": \"316: \\n317:   @DeleteMapping(value = \\\"/{userId}/api-keys/{keyId}\\\")\\n318:   @ResponseStatus(OK)\\n319:   @Operation(summary = \\\"Delete specified Api Key\\\")\\n320:   public OperationCompletionRS deleteApiKey(@PathVariable Long keyId, @PathVariable Long userId) {\\n321:     return apiKeyHandler.deleteApiKey(keyId);\\n322:   }\\n323: \\n324:   @GetMapping(value = \\\"/{userId}/api-keys\\\")\\n325:   @ResponseStatus(OK)\\n326:   @Operation(summary = \\\"Get List of users Api Keys\\\")\"}, \"src/main/java/com/epam/ta/reportportal/core/user/impl/ApiKeyHandlerImpl.java\": {\"parent_lines\": [94, 96], \"parent_numbered_excerpt\": \"89:     return apiKeyRS;\\n90:   }\\n91: \\n92:   @Override\\n93:   public OperationCompletionRS deleteApiKey(Long id) {\\n94:     expect(apiKeyRepository.existsById(id), Predicates.equalTo(true))\\n95:         .verify(NOT_FOUND, \\\"Api key\\\");\\n96:     apiKeyRepository.deleteById(id);\\n97:     return new OperationCompletionRS(\\\"Api key with ID = '\\\" + id + \\\"' was successfully deleted.\\\");\\n98:   }\\n99: \\n100:   @Override\\n101:   public ApiKeysRS getAllUsersApiKeys(Long userId) {\"}}, \"patch\": \"key/t49_evidence/P2C12183.diff\", \"patch_sha256\": \"bb09bd2e3ab41879598cba4104e253862a904d3ef09d1a2291919ff854dcb34d\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

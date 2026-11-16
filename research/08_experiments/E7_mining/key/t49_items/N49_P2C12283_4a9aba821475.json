@@ -1,0 +1,61 @@
+{
+  "repo": "service-api",
+  "fix_commit": "82bee241cd583a60d1d0d7b6840bc6c8ab851e8b",
+  "parent_commit": "bdfadef3d1939c9f645ba2811bc1006dcc5c6c50",
+  "date": "2025-07-09",
+  "message_excerpt": "EPMRPP-104920 || Fix Unauthorized Access to launch (#2332)",
+  "stars": "54",
+  "changes": [
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/launch/GetLaunchHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java"
+    ],
+    [
+      "M",
+      "src/test/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImplTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/epam/ta/reportportal/core/launch/GetLaunchHandler.java",
+    "src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java",
+    "src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java"
+  ],
+  "path_roles": {
+    "src/main/java/com/epam/ta/reportportal/core/launch/GetLaunchHandler.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C12283",
+  "rank": 263,
+  "item_id": "N49_P2C12283_4a9aba821475",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /v1/{projectKey}/launch/{launchId}/report",
+  "proposition": "GET /v1/{projectKey}/launch/{launchId}/report: contract says the launch export operation is scoped to the projectKey path; implementation does load and export launchId globally without passing the path project membership to the export handler",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "resource_scope",
+  "fix_family": "resource_scope.launch-export-project",
+  "proposition_check": "{\"contract\":[\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java:107\",\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java:479\",\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java:482\"],\"implementation\":[\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java:499\",\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java:340\",\"bdfadef3d1939c9f645ba2811bc1006dcc5c6c50:src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java:343\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/java/com/epam/ta/reportportal/ws/controller/LaunchController.java\": {\"parent_lines\": [499], \"parent_numbered_excerpt\": \"494:             format.getValue()\\n495:         )\\n496:     );\\n497: \\n498:     try (OutputStream outputStream = response.getOutputStream()) {\\n499:       getLaunchMessageHandler.exportLaunch(launchId, format, outputStream, user);\\n500:     } catch (IOException e) {\\n501:       throw new ReportPortalException(ErrorType.BAD_REQUEST_ERROR,\\n502:           \\\"Unable to write data to the response.\\\"\\n503:       );\\n504:     }\"}, \"src/main/java/com/epam/ta/reportportal/core/launch/impl/GetLaunchHandlerImpl.java\": {\"parent_lines\": [340, 343], \"parent_numbered_excerpt\": \"335:       Long[] ids) {\\n336:     return launchRepository.getStatuses(membershipDetails.getProjectId(), ids);\\n337:   }\\n338: \\n339:   @Override\\n340:   public void exportLaunch(Long launchId, ReportFormat reportFormat, OutputStream outputStream,\\n341:       ReportPortalUser user) {\\n342: \\n343:     Launch launch = launchRepository.findById(launchId)\\n344:         .orElseThrow(() -> new ReportPortalException(ErrorType.LAUNCH_NOT_FOUND, launchId));\\n345:     expect(launch.getStatus(), not(statusIn(IN_PROGRESS))).verify(ErrorType.FORBIDDEN_OPERATION,\\n346:         Suppliers.formattedSupplier(\\n347:             \\\"Launch '{}' has IN_PROGRESS status. Impossible to export such elements.\\\", launchId)\\n348:     );\"}}, \"patch\": \"key/t49_evidence/P2C12283.diff\", \"patch_sha256\": \"41747696aa656a7bd02d927a692bc8011303a9312951d41df6d3acf757a7bf3d\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

@@ -2,6 +2,7 @@
 Run: /usr/bin/python3 -I -B licence_at_parent.py <accepted_full_*.csv> [...]
 Prints per-repo licence class counts, plus the item ids whose licence needs review (never directions)."""
 import csv, subprocess, sys, collections
+csv.field_size_limit(sys.maxsize)
 from pathlib import Path
 
 UP = Path('/run/media/afridi/Shared Data/api_research_upstream')
