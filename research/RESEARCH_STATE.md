@@ -6,7 +6,9 @@
 - **Roadmap E4 (triage মূল্যায়ন, RQ2):** কৃত্রিম fault-এ (E4) আর আসল developer fix-এ (E6) মূল্যায়ন সম্পন্ন। দুটোতেই zero-shot > codebook v0.6 (`08_experiments/E6_realfix/E6_RESULTS.md`)।
 - **E7 (repair direction, ৪৫টি নতুন fix):** H-E7-1 আর H-E7-2 দুটোই PASS। তবে proposition-only control দেখিয়েছে, divergence_kind-এর সংকেত proposition-এর ভাষাতেই আছে (`08_experiments/E7_repairdir/E7_RESULTS.md`)।
 - **E8 + E8b (direction-blind proposition):** pooled primary PASS (deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6)। Miss-rate দাবি টেকেনি।
-- **পরের ধাপ:** সিদ্ধান্ত বাকি (DAY_2026-11-16 §৬ দেখুন)।
+- **E9 (hybrid triage, ৮৫টি নতুন item):** H-E9-1 INSUFFICIENT (discordant ১)। M1 accidental item আগেই ঠিক বলে; বাকি ভুল deliberate item-এ, মূলত abstention। Post-hoc fallback (M1, abstain করলে R) macro-F1 0.976 (`08_experiments/E9_hybrid/E9_RESULTS.md`)।
+- **Paper খসড়া v0.1:** `10_paper/R1_draft.md`।
+- **পরের ধাপ:** E10 (fallback pipeline, নতুন item-এ pre-registered); user-এর human spot-check (`09_collab/human_check/`)।
 
 ---
 
@@ -138,6 +140,7 @@
 | **E6 আসল fix-এ triage (RQ2)** | ✅ n=18 (IMPL 10 / SPEC 8)। macro-F1: M1 0.86–0.88 > M2 0.70–0.72 > M0 0.36। Q1 PASS, Q2 M1 > M2, Q3 FAIL। | `08_experiments/E6_realfix/E6_PLAN.md`, `E6_RESULTS.md` |
 | **E7 repair direction** (K21/K22 hypothesis) | ✅ ৪৫টি নতুন + ২৫টি exploratory item; blind C1/C2 coding (κ 0.94)। Deliberate → SPEC 26/33, accidental → SPEC 0/11, p < 0.0001। Generic-contract → SPEC 15/18 বনাম 11/26। ⚠️ Proposition-only control κ = 1.0 (A3)। | `08_experiments/E7_repairdir/E7_PLAN.md`, `E7_RESULTS.md`, `E7_mining/` |
 | E8/E8b direction-blind propositions | ✅ E8 একা INSUFFICIENT। E8b pooled PASS: deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6। Miss-rate দাবি টেকেনি (p = 0.31)। | `08_experiments/E8_blindprop/E8_PLAN.md`, `E8_PLAN_AMENDMENTS.md`, `E8_RESULTS.md` |
+| E9 hybrid triage (kind rule + M1) | ✅ Part A: discordant 0। Part B (৮৫টি নতুন item): discordant ১ → INSUFFICIENT। M1 macro-F1 0.90–0.91, R 0.845; override precision 24/24। Post-hoc fallback 0.976 (X)। | `08_experiments/E9_hybrid/E9_PLAN.md`, `E9_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।

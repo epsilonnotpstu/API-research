@@ -25,7 +25,9 @@
 | **Divergence-এর ধরন repair direction আগাম বলে** | **C** | E7: deliberate → SPEC 26/33, accidental → 0/11 (p < 1e-4)। E8b pooled, direction-blind proposition: 39/48 বনাম 0/10 (p = 1.8e-6) | H12, `E7_RESULTS.md`, `E8_RESULTS.md` |
 | Generic contract-এ SPEC repair বেশি | C (secondary) | Generic 15/18, specific 11/26 (p = 0.007) | `E7_RESULTS.md` |
 | Blind reader accidental অমিল বেশি miss করে | X → **টেকেনি** | E8-এ post-hoc দাবি; pre-registered E8b-তে p = 0.31 | `E8_RESULTS.md` |
-| Zero-shot LLM-এর ভুল deliberate item-এ কেন্দ্রীভূত | X | E6-এ: accidental 7/7 ঠিক, deliberate 7/10 ঠিক (Y1 আর Y2 দুজনেরই) | `E9_hybrid/E9_RESULTS.md` (Part A) |
+| Kind rule (accidental → IMPL override) zero-shot LLM-কে উন্নত করে না | C (INSUFFICIENT) | E9 Part B: ৮৫টি item-এ discordant ১; M1 accidental 24/24, 23/24 ঠিক; override precision 24/24 | `E9_hybrid/E9_RESULTS.md` |
+| Zero-shot LLM-এর ভুল deliberate item-এ কেন্দ্রীভূত, মূলত SPEC-truth item-এ abstention | P (pre-registered descriptive) | E6: deliberate 7/10; E9 Part B: deliberate 47/61, যার ১২টি UNDECIDABLE-SPEC | `E9_hybrid/E9_RESULTS.md` |
+| M1 abstain করলে R ব্যবহার → macro-F1 0.976 | X | E9 Part B post-hoc; দুই labeller-এ একই | `E9_hybrid/E9_RESULTS.md` |
 
 ## Paper-এর সম্ভাব্য মূল বক্তব্য (এখনকার অবস্থা)
 1. **ক্লাসিক অনুমান উল্টে দেখা যায়।** স্বাভাবিক ধারণা হলো, spec আর code মিলছে না মানেই code-এ bug। কিন্তু developer-রা প্রায়ই spec সারায়। E6-এ সেটা ৮/১৮, E7-এর নতুন set-এ ২৬/৪৫।
@@ -34,7 +36,10 @@
    - Code যদি ইচ্ছাকৃত সিদ্ধান্তে আলাদা আচরণ করে (deliberate), তাহলে বেশিরভাগ ক্ষেত্রে spec সারানো হয়।
    - এটা দুটো স্বাধীন sample-এ, direction না জানা লেখকের proposition দিয়েও টিকেছে।
 3. **Zero-shot LLM ইতিমধ্যে এই সংকেত ভালো ধরে।** একটা explicit codebook procedure যোগ করলে উন্নতি হয় না, বরং coverage কমে।
-4. **খোলা প্রশ্ন (E9 Part B চলছে):** Kind rule কি LLM-এর চেয়ে ভালো করে? নাকি এটা শুধু LLM কেন সফল তার ব্যাখ্যা?
+4. **Kind rule LLM-এর সাফল্য ব্যাখ্যা করে, কিন্তু override হিসেবে উন্নতি আনে না** (E9 INSUFFICIENT)।
+   - LLM accidental item আগেই ঠিক বলে।
+   - তার দুর্বলতা deliberate item-এ abstention। ঠিক সেখানে rule "SPEC" বলে, আর প্রায় ৫ বারে ৪ বার ঠিক হয়।
+   - **খোলা প্রশ্ন (E10):** "LLM, আর LLM abstain করলে rule" pipeline কি নতুন item-এও টেকে?
 
 ## সব দাবির ক্ষেত্রে প্রযোজ্য সীমাবদ্ধতা
 - **কোনো মানুষ coder নেই।** সব coder, labeller আর judge একই LLM family-র। κ উঁচু, তবে এটা একই model-এর ভেতরের সামঞ্জস্য।
@@ -44,6 +49,6 @@
 - **Forking path:** একাধিক amendment আছে (E7 A1–A3, E8 B1)। সবগুলো আগে থেকে hash করে commit করা, আর পরে নেওয়া সিদ্ধান্তগুলো খোলাখুলি লেখা।
 
 ## পরের কাজ
-1. E9 Part B: কাজ চলছে।
+1. E9 Part B: সম্পন্ন (INSUFFICIENT)। পরের ধাপ E10: fallback pipeline, নতুন item-এ pre-registered।
 2. Human spot-check sheet: আমি তৈরি করব, আপনি সময়মতো যাচাই করবেন।
-3. Paper-এর খসড়া: RQ1 আর RQ2-এর কাঠামো এই document থেকে।
+3. Paper-এর খসড়া v0.1: `10_paper/R1_draft.md`।
