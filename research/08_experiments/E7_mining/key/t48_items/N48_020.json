@@ -1,0 +1,48 @@
+{
+  "repo": "rhsm-subscriptions",
+  "fix_commit": "dc2499ac1861c4e8b6255c6338e036e1286120e1",
+  "parent_commit": "f48de3fc6f23fd99348315a75edfa72a032a856a",
+  "date": "2023-01-19",
+  "message_excerpt": "fix issue with measurements",
+  "stars": "75",
+  "changes": [
+    [
+      "M",
+      "src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java"
+    ],
+    [
+      "M",
+      "swatch-core/src/main/java/org/candlepin/subscriptions/db/model/TallyInstanceView.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java",
+    "swatch-core/src/main/java/org/candlepin/subscriptions/db/model/TallyInstanceView.java"
+  ],
+  "path_roles": {
+    "src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java": [
+      "production_behaviour"
+    ],
+    "swatch-core/src/main/java/org/candlepin/subscriptions/db/model/TallyInstanceView.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11968",
+  "rank": 100,
+  "item_id": "N48_020",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "GET /instances/products/{product_id}",
+  "proposition": "GET /instances/products/{product_id}: contract says each instance measurement corresponds to the unit at the same position in meta.measurements; implementation does read the first monthly total for the instance-key unit and fill other requested units with zero, without selecting their stored totals",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_value",
+  "fix_family": "response_value.instance_measurement_unit_selection",
+  "proposition_check": "{\"contract\":[\"f48de3fc6f23fd99348315a75edfa72a032a856a:api/rhsm-subscriptions-api-spec.yaml:754\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:api/rhsm-subscriptions-api-spec.yaml:1705\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:api/rhsm-subscriptions-api-spec.yaml:1706\"],\"implementation\":[\"f48de3fc6f23fd99348315a75edfa72a032a856a:src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:150\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:215\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:216\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:218\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:220\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:swatch-core/src/main/java/org/candlepin/subscriptions/db/model/TallyInstanceView.java:83\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java:40\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java:50\",\"f48de3fc6f23fd99348315a75edfa72a032a856a:swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java:56\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"api/rhsm-subscriptions-api-spec.yaml\": {\"parent_lines\": [754, 1705, 1706], \"parent_numbered_excerpt\": \"749:           $ref: \\\"../spec/error-responses.yaml#/$defs/ResourceNotFound\\\"\\n750:         '500':\\n751:           $ref: \\\"../spec/error-responses.yaml#/$defs/InternalServerError\\\"\\n752:       tags:\\n753:         - hosts\\n754:   /instances/products/{product_id}:\\n755:     parameters:\\n756:       - name: product_id\\n757:         description: The ID for the product we wish to query\\n758:         in: path\\n759:         required: true\\n1700:           $ref: '#/components/schemas/BillingProviderType'\\n1701:         billing_account_id:\\n1702:           type: string\\n1703:         measurements:\\n1704:           description: >-\\n1705:             Must be in the same order as \\\"measurements\\\" in the meta. (i.e. in the example\\n1706:             instance.measurements[0] is the instance-hours, measurements[1] is storage-gibibytes,\\n1707:             and measurements[2] is the transfer-gibibytes.\\n1708:           type: array\\n1709:           items:\\n1710:             format: double\\n1711:             type: number\"}, \"src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java\": {\"parent_lines\": [150, 215, 216, 218, 220], \"parent_numbered_excerpt\": \"145:     List<String> measurements =\\n146:         uomSet.stream().map(Measurement.Uom::toString).sorted().collect(Collectors.toList());\\n147: \\n148:     validateBeginningAndEndingDates(start, end);\\n149: \\n150:     String month = InstanceMonthlyTotalKey.formatMonthId(start);\\n151:     // We depend on a \\\"reference UOM\\\" in order to filter out instances that were not active in\\n152:     // the selected month. This is also used for sorting purposes (same join). See\\n153:     // org.candlepin.subscriptions.db.TallyInstanceViewSpecification#toPredicate and\\n154:     // org.candlepin.subscriptions.db.TallyInstanceViewRepository#findAllBy.\\n155:     Measurement.Uom referenceUom = SORT_TO_UOM_MAP.get(sort);\\n210:     instance.setId(tallyInstanceView.getKey().getInstanceId().toString());\\n211:     instance.setDisplayName(tallyInstanceView.getDisplayName());\\n212:     if (Objects.nonNull(tallyInstanceView.getHostBillingProvider())) {\\n213:       instance.setBillingProvider(tallyInstanceView.getHostBillingProvider().asOpenApiEnum());\\n214:     }\\n215:     for (String uom : measurements) {\\n216:       if (tallyInstanceView.getKey().getUom().equals(Measurement.Uom.fromValue(uom))) {\\n217:         measurementList.add(\\n218:             tallyInstanceView.getMonthlyTotals().values().stream().findFirst().orElse(0.0));\\n219:       } else {\\n220:         measurementList.add(0.0);\\n221:       }\\n222:     }\\n223:     instance.setCategory(tallyInstanceView.getKey().getMeasurementType().name());\\n224:     instance.setBillingAccountId(tallyInstanceView.getHostBillingAccountId());\\n225:     instance.setMeasurements(measurementList);\"}, \"swatch-core/src/main/java/org/candlepin/subscriptions/db/model/TallyInstanceView.java\": {\"parent_lines\": [83], \"parent_numbered_excerpt\": \"78:   @ElementCollection(fetch = FetchType.EAGER)\\n79:   @CollectionTable(\\n80:       name = \\\"instance_monthly_totals\\\",\\n81:       joinColumns = @JoinColumn(name = \\\"instance_id\\\", referencedColumnName = \\\"id\\\"))\\n82:   @Column(name = \\\"value\\\")\\n83:   private Map<InstanceMonthlyTotalKey, Double> monthlyTotals = new HashMap<>();\\n84: \\n85:   public TallyInstanceView() {\\n86:     key = new TallyInstanceViewKey();\\n87:   }\\n88: }\"}, \"swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java\": {\"parent_lines\": [40, 50, 56], \"parent_numbered_excerpt\": \"35: /** Key for instance monthly totals */\\n36: @Data\\n37: @NoArgsConstructor\\n38: @AllArgsConstructor\\n39: @Embeddable\\n40: public class InstanceMonthlyTotalKey implements Serializable {\\n41:   private static final DateTimeFormatter MONTH_ID_FORMATTER =\\n42:       DateTimeFormatter.ofPattern(\\\"uuuu-MM\\\");\\n43: \\n44:   /** month in YYYY-MM format */\\n45:   @Column(nullable = false) // ENT-4622 needed to avoid recreating collections\\n46:   private String month;\\n47: \\n48:   @Enumerated(EnumType.STRING) // ENT-4622 needed to avoid recreating collections\\n49:   @Column(nullable = false)\\n50:   private Measurement.Uom uom;\\n51: \\n52:   public static String formatMonthId(OffsetDateTime reference) {\\n53:     return reference.format(MONTH_ID_FORMATTER);\\n54:   }\\n55: \\n56:   public InstanceMonthlyTotalKey(OffsetDateTime reference, Measurement.Uom uom) {\\n57:     this.month = formatMonthId(reference);\\n58:     this.uom = uom;\\n59:   }\\n60: }\"}}, \"patch\": \"key/t48_evidence/P2C11968.diff\", \"patch_sha256\": \"2ee775280e36b4478957286f85f1bcc47ae229ec370c763e65f21cc05e336513\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

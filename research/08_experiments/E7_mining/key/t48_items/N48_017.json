@@ -1,0 +1,80 @@
+{
+  "repo": "open-banking-gateway",
+  "fix_commit": "73b5751858d0edcc7d4604ef25d9620de63824bf",
+  "parent_commit": "7a1b6228299080e5708ebbe356344db9aab825cc",
+  "date": "2020-08-13",
+  "message_excerpt": "#705 use payment product parameter in payment info & status endpoints. fix smoke-tests",
+  "stars": "344",
+  "changes": [
+    [
+      "M",
+      "opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml"
+    ],
+    [
+      "M",
+      "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java"
+    ],
+    [
+      "M",
+      "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java"
+    ],
+    [
+      "M",
+      "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/AccountInformationResult.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java"
+    ]
+  ],
+  "surface_paths": [
+    "opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml",
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java",
+    "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java",
+    "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java"
+  ],
+  "path_roles": {
+    "opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml": [
+      "openapi_root"
+    ],
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java": [
+      "production_behaviour"
+    ],
+    "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentInfoRequest.java": [
+      "production_behaviour"
+    ],
+    "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/PaymentStatusRequest.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11674",
+  "rank": 71,
+  "item_id": "N48_017",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "GET /v1/banking/pis/payments/{payment-product}",
+  "proposition": "GET /v1/banking/pis/payments/{payment-product}: contract says payment-product selects the requested product, including instant-sepa-credit-transfers and other listed products; implementation does discard the supplied product and call the bank using the constant sepa-credit-transfers product",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "request_parameter",
+  "fix_family": "request_parameter.payment_product_propagation",
+  "proposition_check": "{\"contract\":[\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:11\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:68\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:96\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:99\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:104\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:108\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:117\"],\"implementation\":[\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:38\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:41\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:49\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:67\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:75\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java:30\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java:53\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java:54\",\"7a1b6228299080e5708ebbe356344db9aab825cc:opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java:55\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml\": {\"parent_lines\": [11, 68, 96, 99, 104, 108, 117], \"parent_numbered_excerpt\": \"6:     This API provides FinTech possibilities to perform use-cases specific calls to the bank of PSU.\\n7: externalDocs:\\n8:   url: \\\"https://adorsys.github.com/open-banking-gateway\\\"\\n9: \\n10: paths:\\n11:   /v1/banking/pis/payments/{payment-product}:\\n12:     post:\\n13:       summary: Payment initiation request\\n14:       description: This method is used to initiate a payment at the ASPSP.\\n15:       operationId: initiatePayment\\n16:       tags:\\n63:         - $ref: \\\"#/components/parameters/PaymentProduct\\\"\\n64:       responses:\\n65:         '200':\\n66:           $ref: '#/components/responses/OK_200_PaymentInitiationInformation'\\n67: \\n68:   /v1/banking/pis/payments/{payment-product}/status:\\n69:     get:\\n70:       summary: Payment initiation status request\\n71:       description: Check the transaction status of a payment initiation.\\n72:       operationId: getPaymentInitiationStatus\\n73:       tags:\\n91:       responses:\\n92:         '200':\\n93:           $ref: '#/components/responses/OK_200_PaymentInitiationStatus'\\n94: components:\\n95:   parameters:\\n96:     PaymentProduct:\\n97:       name: payment-product\\n98:       in: path\\n99:       required: true\\n100:       schema:\\n101:         type: string\\n102:         enum:\\n103:           - sepa-credit-transfers\\n104:           - instant-sepa-credit-transfers\\n105:           - target-2-payments\\n106:           - cross-border-credit-transfers\\n107:           - pain.001-sepa-credit-transfers\\n108:           - pain.001-instant-sepa-credit-transfers\\n109:           - pain.001-target-2-payments\\n110:           - pain.001-cross-border-credit-transfers\\n111:   requestBodies:\\n112:     PaymentInitiation:\\n113:       content:\\n114:         application/json:\\n115:           schema:\\n116:             $ref: '#/components/schemas/paymentInitiation'\\n117:       required: true\\n118:   responses:\\n119:     202_PaymentInitiationResponse:\\n120:       description: ACCEPTED\\n121:       headers:\\n122:         X-Request-ID:\"}, \"opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java\": {\"parent_lines\": [38, 41, 49, 67, 75], \"parent_numbered_excerpt\": \"33:     private final PaymentInfoBodyToApiMapper paymentInfoResponseMapper;\\n34:     private final PaymentStatusBodyToApiMapper paymentStatusResponseMapper;\\n35: \\n36: \\n37:     @Override\\n38:     public CompletableFuture getPaymentInformation(String serviceSessionPassword,\\n39:                                                    String fintechUserID,\\n40:                                                    UUID xRequestID,\\n41:                                                    String paymentProduct,\\n42:                                                    String xTimestampUTC,\\n43:                                                    String xOperationType,\\n44:                                                    String xRequestSignature,\\n45:                                                    String fintechID,\\n46:                                                    String bankID,\\n47:                                                    UUID serviceSessionID) {\\n48:         return paymentInfoService.execute(\\n49:                 PaymentInfoRequest.builder()\\n50:                         .facadeServiceable(FacadeServiceableRequest.builder()\\n51:                                 .requestId(xRequestID)\\n52:                                 .bankId(bankID)\\n53:                                 .sessionPassword(serviceSessionPassword)\\n54:                                 .fintechUserId(fintechUserID)\\n62: \\n63:     @Override\\n64:     public CompletableFuture getPaymentInitiationStatus(String serviceSessionPassword,\\n65:                                                         String fintechUserID,\\n66:                                                         UUID xRequestID,\\n67:                                                         String paymentProduct,\\n68:                                                         String xTimestampUTC,\\n69:                                                         String xOperationType,\\n70:                                                         String xRequestSignature,\\n71:                                                         String fintechID,\\n72:                                                         String bankID,\\n73:                                                         UUID serviceSessionID) {\\n74:         return paymentStatusService.execute(\\n75:                 PaymentStatusRequest.builder()\\n76:                         .facadeServiceable(FacadeServiceableRequest.builder()\\n77:                                 .requestId(xRequestID)\\n78:                                 .bankId(bankID)\\n79:                                 .sessionPassword(serviceSessionPassword)\\n80:                                 .fintechUserId(fintechUserID)\"}, \"opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java\": {\"parent_lines\": [30, 53, 54], \"parent_numbered_excerpt\": \"25: import org.springframework.stereotype.Service;\\n26: import org.springframework.transaction.annotation.Transactional;\\n27: \\n28: import java.util.concurrent.CompletableFuture;\\n29: \\n30: import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.PAYMENT_PRODUCT_SEPA;\\n31: import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.SPRING_KEYWORD;\\n32: import static de.adorsys.opba.protocol.xs2a.constant.GlobalConst.XS2A_MAPPERS_PACKAGE;\\n33: \\n34: /**\\n35:  * Entry point to get payment information. BPMN engine and process is not touched.\\n48:     public CompletableFuture<Result<PaymentInfoBody>> execute(ServiceContext<PaymentInfoRequest> context) {\\n49:         ProtocolFacingConsent consent = context.getRequestScoped().consentAccess().getByCurrentSession();\\n50: \\n51:         ValidatedPathHeaders<PaymentInfoParameters, PaymentInfoHeaders> params = extractor.forExecution(prepareContext(context));\\n52: \\n53:         Response<SinglePaymentInitiationInformationWithStatusResponse> paymentInformation = pis.getSinglePaymentInformation(\\n54:                 PAYMENT_PRODUCT_SEPA,\\n55:                 consent.getConsentId(),\\n56:                 params.getHeaders().toHeaders(),\\n57:                 params.getPath().toParameters()\\n58:         );\\n59: \"}, \"opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/constant/GlobalConst.java\": {\"parent_lines\": [55], \"parent_numbered_excerpt\": \"50:     public static final String SPRING_KEYWORD = \\\"spring\\\";\\n51: \\n52:     /**\\n53:      * Default payment product for getting payment info or payment status\\n54:      */\\n55:     public static final String PAYMENT_PRODUCT_SEPA = \\\"sepa-credit-transfers\\\";\\n56: }\"}}, \"patch\": \"key/t48_evidence/P2C11674.diff\", \"patch_sha256\": \"a9fd573a759fa0a8a230596e85ff8724ad5ccb2c3aba448f69025db04b73ade3\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

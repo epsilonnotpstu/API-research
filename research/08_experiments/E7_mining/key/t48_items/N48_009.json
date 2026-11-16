@@ -1,0 +1,80 @@
+{
+  "repo": "kratos",
+  "fix_commit": "3c62a2363a71e401144d43e26f40fd9fa06da6da",
+  "parent_commit": "05a502662480de7ff54b5a3d60ccff80a539d69f",
+  "date": "2026-06-24",
+  "message_excerpt": "fix: unify NullDuration validation pattern across API specs and SDKs",
+  "stars": 13960,
+  "changes": [
+    [
+      "M",
+      ".schema/openapi/patches/nulls.yaml"
+    ],
+    [
+      "M",
+      "pkg/client-go/model_create_recovery_code_for_identity_body.go"
+    ],
+    [
+      "M",
+      "pkg/client-go/model_create_recovery_link_for_identity_body.go"
+    ],
+    [
+      "M",
+      "pkg/httpclient/model_create_recovery_code_for_identity_body.go"
+    ],
+    [
+      "M",
+      "pkg/httpclient/model_create_recovery_link_for_identity_body.go"
+    ],
+    [
+      "M",
+      "selfservice/strategy/code/.snapshots/TestAdminStrategy-description=should_fail_on_malformed_expiry_time.json"
+    ],
+    [
+      "M",
+      "selfservice/strategy/code/strategy_recovery_admin.go"
+    ],
+    [
+      "M",
+      "selfservice/strategy/link/strategy_recovery.go"
+    ],
+    [
+      "M",
+      "spec/api.json"
+    ],
+    [
+      "M",
+      "spec/swagger.json"
+    ]
+  ],
+  "surface_paths": [
+    "spec/api.json",
+    "spec/swagger.json"
+  ],
+  "path_roles": {
+    "spec/api.json": [
+      "openapi_root"
+    ],
+    "spec/swagger.json": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11176",
+  "rank": 76,
+  "item_id": "N48_009",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "POST /admin/recovery/code",
+  "proposition": "POST /admin/recovery/code: contract says expires_in consists only of integer duration segments and excludes fractional durations such as 1.5h; implementation does parse expires_in with time.ParseDuration and accept a positive fractional duration such as 1.5h",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "request_pattern",
+  "fix_family": "request_pattern.recovery_expiration_duration",
+  "proposition_check": "{\"contract\":[\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:915\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:918\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:920\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:940\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:942\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:2509\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:spec/api.json:6008\"],\"implementation\":[\"05a502662480de7ff54b5a3d60ccff80a539d69f:selfservice/strategy/code/strategy_recovery_admin.go:143\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:selfservice/strategy/code/strategy_recovery_admin.go:145\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:selfservice/strategy/code/strategy_recovery_admin.go:157\",\"05a502662480de7ff54b5a3d60ccff80a539d69f:selfservice/strategy/code/strategy_recovery_admin.go:165\"],\"route\":[\"05a502662480de7ff54b5a3d60ccff80a539d69f:selfservice/strategy/code/strategy_recovery_admin.go:43\"]}",
+  "evidence": "{\"parent\": {\"spec/api.json\": {\"parent_lines\": [915, 918, 920, 940, 942, 2509, 6008], \"parent_numbered_excerpt\": \"910:           \\\"schema_id\\\",\\n911:           \\\"traits\\\"\\n912:         ],\\n913:         \\\"type\\\": \\\"object\\\"\\n914:       },\\n915:       \\\"createRecoveryCodeForIdentityBody\\\": {\\n916:         \\\"description\\\": \\\"Create Recovery Code for Identity Request Body\\\",\\n917:         \\\"properties\\\": {\\n918:           \\\"expires_in\\\": {\\n919:             \\\"description\\\": \\\"Code Expires In\\\\n\\\\nThe recovery code will expire after that amount of time has passed. Defaults to the configuration value of\\\\n`selfservice.methods.code.config.lifespan`.\\\",\\n920:             \\\"pattern\\\": \\\"^([0-9]+(ns|us|ms|s|m|h))*$\\\",\\n921:             \\\"type\\\": \\\"string\\\"\\n922:           },\\n923:           \\\"flow_type\\\": {\\n924:             \\\"$ref\\\": \\\"#/components/schemas/selfServiceFlowType\\\"\\n925:           },\\n935:         \\\"type\\\": \\\"object\\\"\\n936:       },\\n937:       \\\"createRecoveryLinkForIdentityBody\\\": {\\n938:         \\\"description\\\": \\\"Create Recovery Link for Identity Request Body\\\",\\n939:         \\\"properties\\\": {\\n940:           \\\"expires_in\\\": {\\n941:             \\\"description\\\": \\\"Link Expires In\\\\n\\\\nThe recovery link will expire after that amount of time has passed. Defaults to the configuration value of\\\\n`selfservice.methods.code.config.lifespan`.\\\",\\n942:             \\\"pattern\\\": \\\"^[0-9]+(ns|us|ms|s|m|h)$\\\",\\n943:             \\\"type\\\": \\\"string\\\"\\n944:           },\\n945:           \\\"identity_id\\\": {\\n946:             \\\"description\\\": \\\"Identity to Recover\\\\n\\\\nThe identity's ID you wish to recover.\\\",\\n947:             \\\"format\\\": \\\"uuid\\\",\\n2504:         \\\"title\\\": \\\"Is sent when a privileged session is required to perform the settings update.\\\",\\n2505:         \\\"type\\\": \\\"object\\\"\\n2506:       },\\n2507:       \\\"nullDuration\\\": {\\n2508:         \\\"nullable\\\": true,\\n2509:         \\\"pattern\\\": \\\"^[0-9]+(ns|us|ms|s|m|h)$\\\",\\n2510:         \\\"type\\\": \\\"string\\\"\\n2511:       },\\n2512:       \\\"nullInt64\\\": {\\n2513:         \\\"nullable\\\": true,\\n2514:         \\\"type\\\": \\\"integer\\\"\\n6003:           \\\"identity\\\"\\n6004:         ],\\n6005:         \\\"x-ory-ratelimit-bucket\\\": \\\"kratos-admin-medium\\\"\\n6006:       }\\n6007:     },\\n6008:     \\\"/admin/recovery/code\\\": {\\n6009:       \\\"post\\\": {\\n6010:         \\\"description\\\": \\\"This endpoint creates a recovery code which should be given to the user in order for them to recover\\\\n(or activate) their account.\\\",\\n6011:         \\\"operationId\\\": \\\"createRecoveryCodeForIdentity\\\",\\n6012:         \\\"requestBody\\\": {\\n6013:           \\\"content\\\": {\"}, \"selfservice/strategy/code/strategy_recovery_admin.go\": {\"parent_lines\": [43], \"parent_numbered_excerpt\": \"38: \\tpublic.POST(RouteAdminCreateRecoveryCode, redir.RedirectToAdminRoute(s.deps))\\n39: }\\n40: \\n41: func (s *Strategy) RegisterAdminRoutes(admin *httprouterx.RouterAdmin) {\\n42: \\twrappedCreateRecoveryCode := strategy.IsDisabled(s.deps, s.RecoveryStrategyID(), s.createRecoveryCodeForIdentity)\\n43: \\tadmin.POST(RouteAdminCreateRecoveryCode, wrappedCreateRecoveryCode)\\n44: }\\n45: \\n46: // Create Recovery Code for Identity Parameters\\n47: //\\n48: // swagger:parameters createRecoveryCodeForIdentity\"}}, \"patch\": \"key/t48_evidence/P2C11176.diff\", \"patch_sha256\": \"1f0d30177b75ddc863fb937dc3adae0ad6562b24b1da54e02f1103ad82fd05ef\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}
