@@ -294,7 +294,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 **[TODO]** Write after E9.
 
 ## Data availability
-Licence constraints, and the provisional exclusion of three items whose upstream licence restricts publication, are documented in `LICENSE_REVIEW.md`. The headline results do not change without them: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
+Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's parent commit. One repository later adopted a restrictive licence, but every excerpt we use comes from versions under MIT, Apache-2.0 or CC BY-NC 4.0, and the excerpts are released under those terms. As a robustness check, the headline results do not change without the three items closest to the restrictive period: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
 
 **[TODO]** Plan the replication package:
 - packages, keys, codes, labels, scorers, freezes, the analysis scripts and the logs;
