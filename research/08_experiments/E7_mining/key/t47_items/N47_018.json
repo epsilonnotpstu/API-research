@@ -1,0 +1,48 @@
+{
+  "repo": "dockstore",
+  "fix_commit": "7fb1e36f61384f78cf20420448ac0b8a18f0a93f",
+  "parent_commit": "017215795858fc0cc54944007bc63dfbff7b1b6d",
+  "date": "2018-01-03",
+  "message_excerpt": "Feature/workflow to ga4gh fix (#1076)",
+  "stars": "132",
+  "changes": [
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java"
+    ]
+  ],
+  "surface_paths": [
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java",
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java"
+  ],
+  "path_roles": {
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java": [
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsImplCommon.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C01878",
+  "rank": 103,
+  "item_id": "N47_018",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /api/ga4gh/v1/tools/{id}/versions/{version-id}/{type}/descriptor/{relative-path}",
+  "proposition": "GET /api/ga4gh/v1/tools/{id}/versions/{version-id}/{type}/descriptor/{relative-path}: contract says a non-plain descriptor response is a ToolDescriptor object with descriptor metadata; implementation does return the matching SourceFile object directly for an additional descriptor",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "response_schema",
+  "fix_family": "response_schema.additional_trs_descriptor",
+  "proposition_check": "{\"contract\":[\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:131\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:134\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:136\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:149\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:152\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:154\"],\"implementation\":[\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java:434\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/dockstore/webservice/core/SourceFile.java:41\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/dockstore/webservice/core/SourceFile.java:62\"],\"route\":[\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java:146\",\"017215795858fc0cc54944007bc63dfbff7b1b6d:dockstore-webservice/src/main/java/io/dockstore/webservice/DockstoreWebserviceApplication.java:106\"]}",
+  "evidence": "{\"parent\": {\"dockstore-webservice/src/main/java/io/swagger/api/ToolsApi.java\": {\"parent_lines\": [146], \"parent_numbered_excerpt\": \"141:             @Context SecurityContext securityContext, @Context ContainerRequestContext value) throws NotFoundException {\\n142:         return delegate.toolsIdVersionsVersionIdTypeDescriptorGet(type, id, versionId, securityContext, value);\\n143:     }\\n144: \\n145:     @GET\\n146:     @Path(\\\"/{id}/versions/{version-id}/{type}/descriptor/{relative-path}\\\")\\n147:     @UnitOfWork\\n148:     @Produces({ \\\"application/json\\\", \\\"text/plain\\\" })\\n149:     @io.swagger.annotations.ApiOperation(value = \\\"Get additional tool descriptor files (CWL/WDL) relative to the main file\\\", notes = \\\"Returns additional CWL or WDL descriptors for the specified tool in the same or subdirectories\\\", response = ToolDescriptor.class, tags = {\\n150:             \\\"GA4GH\\\", })\\n151:     @io.swagger.annotations.ApiResponses(value = {\"}, \"dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java\": {\"parent_lines\": [434], \"parent_numbered_excerpt\": \"429:                     final Optional<SourceFile> first1 = sourceFiles.stream().filter(file -> file.getPath().equalsIgnoreCase(relativePath))\\n430:                             .findFirst();\\n431:                     if (first1.isPresent()) {\\n432:                         final SourceFile entity = first1.get();\\n433:                         return Response.status(Response.Status.OK).type(unwrap ? MediaType.TEXT_PLAIN : MediaType.APPLICATION_JSON)\\n434:                                 .entity(unwrap ? entity.getContent() : entity).build();\\n435:                     }\\n436:                 }\\n437:             }\\n438:         }\\n439:         return Response.status(Response.Status.NOT_FOUND).build();\"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/core/SourceFile.java\": {\"parent_lines\": [41, 62], \"parent_numbered_excerpt\": \"36:  [REDACTED attribution]\\n37:  */\\n38: @ApiModel(\\\"SourceFile\\\")\\n39: @Entity\\n40: @Table(name = \\\"sourcefile\\\")\\n41: public class SourceFile {\\n42:     /**\\n43:      * NextFlow parameter files are described here https://github.com/nextflow-io/nextflow/issues/208\\n44:      *\\n45:      */\\n46:     public enum FileType {\\n57:     @ApiModelProperty(value = \\\"Enumerates the type of file\\\", required = true)\\n58:     private FileType type;\\n59: \\n60:     @Column(columnDefinition = \\\"TEXT\\\")\\n61:     @ApiModelProperty(\\\"Cache for the contents of the target file\\\")\\n62:     private String content;\\n63: \\n64:     @Column(nullable = false)\\n65:     @ApiModelProperty(value = \\\"Path to source file in git repo\\\", required = true)\\n66:     private String path;\\n67: \"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/DockstoreWebserviceApplication.java\": {\"parent_lines\": [106], \"parent_numbered_excerpt\": \"101: \\n102: /**\\n103:  [REDACTED attribution]\\n104:  */\\n105: public class DockstoreWebserviceApplication extends Application<DockstoreWebserviceConfiguration> {\\n106:     public static final String GA4GH_API_PATH = \\\"/api/ga4gh/v1\\\";\\n107:     private static final Logger LOG = LoggerFactory.getLogger(DockstoreWebserviceApplication.class);\\n108:     private static final int BYTES_IN_KILOBYTE = 1024;\\n109:     private static final int KILOBYTES_IN_MEGABYTE = 1024;\\n110:     private static final int CACHE_IN_MB = 100;\\n111:     private static Cache cache = null;\"}}, \"patch\": \"key/t47_evidence/P2C01878.diff\", \"patch_sha256\": \"c1f22c57663275fec8b83289f1c8d1809001ab7c640b75419b9d9c2fbf8772df\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

@@ -1,0 +1,56 @@
+{
+  "repo": "Iced-Latte",
+  "fix_commit": "5f7541e48d941438bc7799ab483b76ef108a2520",
+  "parent_commit": "ef64a26d256d47c87bde2b317f8e7fffecb70ac4",
+  "date": "2026-04-12",
+  "message_excerpt": "Two fixes:",
+  "stars": "641",
+  "changes": [
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/common/validation/pagination/PaginationParametersValidator.java"
+    ],
+    [
+      "M",
+      "src/main/resources/api-specs/product-openapi.yaml"
+    ],
+    [
+      "M",
+      "src/test/java/com/zufar/icedlatte/common/validation/pagination/PaginationParametersValidatorTest.java"
+    ],
+    [
+      "M",
+      "src/test/java/com/zufar/icedlatte/product/validator/GetProductsRequestValidatorTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/zufar/icedlatte/common/validation/pagination/PaginationParametersValidator.java",
+    "src/main/resources/api-specs/product-openapi.yaml"
+  ],
+  "path_roles": {
+    "src/main/java/com/zufar/icedlatte/common/validation/pagination/PaginationParametersValidator.java": [
+      "production_behaviour"
+    ],
+    "src/main/resources/api-specs/product-openapi.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00250",
+  "rank": 101,
+  "item_id": "N47_002",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /api/v1/products",
+  "proposition": "GET /api/v1/products: contract says sorting and filtering parameters use camelCase names including sortAttribute, minPrice and brandNames; implementation does bind those parameters only through snake_case names including sort_attribute, min_price and brand_names",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "query_parameter_name",
+  "fix_family": "query_parameter_name.product_sort_and_filters",
+  "proposition_check": "{\"contract\":[\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:125\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:133\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:141\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:148\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:155\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:164\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/resources/api-specs/product-openapi.yaml:172\"],\"implementation\":[\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:37\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:62\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:63\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:64\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:65\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:66\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:67\",\"ef64a26d256d47c87bde2b317f8e7fffecb70ac4:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:68\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/resources/api-specs/product-openapi.yaml\": {\"parent_lines\": [125, 133, 141, 148, 155, 164, 172], \"parent_numbered_excerpt\": \"120:           schema:\\n121:             type: \\\"integer\\\"\\n122:             format: \\\"int32\\\"\\n123:             default: 50\\n124:             minimum: 1\\n125:         - name: \\\"sortAttribute\\\"\\n126:           description: \\\"Field to sort results by.\\\"\\n127:           in: \\\"query\\\"\\n128:           required: false\\n129:           schema:\\n130:             type: \\\"string\\\"\\n131:             enum: [\\\"name\\\", \\\"price\\\", \\\"quantity\\\", \\\"averageRating\\\", \\\"reviewsCount\\\"]\\n132:             default: \\\"name\\\"\\n133:         - name: \\\"sortDirection\\\"\\n134:           description: \\\"Sort direction.\\\"\\n135:           in: \\\"query\\\"\\n136:           required: false\\n137:           schema:\\n138:             type: \\\"string\\\"\\n139:             enum: [\\\"asc\\\", \\\"desc\\\"]\\n140:             default: \\\"asc\\\"\\n141:         - name: \\\"minPrice\\\"\\n142:           description: \\\"Minimum product price filter.\\\"\\n143:           in: \\\"query\\\"\\n144:           required: false\\n145:           schema:\\n146:             type: \\\"number\\\"\\n147:             minimum: 0\\n148:         - name: \\\"maxPrice\\\"\\n149:           description: \\\"Maximum product price filter.\\\"\\n150:           in: \\\"query\\\"\\n151:           required: false\\n152:           schema:\\n153:             type: \\\"number\\\"\\n154:             minimum: 0\\n155:         - name: \\\"minimumAverageRating\\\"\\n156:           description: \\\"Minimum average rating filter (1–4).\\\"\\n157:           in: \\\"query\\\"\\n158:           required: false\\n159:           schema:\\n160:             type: \\\"integer\\\"\\n161:             format: \\\"int32\\\"\\n162:             minimum: 1\\n163:             maximum: 4\\n164:         - name: \\\"brandNames\\\"\\n165:           description: \\\"Filter by brand names.\\\"\\n166:           in: \\\"query\\\"\\n167:           required: false\\n168:           schema:\\n169:             type: \\\"array\\\"\\n170:             items:\\n171:               type: \\\"string\\\"\\n172:         - name: \\\"sellerNames\\\"\\n173:           description: \\\"Filter by seller names.\\\"\\n174:           in: \\\"query\\\"\\n175:           required: false\\n176:           schema:\\n177:             type: \\\"array\\\"\"}, \"src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java\": {\"parent_lines\": [37, 62, 63, 64, 65, 66, 67, 68], \"parent_numbered_excerpt\": \"32: @RequiredArgsConstructor\\n33: @Validated\\n34: @RequestMapping(ProductsEndpoint.PRODUCTS_URL)\\n35: public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api.ProductApi {\\n36: \\n37:     public static final String PRODUCTS_URL = \\\"/api/v1/products\\\";\\n38: \\n39:     private final ProductsProvider productsProvider;\\n40:     private final PageableProductsProvider pageableProductsProvider;\\n41:     private final GetProductsRequestValidator getProductsRequestValidator;\\n42:     private final SingleProductProvider singleProductProvider;\\n57:     @Override\\n58:     @GetMapping\\n59:     public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(\\n60:             @RequestParam(name = \\\"page\\\", required = false) Integer pageNumber,\\n61:             @RequestParam(name = \\\"size\\\", required = false) Integer pageSize,\\n62:             @RequestParam(name = \\\"sort_attribute\\\", required = false) String sortAttribute,\\n63:             @RequestParam(name = \\\"sort_direction\\\", required = false) String sortDirection,\\n64:             @RequestParam(name = \\\"min_price\\\", required = false) BigDecimal minPrice,\\n65:             @RequestParam(name = \\\"max_price\\\", required = false) BigDecimal maxPrice,\\n66:             @RequestParam(name = \\\"minimum_average_rating\\\", required = false) Integer minimumAverageRating,\\n67:             @RequestParam(name = \\\"brand_names\\\", required = false) List<String> brandNames,\\n68:             @RequestParam(name = \\\"seller_names\\\", required = false) List<String> sellerNames,\\n69:             @RequestParam(name = \\\"keyword\\\", required = false) String keyword) {\\n70: \\n71:         getProductsRequestValidator.validate(pageNumber, pageSize, sortAttribute, sortDirection,\\n72:                 minPrice, maxPrice, minimumAverageRating, brandNames, sellerNames);\\n73: \"}}, \"patch\": \"key/t47_evidence/P2C00250.diff\", \"patch_sha256\": \"6e59ee0c6890a6bf72efb6ae430551a01b3adaf63691c562ecd5bdc1a3f8253b\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

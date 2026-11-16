@@ -1,0 +1,119 @@
+{
+  "repo": "cwms-data-api",
+  "fix_commit": "b9dd09288c0222bfc5cc334141a03a1db0215364",
+  "parent_commit": "9d4268c8bd8c357c4c21fae78274e85b050d5830",
+  "date": "2026-01-08",
+  "message_excerpt": "bug fixes found testing REGI against SWT db export (#1527)",
+  "stars": "30",
+  "changes": [
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/Dao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/TimeSeriesDaoImpl.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/basinconnectivity/StreamDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/basinconnectivity/StreamLocationDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/basinconnectivity/StreamReachDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/location/kind/LockDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/location/kind/OutletDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/location/kind/TurbineDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/project/ProjectLockDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/watersupply/WaterSupplyUtils.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalLocationLevel.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/helpers/ZoneIdHelper.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/test/java/cwms/cda/api/LocationKindControllerIT.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/test/java/cwms/cda/data/dto/CwmsIdLocationKindTest.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/test/java/cwms/cda/data/dto/LocationLevelTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java",
+    "cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java",
+    "cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalLocationLevel.java"
+  ],
+  "path_roles": {
+    "cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java": [
+      "production_behaviour"
+    ],
+    "cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java": [
+      "production_behaviour"
+    ],
+    "cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/SeasonalLocationLevel.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00792",
+  "rank": 100,
+  "item_id": "N47_012",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /locations/with-kind",
+  "proposition": "GET /locations/with-kind: contract says the successful JSON response contains an array of Location objects; implementation does serialize an array of CwmsIdLocationKind objects with location identifiers and kind identifiers",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "response_schema",
+  "fix_family": "response_schema.location_kind_identifiers",
+  "proposition_check": "{\"contract\":[\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java:87\",\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/data/dto/Location.java:38\",\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/data/dto/Location.java:39\"],\"implementation\":[\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java:112\",\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java:113\",\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java:51\",\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java:55\"],\"route\":[\"9d4268c8bd8c357c4c21fae78274e85b050d5830:cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java:93\"]}",
+  "evidence": "{\"parent\": {\"cwms-data-api/src/main/java/cwms/cda/api/LocationKindController.java\": {\"parent_lines\": [93], \"parent_numbered_excerpt\": \"88:                 })\\n89:         },\\n90:         description = \\\"Returns CWMS Location Data.  The Catalog end-point is also capable of \\\"\\n91:             + \\\"retrieving lists of locations and can filter on additional fields.\\\",\\n92:         method = HttpMethod.GET,\\n93:         path = \\\"/locations/with-kind\\\",\\n94:         tags = {TAG}\\n95:     )\\n96:     @Override\\n97:     public void handle(@NotNull Context ctx) {\\n98:         DSLContext dsl = getDslContext(ctx);\"}, \"cwms-data-api/src/main/java/cwms/cda/data/dto/Location.java\": {\"parent_lines\": [38, 39], \"parent_numbered_excerpt\": \"33: @FormattableWith(contentType = Formats.XMLV2, formatter = XMLv2.class, aliases = {Formats.XML})\\n34: @FormattableWith(contentType = Formats.JSONV2, formatter = JsonV2.class, aliases = {Formats.DEFAULT, Formats.JSON})\\n35: @FormattableWith(contentType = Formats.JSONV1, formatter = JsonV1.class)\\n36: public final class Location extends CwmsDTO {\\n37:     @JsonProperty(required = true)\\n38:     private final String name;\\n39:     private final Double latitude;\\n40:     private final Double longitude;\\n41:     private final Boolean active;\\n42:     private final String publicName;\\n43:     private final String longName;\\n44:     private final String description;\"}, \"cwms-data-api/src/main/java/cwms/cda/data/dto/CwmsIdLocationKind.java\": {\"parent_lines\": [51, 55], \"parent_numbered_excerpt\": \"46:     public CwmsIdLocationKind(Builder builder) {\\n47:         this.location = builder.id;\\n48:         this.locationKindId = builder.locationKindId;\\n49:     }\\n50: \\n51:     public CwmsId getLocationId() {\\n52:         return location;\\n53:     }\\n54: \\n55:     public String getLocationKindId() {\\n56:         return locationKindId;\\n57:     }\\n58: \\n59:     public static final class Builder {\\n60:         private CwmsId id;\"}}, \"patch\": \"key/t47_evidence/P2C00792.diff\", \"patch_sha256\": \"ad2404451dc271d29907f9d84b9f99d772aed0aec3a9adde75c105e9457ccf57\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV2.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

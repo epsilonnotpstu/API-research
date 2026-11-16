@@ -1,0 +1,64 @@
+{
+  "repo": "cwms-data-api",
+  "fix_commit": "92c63e61cb9f02ed3331b3555d090a4c6ae0c636",
+  "parent_commit": "4bd9f6ba16579d7af061c424a7c2a3755b152f64",
+  "date": "2026-09-02",
+  "message_excerpt": "Bugfix: Added defaults to optional query parameters for water contract creation (#1891)",
+  "stars": "30",
+  "changes": [
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java"
+    ]
+  ],
+  "surface_paths": [
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java",
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java",
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java",
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java"
+  ],
+  "path_roles": {
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractCreateController.java": [
+      "production_behaviour"
+    ],
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterContractDeleteController.java": [
+      "production_behaviour"
+    ],
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java": [
+      "production_behaviour"
+    ],
+    "cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserDeleteController.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00765",
+  "rank": 73,
+  "item_id": "N47_011",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "POST /projects/{office}/{project-id}/water-user",
+  "proposition": "POST /projects/{office}/{project-id}/water-user: contract says fail-if-exists defaults to true when omitted; implementation does parse the absent query value with Boolean.parseBoolean and pass false to storage",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "annotations",
+  "mismatch_type": "query_default",
+  "fix_family": "query_default.water_user_fail_if_exists",
+  "proposition_check": "{\"contract\":[\"4bd9f6ba16579d7af061c424a7c2a3755b152f64:cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java:61\"],\"implementation\":[\"4bd9f6ba16579d7af061c424a7c2a3755b152f64:cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java:85\",\"4bd9f6ba16579d7af061c424a7c2a3755b152f64:cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java:87\"],\"route\":[\"4bd9f6ba16579d7af061c424a7c2a3755b152f64:cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java:74\"]}",
+  "evidence": "{\"parent\": {\"cwms-data-api/src/main/java/cwms/cda/api/watersupply/WaterUserCreateController.java\": {\"parent_lines\": [74], \"parent_numbered_excerpt\": \"69:             @OpenApiResponse(status = STATUS_201, description = \\\"Water user successfully stored to CWMS.\\\"),\\n70:             @OpenApiResponse(status = STATUS_501, description = \\\"Requested format is not implemented\\\")\\n71:         },\\n72:         description = \\\"Stores a water user to CWMS.\\\",\\n73:         method = HttpMethod.POST,\\n74:         path = \\\"/projects/{office}/{project-id}/water-user\\\",\\n75:         tags = {TAG}\\n76:     )\\n77:     @Override\\n78:     public void handle(@NotNull Context ctx) {\\n79:         try (Timer.Context ignored = markAndTime(CREATE)) {\"}}, \"patch\": \"key/t47_evidence/P2C00765.diff\", \"patch_sha256\": \"e35fe7a2be32b6a6291e5cd897668080a567194e6f45cc16369178777d4f1918\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

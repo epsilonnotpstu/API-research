@@ -1,0 +1,79 @@
+{
+  "repo": "dockstore",
+  "fix_commit": "7347da6a1ecb1c7f8d1385c4d17b273bf1244b21",
+  "parent_commit": "7ea8312353800b7febd5d5ce400332a34a06176a",
+  "date": "2024-04-08",
+  "message_excerpt": "fix miscellaneous \"fuzzing bugs\"",
+  "stars": "132",
+  "changes": [
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/resources/openapi3/openapi.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java",
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java",
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java",
+    "dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java",
+    "dockstore-webservice/src/main/resources/openapi3/openapi.yaml"
+  ],
+  "path_roles": {
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/WorkflowResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/java/io/openapi/api/impl/ToolsApiServiceImpl.java": [
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/resources/openapi3/openapi.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C01864",
+  "rank": 89,
+  "item_id": "N47_015",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /containers/published",
+  "proposition": "GET /containers/published: contract says limit has the allowable range 1 through 100; implementation does pass limit=0 to a database query with maximum result count zero without a lower-bound guard",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "query_constraint",
+  "fix_family": "query_constraint.published_limit_lower_bound",
+  "proposition_check": "{\"contract\":[\"7ea8312353800b7febd5d5ce400332a34a06176a:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java:786\"],\"implementation\":[\"7ea8312353800b7febd5d5ce400332a34a06176a:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java:791\",\"7ea8312353800b7febd5d5ce400332a34a06176a:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java:792\",\"7ea8312353800b7febd5d5ce400332a34a06176a:dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java:327\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"dockstore-webservice/src/main/java/io/dockstore/webservice/resources/DockerRepoResource.java\": {\"parent_lines\": [791, 792], \"parent_numbered_excerpt\": \"786:             + PAGINATION_LIMIT, allowableValues = \\\"range[1,100]\\\", defaultValue = PAGINATION_LIMIT) @DefaultValue(PAGINATION_LIMIT) @QueryParam(\\\"limit\\\") Integer limit,\\n787:         @ApiParam(value = \\\"Filter, this is a search string that filters the results.\\\") @DefaultValue(\\\"\\\") @QueryParam(\\\"filter\\\") String filter,\\n788:         @ApiParam(value = \\\"Sort column\\\") @DefaultValue(\\\"stars\\\") @QueryParam(\\\"sortCol\\\") String sortCol,\\n789:         @ApiParam(value = \\\"Sort order\\\", allowableValues = \\\"asc,desc\\\") @DefaultValue(\\\"desc\\\") @QueryParam(\\\"sortOrder\\\") String sortOrder,\\n790:         @Context HttpServletResponse response) {\\n791:         int maxLimit = Math.min(Integer.parseInt(PAGINATION_LIMIT), limit);\\n792:         List<Tool> tools = toolDAO.findAllPublished(offset, maxLimit, filter, sortCol, sortOrder);\\n793:         filterContainersForHiddenTags(tools);\\n794:         stripContent(tools);\\n795:         response.addHeader(LambdaEventResource.X_TOTAL_COUNT, String.valueOf(toolDAO.countAllPublished(Optional.of(filter))));\\n796:         response.addHeader(LambdaEventResource.ACCESS_CONTROL_EXPOSE_HEADERS, LambdaEventResource.X_TOTAL_COUNT);\\n797:         return tools;\"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/jdbi/EntryDAO.java\": {\"parent_lines\": [327], \"parent_numbered_excerpt\": \"322:         Root<T> entry = query.from(classType != null ? classType : typeOfT);\\n323:         processQuery(filter, sortCol, sortOrder, cb, query, entry);\\n324:         query.select(entry);\\n325: \\n326:         int primitiveOffset = (offset != null) ? offset : 0;\\n327:         TypedQuery<T> typedQuery = currentSession().createQuery(query).setFirstResult(primitiveOffset).setMaxResults(limit);\\n328:         return typedQuery.getResultList();\\n329:     }\\n330: \\n331:     public long countAllHosted(long userid) {\\n332:         return ((Long)namedQuery(\\\"Entry.hostedWorkflowCount\\\").setParameter(\\\"userid\\\", userid).getSingleResult());\"}}, \"patch\": \"key/t47_evidence/P2C01864.diff\", \"patch_sha256\": \"22bebfc4762891396aaa494bdabb9568651a09e83e47ee76849c01ac67e59044\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

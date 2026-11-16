@@ -1,0 +1,52 @@
+{
+  "repo": "gravitee-api-management",
+  "fix_commit": "00fe7cf02316db4cd49649956332a957f0640cac",
+  "parent_commit": "cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150",
+  "date": "2026-11-04",
+  "message_excerpt": "fix(rest-api): restrict cluster sort fields to the documented values",
+  "stars": 470,
+  "changes": [
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java"
+    ],
+    [
+      "A",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/param/ClusterSortByParam.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/test/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResourceTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/param/ClusterSortByParam.java"
+  ],
+  "path_roles": {
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/param/ClusterSortByParam.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C02563",
+  "rank": 63,
+  "item_id": "N47_025",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /environments/{envId}/clusters",
+  "proposition": "GET /environments/{envId}/clusters: contract says sortBy is limited to name, createdAt and updatedAt with optional descending prefixes; implementation does construct a sorting field directly from any nonblank sortBy value without checking that field set",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "query_constraint",
+  "fix_family": "query_constraint.cluster_sort_fields",
+  "proposition_check": "{\"contract\":[\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-environments.yaml:540\",\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-environments.yaml:2824\",\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-environments.yaml:2829\"],\"implementation\":[\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java:107\",\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java:111\",\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/cluster/use_case/SearchClusterUseCase.java:95\",\"cdf1063fc2fc0fe2aa5641156c3a9deb54ab6150:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/cluster/use_case/SearchClusterUseCase.java:96\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-environments.yaml\": {\"parent_lines\": [540, 2824, 2829], \"parent_numbered_excerpt\": \"535:       tags:\\n536:         - Clusters\\n537:       summary: Search clusters\\n538:       description: |-\\n539:         User must have the ENVIRONMENT_CLUSTER[READ] permission.\\n540:       operationId: searchClusters\\n541:       parameters:\\n542:         - $ref: \\\"#/components/parameters/pageParam\\\"\\n543:         - $ref: \\\"#/components/parameters/perPageParam\\\"\\n544:         - $ref: \\\"#/components/parameters/clusterSortByParam\\\"\\n545:         - $ref: \\\"#/components/parameters/clusterSearchParam\\\"\\n2819:       in: path\\n2820:       description: The unique ID of the cluster\\n2821:       required: true\\n2822:       schema:\\n2823:         type: string\\n2824:     clusterSortByParam:\\n2825:       name: sortBy\\n2826:       in: query\\n2827:       required: false\\n2828:       description: |-\\n2829:         Possibility to sort Cluster results by field.\\n2830:         Can be ascending or descending with minus '-' prefix.\\n2831:         By default, it is sorted by name.\\n2832:       schema:\\n2833:         type: string\\n2834:         example: name\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/cluster/ClustersResource.java\": {\"parent_lines\": [107, 111], \"parent_numbered_excerpt\": \"102:     @Permissions({ @Permission(value = RolePermission.ENVIRONMENT_CLUSTER, acls = { RolePermissionAction.READ }) })\\n103:     public ClustersResponse searchClusters(\\n104:         @QueryParam(\\\"q\\\") String q,\\n105:         @QueryParam(\\\"type\\\") ClusterType type,\\n106:         @BeanParam @Valid PaginationParam paginationParam,\\n107:         @QueryParam(\\\"sortBy\\\") String sortBy\\n108:     ) {\\n109:         var executionContext = GraviteeContext.getExecutionContext();\\n110: \\n111:         SearchClusterUseCase.Output result = searchClusterUseCase.execute(\\n112:             new SearchClusterUseCase.Input(\\n113:                 executionContext.getEnvironmentId(),\\n114:                 type,\\n115:                 q,\\n116:                 paginationParam.toPageable(),\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/cluster/use_case/SearchClusterUseCase.java\": {\"parent_lines\": [95, 96], \"parent_numbered_excerpt\": \"90:         if (sortBy == null) {\\n91:             return Optional.empty();\\n92:         }\\n93: \\n94:         boolean isAscending = !sortBy.startsWith(\\\"-\\\");\\n95:         String field = isAscending ? sortBy : sortBy.substring(1);\\n96:         return Optional.of(new SortableImpl(field, isAscending));\\n97:     }\\n98: }\"}}, \"patch\": \"key/t47_evidence/P2C02563.diff\", \"patch_sha256\": \"eb60e0e8047bf9d532e55d2568c9a468573cc9df3b238608e9044e6b91c62e0b\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

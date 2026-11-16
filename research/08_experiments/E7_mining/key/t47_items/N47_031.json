@@ -1,0 +1,40 @@
+{
+  "repo": "harbor",
+  "fix_commit": "3d324a0e3b2221c4582e3ec77224b043fe468f22",
+  "parent_commit": "83c618c632ab1a70a656c1c6817f59500752b02b",
+  "date": "2016-08-03",
+  "message_excerpt": "Fixed Project describe \"name\" field  error in swagger.yaml",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "docs/swagger.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.yaml"
+  ],
+  "path_roles": {
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09207",
+  "rank": 143,
+  "item_id": "N47_031",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "POST /projects",
+  "proposition": "POST /projects: contract says the project request names its project name property name; implementation does decode and validate the project name only through the project_name property",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "request_property_name",
+  "fix_family": "request_property_name.project_create_name",
+  "proposition_check": "{\"contract\":[\"83c618c632ab1a70a656c1c6817f59500752b02b:docs/swagger.yaml:105\",\"83c618c632ab1a70a656c1c6817f59500752b02b:docs/swagger.yaml:728\",\"83c618c632ab1a70a656c1c6817f59500752b02b:docs/swagger.yaml:750\",\"83c618c632ab1a70a656c1c6817f59500752b02b:docs/swagger.yaml:757\",\"83c618c632ab1a70a656c1c6817f59500752b02b:docs/swagger.yaml:770\"],\"implementation\":[\"83c618c632ab1a70a656c1c6817f59500752b02b:api/project.go:39\",\"83c618c632ab1a70a656c1c6817f59500752b02b:api/project.go:74\",\"83c618c632ab1a70a656c1c6817f59500752b02b:api/project.go:84\",\"83c618c632ab1a70a656c1c6817f59500752b02b:api/project.go:221\",\"83c618c632ab1a70a656c1c6817f59500752b02b:api/project.go:292\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [105, 728, 750, 757, 770], \"parent_numbered_excerpt\": \"100:       description: |\\n101:         This endpoint is for user to create a new project.\\n102:       parameters:\\n103:         - name: project\\n104:           in: body\\n105:           description: New created project.\\n106:           required: true\\n107:           schema:\\n108:             $ref: '#/definitions/Project'\\n109:       tags:\\n110:         - Products\\n723:       repositories:\\n724:         description: Search results of the repositories that matched the filter keywords.\\n725:         type: array\\n726:         items:\\n727:           $ref: '#/definitions/SearchRepository'\\n728:   SearchProject:\\n729:     type: object\\n730:     properties:\\n731:       id:\\n732:         type: integer\\n733:         format: int64\\n745:       repository_name: \\n746:         type: string\\n747:         description: The name of the repository\\n748:       project_name:\\n749:         type: string\\n750:         description: The name of the project that the repository belongs to\\n751:       project_id:\\n752:         type: integer\\n753:         description: The ID of the project that the repository belongs to\\n754:       project_public:\\n755:         type: integer\\n756:         description: The flag to indicate the publicity of the project that the repository belongs to (1 is public, 0 is not)\\n757:   Project:\\n758:     type: object\\n759:     properties:\\n760:       project_id:\\n761:         type: integer\\n762:         format: int32\\n765:         type: integer\\n766:         format: int32\\n767:         description: The owner ID of the project always means the creator of the project.\\n768:       name:\\n769:         type: string\\n770:         description: The name of the project.\\n771:       creation_time:\\n772:         type: string\\n773:         description: The creation time of the project.\\n774:       update_time:\\n775:         type: string\"}, \"api/project.go\": {\"parent_lines\": [39, 74, 84, 221, 292], \"parent_numbered_excerpt\": \"34: \\tuserID    int\\n35: \\tprojectID int64\\n36: }\\n37: \\n38: type projectReq struct {\\n39: \\tProjectName string `json:\\\"project_name\\\"`\\n40: \\tPublic      bool   `json:\\\"public\\\"`\\n41: }\\n42: \\n43: const projectNameMaxLen int = 30\\n44: const projectNameMinLen int = 4\\n69: func (p *ProjectAPI) Post() {\\n70: \\tp.userID = p.ValidateUser()\\n71: \\n72: \\tvar req projectReq\\n73: \\tvar public int\\n74: \\tp.DecodeJSONReq(&req)\\n75: \\tif req.Public {\\n76: \\t\\tpublic = 1\\n77: \\t}\\n78: \\terr := validateProjectReq(req)\\n79: \\tif err != nil {\\n80: \\t\\tlog.Errorf(\\\"Invalid project request, error: %v\\\", err)\\n81: \\t\\tp.RenderError(http.StatusBadRequest, fmt.Sprintf(\\\"invalid request: %v\\\", err))\\n82: \\t\\treturn\\n83: \\t}\\n84: \\tprojectName := req.ProjectName\\n85: \\texist, err := dao.ProjectExists(projectName)\\n86: \\tif err != nil {\\n87: \\t\\tlog.Errorf(\\\"Error happened checking project existence in db, error: %v, project name: %s\\\", err, projectName)\\n88: \\t}\\n89: \\tif exist {\\n216: \\t\\tlog.Errorf(\\\"Error parsing project id: %d, error: %v\\\", projectID, err)\\n217: \\t\\tp.RenderError(http.StatusBadRequest, \\\"invalid project id\\\")\\n218: \\t\\treturn\\n219: \\t}\\n220: \\n221: \\tp.DecodeJSONReq(&req)\\n222: \\tif req.Public {\\n223: \\t\\tpublic = 1\\n224: \\t}\\n225: \\tif !isProjectAdmin(p.userID, projectID) {\\n226: \\t\\tlog.Warningf(\\\"Current user, id: %d does not have project admin role for project, id: %d\\\", p.userID, projectID)\\n287: \\t}\\n288: \\n289: \\treturn hasProjectAdminRole\\n290: }\\n291: \\n292: func validateProjectReq(req projectReq) error {\\n293: \\tpn := req.ProjectName\\n294: \\tif isIllegalLength(req.ProjectName, projectNameMinLen, projectNameMaxLen) {\\n295: \\t\\treturn fmt.Errorf(\\\"Project name is illegal in length. (greater than 4 or less than 30)\\\")\\n296: \\t}\\n297: \\tvalidProjectName := regexp.MustCompile(`^[a-z0-9](?:-*[a-z0-9])*(?:[._][a-z0-9](?:-*[a-z0-9])*)*$`)\"}}, \"patch\": \"key/t47_evidence/P2C09207.diff\", \"patch_sha256\": \"878b6c368895416a2533110cfc801652860d303fbc88d566cb4e76c98c5c39af\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

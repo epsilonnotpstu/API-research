@@ -1,0 +1,40 @@
+{
+  "repo": "harbor",
+  "fix_commit": "3569d62b83f88543cd113884d723e9fce2173734",
+  "parent_commit": "e79334a445255dce9d4266751c82ccfb65f5ec73",
+  "date": "2017-09-27",
+  "message_excerpt": "fix type error in swagger.yaml",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "docs/swagger.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.yaml"
+  ],
+  "path_roles": {
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09184",
+  "rank": 120,
+  "item_id": "N47_030",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /repositories",
+  "proposition": "GET /repositories: contract says Repository.id has string type; implementation does serialize repoResp.ID as an int64 JSON number",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_value_type",
+  "fix_family": "response_value_type.repository_numeric_id",
+  "proposition_check": "{\"contract\":[\"e79334a445255dce9d4266751c82ccfb65f5ec73:docs/swagger.yaml:780\",\"e79334a445255dce9d4266751c82ccfb65f5ec73:docs/swagger.yaml:1080\",\"e79334a445255dce9d4266751c82ccfb65f5ec73:docs/swagger.yaml:2661\"],\"implementation\":[\"e79334a445255dce9d4266751c82ccfb65f5ec73:src/ui/api/repository.go:46\",\"e79334a445255dce9d4266751c82ccfb65f5ec73:src/ui/api/repository.go:128\",\"e79334a445255dce9d4266751c82ccfb65f5ec73:src/ui/api/repository.go:132\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [780, 1080, 2661], \"parent_numbered_excerpt\": \"775:         '200':\\n776:           description: Get repositories successfully.\\n777:           schema:\\n778:             type: array\\n779:             items:\\n780:               $ref: '#/definitions/Repository'\\n781:           headers:\\n782:             X-Total-Count:\\n783:               description: The total count of repositories\\n784:               type: integer\\n785:             Link:\\n1075:         '200':\\n1076:           description: Get popular repositories successfully.\\n1077:           schema:\\n1078:             type: array\\n1079:             items:\\n1080:               $ref: '#/definitions/Repository'\\n1081:         '400':\\n1082:           description: Bad request because of invalid count.\\n1083:         '500':\\n1084:           description: Unexpected internal errors.\\n1085:   /logs:\\n2656:   Repository:\\n2657:     type: object\\n2658:     properties:\\n2659:       id:\\n2660:         type: string\\n2661:         description: The ID of repository.\\n2662:       name:\\n2663:         type: string\\n2664:         description: The name of repository.\\n2665:       project_id:\\n2666:         type: integer\"}, \"src/ui/api/repository.go\": {\"parent_lines\": [46, 128, 132], \"parent_numbered_excerpt\": \"41: type RepositoryAPI struct {\\n42: \\tBaseController\\n43: }\\n44: \\n45: type repoResp struct {\\n46: \\tID           int64     `json:\\\"id\\\"`\\n47: \\tName         string    `json:\\\"name\\\"`\\n48: \\tProjectID    int64     `json:\\\"project_id\\\"`\\n49: \\tDescription  string    `json:\\\"description\\\"`\\n50: \\tPullCount    int64     `json:\\\"pull_count\\\"`\\n51: \\tStarCount    int64     `json:\\\"star_count\\\"`\\n123: \\t\\tra.HandleInternalServerError(fmt.Sprintf(\\\"failed to get repository: %v\\\", err))\\n124: \\t\\treturn\\n125: \\t}\\n126: \\n127: \\tra.SetPaginationHeader(total, page, pageSize)\\n128: \\tra.Data[\\\"json\\\"] = repositories\\n129: \\tra.ServeJSON()\\n130: }\\n131: \\n132: func getRepositories(projectID int64, keyword string,\\n133: \\tlimit, offset int64) ([]*repoResp, error) {\\n134: \\trepositories, err := dao.GetRepositoriesByProject(projectID, keyword, limit, offset)\\n135: \\tif err != nil {\\n136: \\t\\treturn nil, err\\n137: \\t}\"}}, \"patch\": \"key/t47_evidence/P2C09184.diff\", \"patch_sha256\": \"9b929d5cbf6715ecdcd1b9734c56792455a4a1e2929017ef14f6495b9a7ffbfa\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

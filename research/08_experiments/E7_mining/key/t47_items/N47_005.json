@@ -1,0 +1,48 @@
+{
+  "repo": "Iced-Latte",
+  "fix_commit": "8a0764925055330c9385ef665579ae1a4be0c535",
+  "parent_commit": "fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b",
+  "date": "2026-06-06",
+  "message_excerpt": "tests fixed",
+  "stars": "641",
+  "changes": [
+    [
+      "M",
+      "src/main/resources/api-specs/product-review-openapi.yaml"
+    ],
+    [
+      "M",
+      "src/main/resources/api-specs/user-openapi.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/resources/api-specs/product-review-openapi.yaml",
+    "src/main/resources/api-specs/user-openapi.yaml"
+  ],
+  "path_roles": {
+    "src/main/resources/api-specs/product-review-openapi.yaml": [
+      "openapi_root"
+    ],
+    "src/main/resources/api-specs/user-openapi.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00294",
+  "rank": 145,
+  "item_id": "N47_005",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /api/v1/products/{productId}/review",
+  "proposition": "GET /api/v1/products/{productId}/review: contract says a user without a review receives 200 with all review fields null; implementation does throw a NotFoundException mapped to 404 when the user has no review",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_status",
+  "fix_family": "response_status.user_review_absent",
+  "proposition_check": "{\"contract\":[\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/resources/api-specs/product-review-openapi.yaml:257\"],\"implementation\":[\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/review/service/ProductReviewsProvider.java:64\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/review/service/ProductReviewsProvider.java:67\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/review/service/ProductReviewsProvider.java:69\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/common/exception/NotFoundException.java:6\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:232\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:257\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:259\"],\"route\":[\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java:67\",\"fffd0c783ea9a96690a24a7e91c4a86d2f7cf33b:src/main/java/com/zufar/icedlatte/common/http/ApiPaths.java:25\"]}",
+  "evidence": "{\"parent\": {\"src/main/resources/api-specs/product-review-openapi.yaml\": {\"parent_lines\": [257], \"parent_numbered_excerpt\": \"252:           schema:\\n253:             type: \\\"string\\\"\\n254:             format: \\\"uuid\\\"\\n255:       responses:\\n256:         \\\"200\\\":\\n257:           description: \\\"Product's Review and Rating are returned. All fields are null, if user left no review for the product\\\"\\n258:           content:\\n259:             application/json:\\n260:               schema:\\n261:                 $ref: \\\"#/components/schemas/ProductReviewDto\\\"\\n262:         \\\"401\\\":\"}, \"src/main/java/com/zufar/icedlatte/review/service/ProductReviewsProvider.java\": {\"parent_lines\": [64, 67, 69], \"parent_numbered_excerpt\": \"59:                 toProductReviewDto(reviewRepository.findAllProductReviews(productId, productRatings, pageRequest));\\n60:         return productReviewDtoConverter.toProductReviewsAndRatingsWithPagination(responsePage);\\n61:     }\\n62: \\n63:     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)\\n64:     public ProductReviewDto getProductReviewForUser(final UUID productId, final UUID userId) {\\n65:         productReviewValidator.validateProductExists(productId);\\n66:         return reviewRepository\\n67:                 .findByUserIdAndProductId(userId, productId)\\n68:                 .map(this::toProductReviewDto)\\n69:                 .orElseThrow(() -> new NotFoundException(String.format(\\n70:                         \\\"Product's review for productId = '%s' and userId = '%s' was not found\\\", productId, userId)));\\n71:     }\\n72: \\n73:     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_COMMITTED, readOnly = true)\\n74:     public ProductReviewsAndRatingsWithPagination getUserReviews(\"}, \"src/main/java/com/zufar/icedlatte/common/exception/NotFoundException.java\": {\"parent_lines\": [6], \"parent_numbered_excerpt\": \"1: package com.zufar.icedlatte.common.exception;\\n2: \\n3: import org.springframework.http.HttpStatus;\\n4: import org.springframework.web.bind.annotation.ResponseStatus;\\n5: \\n6: @ResponseStatus(HttpStatus.NOT_FOUND)\\n7: public class NotFoundException extends RuntimeException {\\n8: \\n9:     public NotFoundException(String message) {\\n10:         super(message);\\n11:     }\"}, \"src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java\": {\"parent_lines\": [232, 257, 259], \"parent_numbered_excerpt\": \"227:         return ResponseEntity.status(status).body(pd);\\n228:     }\\n229: \\n230:     @ExceptionHandler(Exception.class)\\n231:     public ResponseEntity<ProblemDetail> handleUnhandledException(final Exception exception) {\\n232:         HttpStatus status = resolveHttpStatus(exception);\\n233:         String typeSlug = status.is5xxServerError() ? \\\"internal-error\\\" : \\\"about:blank\\\";\\n234:         String title = status.is5xxServerError() ? \\\"Internal server error\\\" : status.getReasonPhrase();\\n235:         String errorMessage = exception.getMessage() != null\\n236:                 ? exception.getMessage()\\n237:                 : exception.getClass().getSimpleName();\\n252:         }\\n253: \\n254:         return ResponseEntity.status(status).body(pd);\\n255:     }\\n256: \\n257:     private static HttpStatus resolveHttpStatus(Exception exception) {\\n258:         ResponseStatus responseStatus =\\n259:                 AnnotatedElementUtils.findMergedAnnotation(exception.getClass(), ResponseStatus.class);\\n260:         return responseStatus == null ? HttpStatus.INTERNAL_SERVER_ERROR : responseStatus.code();\\n261:     }\\n262: }\"}, \"src/main/java/com/zufar/icedlatte/review/endpoint/ProductReviewEndpoint.java\": {\"parent_lines\": [67], \"parent_numbered_excerpt\": \"62:         return ResponseEntity.ok(productReviewsProvider.getProductReviews(\\n63:                 productId, pageNumber, pageSize, sortAttribute, sortDirection, productRatings));\\n64:     }\\n65: \\n66:     @Override\\n67:     @GetMapping(ApiPaths.PRODUCTS + \\\"/{productId}/review\\\")\\n68:     public ResponseEntity<ProductReviewDto> getProductReview(@PathVariable final UUID productId) {\\n69:         return ResponseEntity.ok(\\n70:                 productReviewsProvider.getProductReviewForUser(productId, currentUserProvider.getUserId()));\\n71:     }\\n72: \"}, \"src/main/java/com/zufar/icedlatte/common/http/ApiPaths.java\": {\"parent_lines\": [25], \"parent_numbered_excerpt\": \"20:     public static final String AUTH_SESSIONS_PATTERN = AUTH + \\\"/sessions/**\\\";\\n21: \\n22:     public static final String USERS = \\\"/api/v1/users\\\";\\n23:     public static final String USERS_PATTERN = USERS + \\\"/**\\\";\\n24: \\n25:     public static final String PRODUCTS = \\\"/api/v1/products\\\";\\n26:     public static final String PRODUCTS_PATTERN = PRODUCTS + \\\"/**\\\";\\n27: \\n28:     public static final String CART = \\\"/api/v1/cart\\\";\\n29:     public static final String CART_PATTERN = CART + \\\"/**\\\";\\n30: \"}}, \"patch\": \"key/t47_evidence/P2C00294.diff\", \"patch_sha256\": \"cf8ccffa64fb5957b82f9a0ada20ca0ab02ffeb780873d1a15e5a2c192b85529\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

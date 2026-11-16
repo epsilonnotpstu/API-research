@@ -1,0 +1,48 @@
+{
+  "repo": "apicurio-registry",
+  "fix_commit": "6f7fe40e970747c2740cb1e588a04d2c0227e558",
+  "parent_commit": "66e4cb978e8bed743b802d23debe7d79bf01f98e",
+  "date": "2020-12-01",
+  "message_excerpt": "fix update metadata bug (#1045)",
+  "stars": 957,
+  "changes": [
+    [
+      "M",
+      "app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java"
+    ],
+    [
+      "M",
+      "app/src/main/java/io/apicurio/registry/storage/impl/AbstractMapRegistryStorage.java"
+    ],
+    [
+      "M",
+      "utils/sql/src/main/java/io/apicurio/registry/storage/impl/sql/AbstractSqlRegistryStorage.java"
+    ]
+  ],
+  "surface_paths": [
+    "app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java"
+  ],
+  "path_roles": {
+    "app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00513",
+  "rank": 69,
+  "item_id": "N47_006",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "PUT /artifacts/{artifactId}/versions/{version}/meta",
+  "proposition": "PUT /artifacts/{artifactId}/versions/{version}/meta: contract says EditableMetaData accepts labels and properties when updating version metadata; implementation does copy only name and description from the request into the storage update",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "request_property",
+  "fix_family": "request_property.version_metadata_labels_properties",
+  "proposition_check": "{\"contract\":[\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:522\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:1701\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:1712\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:1784\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:1873\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:2062\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:common/src/main/resources/META-INF/openapi.json:2169\"],\"implementation\":[\"66e4cb978e8bed743b802d23debe7d79bf01f98e:app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java:572\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java:591\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java:594\",\"66e4cb978e8bed743b802d23debe7d79bf01f98e:app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java:595\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"common/src/main/resources/META-INF/openapi.json\": {\"parent_lines\": [522, 1701, 1712, 1784, 1873, 2062, 2169], \"parent_numbered_excerpt\": \"517:                     },\\n518:                     \\\"500\\\": {\\n519:                         \\\"$ref\\\": \\\"#/components/responses/ServerError\\\"\\n520:                     }\\n521:                 },\\n522:                 \\\"operationId\\\": \\\"updateArtifactVersionMetaData\\\",\\n523:                 \\\"summary\\\": \\\"Update artifact version metadata\\\",\\n524:                 \\\"description\\\": \\\"Updates the user-editable portion of the artifact version's metadata.  Only some of \\\\nthe metadata fields are editable by the user.  For example, `description` is editable, \\\\nbut `createdOn` is not.\\\\n\\\\nThis operation can fail for the following reasons:\\\\n\\\\n* No artifact with this `artifactId` exists (HTTP error `404`)\\\\n* No version with this `version` exists (HTTP error `404`)\\\\n* A server error occurred (HTTP error `500`)\\\\n\\\"\\n525:             },\\n526:             \\\"delete\\\": {\\n527:                 \\\"tags\\\": [\\n1696:             }\\n1697:         }\\n1698:     },\\n1699:     \\\"components\\\": {\\n1700:         \\\"schemas\\\": {\\n1701:             \\\"EditableMetaData\\\": {\\n1702:                 \\\"title\\\": \\\"Root Type for EditableArtifactMetaData\\\",\\n1703:                 \\\"description\\\": \\\"\\\",\\n1704:                 \\\"type\\\": \\\"object\\\",\\n1705:                 \\\"properties\\\": {\\n1706:                     \\\"name\\\": {\\n1707:                         \\\"type\\\": \\\"string\\\"\\n1708:                     },\\n1709:                     \\\"description\\\": {\\n1710:                         \\\"type\\\": \\\"string\\\"\\n1711:                     },\\n1712:                     \\\"labels\\\": {\\n1713:                         \\\"description\\\": \\\"\\\",\\n1714:                         \\\"type\\\": \\\"array\\\",\\n1715:                         \\\"items\\\": {\\n1716:                             \\\"type\\\": \\\"string\\\"\\n1717:                         }\\n1779:                     },\\n1780:                     \\\"id\\\": {\\n1781:                         \\\"description\\\": \\\"The artifact id.\\\",\\n1782:                         \\\"type\\\": \\\"string\\\"\\n1783:                     },\\n1784:                     \\\"labels\\\": {\\n1785:                         \\\"description\\\": \\\"\\\",\\n1786:                         \\\"type\\\": \\\"array\\\",\\n1787:                         \\\"items\\\": {\\n1788:                             \\\"type\\\": \\\"string\\\"\\n1789:                         }\\n1868:                     },\\n1869:                     \\\"state\\\": {\\n1870:                         \\\"$ref\\\": \\\"#/components/schemas/ArtifactState\\\",\\n1871:                         \\\"description\\\": \\\"\\\"\\n1872:                     },\\n1873:                     \\\"labels\\\": {\\n1874:                         \\\"description\\\": \\\"\\\",\\n1875:                         \\\"type\\\": \\\"array\\\",\\n1876:                         \\\"items\\\": {\\n1877:                             \\\"type\\\": \\\"string\\\"\\n1878:                         }\\n2057:                     },\\n2058:                     \\\"type\\\": {\\n2059:                         \\\"$ref\\\": \\\"#/components/schemas/ArtifactType\\\",\\n2060:                         \\\"description\\\": \\\"\\\"\\n2061:                     },\\n2062:                     \\\"labels\\\": {\\n2063:                         \\\"description\\\": \\\"\\\",\\n2064:                         \\\"type\\\": \\\"array\\\",\\n2065:                         \\\"items\\\": {\\n2066:                             \\\"type\\\": \\\"string\\\"\\n2067:                         }\\n2164:                     },\\n2165:                     \\\"type\\\": {\\n2166:                         \\\"$ref\\\": \\\"#/components/schemas/ArtifactType\\\",\\n2167:                         \\\"description\\\": \\\"\\\"\\n2168:                     },\\n2169:                     \\\"labels\\\": {\\n2170:                         \\\"description\\\": \\\"\\\",\\n2171:                         \\\"type\\\": \\\"array\\\",\\n2172:                         \\\"items\\\": {\\n2173:                             \\\"type\\\": \\\"string\\\"\\n2174:                         }\"}, \"app/src/main/java/io/apicurio/registry/rest/ArtifactsResourceImpl.java\": {\"parent_lines\": [572, 591, 594, 595], \"parent_numbered_excerpt\": \"567:      */\\n568:     @Override\\n569:     public void updateArtifactMetaData(String artifactId, EditableMetaData data) {\\n570:         EditableArtifactMetaDataDto dto = new EditableArtifactMetaDataDto();\\n571:         dto.setName(data.getName());\\n572:         dto.setDescription(data.getDescription());\\n573:         dto.setLabels(data.getLabels());\\n574:         dto.setProperties(data.getProperties());\\n575:         storage.updateArtifactMetaData(artifactId, dto);\\n576:     }\\n577: \\n586: \\n587:     /**\\n588:      * @see io.apicurio.registry.rest.ArtifactsResource#updateArtifactVersionMetaData(java.lang.Integer, java.lang.String, io.apicurio.registry.rest.beans.EditableMetaData)\\n589:      */\\n590:     @Override\\n591:     public void updateArtifactVersionMetaData(Integer version, String artifactId, EditableMetaData data) {\\n592:         EditableArtifactMetaDataDto dto = new EditableArtifactMetaDataDto();\\n593:         dto.setName(data.getName());\\n594:         dto.setDescription(data.getDescription());\\n595:         storage.updateArtifactVersionMetaData(artifactId, version.longValue(), dto);\\n596:     }\\n597: \\n598:     /**\\n599:      * @see io.apicurio.registry.rest.ArtifactsResource#deleteArtifactVersionMetaData(java.lang.Integer, java.lang.String)\\n600:      */\"}}, \"patch\": \"key/t47_evidence/P2C00513.diff\", \"patch_sha256\": \"5ecb635d54d0eac3bb53b49ad07f66fe3b4430d3c0d1f48bf52d9d74dfe1c8be\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

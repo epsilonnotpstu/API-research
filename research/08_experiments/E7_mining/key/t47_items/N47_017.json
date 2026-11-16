@@ -1,0 +1,45 @@
+{
+  "repo": "dockstore",
+  "fix_commit": "78ca09709a59b3c7c9accc31cc6491eac2f7aab5",
+  "parent_commit": "2552462faf6580936a09b2de41bdbb91615827d7",
+  "date": "2025-01-09",
+  "message_excerpt": "fix runner dependencies call and add test (#6062)",
+  "stars": "132",
+  "changes": [
+    [
+      "M",
+      "dockstore-integration-testing/src/test/java/io/dockstore/client/cli/OpenApiCRUDClientIT.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java"
+  ],
+  "path_roles": {
+    "dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C01870",
+  "rank": 95,
+  "item_id": "N47_017",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /metadata/runner_dependencies",
+  "proposition": "GET /metadata/runner_dependencies: contract says python_version defaults to 2; implementation does bind an omitted python_version to 3",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "annotations",
+  "mismatch_type": "query_default",
+  "fix_family": "query_default.runner_python_version",
+  "proposition_check": "{\"contract\":[\"2552462faf6580936a09b2de41bdbb91615827d7:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java:335\"],\"implementation\":[\"2552462faf6580936a09b2de41bdbb91615827d7:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java:336\"],\"route\":[\"2552462faf6580936a09b2de41bdbb91615827d7:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java:135\",\"2552462faf6580936a09b2de41bdbb91615827d7:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java:326\"]}",
+  "evidence": "{\"parent\": {\"dockstore-webservice/src/main/java/io/dockstore/webservice/resources/MetadataResource.java\": {\"parent_lines\": [135, 326], \"parent_numbered_excerpt\": \"130: import org.slf4j.LoggerFactory;\\n131: \\n132: /**\\n133:  [REDACTED attribution]\\n134:  */\\n135: @Path(\\\"/metadata\\\")\\n136: @Api(\\\"metadata\\\")\\n137: @Produces({MediaType.TEXT_HTML, MediaType.TEXT_XML})\\n138: @Tag(name = \\\"metadata\\\", description = ResourceConstants.METADATA)\\n139: public class MetadataResource {\\n140: \\n321:         }\\n322:     }\\n323: \\n324:     @GET\\n325:     @Produces({ \\\"text/plain\\\", \\\"application/json\\\" })\\n326:     @Path(\\\"/runner_dependencies\\\")\\n327:     @Operation(summary = \\\"Returns the file containing runner dependencies\\\", description = \\\"Returns the file containing runner dependencies, NO authentication\\\")\\n328:     @ApiResponse(description = \\\"The requirements.txt file\\\", content = @Content(\\n329:         mediaType = \\\"application/json\\\",\\n330:         schema = @Schema(implementation = String.class)))\\n331:     @ApiOperation(value = \\\"Returns the file containing runner dependencies.\\\", response = String.class)\"}}, \"patch\": \"key/t47_evidence/P2C01870.diff\", \"patch_sha256\": \"573be0e895cd8732d1e5fab4670c71c3e96106dca65fffa0880ee29e49539439\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}
