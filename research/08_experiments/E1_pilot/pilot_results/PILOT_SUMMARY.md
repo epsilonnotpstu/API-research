@@ -189,6 +189,12 @@
        - ⇒ direction না জানা লেখকের proposition-এও association টিকেছে।
        - Accidental → IMPL rule-এর precision 1.00; deliberate → SPEC প্রায় ৫ বারে ১ বার ভুল।
      - Miss-rate-এর দাবি ("blind reader accidental অমিল বেশি miss করে") pre-registered test-এ **টেকেনি** (p = 0.31)।
+13. **[H13, E9/RQ2] Kind rule zero-shot LLM-কে উন্নত করে না; এটা LLM-এর সাফল্য ব্যাখ্যা করে।** উৎস: `../../E9_hybrid/E9_RESULTS.md`।
+   - **Pre-registered Part B** (৮৫টি নতুন item): H-E9-1 **INSUFFICIENT**। Discordant item মাত্র ১টি, কারণ M1 accidental item আগে থেকেই ঠিক বলে (24/24 ও 23/24)।
+   - **Macro-F1:** M1 0.90–0.91, HYB 0.90–0.91, R 0.845।
+   - **ACCIDENTAL → IMPL override-এর precision 24/24।** তৃতীয় sample-এ accidental → SPEC শূন্য।
+   - **M1-এর বাকি ভুল প্রায় সবই deliberate item-এ।** এর বেশিরভাগ SPEC-truth item-এ UNDECIDABLE (১২/১৩)।
+   - **Post-hoc (X):** M1 abstain করলে R ব্যবহার করলে macro-F1 0.976 (দুই labeller-এ)। নতুন pre-registered পরীক্ষা (E10) দরকার।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**

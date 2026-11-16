@@ -14,7 +14,7 @@ When a REST implementation and its OpenAPI contract disagree, a test failure doe
    - Deliberate divergences were repaired in the contract in 79% of cases (26/33). Accidental divergences were never repaired in the contract (0/11; one-sided Fisher p < 10⁻⁴).
    - The association survives propositions written by a direction-blind reader (39/48 vs 0/10, p = 1.8 × 10⁻⁶).
 3. **A zero-shot LLM already triages real fixes well** (macro-F1 0.86–0.88), and better than an explicit intent-evidence codebook (0.70–0.72).
-4. **[E9]** Whether an explicit kind rule improves on the LLM.
+4. **An explicit kind rule does not improve on the LLM.** A pre-registered hybrid that routes accidental divergences to the implementation changed only 1 of 85 labels, because the LLM already labels accidental divergences correctly. The LLM's residual errors are abstentions on deliberate divergences. A post-hoc fallback to the kind rule on those abstentions reached macro-F1 0.98; this result is exploratory.
 
 All hypotheses were pre-registered with hash-frozen scorers. All coders were blind to the hypothesis and to the repair direction.
 
@@ -35,7 +35,7 @@ All hypotheses were pre-registered with hash-frozen scorers. All coders were bli
 - **RQ1 (Visibility).** How often do contract–implementation divergences surface under fuzzing, and is single-sided blame adequate?
 - **RQ2 (Triage methods).** How well do a zero-shot LLM and an intent-evidence codebook predict the repaired side, on injected faults and on real fixes?
 - **RQ3 (Predictors).** Does the *kind* of divergence (deliberate vs accidental) predict the repair direction? Does this hold when the divergence is described by someone who does not know the direction?
-- **RQ4 (Hybrid).** Does routing accidental divergences to the implementation improve LLM triage? **[E9]**
+- **RQ4 (Hybrid).** Does routing accidental divergences to the implementation improve LLM triage?
 
 **Contributions:**
 1. **A labelled corpus.** 111 real contract-alignment fixes (25 E6, 45 E7, 41 T47), labelled with repair direction, plus excerpt packages of each item's parent state.
@@ -69,7 +69,7 @@ All hypotheses were pre-registered with hash-frozen scorers. All coders were bli
 | E6 | 18 real fixes, 11 repos | RQ2, real | confirmatory |
 | E7 | 45 new real fixes, 15 repos (+25 E6 items, exploratory) | RQ3 | confirmatory |
 | E8 / E8b | E7 items + 41 new (T47) with direction-blind propositions | RQ3, leakage control | confirmatory (pooled) |
-| E9 | 85 new items | RQ4 | **[E9]** |
+| E9 | 85 new items (44 E7 + 41 T47) | RQ4 | confirmatory (INSUFFICIENT) |
 
 ### 3.2 Mining real contract-alignment fixes
 Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
@@ -221,13 +221,25 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - On the 18 E6 items, M1's errors were all on DELIBERATE items. M1 was correct on 7/7 ACCIDENTAL items and on 7/10 DELIBERATE items, for both labellers.
 - The hybrid therefore changed no labels.
 
-**Part B (confirmatory, 85 new items):** **[E9]**
+**Part B (confirmatory, 85 new items: SPEC 49, IMPL 36; kinds DELIBERATE 61, ACCIDENTAL 24):**
+
+| Method | Labeller 1 macro-F1 | Labeller 2 macro-F1 |
+|---|---|---|
+| R (kind rule) | 0.845 | 0.845 |
+| M1 (zero-shot LLM) | 0.910 | 0.896 |
+| HYB (ACCIDENTAL → IMPL, else M1) | 0.910 | 0.903 |
+
+- **H-E9-1 is INSUFFICIENT.** HYB and M1 disagreed on only 1 item (pooled 1 win, 0 losses), below the pre-registered minimum of 5 discordant items.
+- **M1 already labels accidental divergences correctly:** 24/24 and 23/24.
+- **The override was always right:** precision 24/24. This is the third sample with no accidental divergence repaired in the spec.
+- **M1's residual errors are almost all on DELIBERATE items:** 47/61 correct for each labeller. Most misses are UNDECIDABLE on items whose spec was later repaired (12 per labeller).
+- **Post-hoc (exploratory):** using R only when M1 abstains raised macro-F1 to 0.976 for both labellers, with full coverage. This rule was formed after seeing the data and needs a new pre-registered test.
 
 ## 5. Discussion
 - **The default assumption is wrong for a large share of fixes.** Tools that assume "the implementation is wrong" would misroute a large share of real fixes. In our sample, developers repaired the contract in more than half of them.
 - **Accidental divergences can be routed to code automatically.** No accidental divergence in our data was resolved by changing the contract, so a pipeline can route these to the code with high precision.
 - **Deliberate divergences need a human decision.** They lean towards spec repair, but about one in five is still repaired in the code. This matches practitioner tools, where a human decides whether drift is intended.
-- **Why does the LLM already do well?** One reading is that it implicitly recognises the deliberate/accidental distinction. **[E9]** will test whether the explicit rule adds anything.
+- **Why does the LLM already do well?** It appears to recognise the deliberate/accidental distinction implicitly. It never needed the accidental override (E9). Its weakness is deciding between a deliberate implementation choice and the contract when nothing says which is intended. There it abstains, while the kind rule's prior towards SPEC is right about 4 times in 5. Combining the two is the most promising practical pipeline (exploratory).
 - **Implication for fuzzers.**
   - A runtime failure of the accidental kind (an unhandled exception, a 500, a missing header) is a strong signal of an implementation bug.
   - A clean, explicit rejection that contradicts the spec is more often a stale or under-specified contract.
