@@ -1,0 +1,76 @@
+{
+  "repo": "hydra",
+  "fix_commit": "a58624cf6f6dfb12a9f499d55e1612b90099f21a",
+  "parent_commit": "be54a7578508a522fa161b55c5363daed1c87a0a",
+  "date": "2017-12-14",
+  "message_excerpt": "groups: Corrects group scope documentation (#710)",
+  "stars": 17667,
+  "changes": [
+    [
+      "M",
+      "doc.go"
+    ],
+    [
+      "M",
+      "docs/api.swagger.json"
+    ],
+    [
+      "M",
+      "sdk/go/hydra/swagger/README.md"
+    ],
+    [
+      "M",
+      "sdk/go/hydra/swagger/docs/Handler.md"
+    ],
+    [
+      "M",
+      "sdk/go/hydra/swagger/handler.go"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/README.md"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/docs/Handler.md"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/src/model/Handler.js"
+    ],
+    [
+      "M",
+      "warden/group/handler.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/api.swagger.json",
+    "warden/group/handler.go"
+  ],
+  "path_roles": {
+    "docs/api.swagger.json": [
+      "openapi_root"
+    ],
+    "warden/group/handler.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C10001",
+  "rank": 101,
+  "item_id": "N47_036",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "DELETE /warden/groups/{id}",
+  "proposition": "DELETE /warden/groups/{id}: contract says the required OAuth scope is hydra.groups; implementation does require hydra.warden.groups through the token scope guard",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "security_scope",
+  "fix_family": "security_scope.warden_group_management",
+  "proposition_check": "{\"contract\":[\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1530\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1579\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1629\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1678\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1729\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:1785\",\"be54a7578508a522fa161b55c5363daed1c87a0a:docs/api.swagger.json:3358\"],\"implementation\":[\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:60\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:109\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:165\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:221\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:259\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:266\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:322\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:378\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/warden_local.go:68\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/warden_local.go:69\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/warden_strategy.go:40\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/warden_strategy.go:46\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/warden_strategy.go:63\"],\"route\":[\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:64\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:65\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:66\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:67\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:68\",\"be54a7578508a522fa161b55c5363daed1c87a0a:warden/group/handler.go:69\"]}",
+  "evidence": "{\"parent\": {\"docs/api.swagger.json\": {\"parent_lines\": [1530, 1579, 1629, 1678, 1729, 1785, 3358], \"parent_numbered_excerpt\": \"1525:         \\\"summary\\\": \\\"Find groups by member\\\",\\n1526:         \\\"operationId\\\": \\\"findGroupsByMember\\\",\\n1527:         \\\"security\\\": [\\n1528:           {\\n1529:             \\\"oauth2\\\": [\\n1530:               \\\"hydra.groups\\\"\\n1531:             ]\\n1532:           }\\n1533:         ],\\n1534:         \\\"parameters\\\": [\\n1535:           {\\n1574:         \\\"summary\\\": \\\"Create a group\\\",\\n1575:         \\\"operationId\\\": \\\"createGroup\\\",\\n1576:         \\\"security\\\": [\\n1577:           {\\n1578:             \\\"oauth2\\\": [\\n1579:               \\\"hydra.groups\\\"\\n1580:             ]\\n1581:           }\\n1582:         ],\\n1583:         \\\"parameters\\\": [\\n1584:           {\\n1624:         \\\"summary\\\": \\\"Get a group by id\\\",\\n1625:         \\\"operationId\\\": \\\"getGroup\\\",\\n1626:         \\\"security\\\": [\\n1627:           {\\n1628:             \\\"oauth2\\\": [\\n1629:               \\\"hydra.groups\\\"\\n1630:             ]\\n1631:           }\\n1632:         ],\\n1633:         \\\"parameters\\\": [\\n1634:           {\\n1673:         \\\"summary\\\": \\\"Delete a group by id\\\",\\n1674:         \\\"operationId\\\": \\\"deleteGroup\\\",\\n1675:         \\\"security\\\": [\\n1676:           {\\n1677:             \\\"oauth2\\\": [\\n1678:               \\\"hydra.groups\\\"\\n1679:             ]\\n1680:           }\\n1681:         ],\\n1682:         \\\"parameters\\\": [\\n1683:           {\\n1724:         \\\"summary\\\": \\\"Add members to a group\\\",\\n1725:         \\\"operationId\\\": \\\"addMembersToGroup\\\",\\n1726:         \\\"security\\\": [\\n1727:           {\\n1728:             \\\"oauth2\\\": [\\n1729:               \\\"hydra.groups\\\"\\n1730:             ]\\n1731:           }\\n1732:         ],\\n1733:         \\\"parameters\\\": [\\n1734:           {\\n1780:         \\\"summary\\\": \\\"Remove members from a group\\\",\\n1781:         \\\"operationId\\\": \\\"removeMembersFromGroup\\\",\\n1782:         \\\"security\\\": [\\n1783:           {\\n1784:             \\\"oauth2\\\": [\\n1785:               \\\"hydra.groups\\\"\\n1786:             ]\\n1787:           }\\n1788:         ],\\n1789:         \\\"parameters\\\": [\\n1790:           {\\n3353:       \\\"authorizationUrl\\\": \\\"<redacted>\\\",\\n3354:       \\\"tokenUrl\\\": \\\"<redacted>\\\",\\n3355:       \\\"scopes\\\": {\\n3356:         \\\"hydra.clients\\\": \\\"A scope required to manage OAuth 2.0 Clients\\\",\\n3357:         \\\"hydra.consent\\\": \\\"A scope required to fetch and modify consent requests\\\",\\n3358:         \\\"hydra.groups\\\": \\\"A scope required to manage warden groups\\\",\\n3359:         \\\"hydra.health\\\": \\\"A scope required to get health information\\\",\\n3360:         \\\"hydra.keys.create\\\": \\\"A scope required to create JSON Web Keys\\\",\\n3361:         \\\"hydra.keys.delete\\\": \\\"A scope required to delete JSON Web Keys\\\",\\n3362:         \\\"hydra.keys.get\\\": \\\"A scope required to fetch JSON Web Keys\\\",\\n3363:         \\\"hydra.keys.update\\\": \\\"A scope required to get JSON Web Keys\\\",\"}, \"warden/group/handler.go\": {\"parent_lines\": [64, 65, 66, 67, 68, 69], \"parent_numbered_excerpt\": \"59: \\tGroupResource  = \\\"warden:groups:%s\\\"\\n60: \\tScope          = \\\"hydra.warden.groups\\\"\\n61: )\\n62: \\n63: func (h *Handler) SetRoutes(r *httprouter.Router) {\\n64: \\tr.POST(GroupsHandlerPath, h.CreateGroup)\\n65: \\tr.GET(GroupsHandlerPath, h.FindGroupNames)\\n66: \\tr.GET(GroupsHandlerPath+\\\"/:id\\\", h.GetGroup)\\n67: \\tr.DELETE(GroupsHandlerPath+\\\"/:id\\\", h.DeleteGroup)\\n68: \\tr.POST(GroupsHandlerPath+\\\"/:id/members\\\", h.AddGroupMembers)\\n69: \\tr.DELETE(GroupsHandlerPath+\\\"/:id/members\\\", h.RemoveGroupMembers)\\n70: }\\n71: \\n72: // swagger:route GET /warden/groups warden findGroupsByMember\\n73: //\\n74: // Find groups by member\"}, \"warden/warden_local.go\": {\"parent_lines\": [68, 69], \"parent_numbered_excerpt\": \"63: \\t\\t\\\"reason\\\":  \\\"The policy decision point allowed the request\\\",\\n64: \\t}).Infof(\\\"Access allowed\\\")\\n65: \\treturn nil\\n66: }\\n67: \\n68: func (w *LocalWarden) TokenAllowed(ctx context.Context, token string, a *firewall.TokenAccessRequest, scopes ...string) (*firewall.Context, error) {\\n69: \\tvar auth, err = w.OAuth2.IntrospectToken(ctx, token, fosite.AccessToken, oauth2.NewSession(\\\"\\\"), scopes...)\\n70: \\tif err != nil {\\n71: \\t\\tw.L.WithFields(logrus.Fields{\\n72: \\t\\t\\t\\\"request\\\": a,\\n73: \\t\\t\\t\\\"scopes\\\":  scopes,\\n74: \\t\\t\\t\\\"reason\\\":  \\\"Token is expired, malformed or missing\\\",\"}, \"warden/warden_strategy.go\": {\"parent_lines\": [40, 46, 63], \"parent_numbered_excerpt\": \"35: \\t}\\n36: \\n37: \\treturn err\\n38: }\\n39: \\n40: func matchScopes(ss fosite.ScopeStrategy, granted, scopes []string) error {\\n41: \\tfor _, scope := range scopes {\\n42: \\t\\tif scope == \\\"\\\" {\\n43: \\t\\t\\tcontinue\\n44: \\t\\t}\\n45: \\n46: \\t\\tif !ss(granted, scope) {\\n47: \\t\\t\\treturn errors.Wrapf(fosite.ErrInvalidScope, \\\"Scope %s was not granted\\\", scope)\\n48: \\t\\t}\\n49: \\t}\\n50: \\n51: \\treturn nil\\n58: \\t\\treturn errors.Wrap(fosite.ErrRequestUnauthorized, err.Error())\\n59: \\t} else if err := c.CoreStrategy.ValidateAccessToken(ctx, or, token); err != nil {\\n60: \\t\\treturn err\\n61: \\t}\\n62: \\n63: \\tif err := matchScopes(c.ScopeStrategy, or.GetGrantedScopes(), scopes); err != nil {\\n64: \\t\\treturn err\\n65: \\t}\\n66: \\n67: \\taccessRequest.Merge(or)\\n68: \\treturn nil\"}}, \"patch\": \"key/t47_evidence/P2C10001.diff\", \"patch_sha256\": \"f3edb9dd04f24eeb769243784364985aa612c195ace7d15a94c4387b47d44da6\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

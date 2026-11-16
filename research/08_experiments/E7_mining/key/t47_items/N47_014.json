@@ -1,0 +1,58 @@
+{
+  "repo": "cwms-data-api",
+  "fix_commit": "fbce06556d0b9478715d251e34336896d358fd49",
+  "parent_commit": "ddee0a55255d0be3ed9ecd84eb2648ec497c63bd",
+  "date": "2026-05-06",
+  "message_excerpt": "CMWSVue-745: BUGFIX (#1699)",
+  "stars": "30",
+  "changes": [
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/JooqDao.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/main/java/cwms/cda/data/dao/LocationLevelsDaoImpl.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/test/java/cwms/cda/api/LevelsControllerTestIT.java"
+    ],
+    [
+      "M",
+      "cwms-data-api/src/test/java/cwms/cda/data/dao/JooqDaoTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java"
+  ],
+  "path_roles": {
+    "cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00838",
+  "rank": 146,
+  "item_id": "N47_014",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /level-refs/",
+  "proposition": "GET /level-refs/: contract says the JSON response is a LocationLevels container whose levels contain full LocationLevel objects; implementation does serialize a LocationLevelRefs container whose levels contain identifiers and effective dates",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "response_schema",
+  "fix_family": "response_schema.location_level_reference_container",
+  "proposition_check": "{\"contract\":[\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java:113\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java:114\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java:115\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevels.java:49\"],\"implementation\":[\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java:139\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java:141\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRefs.java:42\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRefs.java:43\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:52\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:56\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:59\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:63\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:86\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java:87\"],\"route\":[\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:481\",\"ddee0a55255d0be3ed9ecd84eb2648ec497c63bd:cwms-data-api/src/main/java/cwms/cda/ApiServlet.java:482\"]}",
+  "evidence": "{\"parent\": {\"cwms-data-api/src/main/java/cwms/cda/api/LevelRefsController.java\": {\"parent_lines\": [139, 141], \"parent_numbered_excerpt\": \"134:             int pageSize = ctx.queryParamAsClass(PAGE_SIZE, Integer.class)\\n135:                 .getOrDefault(DEFAULT_PAGE_SIZE);\\n136:             Instant endZdt = queryParamAsInstant(ctx, END);\\n137:             Instant beginZdt = queryParamAsInstant(ctx, BEGIN);\\n138: \\n139:             LocationLevelRefs levels = levelsDao.retrieveLocationLevelRefs(cursor, pageSize, levelIdMask,\\n140:                 office, beginZdt, endZdt, includeAliases);\\n141:             String result = Formats.format(contentType, levels);\\n142:             ctx.result(result);\\n143:             requestResultSize.update(result.length());\\n144:             ctx.status(HttpServletResponse.SC_OK);\\n145:             ctx.contentType(contentType.toString());\\n146:         }\"}, \"cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevels.java\": {\"parent_lines\": [49], \"parent_numbered_excerpt\": \"44: @FormattableWith(contentType = Formats.JSONV2, formatter = JsonV2.class, aliases = {Formats.DEFAULT, Formats.JSON})\\n45: public class LocationLevels extends CwmsDTOPaginated {\\n46:     @JacksonXmlElementWrapper\\n47:     @JacksonXmlProperty(localName = \\\"location-level\\\")\\n48:     @Schema(description = \\\"List of retrieved location levels\\\")\\n49:     private List<LocationLevel> levels;\\n50: \\n51:     @SuppressWarnings(\\\"unused\\\") // for JAXB to handle marshalling\\n52:     private LocationLevels() {\\n53:     }\\n54: \"}, \"cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRefs.java\": {\"parent_lines\": [42, 43], \"parent_numbered_excerpt\": \"37: \\n38: @FormattableWith(contentType = Formats.JSONV1, formatter = JsonV1.class, aliases = {Formats.DEFAULT, Formats.JSON})\\n39: public class LocationLevelRefs extends CwmsDTOPaginated {\\n40: \\n41:     @JsonProperty\\n42:     @Schema(description = \\\"List of retrieved location levels ids and effective dates\\\")\\n43:     private List<LocationLevelRef> levels;\\n44: \\n45:     @SuppressWarnings(\\\"unused\\\") // for JAXB to handle marshalling\\n46:     private LocationLevelRefs() {\\n47:     }\\n48: \"}, \"cwms-data-api/src/main/java/cwms/cda/data/dto/locationlevel/LocationLevelRef.java\": {\"parent_lines\": [52, 56, 59, 63, 86, 87], \"parent_numbered_excerpt\": \"47: import java.util.TreeSet;\\n48: \\n49: @JsonDeserialize(builder = LocationLevelRef.Builder.class)\\n50: @JsonNaming(PropertyNamingStrategies.KebabCaseStrategy.class)\\n51: @FormattableWith(contentType = Formats.JSONV1, formatter = JsonV1.class, aliases = {Formats.DEFAULT, Formats.JSON})\\n52: public class LocationLevelRef extends CwmsDTOBase {\\n53: \\n54:     @JsonProperty(required = true)\\n55:     @Schema(description = \\\"Name of the location level\\\")\\n56:     private final CwmsId locationLevelId;\\n57: \\n58:     @JsonInclude(JsonInclude.Include.NON_EMPTY)\\n59:     private final SortedSet<String> aliases = new TreeSet<>();\\n60: \\n61:     @Schema(description = \\\"The date/time at which this location level configuration takes effect.\\\")\\n62:     @JsonFormat(shape = JsonFormat.Shape.STRING)\\n63:     private final SortedSet<Instant> effectiveDates = new TreeSet<>();\\n64: \\n65:     LocationLevelRef(LocationLevelRef.Builder builder) {\\n66:         effectiveDates.addAll(builder.effectiveDates);\\n67:         locationLevelId = builder.locationLevelId;\\n68:         aliases.addAll(builder.aliases);\\n81:     }\\n82: \\n83:     @JsonPOJOBuilder\\n84:     @JsonNaming(PropertyNamingStrategies.KebabCaseStrategy.class)\\n85:     public static class Builder {\\n86:         private final List<String> aliases = new ArrayList<>();\\n87:         private final List<Instant> effectiveDates = new ArrayList<>();\\n88:         private CwmsId locationLevelId;\\n89: \\n90:         @JsonIgnore\\n91:         public Builder withEffectiveDate(Instant effectiveDate) {\\n92:             this.effectiveDates.add(effectiveDate);\"}, \"cwms-data-api/src/main/java/cwms/cda/ApiServlet.java\": {\"parent_lines\": [481, 482], \"parent_numbered_excerpt\": \"476:         cdaCrudCache(format(\\\"/levels/{%s}\\\", Controllers.LEVEL_ID),\\n477:                 new LevelsController(metrics), requiredRoles,5, TimeUnit.MINUTES);\\n478:         String levelTsPath = format(\\\"/levels/{%s}/timeseries\\\", Controllers.LEVEL_ID);\\n479:         get(levelTsPath, new LevelsAsTimeSeriesController(metrics));\\n480:         addCacheControl(levelTsPath, 5, TimeUnit.MINUTES);\\n481:         String levelRefsPath = \\\"/level-refs/\\\";\\n482:         get(levelRefsPath, new LevelRefsController(metrics));\\n483:         addCacheControl(levelRefsPath, 5, TimeUnit.MINUTES);\\n484:         String recentPath = \\\"/timeseries/recent/\\\";\\n485:         get(recentPath, new TimeSeriesRecentController(metrics));\\n486:         addCacheControl(recentPath, 5, TimeUnit.MINUTES);\\n487: \"}}, \"patch\": \"key/t47_evidence/P2C00838.diff\", \"patch_sha256\": \"0b3555aaf67156be49735dd4a1373b3f426d3a4597a4877fcf9e8c18adb2002e\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "cwms-data-api/src/main/java/cwms/cda/formatters/json/JsonV1.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

@@ -1,0 +1,48 @@
+{
+  "repo": "harbor",
+  "fix_commit": "24f58f70d615a95b44df0a2ccfb2d2de86d7d36e",
+  "parent_commit": "ab5c594363195922059ad348484139ee4f16c93f",
+  "date": "2023-02-06",
+  "message_excerpt": "[Cherry-pick] fix retention/immutable API issue (#18158) (#18177)",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "src/server/v2.0/handler/immutable.go"
+    ],
+    [
+      "M",
+      "src/server/v2.0/handler/project.go"
+    ]
+  ],
+  "surface_paths": [
+    "src/server/v2.0/handler/immutable.go",
+    "src/server/v2.0/handler/project.go"
+  ],
+  "path_roles": {
+    "src/server/v2.0/handler/immutable.go": [
+      "production_behaviour"
+    ],
+    "src/server/v2.0/handler/project.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09140",
+  "rank": 76,
+  "item_id": "N47_029",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "PUT /projects/{project_name_or_id}/immutabletagrules/{immutable_rule_id}",
+  "proposition": "PUT /projects/{project_name_or_id}/immutabletagrules/{immutable_rule_id}: contract says immutable_rule_id identifies the immutable rule selected for update; implementation does authorize and update the rule identified in the body while ignoring the path rule identifier",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "resource_scope",
+  "fix_family": "resource_scope.immutable_rule_path_id",
+  "proposition_check": "{\"contract\":[\"ab5c594363195922059ad348484139ee4f16c93f:api/v2.0/swagger.yaml:2468\",\"ab5c594363195922059ad348484139ee4f16c93f:api/v2.0/swagger.yaml:6059\"],\"implementation\":[\"ab5c594363195922059ad348484139ee4f16c93f:src/server/v2.0/handler/immutable.go:83\",\"ab5c594363195922059ad348484139ee4f16c93f:src/server/v2.0/handler/immutable.go:100\",\"ab5c594363195922059ad348484139ee4f16c93f:src/server/v2.0/handler/immutable.go:104\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"api/v2.0/swagger.yaml\": {\"parent_lines\": [2468, 6059], \"parent_numbered_excerpt\": \"2463:   '/projects/{project_name_or_id}/immutabletagrules/{immutable_rule_id}':\\n2464:     put:\\n2465:       summary: Update the immutable tag rule or enable or disable the rule\\n2466:       tags:\\n2467:         - immutable\\n2468:       operationId: UpdateImmuRule\\n2469:       parameters:\\n2470:         - $ref: '#/parameters/requestId'\\n2471:         - $ref: '#/parameters/isResourceName'\\n2472:         - $ref: '#/parameters/projectNameOrId'\\n2473:         - $ref: '#/parameters/immutableRuleId'\\n6054:     type: integer\\n6055:     format: int64\\n6056:   immutableRuleId:\\n6057:     name: immutable_rule_id\\n6058:     in: path\\n6059:     description: The ID of the immutable rule\\n6060:     required: true\\n6061:     type: integer\\n6062:     format: int64\\n6063:   accessoryId:\\n6064:     name: accessory_id\"}, \"src/server/v2.0/handler/immutable.go\": {\"parent_lines\": [83, 100, 104], \"parent_numbered_excerpt\": \"78: \\t}\\n79: \\n80: \\treturn operation.NewDeleteImmuRuleOK()\\n81: }\\n82: \\n83: func (ia *immutableAPI) UpdateImmuRule(ctx context.Context, params operation.UpdateImmuRuleParams) middleware.Responder {\\n84: \\tprojectNameOrID := parseProjectNameOrID(params.ProjectNameOrID, params.XIsResourceName)\\n85: \\tif err := ia.RequireProjectAccess(ctx, projectNameOrID, rbac.ActionUpdate, rbac.ResourceImmutableTag); err != nil {\\n86: \\t\\treturn ia.SendError(ctx, err)\\n87: \\t}\\n88: \\n95: \\tif err != nil {\\n96: \\t\\treturn ia.SendError(ctx, err)\\n97: \\t}\\n98: \\tmetadata.ProjectID = projectID\\n99: \\n100: \\tif err = ia.requireRuleAccess(ctx, projectID, metadata.ID); err != nil {\\n101: \\t\\treturn ia.SendError(ctx, err)\\n102: \\t}\\n103: \\n104: \\tif err := ia.immuCtl.UpdateImmutableRule(ctx, projectID, &metadata); err != nil {\\n105: \\t\\treturn ia.SendError(ctx, err)\\n106: \\t}\\n107: \\n108: \\treturn operation.NewUpdateImmuRuleOK()\\n109: }\"}}, \"patch\": \"key/t47_evidence/P2C09140.diff\", \"patch_sha256\": \"615a2d4396d2c73f4953de601f9a1ae72e9cb26e86d85da4854a7b873c02a27d\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

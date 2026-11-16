@@ -1,0 +1,68 @@
+{
+  "repo": "hydra",
+  "fix_commit": "ac61616322e3f58319b5fd778441f442a6a9f156",
+  "parent_commit": "a02ffe9b3a9cd28638673f11c6737d7d0cb9300f",
+  "date": "2021-05-04",
+  "message_excerpt": "fix: valid JSON response for already handled requests (#2517)",
+  "stars": 17667,
+  "changes": [
+    [
+      "M",
+      "consent/handler.go"
+    ],
+    [
+      "M",
+      "consent/handler_test.go"
+    ],
+    [
+      "M",
+      "consent/types.go"
+    ],
+    [
+      "M",
+      "go.mod"
+    ],
+    [
+      "M",
+      "go.sum"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/logout_request.go"
+    ],
+    [
+      "M",
+      "spec/api.json"
+    ]
+  ],
+  "surface_paths": [
+    "consent/handler.go",
+    "spec/api.json"
+  ],
+  "path_roles": {
+    "consent/handler.go": [
+      "production_behaviour"
+    ],
+    "spec/api.json": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C10003",
+  "rank": 103,
+  "item_id": "N47_040",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /oauth2/auth/requests/consent",
+  "proposition": "GET /oauth2/auth/requests/consent: contract says an already handled request returns one 410 JSON requestWasHandledResponse object; implementation does write that 410 object and then continue to serialize the ordinary request into the same response",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_body",
+  "fix_family": "response_body.already_handled_json_fallthrough",
+  "proposition_check": "{\"contract\":[\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:spec/api.json:899\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:spec/api.json:938\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:spec/api.json:1108\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:spec/api.json:1293\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:spec/api.json:3156\"],\"implementation\":[\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:272\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:273\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:279\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:481\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:496\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:497\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:511\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:768\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:769\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:774\"],\"route\":[\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:65\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:69\",\"a02ffe9b3a9cd28638673f11c6737d7d0cb9300f:consent/handler.go:77\"]}",
+  "evidence": "{\"parent\": {\"spec/api.json\": {\"parent_lines\": [899, 938, 1108, 1293, 3156], \"parent_numbered_excerpt\": \"894:             }\\n895:           }\\n896:         }\\n897:       }\\n898:     },\\n899:     \\\"/oauth2/auth/requests/consent\\\": {\\n900:       \\\"get\\\": {\\n901:         \\\"description\\\": \\\"When an authorization code, hybrid, or implicit OAuth 2.0 Flow is initiated, ORY Hydra asks the login provider\\\\nto authenticate the subject and then tell ORY Hydra now about it. If the subject authenticated, he/she must now be asked if\\\\nthe OAuth 2.0 Client which initiated the flow should be allowed to access the resources on the subject's behalf.\\\\n\\\\nThe consent provider which handles this request and is a web app implemented and hosted by you. It shows a subject interface which asks the subject to\\\\ngrant or deny the client access to the requested scope (\\\\\\\"Application my-dropbox-app wants write access to all your private files\\\\\\\").\\\\n\\\\nThe consent challenge is appended to the consent provider's URL to which the subject's user-agent (browser) is redirected to. The consent\\\\nprovider uses that challenge to fetch information on the OAuth2 request and then tells ORY Hydra if the subject accepted\\\\nor rejected the request.\\\",\\n902:         \\\"consumes\\\": [\\n903:           \\\"application/json\\\"\\n904:         ],\\n933:             \\\"description\\\": \\\"genericError\\\",\\n934:             \\\"schema\\\": {\\n935:               \\\"$ref\\\": \\\"#/definitions/genericError\\\"\\n936:             }\\n937:           },\\n938:           \\\"410\\\": {\\n939:             \\\"description\\\": \\\"requestWasHandledResponse\\\",\\n940:             \\\"schema\\\": {\\n941:               \\\"$ref\\\": \\\"#/definitions/requestWasHandledResponse\\\"\\n942:             }\\n943:           },\\n1103:             \\\"description\\\": \\\"genericError\\\",\\n1104:             \\\"schema\\\": {\\n1105:               \\\"$ref\\\": \\\"#/definitions/genericError\\\"\\n1106:             }\\n1107:           },\\n1108:           \\\"410\\\": {\\n1109:             \\\"description\\\": \\\"requestWasHandledResponse\\\",\\n1110:             \\\"schema\\\": {\\n1111:               \\\"$ref\\\": \\\"#/definitions/requestWasHandledResponse\\\"\\n1112:             }\\n1113:           },\\n1288:             \\\"description\\\": \\\"genericError\\\",\\n1289:             \\\"schema\\\": {\\n1290:               \\\"$ref\\\": \\\"#/definitions/genericError\\\"\\n1291:             }\\n1292:           },\\n1293:           \\\"410\\\": {\\n1294:             \\\"description\\\": \\\"requestWasHandledResponse\\\",\\n1295:             \\\"schema\\\": {\\n1296:               \\\"$ref\\\": \\\"#/definitions/requestWasHandledResponse\\\"\\n1297:             }\\n1298:           },\\n3151:           \\\"type\\\": \\\"integer\\\",\\n3152:           \\\"format\\\": \\\"int64\\\"\\n3153:         }\\n3154:       }\\n3155:     },\\n3156:     \\\"requestWasHandledResponse\\\": {\\n3157:       \\\"type\\\": \\\"object\\\",\\n3158:       \\\"title\\\": \\\"The response payload sent when there is an attempt to access already handled request.\\\",\\n3159:       \\\"required\\\": [\\n3160:         \\\"redirect_to\\\"\\n3161:       ],\"}, \"consent/handler.go\": {\"parent_lines\": [65, 69, 77], \"parent_numbered_excerpt\": \"60: \\t\\tr: r,\\n61: \\t}\\n62: }\\n63: \\n64: func (h *Handler) SetRoutes(admin *x.RouterAdmin) {\\n65: \\tadmin.GET(LoginPath, h.GetLoginRequest)\\n66: \\tadmin.PUT(LoginPath+\\\"/accept\\\", h.AcceptLoginRequest)\\n67: \\tadmin.PUT(LoginPath+\\\"/reject\\\", h.RejectLoginRequest)\\n68: \\n69: \\tadmin.GET(ConsentPath, h.GetConsentRequest)\\n70: \\tadmin.PUT(ConsentPath+\\\"/accept\\\", h.AcceptConsentRequest)\\n71: \\tadmin.PUT(ConsentPath+\\\"/reject\\\", h.RejectConsentRequest)\\n72: \\n73: \\tadmin.DELETE(SessionsPath+\\\"/login\\\", h.DeleteLoginSession)\\n74: \\tadmin.GET(SessionsPath+\\\"/consent\\\", h.GetConsentSessions)\\n75: \\tadmin.DELETE(SessionsPath+\\\"/consent\\\", h.DeleteConsentSession)\\n76: \\n77: \\tadmin.GET(LogoutPath, h.GetLogoutRequest)\\n78: \\tadmin.PUT(LogoutPath+\\\"/accept\\\", h.AcceptLogoutRequest)\\n79: \\tadmin.PUT(LogoutPath+\\\"/reject\\\", h.RejectLogoutRequest)\\n80: }\\n81: \\n82: // swagger:route DELETE /oauth2/auth/sessions/consent admin revokeConsentSessions\"}}, \"patch\": \"key/t47_evidence/P2C10003.diff\", \"patch_sha256\": \"2875cc08e5b726df2364a8f4ba28eab97bc8b807c46e2894b74e4ea2c3a3e27a\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

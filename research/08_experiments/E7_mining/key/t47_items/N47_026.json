@@ -1,0 +1,82 @@
+{
+  "repo": "gravitee-api-management",
+  "fix_commit": "0369e51e06795e2fb5b9cf612485c4535491b92b",
+  "parent_commit": "4870b6ed81e78f84198d630772642bf1661c3cb9",
+  "date": "2024-03-20",
+  "message_excerpt": "fix: consistency checks on application logs",
+  "stars": 470,
+  "changes": [
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApplicationLogsResource.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-portal/gravitee-apim-rest-api-portal-rest/src/main/java/io/gravitee/rest/api/portal/rest/resource/ApplicationLogsResource.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-portal/gravitee-apim-rest-api-portal-rest/src/test/java/io/gravitee/rest/api/portal/rest/resource/ApplicationLogsResourceTest.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/LogsService.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/test/java/io/gravitee/rest/api/service/impl/LogsServiceTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApplicationLogsResource.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-portal/gravitee-apim-rest-api-portal-rest/src/main/java/io/gravitee/rest/api/portal/rest/resource/ApplicationLogsResource.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/LogsService.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java"
+  ],
+  "path_roles": {
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApplicationLogsResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-portal/gravitee-apim-rest-api-portal-rest/src/main/java/io/gravitee/rest/api/portal/rest/resource/ApplicationLogsResource.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/LogsService.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C02620",
+  "rank": 120,
+  "item_id": "N47_026",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /apis/{api}/logs/{log}",
+  "proposition": "GET /apis/{api}/logs/{log}: contract says the log resource is nested under the selected api identifier; implementation does look up the log globally by identifier and timestamp without comparing its api to the selected route resource",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "resource_scope",
+  "fix_family": "resource_scope.api_log_lookup",
+  "proposition_check": "{\"contract\":[\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java:56\",\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java:88\",\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiResource.java:910\"],\"implementation\":[\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java:97\",\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java:186\",\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java:188\",\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java:328\"],\"route\":[\"4870b6ed81e78f84198d630772642bf1661c3cb9:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApisResource.java:527\"]}",
+  "evidence": "{\"parent\": {\"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiLogsResource.java\": {\"parent_lines\": [97], \"parent_numbered_excerpt\": \"92:         content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = ApiRequest.class))\\n93:     )\\n94:     @ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal server error\\\")\\n95:     @Permissions({ @Permission(value = RolePermission.API_LOG, acls = RolePermissionAction.READ) })\\n96:     public ApiRequest getApiLog(@PathParam(\\\"log\\\") String logId, @QueryParam(\\\"timestamp\\\") Long timestamp) {\\n97:         return logsService.findApiLog(GraviteeContext.getExecutionContext(), logId, timestamp);\\n98:     }\\n99: \\n100:     @GET\\n101:     @Path(\\\"export\\\")\\n102:     @Produces(\\\"text/csv\\\")\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiResource.java\": {\"parent_lines\": [910], \"parent_numbered_excerpt\": \"905:     public ApiAnalyticsResource getApiAnalyticsResource() {\\n906:         return resourceContext.getResource(ApiAnalyticsResource.class);\\n907:     }\\n908: \\n909:     @Path(\\\"logs\\\")\\n910:     public ApiLogsResource getApiLogsResource() {\\n911:         return resourceContext.getResource(ApiLogsResource.class);\\n912:     }\\n913: \\n914:     @Path(\\\"health\\\")\\n915:     public ApiHealthResource getApiHealthResource() {\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/LogsServiceImpl.java\": {\"parent_lines\": [186, 188, 328], \"parent_numbered_excerpt\": \"181:             throw new TechnicalManagementException(\\\"Unable to retrieve logs\\\", ae);\\n182:         }\\n183:     }\\n184: \\n185:     @Override\\n186:     public ApiRequest findApiLog(final ExecutionContext executionContext, String id, Long timestamp) {\\n187:         try {\\n188:             final ExtendedLog log = logRepository.findById(id, timestamp);\\n189:             if (log == null) {\\n190:                 return null;\\n191:             }\\n192: \\n193:             if (parameterService.findAsBoolean(executionContext, Key.LOGGING_AUDIT_ENABLED, ParameterReferenceType.ORGANIZATION)) {\\n323:     }\\n324: \\n325:     @Override\\n326:     public ApplicationRequest findApplicationLog(ExecutionContext executionContext, String id, Long timestamp) {\\n327:         try {\\n328:             ExtendedLog log = logRepository.findById(id, timestamp);\\n329:             if (log == null) {\\n330:                 return null;\\n331:             }\\n332: \\n333:             return toApplicationRequest(executionContext, log);\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApisResource.java\": {\"parent_lines\": [527], \"parent_numbered_excerpt\": \"522:             .tag(Long.toString(updatedApi.getUpdatedAt().getTime()))\\n523:             .lastModified(updatedApi.getUpdatedAt())\\n524:             .build();\\n525:     }\\n526: \\n527:     @Path(\\\"{api}\\\")\\n528:     public ApiResource getApiResource() {\\n529:         return resourceContext.getResource(ApiResource.class);\\n530:     }\\n531: \\n532:     @Path(\\\"{api}/media\\\")\"}}, \"patch\": \"key/t47_evidence/P2C02620.diff\", \"patch_sha256\": \"ff567a777b6da11c9f45be700c375bfa21185acec72417b723902bc7477b442c\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

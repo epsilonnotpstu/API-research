@@ -1,0 +1,52 @@
+{
+  "repo": "dockstore",
+  "fix_commit": "a4a52c8b0a057f4a760947145e8bc08981d0e700",
+  "parent_commit": "81d8c68597c403ecd461c5519dd2e9b6840962a7",
+  "date": "2018-04-04",
+  "message_excerpt": "Fix containerfile endpoint return type and also add dummy self_link h… (#1275)",
+  "stars": "132",
+  "changes": [
+    [
+      "M",
+      "dockstore-integration-testing/src/test/java/io/dockstore/client/cli/GA4GHV2IT.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/swagger/api/impl/ApiVersionConverter.java"
+    ],
+    [
+      "M",
+      "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java"
+    ]
+  ],
+  "surface_paths": [
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ApiVersionConverter.java",
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java"
+  ],
+  "path_roles": {
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ApiVersionConverter.java": [
+      "production_behaviour"
+    ],
+    "dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C01906",
+  "rank": 131,
+  "item_id": "N47_019",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /api/ga4gh/v2/tools/{id}/versions/{version_id}/containerfile",
+  "proposition": "GET /api/ga4gh/v2/tools/{id}/versions/{version_id}/containerfile: contract says the structured containerfile response is an array of ToolContainerfile objects; implementation does return a single ToolContainerfile object for the structured response",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_shape",
+  "fix_family": "response_shape.trs_containerfile_array",
+  "proposition_check": "{\"contract\":[\"81d8c68597c403ecd461c5519dd2e9b6840962a7:dockstore-webservice/src/main/resources/openapi.yaml:888\",\"81d8c68597c403ecd461c5519dd2e9b6840962a7:dockstore-webservice/src/main/resources/openapi.yaml:924\",\"81d8c68597c403ecd461c5519dd2e9b6840962a7:dockstore-webservice/src/main/resources/openapi.yaml:929\"],\"implementation\":[\"81d8c68597c403ecd461c5519dd2e9b6840962a7:dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java:444\",\"81d8c68597c403ecd461c5519dd2e9b6840962a7:dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java:446\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"dockstore-webservice/src/main/resources/openapi.yaml\": {\"parent_lines\": [888, 924, 929], \"parent_numbered_excerpt\": \"883:               schema:\\n884:                 $ref: '#/components/schemas/Error'\\n885:             text/plain:\\n886:               schema:\\n887:                 $ref: '#/components/schemas/Error'\\n888:   '/api/ga4gh/v2/tools/{id}/versions/{version_id}/containerfile':\\n889:     get:\\n890:       tags:\\n891:         - GA4GH\\n892:       summary: Get the container specification(s) for the specified image.\\n893:       description: >-\\n919:           content:\\n920:             application/json:\\n921:               schema:\\n922:                 type: array\\n923:                 items:\\n924:                   $ref: '#/components/schemas/ToolContainerfile'\\n925:             text/plain:\\n926:               schema:\\n927:                 type: array\\n928:                 items:\\n929:                   $ref: '#/components/schemas/ToolContainerfile'\\n930:         '404':\\n931:           description: There are no container specifications for this tool\\n932:           content:\\n933:             application/json:\\n934:               schema:\"}, \"dockstore-webservice/src/main/java/io/swagger/api/impl/ToolsApiServiceImpl.java\": {\"parent_lines\": [444, 446], \"parent_numbered_excerpt\": \"439:                 }\\n440:                 return Response.status(Response.Status.OK).type(unwrap ? MediaType.TEXT_PLAIN : MediaType.APPLICATION_JSON).entity(\\n441:                     unwrap ? toolTestsList.stream().map(ToolTests::getTest).filter(Objects::nonNull).collect(Collectors.joining(\\\"\\\\n\\\"))\\n442:                         : toolTestsList).build();\\n443:             case DOCKERFILE:\\n444:                 final ToolContainerfile dockerfile = (ToolContainerfile)table.get(toolVersionName, SourceFile.FileType.DOCKERFILE);\\n445:                 return Response.status(Response.Status.OK).type(unwrap ? MediaType.TEXT_PLAIN : MediaType.APPLICATION_JSON)\\n446:                     .entity(unwrap ? dockerfile.getContainerfile() : dockerfile).build();\\n447:             default:\\n448:                 if (relativePath == null) {\\n449:                     if ((type == DOCKSTORE_WDL) && (\\n450:                         ((ToolDescriptor)table.get(toolVersionName, SourceFile.FileType.DOCKSTORE_WDL)).getType()\\n451:                             == DescriptorType.WDL)) {\"}}, \"patch\": \"key/t47_evidence/P2C01906.diff\", \"patch_sha256\": \"60833c2d8948ab4e66543d3e4717df39cd379b46505312c6f7b59ae3cf9dbd51\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

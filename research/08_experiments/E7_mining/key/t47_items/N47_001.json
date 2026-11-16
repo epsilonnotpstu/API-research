@@ -1,0 +1,76 @@
+{
+  "repo": "Iced-Latte",
+  "fix_commit": "4e15b622ef64021e49f6b4002128aaa7c771aaec",
+  "parent_commit": "f164eeaf1edf2cf67e099d0eece83629a1499397",
+  "date": "2024-04-20",
+  "message_excerpt": "tests were fixed",
+  "stars": "641",
+  "changes": [
+    [
+      "A",
+      "src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java"
+    ],
+    [
+      "A",
+      "src/main/java/com/zufar/icedlatte/product/exception/GetProductsBadRequestException.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/product/exception/handler/ProductExceptionHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java"
+    ],
+    [
+      "M",
+      "src/main/resources/api-specs/product-openapi.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java",
+    "src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java",
+    "src/main/java/com/zufar/icedlatte/product/exception/GetProductsBadRequestException.java",
+    "src/main/java/com/zufar/icedlatte/product/exception/handler/ProductExceptionHandler.java",
+    "src/main/resources/api-specs/product-openapi.yaml"
+  ],
+  "path_roles": {
+    "src/main/java/com/zufar/icedlatte/product/api/GetProductsRequestValidator.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/product/exception/GetProductsBadRequestException.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/product/exception/handler/ProductExceptionHandler.java": [
+      "production_behaviour"
+    ],
+    "src/main/resources/api-specs/product-openapi.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00229",
+  "rank": 80,
+  "item_id": "N47_001",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /api/v1/products",
+  "proposition": "GET /api/v1/products: contract says min_price and max_price independently filter the lower and upper product price limits; implementation does disable the price predicate whenever either bound is absent",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "query_filter",
+  "fix_family": "query_filter.product_one_sided_price",
+  "proposition_check": "{\"contract\":[\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/resources/api-specs/product-openapi.yaml:132\",\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/resources/api-specs/product-openapi.yaml:148\"],\"implementation\":[\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java:18\",\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/api/PageableProductsProvider.java:40\"],\"route\":[\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:36\",\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:57\",\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:58\",\"f164eeaf1edf2cf67e099d0eece83629a1499397:src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java:65\"]}",
+  "evidence": "{\"parent\": {\"src/main/resources/api-specs/product-openapi.yaml\": {\"parent_lines\": [132, 148], \"parent_numbered_excerpt\": \"127:               value: \\\"sort_direction=asc\\\"\\n128:             example2:\\n129:               description: \\\"Display the product list in descending order.\\\"\\n130:               value: \\\"sort_direction=disc\\\"\\n131:         - name: \\\"min_price\\\"\\n132:           description: \\\"Filter products by the lower limit of the product's price.\\n133:           Possible allowed values: 1) min_price=5 or 2) min_price=17.25 or 3) any other non negative integer or decimal number value.\\\"\\n134:           in: \\\"query\\\"\\n135:           required: false\\n136:           schema:\\n137:             type: \\\"number\\\"\\n143:               value: \\\"min_price=5\\\"\\n144:             example2:\\n145:               description: \\\"Display the product list filtered by the lower limit of the product's price (min_price=17.25).\\\"\\n146:               value: \\\"min_price=17.25\\\"\\n147:         - name: \\\"max_price\\\"\\n148:           description: \\\"Filter products by the upper limit of the product's price.\\n149:           Possible allowed values: 1) max_price=5 or 2) max_price=17.25 or 3) any other non negative integer or decimal number value.\\\"\\n150:           in: \\\"query\\\"\\n151:           required: false\\n152:           schema:\\n153:             type: \\\"number\\\"\"}, \"src/main/java/com/zufar/icedlatte/product/repository/ProductInfoRepository.java\": {\"parent_lines\": [18], \"parent_numbered_excerpt\": \"13: import java.util.UUID;\\n14: \\n15: public interface ProductInfoRepository extends JpaRepository<ProductInfo, UUID> {\\n16: \\n17:     @Query(\\\"SELECT product FROM ProductInfo product \\\" +\\n18:             \\\"WHERE (:minPrice IS NULL OR :maxPrice IS NULL OR \\\" + \\\"product.price BETWEEN :minPrice AND :maxPrice) \\\" +\\n19:             \\\"AND (:minimumAverageRating IS NULL OR \\\" + \\\":minimumAverageRating <= product.averageRating) \\\" +\\n20:             \\\"AND (:brandNames IS NULL OR \\\" + \\\"product.brandName IN :brandNames) \\\" +\\n21:             \\\"AND (:sellerNames IS NULL OR \\\" + \\\"product.sellerName IN :sellerNames) \\\")\\n22:     Page<ProductInfo> findAllProducts(@Param(value = \\\"minPrice\\\") BigDecimal minPrice,\\n23:                                       @Param(value = \\\"maxPrice\\\") BigDecimal maxPrice,\"}, \"src/main/java/com/zufar/icedlatte/product/api/PageableProductsProvider.java\": {\"parent_lines\": [40], \"parent_numbered_excerpt\": \"35:                                                         final Integer minimumAverageRating,\\n36:                                                         final Set<String> brandNames,\\n37:                                                         final Set<String> sellerNames) {\\n38:         BigDecimal minimumAverageRatingValue = minimumAverageRating == null ? null : BigDecimal.valueOf(minimumAverageRating);\\n39:         Page<ProductInfoDto> productsWithPageInfo = productInfoRepository\\n40:                 .findAllProducts(minPrice, maxPrice, minimumAverageRatingValue, brandNames, sellerNames, pageable)\\n41:                 .map(productInfoDtoConverter::toDto)\\n42:                 .map(productUpdater::update);\\n43: \\n44:         return productInfoDtoConverter.toProductPaginationDto(productsWithPageInfo);\\n45:     }\"}, \"src/main/java/com/zufar/icedlatte/product/endpoint/ProductsEndpoint.java\": {\"parent_lines\": [36, 57, 58, 65], \"parent_numbered_excerpt\": \"31: @RequiredArgsConstructor\\n32: @Validated\\n33: @RequestMapping(value = ProductsEndpoint.PRODUCTS_URL)\\n34: public class ProductsEndpoint implements com.zufar.icedlatte.openapi.product.api.ProductApi {\\n35: \\n36:     public static final String PRODUCTS_URL = \\\"/api/v1/products\\\";\\n37: \\n38:     private final ProductApi productApi;\\n39:     private final PageableProductsProvider productsProvider;\\n40: \\n41:     @Override\\n52:     @GetMapping\\n53:     public ResponseEntity<ProductListWithPaginationInfoDto> getProducts(@RequestParam(name = \\\"page\\\", defaultValue = \\\"0\\\") Integer page,\\n54:                                                                         @RequestParam(name = \\\"size\\\", defaultValue = \\\"50\\\") Integer size,\\n55:                                                                         @RequestParam(name = \\\"sort_attribute\\\", defaultValue = \\\"name\\\") String sortAttribute,\\n56:                                                                         @RequestParam(name = \\\"sort_direction\\\", defaultValue = \\\"desc\\\") String sortDirection,\\n57:                                                                         @RequestParam(name = \\\"min_price\\\", required = false) BigDecimal minPrice,\\n58:                                                                         @RequestParam(name = \\\"max_price\\\", required = false) BigDecimal maxPrice,\\n59:                                                                         @RequestParam(name = \\\"minimum_average_rating\\\", required = false) Integer minimumAverageRating,\\n60:                                                                         @RequestParam(name = \\\"brand_names\\\", required = false) Set<String> brandNames,\\n61:                                                                         @RequestParam(name = \\\"seller_names\\\", required = false) Set<String> sellersNames) {\\n62:         log.info(\\\"Received the request to get products with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}\\\",\\n63:                 page, size, sortAttribute, sortDirection);\\n64:         Pageable pageable = createPageableObject(page, size, sortAttribute, sortDirection);\\n65:         ProductListWithPaginationInfoDto productPaginationDto = productsProvider.getProducts(pageable, minPrice, maxPrice, minimumAverageRating, brandNames, sellersNames);\\n66:         log.info(\\\"Products were retrieved successfully with these pagination and sorting attributes: page - {}, size - {}, sort_attribute - {}, sort_direction - {}\\\",\\n67:                 page, size, sortAttribute, sortDirection);\\n68:         return ResponseEntity.ok()\\n69:                 .body(productPaginationDto);\\n70:     }\"}}, \"patch\": \"key/t47_evidence/P2C00229.diff\", \"patch_sha256\": \"4bf3b3252508a74ec9fc5fc3ee7aae7f195f7fd63962315bc1ca9a0174b50dc4\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

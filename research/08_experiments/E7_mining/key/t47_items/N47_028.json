@@ -1,0 +1,65 @@
+{
+  "repo": "gravitee-api-management",
+  "fix_commit": "03b8a1a76a6f8181876036e7651cdd51d2d25146",
+  "parent_commit": "d3ed6b6a5011ae53002a444d6ad21875e7a53e83",
+  "date": "2026-10-20",
+  "message_excerpt": "fix(rest-api): scope API alert events to their API [APIM-15533]",
+  "stars": 470,
+  "changes": [
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java"
+    ],
+    [
+      "A",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/test/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResourceTest.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/AlertService.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/test/java/io/gravitee/rest/api/service/impl/AlertService_FindEventsTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/AlertService.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java"
+  ],
+  "path_roles": {
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/AlertService.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C02626",
+  "rank": 126,
+  "item_id": "N47_028",
+  "set": "new",
+  "source_task": "T47",
+  "operation": "GET /apis/{api}/alerts/{alert}/events",
+  "proposition": "GET /apis/{api}/alerts/{alert}/events: contract says alert events are retrieved under the selected API alert resource; implementation does query events only by alert identifier and time bounds without checking the selected API reference",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "annotations",
+  "mismatch_type": "resource_scope",
+  "fix_family": "resource_scope.api_alert_events",
+  "proposition_check": "{\"contract\":[\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java:63\",\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java:179\",\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiResource.java:983\"],\"implementation\":[\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java:190\",\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java:192\",\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java:361\",\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java:363\"],\"route\":[\"d3ed6b6a5011ae53002a444d6ad21875e7a53e83:gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApisResource.java:606\"]}",
+  "evidence": "{\"parent\": {\"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiAlertsResource.java\": {\"parent_lines\": [190, 192], \"parent_numbered_excerpt\": \"185:         content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = AlertEventPage.class))\\n186:     )\\n187:     @ApiResponse(responseCode = \\\"500\\\", description = \\\"Internal server error\\\")\\n188:     @Produces(MediaType.APPLICATION_JSON)\\n189:     @Permissions({ @Permission(value = RolePermission.API_ALERT, acls = READ) })\\n190:     public AlertEventPage getApiAlertEvents(@PathParam(\\\"alert\\\") String alert, @BeanParam AlertEventSearchParam param) {\\n191:         return new AlertEventPage(\\n192:             alertService.findEvents(\\n193:                 alert,\\n194:                 new AlertEventQuery.Builder()\\n195:                     .from(param.getFrom())\\n196:                     .to(param.getTo())\\n197:                     .pageNumber(param.getPage())\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApiResource.java\": {\"parent_lines\": [983], \"parent_numbered_excerpt\": \"978:     public ApiNotificationSettingsResource getNotificationSettingsResource() {\\n979:         return resourceContext.getResource(ApiNotificationSettingsResource.class);\\n980:     }\\n981: \\n982:     @Path(\\\"alerts\\\")\\n983:     public ApiAlertsResource getApiAlertsResource() {\\n984:         return resourceContext.getResource(ApiAlertsResource.class);\\n985:     }\\n986: \\n987:     @Path(\\\"quality-rules\\\")\\n988:     public ApiQualityRulesResource getApiQualityRulesResource() {\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/rest/api/service/impl/AlertServiceImpl.java\": {\"parent_lines\": [361, 363], \"parent_numbered_excerpt\": \"356:             throw new TechnicalManagementException(msg, te);\\n357:         }\\n358:     }\\n359: \\n360:     @Override\\n361:     public Page<AlertEventEntity> findEvents(final String alertId, final AlertEventQuery eventQuery) {\\n362:         Page<AlertEvent> alertEventsRepo = alertEventRepository.search(\\n363:             new AlertEventCriteria.Builder().alert(alertId).from(eventQuery.getFrom()).to(eventQuery.getTo()).build(),\\n364:             new PageableBuilder().pageNumber(eventQuery.getPageNumber()).pageSize(eventQuery.getPageSize()).build()\\n365:         );\\n366: \\n367:         if (alertEventsRepo.getPageElements() == 0) {\\n368:             return new Page<>(List.of(), 1, 0, 0);\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management/gravitee-apim-rest-api-management-rest/src/main/java/io/gravitee/rest/api/management/rest/resource/ApisResource.java\": {\"parent_lines\": [606], \"parent_numbered_excerpt\": \"601:             .tag(Long.toString(updatedApi.getUpdatedAt().getTime()))\\n602:             .lastModified(updatedApi.getUpdatedAt())\\n603:             .build();\\n604:     }\\n605: \\n606:     @Path(\\\"{api}\\\")\\n607:     public ApiResource getApiResource() {\\n608:         return resourceContext.getResource(ApiResource.class);\\n609:     }\\n610: \\n611:     @Path(\\\"{api}/media\\\")\"}}, \"patch\": \"key/t47_evidence/P2C02626.diff\", \"patch_sha256\": \"a7164428c716c1029cfb213d15fce0616819c6172917284a014363abe2e17a7f\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}
