@@ -1,0 +1,52 @@
+{
+  "repo": "open-banking-gateway",
+  "fix_commit": "9baa49f49855d5172e5cc769702414384bb2fc06",
+  "parent_commit": "3c6817e6d53fc0400263764778922b7a4f3cf803",
+  "date": "2020-01-14",
+  "message_excerpt": "OBG-124 fix test",
+  "stars": "344",
+  "changes": [
+    [
+      "M",
+      "core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java"
+    ],
+    [
+      "D",
+      "core/banking-protocol/src/test/java/de/adorsys/opba/core/protocol/controller/TestBankProfileController.java"
+    ],
+    [
+      "M",
+      "core/banking-protocol/src/test/java/de/adorsys/opba/core/protocol/controller/TestBankSearchPerformance.java"
+    ],
+    [
+      "A",
+      "core/banking-protocol/src/test/java/de/adorsys/opba/core/protocol/controller/TestTppBankSearchController.java"
+    ]
+  ],
+  "surface_paths": [
+    "core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java"
+  ],
+  "path_roles": {
+    "core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11695",
+  "rank": 92,
+  "item_id": "N48_019",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "GET /v1/banking/search/bankSearch",
+  "proposition": "GET /v1/banking/search/bankSearch: contract says an authorized bank search returns a 200 BankSearchResult response; implementation does return 404 with no result object when the matching banks collection is empty",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "status_code",
+  "fix_family": "status_code.bank_search_empty_result",
+  "proposition_check": "{\"contract\":[\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:13\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:47\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:83\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:93\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:106\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:126\"],\"implementation\":[\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:34\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:43\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:44\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:52\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:61\",\"3c6817e6d53fc0400263764778922b7a4f3cf803:core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:71\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml\": {\"parent_lines\": [13, 47, 83, 93, 106, 126], \"parent_numbered_excerpt\": \"8:   url: \\\"https://adorsys.github.com/open-banking-gateway\\\"\\n9: \\n10: \\n11: paths:\\n12: \\n13:   /v1/banking/search/bankSearch:\\n14:     get:\\n15:       tags:\\n16:       - TppBankSearch\\n17:       operationId: bankSearchGET\\n18:       summary: Issues an incremental bank search request to the TppBankSearchApi.\\n42:             type: integer\\n43:       security:\\n44:         - cookieAuth: []\\n45:       responses:\\n46:         '200':\\n47:           $ref: \\\"#/components/responses/200_BankSearchResult\\\"\\n48:         '401':\\n49:           $ref: './tpp_banking_api_commons.yml#/components/responses/401_UNAUTHORIZED'\\n50: \\n51:   /v1/banking/search/bankProfile:\\n52:     get:\\n78: \\n79:   parameters: {}\\n80: \\n81:   responses:\\n82: \\n83:     200_BankSearchResult:\\n84:       description: The result of a bank search.\\n85:       headers:\\n86:         X-Request-ID:\\n87:           $ref: \\\"./tpp_banking_api_commons.yml#/components/headers/X-Request-ID\\\"\\n88:       content:\\n89:         application/json:\\n90:           schema:\\n91:             type: object\\n92:             properties:\\n93:               bankDescriptor:\\n94:                 type: array\\n95:                 items:\\n96:                   $ref: '#/components/schemas/bankDescriptor'\\n97:               keyword:\\n98:                 type: String\\n101:                 type: integer\\n102:                 description: The index of the first result\\n103:               max:\\n104:                 type: integer\\n105:                 description: The max number of entries to return with the response.\\n106:               total:\\n107:                 type: integer\\n108:                 description: The total count of entities found for the given search input.\\n109: \\n110:     200_BankProfile:\\n111:       description: Response containing the service profile of a bank.\\n121:                 $ref: '#/components/schemas/bankProfileDescriptor'\\n122: \\n123:   schemas:\\n124: \\n125:     # Search and bank profile\\n126:     bankDescriptor:\\n127:       title: Bank Descriptor\\n128:       type: object\\n129:       properties:\\n130:         bankName:\\n131:           type: string\"}, \"core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java\": {\"parent_lines\": [34, 43, 44, 52, 61, 71], \"parent_numbered_excerpt\": \"29:     private static final int DEFAULT_MAX = 10;\\n30: \\n31:     private final BankService bankService;\\n32: \\n33:     @Override\\n34:     public ResponseEntity<InlineResponse200> bankSearchGET(String authorization, UUID xRequestID, String keyword,\\n35:                                                            Integer start, Integer max) {\\n36:         if (start == null) {\\n37:             start = DEFAULT_START;\\n38:         }\\n39:         if (max == null) {\\n40:             max = DEFAULT_MAX;\\n41:         }\\n42:         List<Bank> banks = bankService.getBanks(keyword, start, max);\\n43:         if (banks.isEmpty()) {\\n44:             return new ResponseEntity<>(HttpStatus.NOT_FOUND);\\n45:         }\\n46: \\n47:         InlineResponse200 inlineResponse200 = new InlineResponse200();\\n48:         banks.forEach(it -> inlineResponse200.addBankDescriptorItem(toBankDescriptor(it)));\\n49:         inlineResponse200.setKeyword(keyword);\\n50:         inlineResponse200.setMax(max);\\n51:         inlineResponse200.setStart(start);\\n52:         return new ResponseEntity<>(inlineResponse200, HttpStatus.OK);\\n53:     }\\n54: \\n55:     @Override\\n56:     public ResponseEntity<InlineResponse2001> bankProfileGET(String authorization,\\n57:                                                              UUID xRequestID,\\n58:                                                              String bankId) {\\n59:         Optional<BankProfile> bankProfile = bankService.getBankProfile(bankId);\\n60:         if (!bankProfile.isPresent()) {\\n61:             return new ResponseEntity<>(HttpStatus.NOT_FOUND);\\n62:         }\\n63:         InlineResponse2001 inlineResponse2001 = new InlineResponse2001();\\n64:         BankProfileDescriptor bankProfileDescriptor = new BankProfileDescriptor();\\n65:         bankProfileDescriptor.setBankName(bankProfile.get().getBank().getName());\\n66:         bankProfileDescriptor.setBic(bankProfile.get().getBank().getBic());\\n67:         if (StringUtils.isNotEmpty(bankProfile.get().getServices())) {\\n68:             bankProfileDescriptor.serviceList(Arrays.asList(bankProfile.get().getServices().split(\\\",\\\")));\\n69:         }\\n70:         inlineResponse2001.setBankProfileDescriptor(bankProfileDescriptor);\\n71:         return new ResponseEntity<>(inlineResponse2001, HttpStatus.OK);\\n72:     }\\n73: \\n74:     private BankDescriptor toBankDescriptor(Bank bank) {\\n75:         BankDescriptor bankDescriptor = new BankDescriptor();\\n76:         bankDescriptor.setBankCode(bank.getBankCode());\"}}, \"patch\": \"key/t48_evidence/P2C11695.diff\", \"patch_sha256\": \"d10621d585ae8dd95fbaf7ab5f3d1296d2a51dbd76d779fb042734cdea3f3348\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

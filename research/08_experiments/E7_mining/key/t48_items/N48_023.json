@@ -1,0 +1,104 @@
+{
+  "repo": "rhsm-subscriptions",
+  "fix_commit": "e116a0ee210e700d4bddf317d8e2063ac778e770",
+  "parent_commit": "a716d2a76a2d8bb1028780977e6c15cff7db7e23",
+  "date": "2026-07-13",
+  "message_excerpt": "SWATCH-5242: Fix contracts API errors deserialization in swatch-producer-aws",
+  "stars": "75",
+  "changes": [
+    [
+      "M",
+      "swatch-contracts/src/main/resources/META-INF/openapi.yaml"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/TEST_PLAN.md"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/ct/java/api/AwsWiremockService.java"
+    ],
+    [
+      "A",
+      "swatch-producer-aws/ct/java/tests/AwsUsageContextComponentTest.java"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/exception/DefaultApiException.java"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/resource/DefaultApiExceptionMapper.java"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/service/AwsBillableUsageAggregateConsumer.java"
+    ],
+    [
+      "M",
+      "swatch-producer-aws/src/test/java/com/redhat/swatch/aws/service/AwsBillableUsageAggregateConsumerTest.java"
+    ],
+    [
+      "M",
+      "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/exception/DefaultApiException.java"
+    ],
+    [
+      "M",
+      "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/resource/DefaultApiExceptionMapper.java"
+    ],
+    [
+      "M",
+      "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/service/AzureBillableUsageAggregateConsumer.java"
+    ],
+    [
+      "M",
+      "swatch-producer-azure/src/test/java/com/redhat/swatch/azure/service/BillableUsageConsumerTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "swatch-contracts/src/main/resources/META-INF/openapi.yaml",
+    "swatch-producer-aws/ct/java/api/AwsWiremockService.java",
+    "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/exception/DefaultApiException.java",
+    "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/resource/DefaultApiExceptionMapper.java",
+    "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/exception/DefaultApiException.java",
+    "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/resource/DefaultApiExceptionMapper.java"
+  ],
+  "path_roles": {
+    "swatch-contracts/src/main/resources/META-INF/openapi.yaml": [
+      "openapi_root"
+    ],
+    "swatch-producer-aws/ct/java/api/AwsWiremockService.java": [
+      "production_behaviour"
+    ],
+    "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/exception/DefaultApiException.java": [
+      "production_behaviour"
+    ],
+    "swatch-producer-aws/src/main/java/com/redhat/swatch/aws/resource/DefaultApiExceptionMapper.java": [
+      "production_behaviour"
+    ],
+    "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/exception/DefaultApiException.java": [
+      "production_behaviour"
+    ],
+    "swatch-producer-azure/src/main/java/com/redhat/swatch/azure/resource/DefaultApiExceptionMapper.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11972",
+  "rank": 104,
+  "item_id": "N48_023",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "POST /api/swatch-contracts/internal/contracts",
+  "proposition": "POST /api/swatch-contracts/internal/contracts: contract says the default JSON error response is an Errors envelope with a required errors array; implementation does serialize a single Error object with code, status, title and optional detail directly from exception mappers",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_body",
+  "fix_family": "response_body.contract_service_error_envelope",
+  "proposition_check": "{\"contract\":[\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:123\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1253\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1904\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1915\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1921\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1927\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/resources/META-INF/openapi.yaml:1933\"],\"implementation\":[\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:39\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:44\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:54\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:66\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:32\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:45\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java:32\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java:43\",\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java:44\"],\"route\":[\"a716d2a76a2d8bb1028780977e6c15cff7db7e23:swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsResource.java:111\"]}",
+  "evidence": "{\"parent\": {\"swatch-contracts/src/main/resources/META-INF/openapi.yaml\": {\"parent_lines\": [123, 1251, 1253, 1904, 1909, 1915, 1921, 1927, 1933], \"parent_numbered_excerpt\": \"118:           description: success\\n119:         default:\\n120:           $ref: '#/components/responses/ErrorResponse'\\n121:       security:\\n122:         - test: []\\n123:       operationId: createContract\\n124:   /api/swatch-contracts/internal/rpc/sync/contracts/{org_id}:\\n125:     description: \\\"Trigger a contract sync for a given Org ID\\\"\\n126:     post:\\n127:       parameters:\\n128:         - name: org_id\\n1246:         - customer: [ ]\\n1247:         - test: [ ]\\n1248: \\n1249: components:\\n1250:   schemas:\\n1251:     Errors:\\n1252:       required:\\n1253:         - errors\\n1254:       properties:\\n1255:         errors:\\n1256:           type: array\\n1257:           items:\\n1258:             $ref: '#/components/schemas/Error'\\n1899:           minimum: 0\\n1900:         has_infinite_quantity:\\n1901:           type: boolean\\n1902: \\n1903:   responses:\\n1904:     ErrorResponse:\\n1905:       description: \\\"Error handling request\\\"\\n1906:       content:\\n1907:         application/json:\\n1908:           schema:\\n1909:             $ref: '#/components/schemas/Errors'\\n1910:     BadRequest:\\n1911:       description: \\\"The server could could not process the current request.\\\"\\n1912:       content:\\n1913:         application/vnd.api+json:\\n1914:           schema:\\n1915:             $ref: \\\"#/components/schemas/Errors\\\"\\n1916:     Forbidden:\\n1917:       description: \\\"The request was valid, but the request was refused by the server.\\\"\\n1918:       content:\\n1919:         application/vnd.api+json:\\n1920:           schema:\\n1921:             $ref: \\\"#/components/schemas/Errors\\\"\\n1922:     ResourceNotFound:\\n1923:       description: \\\"The requested resource was not found.\\\"\\n1924:       content:\\n1925:         application/vnd.api+json:\\n1926:           schema:\\n1927:             $ref: \\\"#/components/schemas/Errors\\\"\\n1928:     InternalServerError:\\n1929:       description: \\\"An internal server error has occurred and is not recoverable.\\\"\\n1930:       content:\\n1931:         application/vnd.api+json:\\n1932:           schema:\\n1933:             $ref: \\\"#/components/schemas/Errors\\\"\\n1934: \\n1935:   securitySchemes:\\n1936:     customer:\\n1937:       type: apiKey\\n1938:       description: customer facing API\"}, \"swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java\": {\"parent_lines\": [39, 44, 54, 66, 67], \"parent_numbered_excerpt\": \"34: import jakarta.ws.rs.ext.Provider;\\n35: import lombok.extern.slf4j.Slf4j;\\n36: \\n37: @Slf4j\\n38: @Provider\\n39: public class DefaultExceptionMapper implements ExceptionMapper<Exception> {\\n40: \\n41:   @Context UriInfo info;\\n42: \\n43:   @Override\\n44:   public Response toResponse(Exception exception) {\\n45:     // Usage-context subscription misses are expected; do not log them at ERROR here.\\n46:     if (exception instanceof UsageContextSubscriptionNotFoundException e) {\\n47:       return e.getResponse();\\n48:     }\\n49: \\n50:     // Proceed with the rest of unexpected exceptions\\n51:     log.error(\\n52:         \\\"Request '{}' failed with error '{}'\\\", info.getPath(), exception.getMessage(), exception);\\n53:     if (exception instanceof ServiceException e) {\\n54:       return Response.status(e.getStatus()).entity(e.error()).build();\\n55:     } else if (exception instanceof ClientErrorException clientErrorException) {\\n56:       return Response.status(clientErrorException.getResponse().getStatus()).build();\\n57:     } else if (exception instanceof WebApplicationException webApplicationException) {\\n58:       Response webResponse = webApplicationException.getResponse();\\n59:       if (webResponse != null) {\\n61:       }\\n62:     }\\n63: \\n64:     var status = Status.INTERNAL_SERVER_ERROR;\\n65:     return Response.status(status)\\n66:         .entity(\\n67:             new Error()\\n68:                 .code(ErrorCode.UNHANDLED_EXCEPTION.getCode())\\n69:                 .status(String.valueOf(status.getStatusCode()))\\n70:                 .title(exception.getMessage()))\\n71:         .build();\\n72:   }\"}, \"swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java\": {\"parent_lines\": [32, 45, 46], \"parent_numbered_excerpt\": \"27: import jakarta.ws.rs.ext.ExceptionMapper;\\n28: import jakarta.ws.rs.ext.Provider;\\n29: \\n30: /** ExceptionMapper that maps application exceptions into . */\\n31: @Provider\\n32: public class ContractsExceptionMapper implements ExceptionMapper<ContractsException> {\\n33:   @Override\\n34:   public Response toResponse(ContractsException exception) {\\n35:     // Using a switch expression below forces us to decide on an HTTP status every time we add a new\\n36:     // ErrorCode.\\n37:     var status =\\n40:           case BAD_UPDATE -> Status.BAD_REQUEST;\\n41:           case CONTRACT_DOES_NOT_EXIST -> Status.NOT_FOUND;\\n42:           default -> Status.INTERNAL_SERVER_ERROR;\\n43:         };\\n44:     return Response.status(status)\\n45:         .entity(\\n46:             new Error()\\n47:                 .code(exception.getCode().getCode())\\n48:                 .status(String.valueOf(status.getStatusCode()))\\n49:                 .title(exception.getMessage())\\n50:                 .detail(exception.getDetail()))\\n51:         .build();\"}, \"swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java\": {\"parent_lines\": [32, 43, 44], \"parent_numbered_excerpt\": \"27: import jakarta.ws.rs.ext.ExceptionMapper;\\n28: import jakarta.ws.rs.ext.Provider;\\n29: \\n30: /** ExceptionMapper that maps application exceptions into . */\\n31: @Provider\\n32: public class SubscriptionsExceptionMapper implements ExceptionMapper<SubscriptionsException> {\\n33:   @Override\\n34:   public Response toResponse(SubscriptionsException exception) {\\n35:     // Using a switch expression below forces us to decide on an HTTP status every time we add a new\\n36:     // ErrorCode.\\n37:     var status =\\n38:         switch (exception.getCode()) {\\n39:           case VALIDATION_FAILED_ERROR -> Status.BAD_REQUEST;\\n40:           default -> Status.INTERNAL_SERVER_ERROR;\\n41:         };\\n42:     return Response.status(status)\\n43:         .entity(\\n44:             new Error()\\n45:                 .code(exception.getCode().getCode())\\n46:                 .status(String.valueOf(status.getStatusCode()))\\n47:                 .title(exception.getMessage())\\n48:                 .detail(exception.getDetail()))\\n49:         .build();\"}, \"swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsResource.java\": {\"parent_lines\": [111], \"parent_numbered_excerpt\": \"106:    * @return status\\n107:    */\\n108:   @Override\\n109:   @Transactional\\n110:   @RolesAllowed({\\\"test\\\"})\\n111:   public ContractResponse createContract(ContractRequest request) throws ProcessingException {\\n112:     log.info(\\\"Creating contract\\\");\\n113:     return service.createContract(request);\\n114:   }\\n115: \\n116:   @Override\"}}, \"patch\": \"key/t48_evidence/P2C11972.diff\", \"patch_sha256\": \"b5c6a9feeafcbe7e49c54916e1e3cca6c6bc08f1c742c56ed49fe94d6f0a857a\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

@@ -1,0 +1,96 @@
+{
+  "repo": "Iced-Latte",
+  "fix_commit": "93bcea2e031dca00c758344e8c724a6eaece96b9",
+  "parent_commit": "8614f4eccc9eb26b5e391c462a4f2e07d6fb0406",
+  "date": "2026-04-12",
+  "message_excerpt": "bugs fixes",
+  "stars": "641",
+  "changes": [
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/configuration/SecurityConstants.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java"
+    ],
+    [
+      "A",
+      "src/main/java/com/zufar/icedlatte/security/exception/SessionNotFoundException.java"
+    ],
+    [
+      "A",
+      "src/main/java/com/zufar/icedlatte/security/exception/SessionOwnershipException.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/exception/handler/SignInExceptionHandler.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/filter/PreAuthRateLimitingFilter.java"
+    ],
+    [
+      "M",
+      "src/main/java/com/zufar/icedlatte/security/filter/RateLimitingFilter.java"
+    ],
+    [
+      "M",
+      "src/test/java/com/zufar/icedlatte/security/api/AuthSessionServiceTest.java"
+    ],
+    [
+      "M",
+      "src/test/java/com/zufar/icedlatte/security/filter/PreAuthRateLimitingFilterTest.java"
+    ],
+    [
+      "M",
+      "src/test/java/com/zufar/icedlatte/security/filter/RateLimitingFilterTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java",
+    "src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java",
+    "src/main/java/com/zufar/icedlatte/security/exception/SessionNotFoundException.java",
+    "src/main/java/com/zufar/icedlatte/security/exception/SessionOwnershipException.java",
+    "src/main/java/com/zufar/icedlatte/security/exception/handler/SignInExceptionHandler.java"
+  ],
+  "path_roles": {
+    "src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/security/exception/SessionNotFoundException.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/security/exception/SessionOwnershipException.java": [
+      "production_behaviour"
+    ],
+    "src/main/java/com/zufar/icedlatte/security/exception/handler/SignInExceptionHandler.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C00302",
+  "rank": 153,
+  "item_id": "N48_037",
+  "set": "new",
+  "source_task": "T48",
+  "operation": "DELETE /api/v1/auth/sessions/{sessionId}",
+  "proposition": "DELETE /api/v1/auth/sessions/{sessionId}: contract says an unknown session identifier returns 404 Session not found; implementation does throw IllegalArgumentException for an unknown identifier, which the global catch-all maps to 500",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "spec_file",
+  "mismatch_type": "response_status",
+  "fix_family": "response_status.auth_session_missing",
+  "proposition_check": "{\"contract\":[\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/resources/api-specs/security-openapi.yaml:256\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/resources/api-specs/security-openapi.yaml:281\"],\"implementation\":[\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java:82\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java:85\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:143\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:144\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:145\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:146\"],\"route\":[\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java:220\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java:221\",\"8614f4eccc9eb26b5e391c462a4f2e07d6fb0406:src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java:223\"]}",
+  "evidence": "{\"parent\": {\"src/main/resources/api-specs/security-openapi.yaml\": {\"parent_lines\": [256, 281], \"parent_numbered_excerpt\": \"251:           content:\\n252:             application/json:\\n253:               schema:\\n254:                 $ref: \\\"#/components/schemas/ErrorResponse\\\"\\n255: \\n256:   /api/v1/auth/sessions/{sessionId}:\\n257:     delete:\\n258:       tags:\\n259:         - \\\"Security\\\"\\n260:       summary: \\\"Revoke a specific session by ID\\\"\\n261:       operationId: \\\"revokeSession\\\"\\n276:           content:\\n277:             application/json:\\n278:               schema:\\n279:                 $ref: \\\"#/components/schemas/ErrorResponse\\\"\\n280:         \\\"404\\\":\\n281:           description: \\\"Session not found\\\"\\n282:           content:\\n283:             application/json:\\n284:               schema:\\n285:                 $ref: \\\"#/components/schemas/ErrorResponse\\\"\\n286:         \\\"500\\\":\"}, \"src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java\": {\"parent_lines\": [82, 85], \"parent_numbered_excerpt\": \"77:         sessionRepository.revokeAllByUserId(userId, OffsetDateTime.now());\\n78:         log.info(\\\"auth.session.revoked_all: userId={}\\\", userId);\\n79:     }\\n80: \\n81:     @Transactional\\n82:     public void revokeById(UUID sessionId,\\n83:                            UUID requestingUserId) {\\n84:         AuthSessionEntity session = sessionRepository.findById(sessionId)\\n85:                 .orElseThrow(() -> new IllegalArgumentException(\\\"Session not found\\\"));\\n86:         if (!session.getUserId().equals(requestingUserId)) {\\n87:             throw new IllegalArgumentException(\\\"Session does not belong to user\\\");\\n88:         }\\n89:         session.setRevokedAt(OffsetDateTime.now());\\n90:         sessionRepository.save(session);\"}, \"src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java\": {\"parent_lines\": [143, 144, 145, 146], \"parent_numbered_excerpt\": \"138:     public void handleAsyncRequestNotUsableException(final AsyncRequestNotUsableException exception) {\\n139:         // Client disconnected before response was flushed (broken pipe). Not a server error — suppress Sentry noise.\\n140:         log.debug(\\\"exception.client_disconnect: cause={}\\\", exception.getMessage());\\n141:     }\\n142: \\n143:     @ExceptionHandler(Exception.class)\\n144:     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)\\n145:     public ApiErrorResponse handleUnhandledException(final Exception exception) {\\n146:         ApiErrorResponse apiErrorResponse = apiErrorResponseCreator.buildResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);\\n147:         log.error(\\\"exception.unhandled: exceptionClass={}, status=500\\\", exception.getClass().getName(), exception);\\n148:         return apiErrorResponse;\\n149:     }\\n150: }\"}, \"src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java\": {\"parent_lines\": [220, 221, 223], \"parent_numbered_excerpt\": \"215:                 .toList();\\n216:         return ResponseEntity.ok(sessions);\\n217:     }\\n218: \\n219:     @Override\\n220:     @DeleteMapping(\\\"/sessions/{sessionId}\\\")\\n221:     public ResponseEntity<Void> revokeSession(@PathVariable UUID sessionId) {\\n222:         UUID userId = securityPrincipalProvider.getUserId();\\n223:         authSessionService.revokeById(sessionId, userId);\\n224:         log.info(\\\"auth.session.revoked_remote: sessionId={}, userId={}\\\", sessionId, userId);\\n225:         return ResponseEntity.noContent().build();\\n226:     }\\n227: \\n228:     @Override\"}}, \"patch\": \"key/t48_evidence/P2C00302.diff\", \"patch_sha256\": \"74060566f095cdda85d66698b7f03e14625565e076acad8604e742059b3cd1c8\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}
