@@ -29,6 +29,7 @@
 | Zero-shot LLM-এর ভুল deliberate item-এ কেন্দ্রীভূত, মূলত SPEC-truth item-এ abstention | P (pre-registered descriptive) | E6: deliberate 7/10; E9 Part B: deliberate 47/61, যার ১২টি UNDECIDABLE-SPEC | `E9_hybrid/E9_RESULTS.md` |
 | M1 abstain করলে R ব্যবহার → macro-F1 0.976 | ✗ (replicate হয়নি) | E9 Part B post-hoc; দুই labeller-এ একই; E10-এ pre-registered FB 0.65–0.70, forced choice-এর কাছে হেরেছে | `E9_hybrid/E9_RESULTS.md` |
 | Kind × direction সম্পর্ক সম্পূর্ণ নতুন, আলাদা sample-এ replicate করে | P | E10 H-E10-3: 19/24 বনাম 2/13, p = 2.7e-4; cluster ধরে 7/11 বনাম 1/9, p = 0.025। প্রথমবার accidental → SPEC (২টি, একই fix থেকে) | `E10_fallback/E10_RESULTS.md` |
+| Kind coding coder-এর model family-র ওপর নির্ভর করে না | P | E11: Claude coder 67/81 বনাম 1/39 (cluster ধরে 38/51 বনাম 1/30); GPT আর Claude-এর মধ্যে κ 0.96। ⚠️ দুই পরিবারই একই miner-এর লেখা পড়েছে | `E11_crossfamily/E11_RESULTS.md` |
 | Zero-shot LLM triage-এর accuracy sample-ভেদে স্থিতিশীল নয় | X (descriptive) | M1 macro-F1: E9-এ 0.90, E10-এ 0.58–0.64; এর মূল কারণ এক repo-র ২টি fix থেকে আসা ১০টি item | `E10_fallback/E10_RESULTS.md` |
 
 ## Paper-এর সম্ভাব্য মূল বক্তব্য (এখনকার অবস্থা)
