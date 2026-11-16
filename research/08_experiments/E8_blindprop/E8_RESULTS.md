@@ -70,3 +70,78 @@ This analysis is post-hoc and descriptive. It cross-tabulates the E7 code, the J
 
 ## Next step (Claude, supervisor-delegated)
 E8b would enlarge the ACCIDENTAL arm, with the analysis fixed before any new data is seen. See `E8_PLAN_AMENDMENTS.md` (B1).
+
+---
+
+# E8b: the pooled extension (amendment B1; one further look, final)
+
+## Runs
+- **New data:** T47 added 41 new items: SPEC 23, IMPL 18. They come from continuing the frozen pool2 review, which stayed hypothesis-blind. They form a separate W-package.
+- **Pipeline:** the same as E8, run in fresh sessions with byte-identical task texts:
+  - W2 wrote 37 propositions and 4 NONE.
+  - J2 matched them: SAME 24, PARTIAL 5, DIFFERENT 8, NONE 4.
+  - C5 and C6 coded them: κ = 0.895, with 1 disagreement (scored UNCLEAR).
+  - P3 coded W2's propositions without files: κ vs the final code = 0.488.
+  - P4 coded the miner's propositions without files.
+- **Interruptions:**
+  - W2 stopped on a "model at capacity" error after writing its outputs. I validated those outputs independently: row order, word limits, and the existence of every locator file.
+  - All other runs exited 0.
+- **Checks:**
+  - No run accessed anything outside its own directory.
+  - All freezes (`e8b_freeze`, `e8b_round1_freeze`, `e8b_round2_freeze`) were verified, including the W-tree hash.
+
+## H-E8-1, pooled (confirmatory, final)
+| Analysis | DELIBERATE: SPEC | ACCIDENTAL: SPEC | OR [95% CI] | Fisher one-sided p | Verdict |
+|---|---|---|---|---|---|
+| **PRIMARY, pooled E8 + T47, SAME** | **39/48 = 0.81** [0.68, 0.90] | **0/10** [0.00, 0.28] | 87.3 [4.7, 1626] | **1.8e-6** | **PASS** |
+| Secondary: T47 alone, SAME | 17/19 = 0.89 | 0/4 | 63.0 | 0.0017 | — |
+| Sensitivity: pooled SAME + PARTIAL | 43/54 | 0/11 | 87.0 | < 1e-4 | — |
+| Sensitivity: pooled, all non-NONE | 47/68 = 0.69 | 1/12 = 0.08 | 16.9 [2.9, 100] | 0.0001 | — |
+
+1 item is UNCLEAR and is excluded from the tables.
+
+Triage rule on the pooled primary set (descriptive): macro-F1 0.79.
+
+| Class | Precision | Recall |
+|---|---|---|
+| SPEC | 0.81 | 1.00 |
+| IMPL | 1.00 | 0.53 |
+
+**Verdict per B1: PASS.** The association survives propositions written by a reader who does not know the repair direction. As in E7, when an accidental divergence is described, it is repaired in the code.
+
+## Pre-registered miss-rate test (T47): not replicated
+- **Missed accidental divergences:** 5/11 counted as DIFFERENT or PARTIAL, using P4's code of the miner's propositions.
+- **Missed deliberate divergences:** 8/26.
+- **Fisher one-sided p:** 0.31.
+
+The E8 post-hoc finding, that blind reading misses accidental divergences more often, is **not confirmed**.
+
+⚠️ This pre-registered test excluded NONE. W2 wrote NONE for 4 items, and all 4 are accidental and IMPL according to P4. Counted post-hoc with NONE as a miss, the figures are 9/15 vs 8/26. That count is descriptive only.
+
+## Descriptive (T47)
+- **Re-authoring and the kind code.** On the SAME items, P4's code of the miner's proposition equals the final E8b code in 21/24. The 3 changes are:
+  - 2 items that P4 coded ACCIDENTAL from the miner's text. Both have SPEC truth, and C5/C6 coded both DELIBERATE after reading the files.
+  - 1 item that C5 and C6 left UNCLEAR.
+- **The proposition text is not always the signal.** In T47, miner-text-only coding (P4) would have put 2 SPEC items into the ACCIDENTAL arm. Reading the code corrected both.
+- **Proposition-only coding of W2's text agrees less here** (κ 0.488, against 0.956 in E8). So in T47 the files mattered to the code.
+
+## Updated status of H12 (E7 + E8 + E8b)
+- **The association holds under three conditions:**
+  - miner-written propositions (E7);
+  - direction-blind propositions, pooled (E8b, PASS);
+  - blind coders reading code.
+- **Divergence kind is a strong predictor of the repair direction:**
+  - ACCIDENTAL implies an IMPL repair (0 SPEC of 10 matched accidental items in the pooled primary);
+  - DELIBERATE leans SPEC (about 0.8).
+- **The asymmetry matters in practice:**
+  - The ACCIDENTAL → IMPL rule has precision 1.00 here.
+  - The DELIBERATE → SPEC rule is wrong about 1 time in 5.
+  - So the rule is safe for routing accidental divergences to code repair, but it cannot by itself decide the deliberate ones.
+
+## Remaining threats
+- **Same model throughout.** All roles were played by the same model family, with no human coder.
+- **The extension was decided after E8.** It was disclosed and limited to one further look.
+- **T47 previewed beyond its prefix.** Its patch preview looked at 41 candidates beyond the final review prefix (T47_report).
+- **Correlated items.** Many items share a repo and some share a fix.
+- **The miss-rate claim failed.**
+- **Small zero cell.** The ACCIDENTAL arm has 10 items, so the 95% upper bound on its SPEC rate is 0.28.

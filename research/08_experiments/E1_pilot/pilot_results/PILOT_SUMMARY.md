@@ -184,7 +184,10 @@
      - Primary-র ফল: deliberate → SPEC 22/29, accidental → SPEC 0/6, p = 0.001। কিন্তু accidental arm-এ item ৮-এর কম, তাই **INSUFFICIENT**।
      - যে ৩৫টি item-এ একই অমিল মিলেছে, সবগুলোতে E8-এর code = E7-এর code। ⇒ proposition কে লিখেছে, তাতে divergence_kind বদলায় না; authoring leakage-এর ব্যাখ্যা দুর্বল হলো।
      - Blind reader accidental অমিল বেশি miss করেছে: ১১টির মধ্যে ৫টি, যেখানে deliberate-এ ৩৩টির মধ্যে ২–৪টি (post-hoc)।
-     - পরের ধাপ E8b (B1): sample বাড়ানো (T47), শুধু একবার আরেকটি look।
+     - **E8b (B1, pooled, চূড়ান্ত look): PASS।** নতুন T47 item মিলিয়ে: deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6।
+       - ⇒ direction না জানা লেখকের proposition-এও association টিকেছে।
+       - Accidental → IMPL rule-এর precision 1.00; deliberate → SPEC প্রায় ৫ বারে ১ বার ভুল।
+     - Miss-rate-এর দাবি ("blind reader accidental অমিল বেশি miss করে") pre-registered test-এ **টেকেনি** (p = 0.31)।
 
 ## 6. সীমা (threats to validity)
 - **External validity:**
