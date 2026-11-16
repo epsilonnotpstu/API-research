@@ -1,0 +1,42 @@
+{
+  "repo": "harbor",
+  "fix_commit": "442025a31315bbc1c2d1f8ce63cd3e891ab3fd72",
+  "parent_commit": "0339b820b936e4079a13023946a2350477bf86c8",
+  "date": "2024-04-08",
+  "message_excerpt": "fix: add 400 response code for /scan/{report_id}/log (#20242)",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "api/v2.0/swagger.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "api/v2.0/swagger.yaml"
+  ],
+  "path_roles": {
+    "api/v2.0/swagger.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09230",
+  "rank": 166,
+  "item_id": "N49_P2C09230_6da3f43aaa40",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/scan/{report_id}/log",
+  "proposition": "GET /projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/scan/{report_id}/log: contract says the documented responses are 200, 401, 403, 404 and 500 with no 400 response; implementation does return HTTP 400 for an invalid report UUID through the task lookup and error mapper",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "response_status",
+  "fix_family": "response_status.scan-log-invalid-uuid",
+  "proposition_check": "{\"contract\":[\"0339b820b936e4079a13023946a2350477bf86c8:api/v2.0/swagger.yaml:1205\",\"0339b820b936e4079a13023946a2350477bf86c8:api/v2.0/swagger.yaml:1211\"],\"implementation\":[\"0339b820b936e4079a13023946a2350477bf86c8:src/server/v2.0/handler/scan.go:93\",\"0339b820b936e4079a13023946a2350477bf86c8:src/server/v2.0/handler/scan.go:103\",\"0339b820b936e4079a13023946a2350477bf86c8:src/controller/scan/base_controller.go:708\",\"0339b820b936e4079a13023946a2350477bf86c8:src/controller/scan/base_controller.go:1050\",\"0339b820b936e4079a13023946a2350477bf86c8:src/controller/scan/base_controller.go:1095\",\"0339b820b936e4079a13023946a2350477bf86c8:src/pkg/task/task.go:241\",\"0339b820b936e4079a13023946a2350477bf86c8:src/pkg/task/dao/task.go:113\",\"0339b820b936e4079a13023946a2350477bf86c8:src/lib/http/error.go:31\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"api/v2.0/swagger.yaml\": {\"parent_lines\": [1205, 1211], \"parent_numbered_excerpt\": \"1200:           $ref: '#/responses/403'\\n1201:         '404':\\n1202:           $ref: '#/responses/404'\\n1203:         '500':\\n1204:           $ref: '#/responses/500'\\n1205:   /projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/scan/{report_id}/log:\\n1206:     get:\\n1207:       summary: Get the log of the scan report\\n1208:       description: Get the log of the scan report\\n1209:       tags:\\n1210:         - scan\\n1211:       operationId: getReportLog\\n1212:       produces:\\n1213:         - text/plain\\n1214:       parameters:\\n1215:         - $ref: '#/parameters/requestId'\\n1216:         - $ref: '#/parameters/projectName'\"}, \"src/server/v2.0/handler/scan.go\": {\"parent_lines\": [93, 103], \"parent_numbered_excerpt\": \"88: \\t}\\n89: \\n90: \\treturn operation.NewScanArtifactAccepted()\\n91: }\\n92: \\n93: func (s *scanAPI) GetReportLog(ctx context.Context, params operation.GetReportLogParams) middleware.Responder {\\n94: \\tif err := s.RequireProjectAccess(ctx, params.ProjectName, rbac.ActionRead, rbac.ResourceScan); err != nil {\\n95: \\t\\treturn s.SendError(ctx, err)\\n96: \\t}\\n97: \\trepository := fmt.Sprintf(\\\"%s/%s\\\", params.ProjectName, params.RepositoryName)\\n98: \\ta, err := s.artCtl.GetByReference(ctx, repository, params.Reference, nil)\\n99: \\tif err != nil {\\n100: \\t\\treturn s.SendError(ctx, err)\\n101: \\t}\\n102: \\n103: \\tbytes, err := s.scanCtl.GetScanLog(ctx, a, params.ReportID)\\n104: \\tif err != nil {\\n105: \\t\\treturn s.SendError(ctx, err)\\n106: \\t}\\n107: \\n108: \\tif bytes == nil {\"}, \"src/controller/scan/base_controller.go\": {\"parent_lines\": [708, 1050, 1095], \"parent_numbered_excerpt\": \"703: \\n704: \\treturn summaries, nil\\n705: }\\n706: \\n707: // GetScanLog ...\\n708: func (bc *basicController) GetScanLog(ctx context.Context, artifact *ar.Artifact, uuid string) ([]byte, error) {\\n709: \\tif len(uuid) == 0 {\\n710: \\t\\treturn nil, errors.New(\\\"empty uuid to get scan log\\\")\\n711: \\t}\\n712: \\tr, err := bc.sc.GetRegistrationByProject(ctx, artifact.ProjectID)\\n713: \\tif err != nil {\\n1045: \\t_, err = bc.taskMgr.Create(ctx, param.ExecutionID, j, extraAttrs)\\n1046: \\treturn err\\n1047: }\\n1048: \\n1049: // listScanTasks returns the tasks of the reports\\n1050: func (bc *basicController) listScanTasks(ctx context.Context, reportUUIDs []string) ([]*task.Task, error) {\\n1051: \\tif len(reportUUIDs) == 0 {\\n1052: \\t\\treturn nil, nil\\n1053: \\t}\\n1054: \\n1055: \\ttasks := make([]*task.Task, len(reportUUIDs))\\n1090: \\treturn results, nil\\n1091: }\\n1092: \\n1093: func (bc *basicController) getScanTask(ctx context.Context, reportUUID string) (*task.Task, error) {\\n1094: \\t// NOTE: the method uses the postgres' unique operations and should consider here if support other database in the future.\\n1095: \\ttasks, err := bc.taskMgr.ListScanTasksByReportUUID(ctx, reportUUID)\\n1096: \\tif err != nil {\\n1097: \\t\\treturn nil, err\\n1098: \\t}\\n1099: \\n1100: \\tif len(tasks) == 0 {\"}, \"src/pkg/task/task.go\": {\"parent_lines\": [241], \"parent_numbered_excerpt\": \"236: \\t}\\n237: \\treturn ts, nil\\n238: }\\n239: \\n240: func (m *manager) ListScanTasksByReportUUID(ctx context.Context, uuid string) ([]*Task, error) {\\n241: \\ttasks, err := m.dao.ListScanTasksByReportUUID(ctx, uuid)\\n242: \\tif err != nil {\\n243: \\t\\treturn nil, err\\n244: \\t}\\n245: \\tvar ts []*Task\\n246: \\tfor _, task := range tasks {\"}, \"src/pkg/task/dao/task.go\": {\"parent_lines\": [113], \"parent_numbered_excerpt\": \"108: \\tif err != nil {\\n109: \\t\\treturn nil, err\\n110: \\t}\\n111: \\n112: \\tif !isValidUUID(uuid) {\\n113: \\t\\treturn nil, errors.BadRequestError(fmt.Errorf(\\\"invalid UUID %v\\\", uuid))\\n114: \\t}\\n115: \\n116: \\tvar tasks []*Task\\n117: \\tparam := fmt.Sprintf(`{\\\"report_uuids\\\":[\\\"%s\\\"]}`, uuid)\\n118: \\tsql := `SELECT * FROM task WHERE extra_attrs::jsonb @> cast( ? as jsonb )`\"}, \"src/lib/http/error.go\": {\"parent_lines\": [31], \"parent_numbered_excerpt\": \"26: \\t\\\"github.com/goharbor/harbor/src/lib/log\\\"\\n27: )\\n28: \\n29: var (\\n30: \\tcodeMap = map[string]int{\\n31: \\t\\terrors.BadRequestCode:                  http.StatusBadRequest,\\n32: \\t\\terrors.DIGESTINVALID:                   http.StatusBadRequest,\\n33: \\t\\terrors.MANIFESTINVALID:                 http.StatusBadRequest,\\n34: \\t\\terrors.UNSUPPORTED:                     http.StatusBadRequest,\\n35: \\t\\terrors.UnAuthorizedCode:                http.StatusUnauthorized,\\n36: \\t\\terrors.ForbiddenCode:                   http.StatusForbidden,\"}}, \"patch\": \"key/t49_evidence/P2C09230.diff\", \"patch_sha256\": \"9b60965d9b1669d606ff8f7b7e0ffaef72b46ff43e654b6d3996c30549214eaf\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "src/server/v2.0/handler/base.go"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

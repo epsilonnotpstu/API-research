@@ -296,3 +296,4 @@
 - 2026-11-16 | Claude | The user confirmed the revised licence decision (LICENSE_REVIEW.md).
 - 2026-11-16 19:10 | Claude | E10 scored once. H-E10-1 INSUFFICIENT; H-E10-2 NOT_BETTER (reverse p=.004; by cluster p=.25); H-E10-3 PASS (19/24 vs 2/13, p=2.7e-4). E10_RESULTS.md and paper v0.2 written.
 - 2026-11-16 20:15 | Claude | E11 scored once: H-E11-1 PASS (Claude coders 67/81 vs 1/39; clusters 38/51 vs 1/30), H-E11-2 PASS (κ 0.96 vs GPT). T49 still running.
+2026-11-17 00:16 | Codex | T49 | Completed frozen pool2 continuation: 949 candidates, 36 U items, 45 FIX_CAP exclusions; all eligible repos capped or exhausted; 73 tests pass; existing keys and freeze preserved. Report: 09_collab/reports/T49_report.md

@@ -1,0 +1,40 @@
+{
+  "repo": "harbor",
+  "fix_commit": "487e8b43abf4d53c0a7a79ee35528ca241058a5d",
+  "parent_commit": "3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d",
+  "date": "2020-08-04",
+  "message_excerpt": "fix(swagger): fix the definition of errors",
+  "stars": 29733,
+  "changes": [
+    [
+      "M",
+      "api/v2.0/swagger.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "api/v2.0/swagger.yaml"
+  ],
+  "path_roles": {
+    "api/v2.0/swagger.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C09242",
+  "rank": 178,
+  "item_id": "N49_P2C09242_b355375cf6a7",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /projects/{project_name}/logs",
+  "proposition": "GET /projects/{project_name}/logs: contract says documented error responses use a top-level Errors array; implementation does send an object containing an errors array through the shared error responder",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "response_shape",
+  "fix_family": "response_shape.shared-error-envelope",
+  "proposition_check": "{\"contract\":[\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:api/v2.0/swagger.yaml:619\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:api/v2.0/swagger.yaml:1350\"],\"implementation\":[\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:27\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:29\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:33\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:37\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:43\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/project.go:47\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/base.go:48\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/server/v2.0/handler/base.go:194\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/lib/http/error.go:56\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/lib/http/error.go:93\",\"3d3fabbd205d7c65bde62c4ad8c2dbddbb9df23d:src/lib/errors/errors.go:94\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"api/v2.0/swagger.yaml\": {\"parent_lines\": [619, 1350], \"parent_numbered_excerpt\": \"614:     get:\\n615:       summary: Get recent logs of the projects\\n616:       description: Get recent logs of the projects\\n617:       tags:\\n618:         - project\\n619:       operationId: getLogs\\n620:       parameters:\\n621:         - $ref: '#/parameters/projectName'\\n622:         - $ref: '#/parameters/requestId'\\n623:         - $ref: '#/parameters/query'\\n624:         - $ref: '#/parameters/page'\\n1345:         description: The ID of the corresponding request for the response\\n1346:         type: string\\n1347:     schema:\\n1348:       $ref: '#/definitions/Errors'\\n1349: definitions:\\n1350:   Errors:\\n1351:     description: The error array that describe the errors got during the handling of request\\n1352:     type: array\\n1353:     items:\\n1354:       $ref: '#/definitions/Error'\\n1355:   Error:\"}, \"src/server/v2.0/handler/project.go\": {\"parent_lines\": [27, 29, 33, 37, 43, 47], \"parent_numbered_excerpt\": \"22: \\tBaseAPI\\n23: \\tauditMgr audit.Manager\\n24: \\tproCtl   project.Controller\\n25: }\\n26: \\n27: func (a *projectAPI) GetLogs(ctx context.Context, params operation.GetLogsParams) middleware.Responder {\\n28: \\tif err := a.RequireProjectAccess(ctx, params.ProjectName, rbac.ActionList, rbac.ResourceLog); err != nil {\\n29: \\t\\treturn a.SendError(ctx, err)\\n30: \\t}\\n31: \\tpro, err := a.proCtl.GetByName(ctx, params.ProjectName)\\n32: \\tif err != nil {\\n33: \\t\\treturn a.SendError(ctx, err)\\n34: \\t}\\n35: \\tquery, err := a.BuildQuery(ctx, params.Q, params.Page, params.PageSize)\\n36: \\tif err != nil {\\n37: \\t\\treturn a.SendError(ctx, err)\\n38: \\t}\\n39: \\tquery.Keywords[\\\"ProjectID\\\"] = pro.ProjectID\\n40: \\n41: \\ttotal, err := a.auditMgr.Count(ctx, query)\\n42: \\tif err != nil {\\n43: \\t\\treturn a.SendError(ctx, err)\\n44: \\t}\\n45: \\tlogs, err := a.auditMgr.List(ctx, query)\\n46: \\tif err != nil {\\n47: \\t\\treturn a.SendError(ctx, err)\\n48: \\t}\\n49: \\n50: \\tvar auditLogs []*models.AuditLog\\n51: \\tfor _, log := range logs {\\n52: \\t\\tauditLogs = append(auditLogs, &models.AuditLog{\"}, \"src/server/v2.0/handler/base.go\": {\"parent_lines\": [48, 194], \"parent_numbered_excerpt\": \"43: \\treturn nil\\n44: }\\n45: \\n46: // SendError returns response for the err\\n47: func (*BaseAPI) SendError(ctx context.Context, err error) middleware.Responder {\\n48: \\treturn NewErrResponder(err)\\n49: }\\n50: \\n51: // HasPermission returns true when the request has action permission on resource\\n52: func (*BaseAPI) HasPermission(ctx context.Context, action rbac.Action, resource rbac.Resource) bool {\\n53: \\ts, ok := security.FromContext(ctx)\\n189: \\terr error\\n190: }\\n191: \\n192: // WriteResponse ...\\n193: func (r *ErrResponder) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {\\n194: \\tlib_http.SendError(rw, r.err)\\n195: }\\n196: \\n197: // NewErrResponder returns responder for err\\n198: func NewErrResponder(err error) *ErrResponder {\\n199: \\treturn &ErrResponder{err: err}\"}, \"src/lib/http/error.go\": {\"parent_lines\": [56, 93], \"parent_numbered_excerpt\": \"51: \\tstatusCode, errPayload, stackTrace := apiError(err)\\n52: \\t// the error detail is logged only, and will not be sent to the client to avoid leaking server information\\n53: \\tif statusCode >= http.StatusInternalServerError {\\n54: \\t\\tlog.Errorf(\\\"%s %s\\\", errPayload, stackTrace)\\n55: \\t\\terr = errors.New(nil).WithCode(errors.GeneralCode).WithMessage(\\\"internal server error\\\")\\n56: \\t\\terrPayload = errors.NewErrs(err).Error()\\n57: \\t} else {\\n58: \\t\\t// only log the error whose status code < 500 when debugging to avoid log flooding\\n59: \\t\\tlog.Debug(errPayload)\\n60: \\t}\\n61: \\tw.WriteHeader(statusCode)\\n88: \\t}\\n89: \\tfullStack := \\\"\\\"\\n90: \\tif _, ok := err.(*errors.Error); ok {\\n91: \\t\\tfullStack = err.(*errors.Error).StackTrace()\\n92: \\t}\\n93: \\treturn code, errors.NewErrs(err).Error(), fullStack\\n94: }\"}, \"src/lib/errors/errors.go\": {\"parent_lines\": [94], \"parent_numbered_excerpt\": \"89: var _ error = Errors{}\\n90: \\n91: // Error converts slice of error\\n92: func (errs Errors) Error() string {\\n93: \\tvar tmpErrs struct {\\n94: \\t\\tErrors []Error `json:\\\"errors,omitempty\\\"`\\n95: \\t}\\n96: \\n97: \\tfor _, e := range errs {\\n98: \\t\\terr, ok := e.(*Error)\\n99: \\t\\tif !ok {\"}}, \"patch\": \"key/t49_evidence/P2C09242.diff\", \"patch_sha256\": \"39c46f625dff27b67930a628b42e13801ab323e01c41bcb8ce59a6130b068d48\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

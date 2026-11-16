@@ -1,0 +1,68 @@
+{
+  "repo": "gravitee-api-management",
+  "fix_commit": "069ad80536e81c99ce0c16b4069fe3e79e77770b",
+  "parent_commit": "d60f4c6bff485c7557dcd54eca54a21c74ee5a85",
+  "date": "2026-03-08",
+  "message_excerpt": "fix: persist dashboard widget description",
+  "stars": 470,
+  "changes": [
+    [
+      "M",
+      "gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-repository/gravitee-apim-repository-mongodb/src/main/java/io/gravitee/repository/mongodb/management/internal/model/CustomDashboardWidgetMongo.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-repository/gravitee-apim-repository-test/src/test/java/io/gravitee/repository/management/CustomDashboardRepositoryTest.java"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml"
+    ],
+    [
+      "M",
+      "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java"
+    ]
+  ],
+  "surface_paths": [
+    "gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java",
+    "gravitee-apim-repository/gravitee-apim-repository-mongodb/src/main/java/io/gravitee/repository/mongodb/management/internal/model/CustomDashboardWidgetMongo.java",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml",
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java"
+  ],
+  "path_roles": {
+    "gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-repository/gravitee-apim-repository-mongodb/src/main/java/io/gravitee/repository/mongodb/management/internal/model/CustomDashboardWidgetMongo.java": [
+      "production_behaviour"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml": [
+      "openapi_root"
+    ],
+    "gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C02700",
+  "rank": 200,
+  "item_id": "N49_P2C02700_b7cdcd46cbe8",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "POST /analytics/dashboards",
+  "proposition": "POST /analytics/dashboards: contract says the submitted dashboard widgets support an optional description string; implementation does map each widget into a domain and persistence model with no description field, losing the submitted description",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "request_body",
+  "fix_family": "request_body.dashboard-widget-description-persistence",
+  "proposition_check": "{\"contract\":[\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml:727\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml:952\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml:1722\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml:1748\"],\"implementation\":[\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/mapper/DashboardMapper.java:46\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/mapper/DashboardMapper.java:54\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java:36\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java:37\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java:79\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java:35\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java:36\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java:82\"],\"route\":[\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/analytics/dashboards/DashboardsResource.java:87\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/analytics/dashboards/DashboardsResource.java:89\",\"d60f4c6bff485c7557dcd54eca54a21c74ee5a85:gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/analytics/dashboards/DashboardsResource.java:92\"]}",
+  "evidence": "{\"parent\": {\"gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/resources/openapi/openapi-analytics.yaml\": {\"parent_lines\": [727, 952, 1722, 1748], \"parent_numbered_excerpt\": \"722:                     content:\\n723:                         application/json:\\n724:                             schema:\\n725:                                 $ref: \\\"#/components/schemas/Error\\\"\\n726: \\n727:     /analytics/dashboards:\\n728:         get:\\n729:             operationId: listDashboards\\n730:             summary: List custom analytics dashboards\\n731:             description: |\\n732:                 Retrieves a paginated list of all custom analytics dashboards for the current organization.\\n947:                     content:\\n948:                         application/json:\\n949:                             schema:\\n950:                                 $ref: \\\"#/components/schemas/Error\\\"\\n951: \\n952:     /analytics/dashboards/{dashboardId}:\\n953:         parameters:\\n954:             - $ref: \\\"#/components/parameters/dashboardId\\\"\\n955:         get:\\n956:             operationId: getDashboard\\n957:             summary: Get a custom analytics dashboard\\n1717:                     maxLength: 256\\n1718:                     description: Display title of the widget\\n1719:                     example: \\\"Requests\\\"\\n1720:                 description:\\n1721:                     type: string\\n1722:                     description: Optional description of the widget\\n1723:                     example: \\\"Total number of API requests\\\"\\n1724:                 type:\\n1725:                     $ref: \\\"#/components/schemas/WidgetType\\\"\\n1726:                 layout:\\n1727:                     $ref: \\\"#/components/schemas/WidgetLayout\\\"\\n1743:                         to: \\\"2025-12-07T11:35:30Z\\\"\\n1744:                     metrics:\\n1745:                         - name: \\\"HTTP_REQUESTS\\\"\\n1746:                           measures: [\\\"COUNT\\\"]\\n1747: \\n1748:         CreateUpdateDashboard:\\n1749:             type: object\\n1750:             required:\\n1751:                 - name\\n1752:             description: Request body for creating a new custom analytics dashboard.\\n1753:             properties:\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/mapper/DashboardMapper.java\": {\"parent_lines\": [46, 54], \"parent_numbered_excerpt\": \"41:     @Mapping(target = \\\"id\\\", ignore = true)\\n42:     @Mapping(target = \\\"organizationId\\\", ignore = true)\\n43:     @Mapping(target = \\\"createdBy\\\", ignore = true)\\n44:     @Mapping(target = \\\"createdAt\\\", ignore = true)\\n45:     @Mapping(target = \\\"lastModified\\\", ignore = true)\\n46:     Dashboard map(CreateUpdateDashboard dashboard);\\n47: \\n48:     io.gravitee.rest.api.management.v2.rest.model.analytics.engine.Dashboard map(Dashboard dashboard);\\n49: \\n50:     List<io.gravitee.rest.api.management.v2.rest.model.analytics.engine.Dashboard> mapList(List<Dashboard> dashboards);\\n51: \\n52:     @Mapping(target = \\\"type\\\", expression = \\\"java(mapWidgetTypeToString(widget.getType()))\\\")\\n53:     @Mapping(target = \\\"request\\\", expression = \\\"java(mapToDomainRequest(widget.getRequest()))\\\")\\n54:     DashboardWidget mapWidget(Widget widget);\\n55: \\n56:     @Mapping(target = \\\"type\\\", expression = \\\"java(mapStringToWidgetType(dashboardWidget.getType()))\\\")\\n57:     @Mapping(target = \\\"request\\\", expression = \\\"java(mapToRestRequest(dashboardWidget.getRequest()))\\\")\\n58:     Widget mapWidget(DashboardWidget dashboardWidget);\\n59: \"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-service/src/main/java/io/gravitee/apim/core/dashboard/model/DashboardWidget.java\": {\"parent_lines\": [36, 37, 79], \"parent_numbered_excerpt\": \"31: @AllArgsConstructor\\n32: @Builder(toBuilder = true)\\n33: public class DashboardWidget {\\n34: \\n35:     private String id;\\n36:     private String title;\\n37:     private String type;\\n38:     private Layout layout;\\n39:     private Request request;\\n40: \\n41:     @Builder\\n42:     @NoArgsConstructor\\n74:     @NoArgsConstructor\\n75:     @AllArgsConstructor\\n76:     @Data\\n77:     public static class Request {\\n78: \\n79:         private String type;\\n80:         private TimeRange timeRange;\\n81:         private List<MetricRequest> metrics;\\n82:         private Long interval;\\n83:         private List<String> by;\\n84:         private Integer limit;\"}, \"gravitee-apim-repository/gravitee-apim-repository-api/src/main/java/io/gravitee/repository/management/model/CustomDashboardWidget.java\": {\"parent_lines\": [35, 36, 82], \"parent_numbered_excerpt\": \"30: @AllArgsConstructor\\n31: @Data\\n32: public class CustomDashboardWidget {\\n33: \\n34:     private String id;\\n35:     private String title;\\n36:     private String type;\\n37:     private Layout layout;\\n38:     private Request request;\\n39: \\n40:     @Builder\\n41:     @NoArgsConstructor\\n77:     @NoArgsConstructor\\n78:     @AllArgsConstructor\\n79:     @Data\\n80:     public static class Request {\\n81: \\n82:         private String type;\\n83:         private TimeRange timeRange;\\n84:         private List<MetricRequest> metrics;\\n85:         private Long interval;\\n86:         private List<String> by;\\n87:         private Integer limit;\"}, \"gravitee-apim-rest-api/gravitee-apim-rest-api-management-v2/gravitee-apim-rest-api-management-v2-rest/src/main/java/io/gravitee/rest/api/management/v2/rest/resource/analytics/dashboards/DashboardsResource.java\": {\"parent_lines\": [87, 89, 92], \"parent_numbered_excerpt\": \"82:     @Consumes(MediaType.APPLICATION_JSON)\\n83:     @Permissions({ @Permission(value = RolePermission.ORGANIZATION_DASHBOARD, acls = { RolePermissionAction.CREATE }) })\\n84:     public Response createDashboard(@Valid @NotNull CreateUpdateDashboard createDashboard) {\\n85:         var auditInfo = getAuditInfo();\\n86: \\n87:         var dashboard = DashboardMapper.INSTANCE.map(createDashboard);\\n88: \\n89:         var output = createDashboardUseCase.execute(new CreateDashboardUseCase.Input(dashboard, auditInfo));\\n90: \\n91:         return Response.created(getLocationHeader(output.dashboard().getId()))\\n92:             .entity(DashboardMapper.INSTANCE.map(output.dashboard()))\\n93:             .build();\\n94:     }\\n95: \\n96:     @Path(\\\"{dashboardId}\\\")\\n97:     public DashboardResource getDashboardResource() {\"}}, \"patch\": \"key/t49_evidence/P2C02700.diff\", \"patch_sha256\": \"8064ad5420457c06322c35b62098ac03c4e757a0b91cf5327eb6089b41fd03d4\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

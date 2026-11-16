@@ -1,0 +1,99 @@
+{
+  "repo": "ditto",
+  "fix_commit": "520b874a84994861fc565f23be0e40988a4c0b58",
+  "parent_commit": "787c185c490ed3f988612598bdbab145b510e631",
+  "date": "2026-02-20",
+  "message_excerpt": "Fix allowedImportAdditions being dropped during PolicyEntry reconstruction",
+  "stars": 952,
+  "changes": [
+    [
+      "M",
+      "base/service/src/main/java/org/eclipse/ditto/base/service/signaltransformer/placeholdersubstitution/AbstractTypedSubstitutionStrategy.java"
+    ],
+    [
+      "M",
+      "gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java"
+    ],
+    [
+      "M",
+      "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicy.java"
+    ],
+    [
+      "M",
+      "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicyBuilder.java"
+    ],
+    [
+      "M",
+      "policies/model/src/main/java/org/eclipse/ditto/policies/model/PolicyImporter.java"
+    ],
+    [
+      "M",
+      "policies/model/src/test/java/org/eclipse/ditto/policies/model/ImmutablePolicyBuilderTest.java"
+    ],
+    [
+      "M",
+      "policies/model/src/test/java/org/eclipse/ditto/policies/model/ImmutablePolicyTest.java"
+    ],
+    [
+      "M",
+      "policies/model/src/test/java/org/eclipse/ditto/policies/model/PolicyImporterTest.java"
+    ],
+    [
+      "M",
+      "policies/service/src/main/java/org/eclipse/ditto/policies/service/persistence/actors/strategies/commands/AbstractPolicyCommandStrategy.java"
+    ],
+    [
+      "M",
+      "policies/service/src/main/java/org/eclipse/ditto/policies/service/persistence/actors/strategies/events/ResourcesModifiedStrategy.java"
+    ],
+    [
+      "M",
+      "policies/service/src/main/java/org/eclipse/ditto/policies/service/persistence/actors/strategies/events/SubjectsModifiedStrategy.java"
+    ]
+  ],
+  "surface_paths": [
+    "gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java",
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicy.java",
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicyBuilder.java",
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/PolicyImporter.java",
+    "policies/service/src/main/java/org/eclipse/ditto/policies/service/persistence/actors/strategies/events/ResourcesModifiedStrategy.java"
+  ],
+  "path_roles": {
+    "gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java": [
+      "production_behaviour"
+    ],
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicy.java": [
+      "production_behaviour"
+    ],
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicyBuilder.java": [
+      "production_behaviour"
+    ],
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/PolicyImporter.java": [
+      "production_behaviour"
+    ],
+    "policies/service/src/main/java/org/eclipse/ditto/policies/service/persistence/actors/strategies/events/ResourcesModifiedStrategy.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C01139",
+  "rank": 270,
+  "item_id": "N49_004",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "PUT /policies/{policyId}/entries/{label}",
+  "proposition": "PUT /policies/{policyId}/entries/{label}: contract says the PolicyEntry request permits allowedImportAdditions to specify permitted imported additions; implementation does reconstruct the submitted entry from subjects, resources and importable while omitting allowedImportAdditions",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "request_body",
+  "fix_family": "request_body.policy-entry-allowed-import-additions",
+  "proposition_check": "{\"contract\":[\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5199\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5453\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5499\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5539\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5685\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:5892\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:6069\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/ditto-api-2.yml:9799\",\"787c185c490ed3f988612598bdbab145b510e631:documentation/src/main/resources/openapi/sources/schemas/policies/policyEntry.yml:20\"],\"implementation\":[\"787c185c490ed3f988612598bdbab145b510e631:gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java:166\",\"787c185c490ed3f988612598bdbab145b510e631:gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java:179\",\"787c185c490ed3f988612598bdbab145b510e631:gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java:189\",\"787c185c490ed3f988612598bdbab145b510e631:gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java:191\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"documentation/src/main/resources/openapi/ditto-api-2.yml\": {\"parent_lines\": [5199, 5453, 5499, 5539, 5685, 5892, 6069, 9799], \"parent_numbered_excerpt\": \"5194:         description: |-\\n5195:           JSON representation of the policy entries.\\n5196:           Use the placeholder `{{ request:subjectId }}` in order to let the\\n5197:           backend insert the authenticated subjectId of the HTTP request.\\n5198:         required: true\\n5199:   '/api/2/policies/{policyId}/entries/{label}':\\n5200:     get:\\n5201:       summary: Retrieve the entries of a specific Label of a specific policy\\n5202:       description: |-\\n5203:         Returns all entries (subjects, resources, etc.) of the policy identified by the `policyId` path\\n5204:         parameter, and by the `label` path parameter.\\n5448:             application/json:\\n5449:               schema:\\n5450:                 $ref: '#/components/schemas/AdvancedError'\\n5451:         '412':\\n5452:           $ref: '#/components/responses/PreconditionFailed'\\n5453:   '/api/2/policies/{policyId}/entries/{label}/actions/activateTokenIntegration':\\n5454:     post:\\n5455:       summary: Activate a subject for this policy entry derived from the token\\n5456:       description: |-\\n5457:         **This action only works when authenticated with a Json Web Token (JWT).**\\n5458: \\n5494:             The request could not be completed because this policy entry did not match the following conditions:\\n5495:             * containing a a subject ID matching the JWT's authenticated subject\\n5496:             * containing a `READ` permission granted to a `thing:/` resource path\\n5497:       requestBody:\\n5498:         $ref: '#/components/requestBodies/ActivateTokenIntegration'\\n5499:   '/api/2/policies/{policyId}/entries/{label}/actions/deactivateTokenIntegration':\\n5500:     post:\\n5501:       summary: Deactivate a subject for this policy entry derived from the token\\n5502:       description: |-\\n5503:         **This action only works when authenticated with a Json Web Token (JWT).**\\n5504: \\n5534:           description: The request could not be completed because the user did not have the `EXECUTE` permission on this policy entry.\\n5535:         '404':\\n5536:           description: |-\\n5537:             The request could not be completed because this policy entry did not match the following conditions:\\n5538:             * containing a a subject ID matching the JWT's authenticated subject\\n5539:   '/api/2/policies/{policyId}/entries/{label}/subjects':\\n5540:     get:\\n5541:       summary: Retrieve all Subjects for a specific Label of a specific policy\\n5542:       description: |-\\n5543:         Returns all subject entries of the policy identified by the\\n5544:         `policyId` path parameter, and by the `label`\\n5680: \\n5681: \\n5682:           Use the placeholder `{{ request:subjectId }}` in order to let the\\n5683:           backend insert the authenticated subjectId of the HTTP request.\\n5684:         required: true\\n5685:   '/api/2/policies/{policyId}/entries/{label}/subjects/{subjectId}':\\n5686:     get:\\n5687:       summary: Retrieve one specific Subject for a specific Label of a specific policy\\n5688:       description: |-\\n5689:         Returns the subject with ID `subjectId` of the policy entry identified\\n5690:         by the `policyId` path parameter, and by the `label` path parameter.\\n5887:             application/json:\\n5888:               schema:\\n5889:                 $ref: '#/components/schemas/AdvancedError'\\n5890:         '412':\\n5891:           $ref: '#/components/responses/PreconditionFailed'\\n5892:   '/api/2/policies/{policyId}/entries/{label}/resources':\\n5893:     get:\\n5894:       summary: Retrieve all Resources for a specific Label of a specific policy\\n5895:       description: |-\\n5896:         Returns all resource entries of the policy identified by\\n5897:         the `policyId` path parameter,\\n6064:           application/json:\\n6065:             schema:\\n6066:               $ref: '#/components/schemas/Resources'\\n6067:         description: JSON representation of the Resources\\n6068:         required: true\\n6069:   '/api/2/policies/{policyId}/entries/{label}/resources/{resourcePath}':\\n6070:     get:\\n6071:       summary: Retrieve one specific Resource for a specific Label of a specific policy\\n6072:       description: |-\\n6073:         Returns the resource with path `resourcePath` of the policy identified\\n6074:         by the `policyId` path parameter, and\\n9794:           $ref: '#/components/schemas/Subjects'\\n9795:         resources:\\n9796:           $ref: '#/components/schemas/Resources'\\n9797:         importable:\\n9798:           $ref: '#/components/schemas/Importable'\\n9799:         allowedImportAdditions:\\n9800:           type: array\\n9801:           description: |-\\n9802:             Defines which types of additions are allowed when this entry is imported by other policies\\n9803:             via `entriesAdditions`. If omitted or empty, no additions are allowed. This default ensures\\n9804:             that existing policies cannot be extended with additional subjects or resources unless the\"}, \"documentation/src/main/resources/openapi/sources/schemas/policies/policyEntry.yml\": {\"parent_lines\": [20], \"parent_numbered_excerpt\": \"15:     $ref: 'subjects.yml'\\n16:   resources:\\n17:     $ref: 'resources.yml'\\n18:   importable:\\n19:     $ref: 'importable.yml'\\n20:   allowedImportAdditions:\\n21:     $ref: 'allowedImportAdditions.yml'\\n22: required:\\n23:   - subjects\\n24:   - resources\"}, \"gateway/service/src/main/java/org/eclipse/ditto/gateway/service/endpoints/routes/policies/PolicyEntriesRoute.java\": {\"parent_lines\": [166, 179, 189, 191], \"parent_numbered_excerpt\": \"161:                                         ensureMediaTypeJsonWithFallbacksThenExtractDataBytes(ctx, dittoHeaders,\\n162:                                                 payloadSource ->\\n163:                                                         handlePerRequest(ctx, dittoHeaders, payloadSource,\\n164:                                                                 policyEntryJson -> ModifyPolicyEntry\\n165:                                                                         .of(policyId,\\n166:                                                                                 createPolicyEntryForPut(policyEntryJson,\\n167:                                                                                         label), dittoHeaders))\\n168:                                         )\\n169:                                 ),\\n170:                                 delete(() -> // DELETE /entries/<label>\\n171:                                         handlePerRequest(ctx,\\n174:                         )\\n175:                 )\\n176:         );\\n177:     }\\n178: \\n179:     private static PolicyEntry createPolicyEntryForPut(final String jsonString, final CharSequence labelString) {\\n180:         final JsonObject jsonObject = wrapJsonRuntimeException(() -> JsonFactory.newObject(jsonString));\\n181:         final Subjects subjects =\\n182:                 PoliciesModelFactory.newSubjects(jsonObject.getValueOrThrow(PolicyEntry.JsonFields.SUBJECTS));\\n183:         final Resources resources =\\n184:                 PoliciesModelFactory.newResources(jsonObject.getValueOrThrow(PolicyEntry.JsonFields.RESOURCES));\\n185: \\n186:         final Optional<ImportableType> importableOpt = jsonObject.getValue(PolicyEntry.JsonFields.IMPORTABLE_TYPE)\\n187:                 .flatMap(ImportableType::forName);\\n188:         return importableOpt\\n189:                 .map(importableType -> PoliciesModelFactory.newPolicyEntry(Label.of(labelString), subjects, resources,\\n190:                         importableType))\\n191:                 .orElseGet(() -> PoliciesModelFactory.newPolicyEntry(Label.of(labelString), subjects, resources));\\n192:     }\\n193: \\n194:     /*\\n195:      * Describes {@code /entries/<label>/subjects} route.\\n196:      *\"}}, \"patch\": \"key/t49_evidence/P2C01139.diff\", \"patch_sha256\": \"0c8a2996ced8b403810ae7a893ef2b90ef70a9f9577090e8739b43c5031f31a1\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/PoliciesModelFactory.java",
+    "policies/model/src/main/java/org/eclipse/ditto/policies/model/ImmutablePolicyEntry.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

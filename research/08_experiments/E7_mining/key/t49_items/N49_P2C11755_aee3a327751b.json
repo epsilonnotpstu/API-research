@@ -1,0 +1,90 @@
+{
+  "repo": "open-banking-gateway",
+  "fix_commit": "f297cebc9dd44fdbc01ccac2b7bb8c0642289b83",
+  "parent_commit": "e045187165cfcf60c3a87db57d227fee04159c07",
+  "date": "2020-07-02",
+  "message_excerpt": "fixed tests",
+  "stars": "344",
+  "changes": [
+    [
+      "M",
+      "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java"
+    ],
+    [
+      "M",
+      "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java"
+    ],
+    [
+      "M",
+      "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/controller/AuthStateConsentServiceController.java"
+    ],
+    [
+      "M",
+      "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/service/mapper/PisSinglePaymentMapper.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/java/de/adorsys/opba/protocol/xs2a/tests/e2e/stages/PaymentRequestCommon.java"
+    ],
+    [
+      "A",
+      "opba-protocols/xs2a-protocol-tests/xs2a-bdd-tests-common/src/main/resources/restrecord/tpp-ui-input/params/anton-brueckner-single-payment-response.json"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/Xs2aResultBodyExtractor.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java"
+    ],
+    [
+      "M",
+      "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInitiateBody.java"
+    ]
+  ],
+  "surface_paths": [
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java",
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java",
+    "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/controller/AuthStateConsentServiceController.java",
+    "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/service/mapper/PisSinglePaymentMapper.java",
+    "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInitiateBody.java"
+  ],
+  "path_roles": {
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java": [
+      "production_behaviour"
+    ],
+    "opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java": [
+      "production_behaviour"
+    ],
+    "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/controller/AuthStateConsentServiceController.java": [
+      "production_behaviour"
+    ],
+    "opba-consent-rest-impl/src/main/java/de/adorsys/opba/consentapi/service/mapper/PisSinglePaymentMapper.java": [
+      "production_behaviour"
+    ],
+    "opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/service/xs2a/dto/payment/PaymentInitiateBody.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P2C11755",
+  "rank": 152,
+  "item_id": "N49_P2C11755_aee3a327751b",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "POST /v1/banking/pis/payments/{payment-product}",
+  "proposition": "POST /v1/banking/pis/payments/{payment-product}: contract says creditorAddress includes the townName string; implementation does map creditorAddress without translating townName to the domain city property",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "property_mapping",
+  "fix_family": "property_mapping.payment-creditor-town-name",
+  "proposition_check": "{\"contract\":[\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:11\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:68\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:183\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:231\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml:344\"],\"implementation\":[\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java:62\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java:69\",\"e045187165cfcf60c3a87db57d227fee04159c07:opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/body/Address.java:9\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml\": {\"parent_lines\": [11, 68, 183, 231], \"parent_numbered_excerpt\": \"6:     This API provides FinTech possibilities to perform use-cases specific calls to the bank of PSU.\\n7: externalDocs:\\n8:   url: \\\"https://adorsys.github.com/open-banking-gateway\\\"\\n9: \\n10: paths:\\n11:   /v1/banking/pis/payments/{payment-product}:\\n12:     post:\\n13:       summary: Payment initiation request\\n14:       description: This method is used to initiate a payment at the ASPSP.\\n15:       operationId: initiatePayment\\n16:       tags:\\n63:         - $ref: \\\"#/components/parameters/PaymentProduct\\\"\\n64:       responses:\\n65:         \\\"200\\\":\\n66:           $ref: \\\"#/components/responses/OK_200_PaymentInitiationInformation\\\"\\n67: \\n68:   /v1/banking/pis/payments/{payment-product}/status:\\n69:     get:\\n70:       summary: Payment initiation status request\\n71:       description: Check the transaction status of a payment initiation.\\n72:       operationId: getPaymentInitiationStatus\\n73:       tags:\\n178:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/bicfi\\\"\\n179:         creditorAgentName:\\n180:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/creditorAgentName\\\"\\n181:         creditorName:\\n182:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/creditorName\\\"\\n183:         creditorAddress:\\n184:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/address\\\"\\n185:         remittanceInformationUnstructured:\\n186:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/remittanceInformationUnstructured\\\"\\n187:         requestedExecutionDate:\\n188:           type: string\\n226:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/accountReference\\\"\\n227:         creditorAgent:\\n228:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/bicfi\\\"\\n229:         creditorName:\\n230:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/creditorName\\\"\\n231:         creditorAddress:\\n232:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/address\\\"\\n233:         remittanceInformationUnstructured:\\n234:           $ref: \\\"./tpp_banking_api_commons.yml#/components/schemas/remittanceInformationUnstructured\\\"\\n235:         transactionStatus:\\n236:           $ref: \\\"#/components/schemas/transactionStatus\\\"\"}, \"opba-banking-rest-api/src/main/resources/static/tpp_banking_api_commons.yml\": {\"parent_lines\": [344], \"parent_numbered_excerpt\": \"339:         streetName:\\n340:           type: string\\n341:           maxLength: 70\\n342:         buildingNumber:\\n343:           type: string\\n344:         townName:\\n345:           type: string\\n346:         postCode:\\n347:           type: string\\n348:         country:\\n349:           $ref: \\\"#/components/schemas/countryCode\\\"\"}, \"opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisController.java\": {\"parent_lines\": [62, 69], \"parent_numbered_excerpt\": \"57:                                                    .fintechRedirectUrlNok(fintechRedirectURLNOK)\\n58:                                                    .requestId(xRequestID)\\n59:                                                    .bankId(bankID)\\n60:                                                    .build()\\n61:                         )\\n62:                         .singlePayment(pisSinglePaymentMapper.map(body, PaymentProductDetails.fromValue(paymentProduct)))\\n63:                         .build()\\n64:         ).thenApply((FacadeResult<SinglePaymentBody> result) -> mapper.translate(result, paymentResponseMapper));\\n65:     }\\n66: \\n67:     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = API_MAPPERS_PACKAGE)\\n68:     public interface PaymentRestRequestBodyToSinglePaymentMapper {\\n69:         SinglePaymentBody map(PaymentInitiation body, PaymentProductDetails paymentProduct);\\n70:     }\\n71: \\n72:     @Mapper(componentModel = SPRING_KEYWORD, implementationPackage = API_MAPPERS_PACKAGE)\\n73:     public interface PaymentFacadeResponseBodyToRestBodyMapper extends FacadeResponseBodyToRestBodyMapper<PaymentInitiationResponse, SinglePaymentBody> {\\n74:         PaymentInitiationResponse map(SinglePaymentBody facadeEntity);\"}, \"opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/result/body/Address.java\": {\"parent_lines\": [9], \"parent_numbered_excerpt\": \"4: \\n5: @Data\\n6: public class Address {\\n7:     private String streetName;\\n8:     private String buildingNumber;\\n9:     private String city;\\n10:     private String postCode;\\n11:     private String country;\\n12: }\"}}, \"patch\": \"key/t49_evidence/P2C11755.diff\", \"patch_sha256\": \"69e8961941faaf8f411118fc9de0dc572fdaebb4037036f0843329ddb249f676\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "opba-facade-protocol-api-shared/src/main/java/de/adorsys/opba/protocol/api/dto/request/payments/SinglePaymentBody.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

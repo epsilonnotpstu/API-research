@@ -1,0 +1,40 @@
+{
+  "repo": "dockstore",
+  "fix_commit": "502763f918f21d964ef2676bdde7071a4b53bc4c",
+  "parent_commit": "5e21b38d44454d31ecb99520ae355f2cd34e9fb6",
+  "date": "2021-03-16",
+  "message_excerpt": "Feature/missing tos version (#4113)",
+  "stars": "132",
+  "changes": [
+    [
+      "M",
+      "dockstore-webservice/src/main/resources/openapi3/openapi.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "dockstore-webservice/src/main/resources/openapi3/openapi.yaml"
+  ],
+  "path_roles": {
+    "dockstore-webservice/src/main/resources/openapi3/openapi.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 11,
+  "candidate_id": "P2C01998",
+  "rank": 223,
+  "item_id": "N49_P2C01998_e827a925dfe1",
+  "set": "new",
+  "source_task": "T49",
+  "operation": "GET /users/{userId}",
+  "proposition": "GET /users/{userId}: contract says the returned User tosversion enum permits only NONE and TOS_VERSION_1; implementation does return the stored TOSVersion enum which also permits TOS_VERSION_2 through the JSON getter",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "response_enum",
+  "fix_family": "response_enum.user-tos-version2",
+  "proposition_check": "{\"contract\":[\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:1397\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/resources/openapi3/openapi.yaml:1400\"],\"implementation\":[\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/core/TOSVersion.java:25\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/core/User.java:479\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/core/User.java:480\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/core/User.java:501\"],\"route\":[\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:199\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:201\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:214\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:216\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:219\",\"5e21b38d44454d31ecb99520ae355f2cd34e9fb6:dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java:226\"]}",
+  "evidence": "{\"parent\": {\"dockstore-webservice/src/main/resources/openapi3/openapi.yaml\": {\"parent_lines\": [1397, 1400], \"parent_numbered_excerpt\": \"1392:         setupComplete:\\n1393:           type: boolean\\n1394:         tosacceptanceDate:\\n1395:           format: int64\\n1396:           type: integer\\n1397:         tosversion:\\n1398:           enum:\\n1399:             - NONE\\n1400:             - TOS_VERSION_1\\n1401:           type: string\\n1402:         tosversionAcceptanceDate:\\n1403:           format: int64\\n1404:           type: integer\\n1405:           writeOnly: true\"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/core/TOSVersion.java\": {\"parent_lines\": [25], \"parent_numbered_excerpt\": \"20: \\n21: @ApiModel(description = \\\"Enumerates which version, if any, of the TOS a user has accepted\\\")\\n22: public enum TOSVersion {\\n23:     NONE,\\n24:     TOS_VERSION_1,\\n25:     TOS_VERSION_2\\n26: }\"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/core/User.java\": {\"parent_lines\": [479, 480, 501], \"parent_numbered_excerpt\": \"474:     public boolean isBanned() {\\n475:         return isBanned;\\n476:     }\\n477:     \\n478:     @JsonProperty\\n479:     public TOSVersion getTOSVersion() {\\n480:         return this.tosVersion;\\n481:     }\\n482: \\n483:     public void setTOSVersion(TOSVersion version) {\\n484:         this.tosVersion = version;\\n485:     }\\n496:     // tosVersionAcceptanceDate is split into two properties in the resulting OpenAPI.\\n497:     @JsonProperty\\n498:     @ApiModelProperty(value = \\\"Time TOS was accepted\\\", position = 15, dataType = \\\"long\\\")\\n499:     @Schema(type = \\\"integer\\\", format = \\\"int64\\\")\\n500:     public Date getTOSAcceptanceDate() {\\n501:         return this.tosVersionAcceptanceDate;\\n502:     }\\n503: \\n504:     @Schema(type = \\\"integer\\\", format = \\\"int64\\\")\\n505:     public void setTOSVersionAcceptanceDate(Date date) {\\n506:         this.tosVersionAcceptanceDate = date;\"}, \"dockstore-webservice/src/main/java/io/dockstore/webservice/resources/UserResource.java\": {\"parent_lines\": [199, 201, 214, 216, 219, 226], \"parent_numbered_excerpt\": \"194: \\n195:     @GET\\n196:     @Timed\\n197:     @UnitOfWork(readOnly = true)\\n198:     @Path(\\\"/{userId}\\\")\\n199:     @Operation(operationId = \\\"getSpecificUser\\\", description = \\\"Get user by id.\\\", security = @SecurityRequirement(name = OPENAPI_JWT_SECURITY_DEFINITION_NAME))\\n200:  [REDACTED attribution]\\n201:     public User getUser(@ApiParam(hidden = true) @Parameter(hidden = true) @Auth User authUser, @ApiParam(\\\"User to return\\\") @PathParam(\\\"userId\\\") long userId) {\\n202:         checkUser(authUser, userId);\\n203:         User user = userDAO.findById(userId);\\n204:         if (user == null) {\\n205:             throw new CustomWebApplicationException(\\\"User not found.\\\", HttpStatus.SC_BAD_REQUEST);\\n206:         }\\n209: \\n210:     @GET\\n211:     @Timed\\n212:     @UnitOfWork(readOnly = true)\\n213:     @Path(\\\"/user\\\")\\n214:     @Operation(operationId = \\\"getUser\\\", description = \\\"Get the logged-in user.\\\", security = @SecurityRequirement(name = OPENAPI_JWT_SECURITY_DEFINITION_NAME))\\n215:  [REDACTED attribution]\\n216:     public User getUser(@ApiParam(hidden = true) @Parameter(hidden = true) @Auth User user) {\\n217:         User foundUser = userDAO.findById(user.getId());\\n218:         Hibernate.initialize(foundUser.getUserProfiles());\\n219:         return foundUser;\\n220:     }\\n221: \\n222:     @GET\\n223:     @Timed\\n224:     @UnitOfWork(readOnly = true)\\n225:     @Path(\\\"/user/memberships\\\")\\n226:     @Operation(operationId = \\\"getUserMemberships\\\", description = \\\"Get the logged-in user's memberships.\\\", security = @SecurityRequirement(name = OPENAPI_JWT_SECURITY_DEFINITION_NAME))\\n227:  [REDACTED attribution]\\n228:     public Set<OrganizationUser> getUserMemberships(@ApiParam(hidden = true) @Parameter(hidden = true, name = \\\"user\\\")@Auth User user) {\\n229:         User foundUser = userDAO.findById(user.getId());\\n230:         Set<OrganizationUser> organizationUsers = foundUser.getOrganizations();\\n231:         organizationUsers.forEach(organizationUser -> Hibernate.initialize(organizationUser.getOrganization()));\"}}, \"patch\": \"key/t49_evidence/P2C01998.diff\", \"patch_sha256\": \"e7385588ffe2e70b6bb10bf78ac778ac4c7ba3709414a39f882df0a6d4d89d23\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution."
+}

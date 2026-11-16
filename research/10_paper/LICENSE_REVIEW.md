@@ -73,3 +73,11 @@
 | E9 H-E9-1 | INSUFFICIENT | unchanged: the only discordant item is X22, an X item, not one of these three |
 
 Neither conclusion depends on these items.
+
+## T49 items (U01–U36), checked at each parent commit on 2026-11-17 (Claude)
+The check uses `licence_at_parent.py` on `accepted_full_t49.csv`. Nothing is restrictive or non-commercial:
+- Apache-2.0: 23 items (dockstore 3, gravitee 4, harbor 6, open-banking-gateway 2, service-api 8);
+- EPL-2.0: 9 items (ditto);
+- GPL: 4 items (dockstore 2, service-api 2).
+
+Both dockstore and service-api changed licence during their history, so the licence is read per item at its parent commit. The GPL items follow the same rule as rhsm-subscriptions: per-directory GPL text in the replication package. The open-banking-gateway items are Apache-2.0 at their parent commits, although the repository's HEAD is AGPL.
