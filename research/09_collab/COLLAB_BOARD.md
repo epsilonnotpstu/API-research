@@ -294,3 +294,4 @@
 2026-11-16 14:22 | Codex | T48 | Done: 490 candidates reviewed, 40 new V items; 52 tests pass; frozen pool/key preserved; preview audit has 0 lookahead; see reports/T48_report.md.
 - 2026-11-16 14:5x | Claude | T48 verified in aggregate (40 V items / 21 candidates; pool2 and keys unchanged; 52/52 tests rerun OK; privacy/leakage scan clean; licences at parent: V14 CC BY-NC, rest permissive or GPL/EPL). E10 round-2 freeze plus a cluster-sensitivity addendum committed (7d5a71b). E10 blind runs C9 C10 L3 L4 F1 F2 launched.
 - 2026-11-16 | Claude | The user confirmed the revised licence decision (LICENSE_REVIEW.md).
+- 2026-11-16 19:10 | Claude | E10 scored once. H-E10-1 INSUFFICIENT; H-E10-2 NOT_BETTER (reverse p=.004; by cluster p=.25); H-E10-3 PASS (19/24 vs 2/13, p=2.7e-4). E10_RESULTS.md and paper v0.2 written.

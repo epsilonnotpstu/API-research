@@ -7,8 +7,19 @@
 - **E7 (repair direction, ৪৫টি নতুন fix):** H-E7-1 আর H-E7-2 দুটোই PASS। তবে proposition-only control দেখিয়েছে, divergence_kind-এর সংকেত proposition-এর ভাষাতেই আছে (`08_experiments/E7_repairdir/E7_RESULTS.md`)।
 - **E8 + E8b (direction-blind proposition):** pooled primary PASS (deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6)। Miss-rate দাবি টেকেনি।
 - **E9 (hybrid triage, ৮৫টি নতুন item):** H-E9-1 INSUFFICIENT (discordant ১)। M1 accidental item আগেই ঠিক বলে; বাকি ভুল deliberate item-এ, মূলত abstention। Post-hoc fallback (M1, abstain করলে R) macro-F1 0.976 (`08_experiments/E9_hybrid/E9_RESULTS.md`)।
-- **Paper খসড়া v0.1:** `10_paper/R1_draft.md`।
-- **পরের ধাপ:** E10 (fallback pipeline, নতুন item-এ pre-registered); user-এর human spot-check (`09_collab/human_check/`)।
+- **E10 (fallback triage, T48-এর ৪০টি নতুন item, যা ২১টি fix থেকে এসেছে):**
+  - H-E10-1 INSUFFICIENT: abstention pair মাত্র ৬টি, সবই এক cluster-এ।
+  - H-E10-2 NOT_BETTER: forced-choice উল্টো ভালো, item-level p = 0.004; তবে cluster ধরে p = 0.25।
+  - **H-E10-3 PASS:** deliberate → SPEC 19/24, accidental → SPEC 2/13, p = 2.7e-4; cluster ধরেও p = 0.025।
+  - M1-এর macro-F1 নেমে 0.58–0.64, আর R 0.77।
+  - E9-এর post-hoc fallback-এর ফল replicate হয়নি।
+  - বিস্তারিত: `08_experiments/E10_fallback/E10_RESULTS.md`।
+- **Paper খসড়া v0.2:** `10_paper/R1_draft.md`। E10-এর ফল আর conclusion যোগ হয়েছে।
+- **পরের ধাপ:**
+  - user-এর human spot-check (`09_collab/human_check/`);
+  - Q1-এর জন্য বড় পরিসরে মানুষের validation আর বড় sample;
+  - অন্য পরিবারের মডেল দিয়ে replication;
+  - replication package।
 
 ---
 
@@ -141,6 +152,7 @@
 | **E7 repair direction** (K21/K22 hypothesis) | ✅ ৪৫টি নতুন + ২৫টি exploratory item; blind C1/C2 coding (κ 0.94)। Deliberate → SPEC 26/33, accidental → SPEC 0/11, p < 0.0001। Generic-contract → SPEC 15/18 বনাম 11/26। ⚠️ Proposition-only control κ = 1.0 (A3)। | `08_experiments/E7_repairdir/E7_PLAN.md`, `E7_RESULTS.md`, `E7_mining/` |
 | E8/E8b direction-blind propositions | ✅ E8 একা INSUFFICIENT। E8b pooled PASS: deliberate → SPEC 39/48, accidental → SPEC 0/10, p = 1.8e-6। Miss-rate দাবি টেকেনি (p = 0.31)। | `08_experiments/E8_blindprop/E8_PLAN.md`, `E8_PLAN_AMENDMENTS.md`, `E8_RESULTS.md` |
 | E9 hybrid triage (kind rule + M1) | ✅ Part A: discordant 0। Part B (৮৫টি নতুন item): discordant ১ → INSUFFICIENT। M1 macro-F1 0.90–0.91, R 0.845; override precision 24/24। Post-hoc fallback 0.976 (X)। | `08_experiments/E9_hybrid/E9_PLAN.md`, `E9_RESULTS.md` |
+| E10 fallback triage (T48, ৪০টি নতুন item) | ✅ H-E10-1 INSUFFICIENT (৬টি pair); H-E10-2 NOT_BETTER (forced choice > FB, cluster ধরে n.s.); **H-E10-3 PASS** (19/24 বনাম 2/13, p = 2.7e-4)। M1 0.58–0.64, R 0.77। | `08_experiments/E10_fallback/E10_PLAN.md`, `E10_ADDENDUM.md`, `E10_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।

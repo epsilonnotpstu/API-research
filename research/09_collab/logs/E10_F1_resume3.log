@@ -1,0 +1,341 @@
+2026-11-16T12:50:54.906761Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/deploy/SKILL.md: missing YAML frontmatter delimited by ---
+2026-11-16T12:50:54.906854Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/prepare/SKILL.md: missing YAML frontmatter delimited by ---
+2026-11-16T12:50:54.906868Z ERROR codex_core::session::session: failed to load skill /home/afridi/.agents/skills/azure-app-onboard/scaffold/SKILL.md: missing YAML frontmatter delimited by ---
+OpenAI Codex v0.160.1
+--------
+workdir: /home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f
+model: gpt-6.1-sol
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 01a1e37a-17c8-7fb1-b838-8c57854e7d49
+--------
+user
+Usage limit has reset. Continue as blind labeller F1 (YOUR_ID=F1) exactly per TASK_M1F.md in this directory, from where you stopped, and finish all deliverables.
+codex
+All 40 reviews are complete. The output check caught one rationale at 41 words before either file was written. I’ll shorten it, write both deliverables, and validate them.
+
+exec
+/usr/bin/zsh -lc "/usr/bin/python3 -I -B - <<'PY'
+from pathlib import Path
+from collections import Counter
+import csv
+
+rows=[]
+def add(item,label,confidence,locators,rationale):
+    rows.append({'item_id':item,'L1':label,'confidence':confidence,'evidence_locators':'; '.join(item+'/'+p for p in locators),'rationale':rationale})
+
+add('V01','IMPL',3,[
+'contract/src/main/resources/openapi.json:1165',
+'contract/src/main/resources/openapi.json:2257',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java:48',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpTextMessageConverter.java:49'],
+'⚠️ Binary conversion decodes asText without checking node type, unlike the text converter. Silently turning structured input into empty bytes loses record data; rejecting invalid binary representations better fits the documented encoding and 422 response.')
+add('V02','SPEC',1,[
+'contract/rest-api/resources/src/main/resources/openapi/deviceEvent/deviceEvent.yaml:44',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:101',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:144',
+'impl/service/device/registry/internal/src/main/java/org/eclipse/kapua/service/device/registry/event/internal/DeviceEventImpl.java:196'],
+'⚠️ The asserted six-value restriction is absent: action is an unrestricted string. SUBMIT is explicitly modeled and survives normalization. Forced SPEC choice reflects incomplete action documentation; no supplied enum violation is established.')
+add('V03','IMPL',3,[
+'contract/spec/api.json:422',
+'impl/identity/handler.go:161',
+'impl/identity/handler.go:216'],
+'⚠️ Both the contract and request-field annotation name preview_credentials_identifier_similar. The handler reads credentials_identifier_similar instead. This isolated lookup mismatch makes documented similarity filtering ineffective and is more plausibly an implementation typo.')
+add('V04','SPEC',2,[
+'contract/spec/api.json:9',
+'impl/selfservice/strategy/code/strategy_recovery_admin.go:74',
+'impl/selfservice/strategy/code/strategy_recovery_admin.go:157',
+'impl/selfservice/strategy/code/strategy_recovery_admin.go:165'],
+'⚠️ ParseDuration plus a positive-duration check supports meaningful fractional lifespans. No functional requirement explains excluding 1.5h. The integer-only schema and matching annotation/error text appear narrower than the deliberately used duration parser, although intent remains uncertain.')
+add('V05','SPEC',3,[
+'contract/rest-api/resources/src/main/resources/openapi/dataMessage/dataMessage-scopeId-datastoreMessageId.yaml:19',
+'contract/rest-api/resources/src/main/resources/openapi/dataMessage/dataMessage-scopeId-datastoreMessageId.yaml:30',
+'impl/rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DataMessagesJson.java:212',
+'impl/rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/DataMessages.java:209'],
+'⚠️ The operation summary and response description promise one identified message, and both JSON and XML retrieval return one entity. Referencing dataMessageListResult contradicts that singular operation; the response schema is likely mistaken.')
+add('V06','IMPL',3,[
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:90',
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:102',
+'impl/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:67',
+'impl/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentStatusEntrypoint.java:54'],
+'⚠️ The required product parameter permits multiple products, but the controller never forwards it and the bank call hardcodes SEPA. Selecting a different product should affect the request; dropping that selection is an implementation defect.')
+add('V07','SPEC',1,[
+'contract/rest-api/resources/src/main/resources/openapi/deviceEvent/deviceEvent.yaml:44',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:101',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:144',
+'impl/service/device/registry/internal/src/main/java/org/eclipse/kapua/service/device/registry/event/internal/DeviceEventImpl.java:196'],
+'⚠️ This item documents action as a plain string, without the claimed enum. SUBMIT is an explicit method preserved by normalization. Forced SPEC choice concerns sparse documentation; the proposition does not demonstrate an implementation/schema incompatibility.')
+add('V08','IMPL',3,[
+'contract/src/main/resources/openapi.json:335',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:375',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:412',
+'impl/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java:197'],
+'⚠️ Subscription checks only whether topics and topic_pattern coexist in this body. It then subscribes without checking manual assignment or translating that conflict to 409. The documented mutual exclusion needs enforcement against existing consumer state.')
+add('V09','IMPL',3,[
+'contract/app/src/main/resources-unfiltered/META-INF/resources/api-specifications/registry/v3/openapi.json:4581',
+'contract/app/src/main/resources-unfiltered/META-INF/resources/api-specifications/registry/v3/openapi.json:638',
+'impl/app/src/main/java/io/apicurio/registry/rest/v3/impl/IdsResourceImpl.java:89',
+'impl/app/src/main/java/io/apicurio/registry/rest/v3/impl/AbstractResourceImpl.java:131'],
+'⚠️ REWRITE is applied to artifact content, yet generated URLs target the version metadata operation. A content reference must retrieve the referenced content. Omitting /content in the URL construction is the likely defect.')
+add('V10','IMPL',3,[
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:63',
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_pis.yml:102',
+'impl/opba-banking-rest-impl/src/main/java/de/adorsys/opba/tppbankingapi/controller/TppBankingApiPisInfoController.java:41',
+'impl/opba-protocols/xs2a-protocol/src/main/java/de/adorsys/opba/protocol/xs2a/entrypoint/pis/Xs2aGetPaymentInfoEntrypoint.java:54'],
+'⚠️ Payment information accepts a required product choice, but the controller drops it and the protocol calls the bank with the SEPA constant. This defeats the path parameter and can query the wrong payment product.')
+add('V11','IMPL',3,[
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:46',
+'contract/opba-banking-rest-api/src/main/resources/static/tpp_banking_api_bank_search.yml:93',
+'impl/core/banking-protocol/src/main/java/de/adorsys/opba/core/protocol/controller/TppBankSearchController.java:43'],
+'⚠️ The search result models a bank array and total count, naturally representing zero matches. Returning 404 solely because that collection is empty unnecessarily discards the documented result object; the implementation should return an empty successful search result.')
+add('V12','SPEC',2,[
+'contract/spec/api.json:9',
+'impl/selfservice/strategy/link/strategy_recovery.go:97',
+'impl/selfservice/strategy/link/strategy_recovery.go:163',
+'impl/selfservice/strategy/link/strategy_recovery.go:170'],
+'⚠️ The handler deliberately parses durations and checks that expiry lies in the future. Positive compound and fractional durations preserve that behavior. The single-integer-segment pattern looks unnecessarily restrictive, despite matching source annotations and error wording.')
+add('V13','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:316',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java:44',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67'],
+'⚠️ Errors reaching these mappers are serialized as one Error, although the endpoint references an envelope requiring errors. The defined Error schema already serves as the array element. Omitting the envelope is the likelier implementation omission.')
+add('V14','IMPL',3,[
+'contract/src/main/resources/api-specs/security-openapi.yaml:280',
+'impl/src/main/java/com/zufar/icedlatte/security/endpoint/UserSecurityEndpoint.java:223',
+'impl/src/main/java/com/zufar/icedlatte/security/api/AuthSessionService.java:85',
+'impl/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:143'],
+'⚠️ A missing session is a normal not-found condition explicitly documented as 404. revokeById throws IllegalArgumentException, while the catch-all returns 500. The service should use a mapped not-found exception or provide the appropriate mapping.')
+add('V15','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:119',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46'],
+'⚠️ Contract creation references the Errors response with a required errors array. ContractsExceptionMapper instead puts a single Error directly in the response entity. Wrapping that existing error object better preserves the explicitly modeled response structure.')
+add('V16','SPEC',2,[
+'contract/spec/api.json:720',
+'impl/selfservice/strategy/idfirst/strategy_login.go:188',
+'impl/ui/node/attributes.go:87'],
+'⚠️ Identifier-first login explicitly assigns username webauthn to its identifier input. This purposeful UI attribute is serialized as a string. The six-value enum omits an intentionally generated autocomplete value and is more likely incomplete than the login behavior.')
+add('V17','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:339',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/SubscriptionsExceptionMapper.java:44'],
+'⚠️ Subscription listing promises the shared Errors envelope for default errors. The supplied mappers emit an Error directly, losing the required errors member. The response construction is more likely missing a wrapper than the schema defining an unintended collection.')
+add('V18','SPEC',2,[
+'contract/rest-api/resources/src/main/resources/openapi/deviceKeystore/deviceKeystore.yaml:21',
+'contract/rest-api/resources/src/main/resources/openapi/deviceKeystore/deviceKeystore-scopeId-deviceId.yaml:49',
+'impl/service/device/management/keystore/api/src/main/java/org/eclipse/kapua/service/device/management/keystore/model/DeviceKeystore.java:39',
+'impl/service/device/management/keystore/internal/src/main/java/org/eclipse/kapua/service/device/management/keystore/model/internal/DeviceKeystoreImpl.java:37'],
+'⚠️ The public model explicitly calls this an identifier and maps getId to id; keystore operations also select keystoreId. The schema alone calls it name. That isolated property name is more likely a documentation mismatch than an unintended identifier serialization.')
+add('V19','IMPL',1,[
+'contract/src/main/resources/openapi.json:16',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:143',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:169',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:286',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:95'],
+'⚠️ CORS uses RouterBuilder.rootHandler, and consumer creation reads the JSON body. The claimed body-handler replacement is unproven without framework internals. Forced IMPL choice: if configuration values disappear under CORS, router/body integration is the likely fault.')
+add('V20','IMPL',1,[
+'contract/src/main/resources/openapi.json:168',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:169',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:181',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:500'],
+'⚠️ The endpoint reads body.partitions and seeks to their end. CORS adds a RouterBuilder root handler; supplied files do not establish body-parser suppression. Forced IMPL choice localizes any such failure to router integration, with low confidence.')
+add('V21','SPEC',3,[
+'contract/spec/swagger.json:1562',
+'contract/spec/swagger.json:2762',
+'impl/session/helper.go:9',
+'impl/session/manager_http.go:94'],
+'⚠️ The contract itself explains that session tokens use the HTTP Authorization header. The bearer extractor implements exactly that behavior. Declaring Authorization as a query parameter contradicts this internal documentation and is likely an annotation-generation error.')
+add('V22','SPEC',1,[
+'contract/rest-api/resources/src/main/resources/openapi/deviceEvent/deviceEvent.yaml:44',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:101',
+'impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java:144',
+'impl/service/device/registry/internal/src/main/java/org/eclipse/kapua/service/device/registry/event/internal/DeviceEventImpl.java:196'],
+'⚠️ The query response schema has no action enum, so SUBMIT does not violate the supplied contract. Explicit enum modeling and default normalization preserve it intentionally. Forced SPEC choice concerns documentation incompleteness; the asserted restriction is unsupported.')
+add('V23','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:469',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67'],
+'⚠️ The sync operation references the Errors envelope. Unhandled exceptions reaching DefaultExceptionMapper instead receive a bare Error object. Adding the required errors wrapper fits the schema without changing the error details or endpoint semantics.')
+add('V24','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:195',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67'],
+'⚠️ Contract sync advertises Errors with a required errors array, but the supplied exception mappers build response entities from Error directly. This loses the envelope while retaining its intended element fields, suggesting incomplete implementation of the response model.')
+add('V25','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:30',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:41',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46'],
+'⚠️ Deletion errors use the shared envelope in the contract. ContractsExceptionMapper maps a missing contract to 404 but serializes one Error without errors. Correct status selection does not satisfy the required response shape; the mapper likely needs wrapping.')
+add('V26','SPEC',2,[
+'contract/rest-api/resources/src/main/resources/openapi/authentication/authentication.yaml:54',
+'impl/service/security/authentication/api/src/main/java/org/eclipse/kapua/service/authentication/token/LoginInfo.java:38',
+'impl/service/security/authentication/api/src/main/java/org/eclipse/kapua/service/authentication/token/LoginInfo.java:48',
+'impl/service/security/shiro/src/main/java/org/eclipse/kapua/service/authentication/token/shiro/LoginInfoImpl.java:43'],
+'⚠️ LoginInfo deliberately exposes singular getter and XML element names for permission collections, consistently implemented by its model. The schema pluralizes those wire names. A specification naming mismatch is more plausible than three independently accidental serialization names.')
+add('V27','SPEC',2,[
+'contract/spec/api.json:720',
+'impl/selfservice/strategy/idfirst/strategy_login.go:139',
+'impl/selfservice/strategy/idfirst/strategy_login.go:188',
+'impl/ui/node/attributes.go:87'],
+'⚠️ Identifier-first flow construction intentionally emits username webauthn for identifier nodes, and autocomplete is serialized directly. The response enum fails to describe this purposeful strategy output. Extending the specification is more plausible than removing the attribute.')
+add('V28','IMPL',3,[
+'contract/src/main/resources/api-specs/product-openapi.yaml:95',
+'impl/src/main/java/com/zufar/icedlatte/product/api/PageableProductsProvider.java:34',
+'impl/src/main/java/com/zufar/icedlatte/product/api/PageableProductsProvider.java:46',
+'impl/src/main/java/com/zufar/icedlatte/product/exception/handler/ProductExceptionHandler.java:22',
+'impl/src/main/java/com/zufar/icedlatte/common/exception/handler/GlobalExceptionHandler.java:20'],
+'⚠️ User-supplied sort properties reach Sort.by and findAll without validation. The supplied advice handles validation and product-not-found exceptions, not invalid property references. A client sorting mistake should produce the documented 400 rather than an unmapped server failure.')
+add('V29','IMPL',3,[
+'contract/src/main/resources/openapi.json:548',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:357',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:641',
+'impl/src/main/java/io/strimzi/kafka/bridge/SinkBridgeEndpoint.java:317'],
+'⚠️ doAssign adds requested partitions and calls assign without checking an active subscription. The underlying assignment path supplies no matching 409 guard either. Existing subscription conflicts therefore lack the API-level mutual-exclusion handling explicitly promised by the contract.')
+add('V30','IMPL',3,[
+'contract/docs/api.swagger.json:3083',
+'contract/docs/api.swagger.json:3176',
+'impl/oauth2/doc.go:83',
+'impl/oauth2/doc.go:96',
+'impl/oauth2/handler.go:229'],
+'⚠️ Both schema descriptions and Go response fields distinguish claim names from OAuth scopes. The discovery handler assigns each from the oppositely named provider. Swapped assignments are a direct implementation error; the documented field meanings are internally consistent.')
+add('V31','IMPL',1,[
+'contract/src/main/resources/openapi.json:104',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java:169',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:181',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java:500'],
+'⚠️ Beginning-seek consumes JSON partitions, while CORS is installed through RouterBuilder.rootHandler. No supplied framework implementation proves body handling is disabled. Forced IMPL choice: any CORS-dependent loss of partition input belongs in request processing, not the documented seek behavior.')
+add('V32','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:444',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsResource.java:358'],
+'⚠️ For exceptions reaching the shared mappers, bare Error entities omit the required errors envelope. The UMB handler catches many processing errors itself, so this does not characterize every failure; the mapper response construction remains the likelier defect.')
+add('V33','SPEC',2,[
+'contract/spec/api.json:725',
+'impl/selfservice/strategy/idfirst/strategy_login.go:188',
+'impl/ui/node/attributes.go:87'],
+'⚠️ The browser login strategy explicitly builds an identifier input using username webauthn. Serialization preserves that chosen attribute. The six-entry autocomplete enum does not cover the intentional browser-flow output, making the schema more likely incomplete.')
+add('V34','IMPL',3,[
+'contract/app/src/main/resources-unfiltered/META-INF/resources/api-specifications/registry/v3/openapi.json:611',
+'contract/app/src/main/resources-unfiltered/META-INF/resources/api-specifications/registry/v3/openapi.json:2686',
+'contract/app/src/main/resources-unfiltered/META-INF/resources/api-specifications/registry/v3/openapi.json:4581',
+'impl/app/src/main/java/io/apicurio/registry/rest/v3/impl/AbstractResourceImpl.java:131',
+'impl/app/src/main/java/io/apicurio/registry/rest/v3/impl/GroupsResourceImpl.java:875'],
+'⚠️ The content operation rewrites references using URLs lacking /content. The contract separates version metadata from version content, so those URLs identify the wrong representation. Fixing the URL builder preserves the intended usefulness of rewritten content references.')
+add('V35','IMPL',3,[
+'contract/src/main/resources/openapi.json:724',
+'contract/src/main/resources/openapi.json:2257',
+'contract/src/main/resources/openapi.json:2276',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpBinaryMessageConverter.java:48',
+'impl/src/main/java/io/strimzi/kafka/bridge/http/converter/HttpTextMessageConverter.java:49'],
+'⚠️ The binary converter applies asText before decoding, without the node-type validation present for text records. Structured input can become empty bytes rather than trigger 422. Such silent representation loss is more plausibly a converter bug than intended binary encoding.')
+add('V36','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:98',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67'],
+'⚠️ Contract listing references the required errors-array envelope. The supplied exception mappers serialize Error as the entire entity instead of an element within that envelope. This is most plausibly an omitted response wrapper in the implementation.')
+add('V37','SPEC',3,[
+'contract/.schema/api.swagger.json:684',
+'impl/selfservice/strategy/password/login.go:31',
+'impl/selfservice/strategy/password/login.go:63',
+'impl/selfservice/strategy/password/login.go:178'],
+'⚠️ Route registration and generated login forms independently use POST for credential submission. The Swagger annotation alone says GET and produces the contract mismatch. Correcting that annotation fits the implemented login flow better than exposing password submission through GET.')
+add('V38','IMPL',2,[
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:259',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1251',
+'contract/swatch-contracts/src/main/resources/META-INF/openapi.yaml:1909',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsExceptionMapper.java:46',
+'impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/DefaultExceptionMapper.java:67'],
+'⚠️ Partner contract creation specifies the shared Errors envelope. Its supplied mappers return a bare Error carrying the envelope element fields. The missing required errors array is more likely a response-building omission than an intended alternative error format.')
+add('V39','IMPL',3,[
+'contract/rest-api/resources/src/main/resources/openapi/serviceConfiguration/serviceConfiguration-scopeId.yaml:79',
+'impl/rest-api/resources/src/main/java/org/eclipse/kapua/app/api/resources/v1/resources/ServiceConfigurations.java:86',
+'impl/commons-rest/errors/src/main/java/org/eclipse/kapua/commons/rest/errors/KapuaEntityNotFoundExceptionMapper.java:42',
+'impl/commons-rest/errors/src/main/java/org/eclipse/kapua/commons/rest/errors/ThrowableMapper.java:40'],
+'⚠️ Updating configurations dereferences accountService.find(scopeId) without checking for a missing account. A not-found mapper already exists, whereas an unchecked null dereference reaches the server-error mapper. The implementation should raise the existing entity-not-found condition.')
+add('V40','IMPL',3,[
+'contract/api/rhsm-subscriptions-api-spec.yaml:1705',
+'impl/src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:215',
+'impl/src/main/java/org/candlepin/subscriptions/resource/InstancesResource.java:218',
+'impl/swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java:46',
+'impl/swatch-core/src/main/java/org/candlepin/subscriptions/db/model/InstanceMonthlyTotalKey.java:50'],
+'⚠️ Stored totals are keyed by month and unit, but conversion takes an arbitrary first value for one unit and inserts zeros for others. Positions follow metadata, but values need unit-specific total lookup; the implementation loses measurement meaning.')
+
+headers=['item_id','L1','confidence','evidence_locators','rationale']
+with Path('items.csv').open(newline='') as source:
+    expected=[r['item_id'] for r in csv.DictReader(source)]
+assert [r['item_id'] for r in rows]==expected
+assert len(rows)==40 and len({r['item_id'] for r in rows})==40
+for r in rows:
+    assert r['L1'] in {'SPEC','IMPL'} and r['confidence'] in {1,2,3}
+    assert len(r['rationale'].split())<=40,(r['item_id'],len(r['rationale'].split()))
+    for locator in r['evidence_locators'].split('; '):
+        path,line=locator.rsplit(':',1)
+        assert path.startswith(r['item_id']+'/')
+        assert 1<=int(line)<=len(Path(path).read_text().splitlines())
+counts=Counter(r['L1'] for r in rows)
+conf=Counter(r['confidence'] for r in rows)
+with Path('labels_F1.csv').open('w',newline='') as target:
+    writer=csv.DictWriter(target,fieldnames=headers)
+    writer.writeheader()
+    writer.writerows(rows)
+
+report=f'''F1-এর blind review সম্পন্ন: items.csv-এর ক্রমে ৪০টি item-এর প্রত্যেকটির জন্য একটি L1 সিদ্ধান্ত দেওয়া হয়েছে। SPEC {counts['SPEC']}টি এবং IMPL {counts['IMPL']}টি; confidence 1: {conf[1]}টি, 2: {conf[2]}টি, 3: {conf[3]}টি। গণনার উৎস [labels_F1.csv](labels_F1.csv)-এর V01–V40 row। Forced-choice ও confidence-এর নিয়ম [TASK_M1F.md](TASK_M1F.md)-এর Labelling ও Task M1 অংশে আছে।
+
+পদ্ধতি: প্রথম command ছিল "'`cat TASK_M1F.md`; এরপর অনুমোদিত protocol এবং এই directory-র task data পড়েছি। প্রতিটি item-এর contract, schema/annotation এবং implementation-এর handler/model/error path সেই item-এর মধ্যেই পর্যালোচনা করেছি। অন্য item-এর source-এর সঙ্গে তুলনা করিনি। Proposition-কে যাচাইযোগ্য দাবি হিসেবে নিয়েছি। Intended behavior সম্পর্কে অনুমান CSV rationale-তে ⚠️ দিয়ে চিহ্নিত করেছি। প্রতিটি সিদ্ধান্তে নিজ item-এর file:line evidence আছে; rationale সর্বোচ্চ ৪০টি whitespace-separated শব্দ। বিধির উৎস: [TASK_M1F.md](TASK_M1F.md)-এর The items, Rules, Task M1 ও Output অংশ।
+
+কঠিন ক্ষেত্র: V02-তে action schema শুধু string; proposition-এর ছয়-মানের enum নেই। SUBMIT মডেলে আছে এবং normalization-এর default branch সেটি অপরিবর্তিত রাখে। তাই enum violation প্রতিষ্ঠিত হয়নি; বাধ্যতামূলক SPEC সিদ্ধান্তের confidence 1। প্রমাণ: [V02 schema](V02/contract/rest-api/resources/src/main/resources/openapi/deviceEvent/deviceEvent.yaml#L44), [V02 enum](V02/impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java#L101), [V02 normalization](V02/impl/service/device/api/src/main/java/org/eclipse/kapua/service/device/management/message/KapuaMethod.java#L144)। V07 ও V22-ও আলাদাভাবে নিজস্ব artifact দেখে বিচার করেছি; সেই item-গুলোর SPEC, confidence 1 সিদ্ধান্তের সুনির্দিষ্ট locator তাদের [CSV row](labels_F1.csv)-তে আছে। এখানে SPEC নির্বাচন documentation completeness সম্পর্কে দুর্বল অনুমান, প্রমাণিত contract/implementation বিরোধ নয়।
+
+V19, V20 ও V31-এর CORS proposition পুরোপুরি প্রতিষ্ঠা করা যায়নি। প্রতিটি item-এর দেওয়া implementation-এ `RouterBuilder.rootHandler` এবং JSON body পড়ার code আছে; framework internals দেওয়া নেই। ⚠️ যদি CORS-এর কারণে body হারায়, request-processing integration-ই সম্ভাব্য ত্রুটির স্থান—এই শর্তাধীন বিচারে IMPL, confidence 1 দিয়েছি। এগুলো পর্যবেক্ষিত runtime failure নয়। প্রমাণ পৃথকভাবে: [V19 router](V19/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java#L169), [V19 body](V19/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java#L286); [V20 router](V20/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java#L169), [V20 body](V20/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java#L500); [V31 router](V31/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpBridge.java#L169), [V31 body](V31/impl/src/main/java/io/strimzi/kafka/bridge/http/HttpSinkBridgeEndpoint.java#L500)।
+
+V04 ও V12-তে restrictive pattern ও duration parser-এর উদ্দেশ্য নির্ধারণ কঠিন। ⚠️ positive fractional/compound duration গ্রহণকে স্বাভাবিক lifespan behavior ধরে SPEC বেছে নিয়েছি; source annotation ও error wording-ও restrictive হওয়ায় confidence 2 রেখেছি। প্রমাণ: [V04 pattern](V04/contract/spec/api.json#L9), [V04 parser](V04/impl/selfservice/strategy/code/strategy_recovery_admin.go#L157), [V12 pattern](V12/contract/spec/api.json#L9), [V12 parser](V12/impl/selfservice/strategy/link/strategy_recovery.go#L163)। V18 ও V26-তে wire-name-এর intended design ইতিহাস ছাড়া নিশ্চিত নয়; explicit model annotation/getter-কে বেশি ওজন দিয়ে SPEC, confidence 2 দিয়েছি। প্রমাণ: [V18 identifier](V18/impl/service/device/management/keystore/api/src/main/java/org/eclipse/kapua/service/device/management/keystore/model/DeviceKeystore.java#L39), [V18 schema](V18/contract/rest-api/resources/src/main/resources/openapi/deviceKeystore/deviceKeystore.yaml#L21); [V26 model](V26/impl/service/security/authentication/api/src/main/java/org/eclipse/kapua/service/authentication/token/LoginInfo.java#L38), [V26 schema](V26/contract/rest-api/resources/src/main/resources/openapi/authentication/authentication.yaml#L54)।
+
+V13, V15, V17, V23, V24, V25, V32, V36 ও V38-এর প্রত্যেকটির নিজস্ব error schema ও mapper দেখে IMPL, confidence 2 নির্ধারণ করেছি। প্রত্যেকটির [CSV row](labels_F1.csv)-তে সেই item-এর default response, required errors array এবং bare Error entity-এর locator আছে। ⚠️ envelope বাদ পড়াকে implementation omission বলা intent inference; mismatch থেকে developer intent নিশ্চিত করা যায় না। V32 handler অনেক processing exception নিজেই ধরে response detail বসায়, তাই সব failure mapper-এ যাবে বলা ঠিক নয়: [V32 catch](V32/impl/swatch-contracts/src/main/java/com/redhat/swatch/contract/resource/ContractsResource.java#L358)।
+
+সীমাবদ্ধতা: runtime exchange ও VCS history অনুপস্থিত; কাজটি static review। কোনো item source compile বা execute করিনি; network, Docker, Java, Maven, external tool source, intent tool বা codebook ব্যবহার করিনি। পাঠ, redaction, CSV লেখা ও output validation-এর জন্য শুধু standard-library Python (`/usr/bin/python3 -I -B`) ব্যবহার করেছি; repository module import করিনি। Evidence সীমা ও বিধি [TASK_M1F.md](TASK_M1F.md)-এর The items, No execution ও Tools অংশে আছে। Confidence intended behavior সম্পর্কে বিচারগত আস্থা, runtime পরীক্ষার ফল নয়। অমীমাংসিত বিষয়: confidence 1 row-গুলোর intent ও CORS framework behavior; বর্তমান boundary-র বাইরে গিয়ে যাচাই করিনি।
+
+Boundary incidents: কোনো accidental boundary access ঘটেনি। COLLAB_BOARD.md, coordinator task, অন্য labeller-এর output বা বাইরের project material পড়িনি; directory-র বাইরের একমাত্র পাঠ ছিল অনুমোদিত `../../../09_collab/PROTOCOL.md`। Source ছাপানোর আগে personal-attribution/credential-looking line filter করেছি। Output শুধু [labels_F1.csv](labels_F1.csv) এবং এই report-এ লিখেছি। Read/write সীমার উৎস [TASK_M1F.md](TASK_M1F.md)-এর Supervisor authorization, Boundary, Privacy ও Writing অংশ।
+
+শেষ যাচাই: CSV header, ৪০টি অনন্য item, items.csv-এর ক্রম, অনুমোদিত L1/confidence, প্রতিটি rationale-এর শব্দসীমা এবং প্রতিটি evidence file:line-এর অস্তিত্ব যাচাই করা হয়েছে। আগের write-পূর্ব validation-এ V40 rationale ৪১ শব্দ হওয়ায় থেমেছিল; সেটি সংক্ষিপ্ত করার পর দুই deliverable লেখা হয়েছে। কোনো L2 বা partial-label file তৈরি করিনি। যাচাইয়ের বস্তু [items.csv](items.csv) ও [labels_F1.csv](labels_F1.csv); সব structural check উত্তীর্ণ।
+'"'''
+Path('report_F1.md').write_text(report)
+
+with Path('labels_F1.csv').open(newline='') as source:
+    reader=csv.DictReader(source)
+    assert reader.fieldnames==headers
+    saved=list(reader)
+assert [r['item_id'] for r in saved]==expected
+assert all(r['L1'] in {'SPEC','IMPL'} and r['confidence'] in {'1','2','3'} and len(r['rationale'].split())<=40 for r in saved)
+assert Path('report_F1.md').stat().st_size>0
+print({'rows':len(saved),'labels':dict(counts),'confidence':dict(sorted(conf.items())),'max_rationale_words':max(len(r['rationale'].split()) for r in saved),'evidence_locators_checked':sum(len(r['evidence_locators'].split('; ')) for r in saved),'outputs':['labels_F1.csv','report_F1.md'],'validation':'passed'})
+PY" in /home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f
+ succeeded in 0ms:
+{'rows': 40, 'labels': {'IMPL': 27, 'SPEC': 13}, 'confidence': {1: 6, 2: 16, 3: 18}, 'max_rationale_words': 40, 'evidence_locators_checked': 169, 'outputs': ['labels_F1.csv', 'report_F1.md'], 'validation': 'passed'}
+
+codex
+সম্পন্ন: ৪০টি label—IMPL ২৭, SPEC ১৩। সব structural validation পাস করেছে।
+
+- [labels_F1.csv](</home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f/labels_F1.csv>)
+- [বাংলা রিপোর্ট](</home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f/report_F1.md>)
+tokens used
+141,141
+সম্পন্ন: ৪০টি label—IMPL ২৭, SPEC ১৩। সব structural validation পাস করেছে।
+
+- [labels_F1.csv](</home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f/labels_F1.csv>)
+- [বাংলা রিপোর্ট](</home/afridi/Documents/API research/research/08_experiments/E2_labelling/e10_m1f/report_F1.md>)

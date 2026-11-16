@@ -1,6 +1,6 @@
 # Spec or Bug? Predicting Which Side Developers Repair When a REST API and Its Contract Disagree
 
-*Working draft v0.1 (2026-11-16). Numbers are taken from the frozen result files cited in brackets. Sections marked **[TODO]** need content that is not yet available. Sections marked **[E9]** are filled after E9 Part B is scored.*
+*Working draft v0.2 (2026-11-16). Numbers are taken from the frozen result files cited in brackets. Sections marked **[TODO]** need content that is not yet available. Sections marked **[E9]** are filled after E9 Part B is scored.*
 
 ---
 
@@ -14,7 +14,12 @@ When a REST implementation and its OpenAPI contract disagree, a test failure doe
    - Deliberate divergences were repaired in the contract in 79% of cases (26/33). Accidental divergences were never repaired in the contract (0/11; one-sided Fisher p < 10⁻⁴).
    - The association survives propositions written by a direction-blind reader (39/48 vs 0/10, p = 1.8 × 10⁻⁶).
 3. **A zero-shot LLM already triages real fixes well** (macro-F1 0.86–0.88), and better than an explicit intent-evidence codebook (0.70–0.72).
-4. **An explicit kind rule does not improve on the LLM.** A pre-registered hybrid that routes accidental divergences to the implementation changed only 1 of 85 labels, because the LLM already labels accidental divergences correctly. The LLM's residual errors are abstentions on deliberate divergences. A post-hoc fallback to the kind rule on those abstentions reached macro-F1 0.98; this result is exploratory.
+4. **An explicit kind rule does not improve on the LLM.** A pre-registered hybrid that routes accidental divergences to the implementation changed only 1 of 85 labels, because the LLM already labels accidental divergences correctly. In that sample the LLM's residual errors were abstentions on deliberate divergences, and a post-hoc fallback to the kind rule reached macro-F1 0.98.
+5. **The fallback did not replicate, but the kind effect did.** On 40 further pre-registered items (E10):
+   - The LLM rarely abstained. Instead it confidently mislabelled a cluster of deliberate divergences, and its macro-F1 fell to 0.58–0.64.
+   - The fallback lost to a forced-choice LLM.
+   - The kind rule held at 0.77, and the kind × direction association replicated: 19/24 vs 2/13, p = 2.7 × 10⁻⁴.
+   - LLM triage accuracy varies strongly between clustered samples. The divergence kind is the more stable signal.
 
 All hypotheses were pre-registered with hash-frozen scorers. All coders were blind to the hypothesis and to the repair direction.
 
@@ -237,6 +242,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - E8 + E8b re-describes the E7 items and the T47 items.
   - The T47 row codes the same T47 items from the miner's text.
   - The E6 row is the exploratory set from which the hypothesis came.
+  - The E10 row is the only sample disjoint from all the others: new items mined by T48, coded by new coders C9 and C10. It is the first sample with accidental divergences repaired in the contract (2/13, from one fix).
 - **In every row, no accidental divergence was repaired in the contract.**
 
 - **The rule's errors are asymmetric.**
@@ -263,11 +269,35 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - **M1's residual errors are almost all on DELIBERATE items:** 47/61 correct for each labeller. Most misses are UNDECIDABLE on items whose spec was later repaired (12 per labeller).
 - **Post-hoc (exploratory):** using R only when M1 abstains raised macro-F1 to 0.976 for both labellers, with full coverage. This rule was formed after seeing the data and needs a new pre-registered test.
 
+### 4.5 RQ4 replication: fallback triage [E10]
+**Data:** 40 new items (SPEC 21, IMPL 19) from 21 mined fixes in 8 repositories. Final kinds: DELIBERATE 24, ACCIDENTAL 13, UNCLEAR 3 (coder κ 0.853). Pre-registered before mining [`E10_PLAN.md`]; a cluster-level sensitivity analysis was frozen before any blind run [`E10_ADDENDUM.md`].
+
+| Method | macro-F1 (labeller pair) |
+|---|---|
+| R (kind rule) | 0.766 |
+| M1 (zero-shot LLM, may abstain) | 0.575 / 0.639 |
+| FB (M1; R when M1 abstains) | 0.646 / 0.702 |
+| M1F (forced choice SPEC/IMPL) | 0.744 / 0.744 |
+
+- **H-E10-1 (R on M1's abstentions) is INSUFFICIENT.** R was right on 6/6 pairs, but they come from only 3 items in one cluster, below the pre-registered minimum of 8 pairs.
+- **H-E10-2 (FB better than forced choice) is NOT_BETTER.** The forced-choice LLM won all 8 discordant pairs (reverse p = 0.0039). By cluster, the difference rests on 2 of 21 clusters (p = 0.25).
+- **H-E10-3 (kind × direction) PASSES again:** DELIBERATE → SPEC 19/24 vs ACCIDENTAL → SPEC 2/13, p = 2.7 × 10⁻⁴. By cluster: 7/11 vs 1/9, p = 0.025.
+- **Exploratory: why M1 dropped.**
+  - One repository contributed 10 items from 2 fixes, 9 of them repaired in the spec.
+  - Every LLM labeller called 9 of these 10 IMPL; the kind rule was right on 9/10.
+  - So M1's errors here were confident wrong labels, not abstentions.
+- **Exploratory: the first accidental divergences repaired in the contract.** Two items from one fix.
+
 ## 5. Discussion
 - **The default assumption is wrong for a large share of fixes.** Tools that assume "the implementation is wrong" would misroute a large share of real fixes. In our sample, developers repaired the contract in more than half of them.
-- **Accidental divergences can be routed to code automatically.** No accidental divergence in our data was resolved by changing the contract, so a pipeline can route these to the code with high precision.
+- **Accidental divergences can usually be routed to code.** In the first three confirmatory samples no accidental divergence was resolved by changing the contract. E10 found the first two, both from one fix. Routing accidental divergences to the code is therefore high-precision, not infallible.
 - **Deliberate divergences need a human decision.** They lean towards spec repair, but about one in five is still repaired in the code. This matches practitioner tools, where a human decides whether drift is intended.
-- **Why does the LLM already do well?** It appears to recognise the deliberate/accidental distinction implicitly. It never needed the accidental override (E9). Its weakness is deciding between a deliberate implementation choice and the contract when nothing says which is intended. There it abstains, while the kind rule's prior towards SPEC is right about 4 times in 5. Combining the two is the most promising practical pipeline (exploratory).
+- **How reliable is LLM triage?**
+  - In E9 the LLM seemed to recognise the deliberate/accidental distinction implicitly. It never needed the accidental override, and its errors were abstentions on deliberate divergences.
+  - E10 shows that this picture is sample-dependent. On a new, more clustered sample the LLM confidently mislabelled deliberate divergences as implementation bugs.
+  - The kind rule was the more stable of the two: macro-F1 0.85 in E9 and 0.77 in E10, against 0.90 and 0.58–0.64 for the LLM.
+  - No single combination rule was best in both samples. Each sample's apparent winner (fallback in E9; kind rule first plus forced choice in E10, macro-F1 0.82) was found post hoc.
+  - The practical lesson: report LLM triage accuracy over many fixes and clusters, and use the divergence kind as an interpretable check on it.
 - **Implication for fuzzers.**
   - A runtime failure of the accidental kind (an unhandled exception, a 500, a missing header) is a strong signal of an implementation bug.
   - A clean, explicit rejection that contradicts the spec is more often a stale or under-specified contract.
@@ -284,14 +314,26 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - **Sampling.**
   - Only correction-cue commits, and only OSS Java, Kotlin and Go projects.
   - Items cluster by repository and fix.
-  - The accidental arm is small (n = 10–11), so the odds-ratio CIs are very wide.
+  - The accidental arm is small (n = 10–24 per sample), so the odds-ratio CIs are very wide.
+  - E10's 40 items come from 21 fixes, and one repository contributes 10 items from 2 fixes. Cluster-level analyses are reported alongside the item-level ones.
 - **Hypothesis origin and forking paths.**
   - H-E7-1 came from post-hoc coding of the E6 items, which are reported as exploratory only.
   - All amendments were frozen before use and are disclosed: E7 A1–A3 and E8 B1, the single further look.
   - Some mining stages previewed candidates beyond their final prefix, as documented in the T46 and T47 reports.
 
 ## 7. Conclusion
-**[TODO]** Write after E9.
+When an API and its contract disagree, the side developers repair is predictable from what kind of divergence it is.
+- **Deliberate divergences,** behaviour that the code explicitly produces, are mostly resolved by changing the contract.
+- **Accidental divergences,** side effects of omissions, are almost always resolved by changing the code.
+- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10). It held with direction-blind propositions, and it held at the level of fix clusters.
+- **LLM triage is less stable.** A zero-shot LLM can match or beat explicit rules on one sample (E9) and fall well below them on another (E10). Neither pre-registered attempt to combine the LLM with the kind rule beat the LLM alone.
+
+Testing tools should therefore not assume that the implementation is wrong. They should surface the divergence kind as a first-class signal.
+
+**Future work:**
+- larger human-validated samples;
+- other model families;
+- triage tools evaluated over many fix clusters, not single samples.
 
 ## Data availability
 Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's parent commit. One repository later adopted a restrictive licence, but every excerpt we use comes from versions under MIT, Apache-2.0 or CC BY-NC 4.0, and the excerpts are released under those terms. As a robustness check, the headline results do not change without the three items closest to the restrictive period: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
