@@ -294,6 +294,8 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 **[TODO]** Write after E9.
 
 ## Data availability
+Licence constraints, and the provisional exclusion of three items whose upstream licence restricts publication, are documented in `LICENSE_REVIEW.md`. The headline results do not change without them: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
+
 **[TODO]** Plan the replication package:
 - packages, keys, codes, labels, scorers, freezes, the analysis scripts and the logs;
 - licence review for the upstream excerpts.
