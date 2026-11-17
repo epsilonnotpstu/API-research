@@ -82,3 +82,55 @@ Claude knows the hypotheses but makes no choice that could favour them. Two furt
 - **Cause.** After F3, the preflight failed at package level on three `raw_fallback` contract files, all with finding kind `vcs_header` and no other kind. The case-insensitive VCS-header pattern (`^index <hex>`, `^Date:`, …) matches ordinary upstream YAML lines, such as a top-level `date:` key.
 - **Change.** The VCS-header check now applies to the generated files: `diff.patch`, `item.md`, `items.csv`, `README.md` and `TASK_R3.md`. It no longer applies to upstream `contract/`, `before/` or `after/` file contents. Those still pass the full privacy and metadata findings: emails, attribution, credentials, encoded literals, sample SHAs, IDs and message text.
 - **Inspection.** Only the finding kinds and file roles were inspected; no contents.
+
+**F4 revised (before publication, 2026-11-18).**
+- **Cause.** The first version of F4 ran the generic content rules on delivered paths. The build then flagged almost every path: 143 before, 153 after and 176 contract paths. `ENCODED` matches any token of 40 or more characters joined by `/`, such as Java source paths.
+- **Change.** Paths now get a targeted check (`path_flag`). A path is flagged only if:
+  - it contains a sample SHA of at least 7 characters, or a distinctive message line; or
+  - one of its segments contains an email address, a ticket-style ID, or a `#N` ID written with `#`.
+- **Tests:**
+  - `test_t53.py --synthetic-only`: 29/29 pass.
+  - `test_t54.py`: 22/24 pass. Both failures are expected by design:
+    - `test_risk_metadata_in_fallback_filename_is_not_scanned` now fails because the path check catches the ID in the filename.
+    - `test_package_scan_still_rejects_fallback_vcs_header` fails because F5 deliberately exempts upstream contract contents from the VCS-header check; their full privacy findings still apply.
+
+**Fix F6 to `t53_build.py` (2026-11-18, before any coder ran).**
+- **Cause.** The first successful build delivered 115 of 136 items. All 21 build failures had one item-level finding, `non_idempotent_or_metadata`, always on a projected JSON contract, and always because the generic redaction rules are not idempotent (redacted output matched another rule on a second pass). None was caused by remaining sample metadata.
+- **Inspection.** Only finding kinds, file roles and the cause class were inspected; no values.
+- **Change.** `redact_fix` applies redaction to a fixpoint (at most 5 passes) for every delivered file in `build_item`. This only ever redacts more, and is byte-identical for files that were already idempotent.
+- **Superseded build.** The first build's package and key files were moved unopened to `collab/logs/T53_scratch/superseded_build1/` (local only) and replaced by the rebuild. The salt, and therefore the item IDs, are unchanged. No coder had seen it.
+- **Tests.** `test_t53.py --synthetic-only` 29/29. `test_t54.py` 22/24, with the same two expected failures as before.
+
+**Fix F6b (2026-11-18).**
+- **Cause.** After F6 the rebuild delivered 122 of 136 items. All 14 remaining failures were again `non_idempotent_or_metadata` on a projected JSON contract, generic cause: redaction did not reach a fixpoint within 5 passes.
+- **Change.** A projected contract whose redaction still changes after the fixpoint attempts raises ContractError, so the item takes the F3 raw-text fallback instead of failing.
+- **Superseded build.** The second build (122 items) was moved unopened to `collab/logs/T53_scratch/superseded_build2/`. The IDs are unchanged.
+
+**Fix F6c (2026-11-18).**
+- **Cause.** F6b did not change the result: 122 delivered and the same 14 failures. The non-converging redaction was in the raw-fallback contract text, which also starts with `{`.
+- **Change.** If redaction still has no fixpoint after 5 passes, `redact_fix` replaces every line that redaction would still change with a whole-line `[REDACTED]` marker. The marker itself is idempotent. This removes more text, never less.
+- **Superseded build.** The third build was moved unopened to `superseded_build3/`.
+
+**Fix F6d (2026-11-18).**
+- **Cause.** F6b and F6c left the build byte-identical (122 delivered, 14 failed). Direct inspection of one failing item (boolean properties only) found the cause:
+  - In the raw fallback, a large JSON contract is redacted as JSON and then truncated to 2,000 lines.
+  - The truncated prefix is no longer JSON, so redaction applies different line rules to it.
+  - A second pass therefore changes it. One further pass reaches a fixpoint.
+- **Change.** The truncated fallback text is passed through `redact_fix` again.
+- **F6b and F6c** stay in place as harmless guards.
+- **Superseded build.** The fourth build was moved unopened to `superseded_build4/`.
+
+**Build outcome (2026-11-18).**
+- After F6d, all 136 sampled items were delivered, with 0 build failures.
+- Mapping modes:
+  - `raw_fallback`: 93
+  - `no_checked_in_document`: 29 (the parent commit has no checked-in contract document)
+  - `bounded_document_prefix`: 6
+  - `whole_document`: 5
+  - `mapped_operations`: 3
+- Claude's own checks:
+  - 136 items with IDs matching the key;
+  - `items.csv` uses LF line endings;
+  - `TASK_R3.md` is byte-identical to the plan copy;
+  - none of the 1,009 delivered files contains any sample commit or parent SHA (full, 10-character or 7-character).
+- The Claude batches are `r3_kb1`–`r3_kb10` (14 items each; `r3_kb10` has 10).
