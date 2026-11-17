@@ -1,0 +1,9 @@
+item_id,repo,operation,proposition
+Q01,fess,DELETE /api/v2/tags/{tagId},DELETE /api/v2/tags/{tagId}: contract says the listed deletion responses omit 409 Conflict; implementation does exhausted concurrent deletion retries return 409 Conflict
+Q02,fess,POST /api/v2/chat,"POST /api/v2/chat: contract says message is a required string with no stated maximum length; implementation does messages above the configured character limit return 400, with a default limit of 4000"
+Q03,datarhei-core,PUT /api/v3/process/{id},PUT /api/v3/process/{id}: contract says 404 Not Found is listed for the process update operation; implementation does an unknown process ID returns 400 Bad Request
+Q04,fess,GET /api/v2/auth/me,GET /api/v2/auth/me: contract says the listed responses omit 400 for undecodable query parameters; implementation does undecodable query parameters produce 400 invalid_request before dispatch
+Q05,answer,GET /answer/admin/api/siteinfo/interface,GET /answer/admin/api/siteinfo/interface: contract says a data request body matching AddCommentReq is required; implementation does GetInterface reads site configuration without binding or requiring a request body
+Q06,photoprism,GET /api/v1/labels,GET /api/v1/labels: contract says a single search.Label object; implementation does a JSON array of label objects
+Q07,fess,POST /api/v2/chat/stream,"POST /api/v2/chat/stream: contract says message is a required string with no stated maximum length; implementation does messages above the configured character limit return 400, with a default limit of 4000"
+Q08,photoprism,GET /api/v1/albums/{uid}/links,GET /api/v1/albums/{uid}/links: contract says a single entity.Link object; implementation does a JSON array of share links

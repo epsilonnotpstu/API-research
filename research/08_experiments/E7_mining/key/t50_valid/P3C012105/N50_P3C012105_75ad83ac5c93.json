@@ -1,0 +1,42 @@
+{
+  "repo": "nifi",
+  "fix_commit": "4e8c711b97921de8ce2465b43df79e089ea77a59",
+  "parent_commit": "d09c8b5a363edb415f0ad746730db998a380a915",
+  "date": "2026-07-27",
+  "message_excerpt": "NIFI-16148 Aligned Parameter Context Update Authorization (#11479)",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java"
+  ],
+  "path_roles": {
+    "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C012105",
+  "rank": 16,
+  "item_id": "N50_P3C012105_75ad83ac5c93",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /parameter-contexts/{contextId}/update-requests",
+  "proposition": "POST /parameter-contexts/{contextId}/update-requests: contract says updating a parameter context requires read permission for current and newly inherited parameter contexts; implementation does the update authorization callback checks the context, affected components and service references without checking inherited-context read permission",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "authorization",
+  "fix_family": "authorization.inherited_context",
+  "proposition_check": "{\"contract\":[\"d09c8b5a363edb415f0ad746730db998a380a915:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:669\"],\"implementation\":[\"d09c8b5a363edb415f0ad746730db998a380a915:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:177\",\"d09c8b5a363edb415f0ad746730db998a380a915:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:672\",\"d09c8b5a363edb415f0ad746730db998a380a915:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:739\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java\": {\"parent_lines\": [177, 672, 739], \"parent_numbered_excerpt\": \"172:             final Authorizable parameterContext = lookup.getParameterContext(parameterContextId);\\n173:             parameterContext.authorize(authorizer, RequestAction.READ, NiFiUserUtils.getNiFiUser());\\n174:         });\\n175:     }\\n176: \\n177:     private void authorizeReadWriteParameterContext(final String parameterContextId) {\\n178:         if (parameterContextId == null) {\\n179:             throw new IllegalArgumentException(\\\"Parameter Context ID must be specified\\\");\\n180:         }\\n181: \\n182:         serviceFacade.authorizeAccess(lookup -> {\\n667:                     @SecurityRequirement(name = \\\"Write - for every component that is affected by the update\\\"),\\n668:                     @SecurityRequirement(name = \\\"Read - for every currently inherited parameter context\\\"),\\n669:                     @SecurityRequirement(name = \\\"Read - for any new inherited parameter context\\\")\\n670:             }\\n671:     )\\n672:     public Response submitParameterContextUpdate(\\n673:             @PathParam(\\\"contextId\\\") final String contextId,\\n674:             @Parameter(description = \\\"The updated version of the parameter context.\\\", required = true) final ParameterContextEntity requestEntity) {\\n675: \\n676:         if (requestEntity == null) {\\n677:             throw new IllegalArgumentException(\\\"Parameter Context must be specified.\\\");\\n734: \\n735:                     // Verify READ and WRITE permissions for user, for every component that is affected\\n736:                     affectedComponents.forEach(component -> parameterUpdateManager.authorizeAffectedComponent(component, lookup, user, true, true));\\n737: \\n738:                     final ParameterContext parameterContext = lookup.getParameterContext(contextId);\\n739:                     validateControllerServiceReferences(requestEntity, lookup, parameterContext, user);\\n740:                 },\\n741:                 () -> {\\n742:                     // Verify Request\\n743:                     serviceFacade.verifyUpdateParameterContext(contextDto, false);\\n744:                 },\"}}, \"patch\": \"key/t50_evidence/P3C012105.diff\", \"patch_sha256\": \"44159943c607ca3948611a5a00b15d3628e641fa211192d5424aac9c105d0c47\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

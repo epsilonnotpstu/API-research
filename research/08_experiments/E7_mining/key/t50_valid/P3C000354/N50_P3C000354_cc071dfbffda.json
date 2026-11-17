@@ -1,0 +1,41 @@
+{
+  "repo": "datarhei-core",
+  "fix_commit": "6ee565b3c9f1f1e81d8a123d70f663776cb2fe75",
+  "parent_commit": "e675eccd509df718dc2fbba9fba1c433d6bc8c40",
+  "date": "2022-08-26",
+  "message_excerpt": "Fix correct output of purge_on_delete value",
+  "stars": "282",
+  "changes": [
+    [
+      "M",
+      "http/api/process.go"
+    ]
+  ],
+  "surface_paths": [
+    "http/api/process.go"
+  ],
+  "path_roles": {
+    "http/api/process.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C000354",
+  "rank": 39,
+  "item_id": "N50_P3C000354_cc071dfbffda",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v3/process/{id}",
+  "proposition": "GET /api/v3/process/{id}: contract says returned process configuration reflects the configuration supplied by Add or Update, including purge_on_delete; implementation does output cleanup conversion omits PurgeOnDelete, returning false even when the stored value is true",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "response",
+  "fix_family": "response.purge_configuration_roundtrip",
+  "proposition_check": "{\"contract\":[\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:docs/swagger.yaml:704\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:docs/swagger.yaml:2489\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:docs/swagger.yaml:2490\"],\"implementation\":[\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/api/process.go:98\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/api/process.go:136\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/api/process.go:177\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/handler/api/restream.go:81\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/handler/api/restream.go:129\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/handler/api/restream.go:268\",\"e675eccd509df718dc2fbba9fba1c433d6bc8c40:http/handler/api/restream.go:527\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [704, 2489, 2490], \"parent_numbered_excerpt\": \"699:         type: integer\\n700:       max_files:\\n701:         type: integer\\n702:       pattern:\\n703:         type: string\\n704:       purge_on_delete:\\n705:         type: boolean\\n706:     required:\\n707:     - pattern\\n708:     type: object\\n709:   api.ProcessConfigLimits:\\n2484:       security:\\n2485:       - ApiKeyAuth: []\\n2486:       summary: Issue a command to a process\\n2487:   /api/v3/process/{id}/config:\\n2488:     get:\\n2489:       description: Get the configuration of a process. This is the configuration as\\n2490:         provided by Add or Update.\\n2491:       operationId: process-3-get-config\\n2492:       parameters:\\n2493:       - description: Process ID\\n2494:         in: path\\n2495:         name: id\"}, \"http/api/process.go\": {\"parent_lines\": [98, 136, 177], \"parent_numbered_excerpt\": \"93: \\t\\tfor _, c := range x.Cleanup {\\n94: \\t\\t\\toutput.Cleanup = append(output.Cleanup, app.ConfigIOCleanup{\\n95: \\t\\t\\t\\tPattern:       c.Pattern,\\n96: \\t\\t\\t\\tMaxFiles:      c.MaxFiles,\\n97: \\t\\t\\t\\tMaxFileAge:    c.MaxFileAge,\\n98: \\t\\t\\t\\tPurgeOnDelete: c.PurgeOnDelete,\\n99: \\t\\t\\t})\\n100: \\t\\t}\\n101: \\n102: \\t\\tp.Output = append(p.Output, output)\\n103: \\n131: \\t\\t}\\n132: \\t}\\n133: }\\n134: \\n135: // Unmarshal converts a restream process config to a process config in API representation\\n136: func (cfg *ProcessConfig) Unmarshal(c *app.Config) {\\n137: \\tif c == nil {\\n138: \\t\\treturn\\n139: \\t}\\n140: \\n141: \\tcfg.ID = c.ID\\n172: \\n173: \\t\\tio.Options = make([]string, len(x.Options))\\n174: \\t\\tcopy(io.Options, x.Options)\\n175: \\n176: \\t\\tfor _, c := range x.Cleanup {\\n177: \\t\\t\\tio.Cleanup = append(io.Cleanup, ProcessConfigIOCleanup{\\n178: \\t\\t\\t\\tPattern:    c.Pattern,\\n179: \\t\\t\\t\\tMaxFiles:   c.MaxFiles,\\n180: \\t\\t\\t\\tMaxFileAge: c.MaxFileAge,\\n181: \\t\\t\\t})\\n182: \\t\\t}\"}, \"http/handler/api/restream.go\": {\"parent_lines\": [81, 129, 268, 527], \"parent_numbered_excerpt\": \"76: // @Param idpattern query string false \\\"Glob pattern for process IDs. If empty all IDs will be returned. Intersected with results from refpattern.\\\"\\n77: // @Param refpattern query string false \\\"Glob pattern for process references. If empty all IDs will be returned. Intersected with results from idpattern.\\\"\\n78: // @Success 200 {array} api.Process\\n79: // @Security ApiKeyAuth\\n80: // @Router /api/v3/process [get]\\n81: func (h *RestreamHandler) GetAll(c echo.Context) error {\\n82: \\tfilter := util.DefaultQuery(c, \\\"filter\\\", \\\"\\\")\\n83: \\treference := util.DefaultQuery(c, \\\"reference\\\", \\\"\\\")\\n84: \\twantids := strings.FieldsFunc(util.DefaultQuery(c, \\\"id\\\", \\\"\\\"), func(r rune) bool {\\n85: \\t\\treturn r == rune(',')\\n86: \\t})\\n124: // @Param filter query string false \\\"Comma separated list of fields (config, state, report, metadata) to be part of the output. If empty, all fields will be part of the output\\\"\\n125: // @Success 200 {object} api.Process\\n126: // @Failure 404 {object} api.Error\\n127: // @Security ApiKeyAuth\\n128: // @Router /api/v3/process/{id} [get]\\n129: func (h *RestreamHandler) Get(c echo.Context) error {\\n130: \\tid := util.PathParam(c, \\\"id\\\")\\n131: \\tfilter := util.DefaultQuery(c, \\\"filter\\\", \\\"\\\")\\n132: \\n133: \\tp, err := h.getProcess(id, filter)\\n134: \\tif err != nil {\\n263: \\tif err != nil {\\n264: \\t\\treturn api.Err(http.StatusNotFound, \\\"Unknown process ID\\\", \\\"%s\\\", err)\\n265: \\t}\\n266: \\n267: \\tconfig := api.ProcessConfig{}\\n268: \\tconfig.Unmarshal(p.Config)\\n269: \\n270: \\treturn c.JSON(http.StatusOK, config)\\n271: }\\n272: \\n273: // GetState returns the current state of a process\\n522: \\t\\tCreatedAt: process.CreatedAt,\\n523: \\t}\\n524: \\n525: \\tif wants[\\\"config\\\"] {\\n526: \\t\\tinfo.Config = &api.ProcessConfig{}\\n527: \\t\\tinfo.Config.Unmarshal(process.Config)\\n528: \\t}\\n529: \\n530: \\tif wants[\\\"state\\\"] {\\n531: \\t\\tif state, err := h.restream.GetProcessState(id); err == nil {\\n532: \\t\\t\\tinfo.State = &api.ProcessState{}\"}}, \"patch\": \"key/t50_evidence/P3C000354.diff\", \"patch_sha256\": \"7bcec4d14d72e7ea0c87254b74ec8258b957bca8b6db4646c3cd57f3c35a29d9\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

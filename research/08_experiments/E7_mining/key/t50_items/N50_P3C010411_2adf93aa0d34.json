@@ -1,0 +1,62 @@
+{
+  "repo": "answer",
+  "fix_commit": "0ce3b14bd25266c8c6c463c57dec4af29d961901",
+  "parent_commit": "1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b",
+  "date": "2022-11-03",
+  "message_excerpt": "fix: swagger wrong request parameter",
+  "stars": "15712",
+  "changes": [
+    [
+      "M",
+      "docs/docs.go"
+    ],
+    [
+      "M",
+      "docs/swagger.json"
+    ],
+    [
+      "M",
+      "docs/swagger.yaml"
+    ],
+    [
+      "M",
+      "internal/controller_backyard/siteinfo_controller.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.json",
+    "docs/swagger.yaml",
+    "internal/controller_backyard/siteinfo_controller.go"
+  ],
+  "path_roles": {
+    "docs/swagger.json": [
+      "openapi_root"
+    ],
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ],
+    "internal/controller_backyard/siteinfo_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C010411",
+  "rank": 2,
+  "item_id": "N50_P3C010411_2adf93aa0d34",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /answer/admin/api/siteinfo/interface",
+  "proposition": "GET /answer/admin/api/siteinfo/interface: contract says a data request body matching AddCommentReq is required; implementation does GetInterface reads site configuration without binding or requiring a request body",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "request",
+  "fix_family": "request.spurious_body",
+  "proposition_check": "{\"contract\":[\"1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b:docs/swagger.yaml:1717\"],\"implementation\":[\"1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b:internal/controller_backyard/siteinfo_controller.go:43\",\"1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b:internal/controller_backyard/siteinfo_controller.go:44\"],\"route\":[\"1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b:internal/router/answer_api_router.go:224\",\"1bcd3abbcbce947a0e6c3bd9d53b28735ea9ce7b:internal/router/answer_api_router.go:226\"]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [1717], \"parent_numbered_excerpt\": \"1712:       security:\\n1713:       - ApiKeyAuth: []\\n1714:       summary: Get siteinfo interface\\n1715:       tags:\\n1716:       - admin\\n1717:   /answer/admin/api/siteinfo/interface:\\n1718:     get:\\n1719:       description: Get siteinfo interface\\n1720:       parameters:\\n1721:       - description: general\\n1722:         in: body\"}, \"internal/controller_backyard/siteinfo_controller.go\": {\"parent_lines\": [43, 44], \"parent_numbered_excerpt\": \"38: // @Tags admin\\n39: // @Produce json\\n40: // @Success 200 {object} handler.RespBody{data=schema.SiteInterfaceResp}\\n41: // @Router /answer/admin/api/siteinfo/interface [get]\\n42: // @Param data body schema.AddCommentReq true \\\"general\\\"\\n43: func (sc *SiteInfoController) GetInterface(ctx *gin.Context) {\\n44: \\tresp, err := sc.siteInfoService.GetSiteInterface(ctx)\\n45: \\thandler.HandleResponse(ctx, err, resp)\\n46: }\\n47: \\n48: // UpdateGeneral godoc\\n49: // @Summary Get siteinfo interface\"}, \"internal/router/answer_api_router.go\": {\"parent_lines\": [224, 226], \"parent_numbered_excerpt\": \"219: \\t// theme\\n220: \\tr.GET(\\\"/theme/options\\\", a.themeController.GetThemeOptions)\\n221: \\n222: \\t// siteinfo\\n223: \\tr.GET(\\\"/siteinfo/general\\\", a.siteInfoController.GetGeneral)\\n224: \\tr.GET(\\\"/siteinfo/interface\\\", a.siteInfoController.GetInterface)\\n225: \\tr.PUT(\\\"/siteinfo/general\\\", a.siteInfoController.UpdateGeneral)\\n226: \\tr.PUT(\\\"/siteinfo/interface\\\", a.siteInfoController.UpdateInterface)\\n227: \\tr.GET(\\\"/setting/smtp\\\", a.siteInfoController.GetSMTPConfig)\\n228: \\tr.PUT(\\\"/setting/smtp\\\", a.siteInfoController.UpdateSMTPConfig)\\n229: }\"}}, \"patch\": \"key/t50_evidence/P3C010411.diff\", \"patch_sha256\": \"8e8671b3fe90d82bad856a78e2fb63be7b93fb4e7c970f1b6bd1373cfc67281a\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

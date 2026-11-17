@@ -1,0 +1,157 @@
+{
+  "repo": "harness",
+  "fix_commit": "0d9d587066e35afe98be75fc1bcf24e73bdf1245",
+  "parent_commit": "c7ab87ec7d140d202a174108a08d4988ac35d4c1",
+  "date": "2026-01-02",
+  "message_excerpt": "fix: [AH-2505]: status update of multiple apis (#4843)",
+  "stars": "38922",
+  "changes": [
+    [
+      "M",
+      "registry/app/api/controller/metadata/cleanuppolicy_mapper.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/cleanuppolicy_mapper_test.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/create_registry.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifact_detail.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifact_file.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifact_files.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifacts.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifacts_summary.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifacts_version_summary.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_artifacts_versions.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_registries.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_registry.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/get_registry_artifacts.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/registry_metadata_helper.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/update_registry.go"
+    ],
+    [
+      "M",
+      "registry/app/api/controller/metadata/utils.go"
+    ]
+  ],
+  "surface_paths": [
+    "registry/app/api/controller/metadata/cleanuppolicy_mapper.go",
+    "registry/app/api/controller/metadata/create_registry.go",
+    "registry/app/api/controller/metadata/get_artifact_detail.go",
+    "registry/app/api/controller/metadata/get_artifact_file.go",
+    "registry/app/api/controller/metadata/get_artifact_files.go",
+    "registry/app/api/controller/metadata/get_artifacts.go",
+    "registry/app/api/controller/metadata/get_artifacts_summary.go",
+    "registry/app/api/controller/metadata/get_artifacts_version_summary.go",
+    "registry/app/api/controller/metadata/get_artifacts_versions.go",
+    "registry/app/api/controller/metadata/get_registries.go",
+    "registry/app/api/controller/metadata/get_registry.go",
+    "registry/app/api/controller/metadata/get_registry_artifacts.go",
+    "registry/app/api/controller/metadata/registry_metadata_helper.go",
+    "registry/app/api/controller/metadata/update_registry.go",
+    "registry/app/api/controller/metadata/utils.go"
+  ],
+  "path_roles": {
+    "registry/app/api/controller/metadata/cleanuppolicy_mapper.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/create_registry.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifact_detail.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifact_file.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifact_files.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifacts.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifacts_summary.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifacts_version_summary.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_artifacts_versions.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_registries.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_registry.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/get_registry_artifacts.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/registry_metadata_helper.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/update_registry.go": [
+      "production_behaviour"
+    ],
+    "registry/app/api/controller/metadata/utils.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C008645",
+  "rank": 52,
+  "item_id": "N50_P3C008645_615480d34571",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /registry/{registry_ref}/artifact/{artifact}/version/{version}/files",
+  "proposition": "GET /registry/{registry_ref}/artifact/{artifact}/version/{version}/files: contract says a missing requested resource is reported as HTTP 404; implementation does a missing image lookup is translated to a resource-not-found error but the handler returns a typed HTTP 500 response",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "response",
+  "fix_family": "response.artifact_not_found_status",
+  "proposition_check": "{\"contract\":[\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/openapi/api.yaml:779\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/openapi/api.yaml:1685\"],\"implementation\":[\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:78\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:95\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:98\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:107\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:168\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/controller/metadata/get_artifact_files.go:211\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/store/database/image.go:101\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/store/database/image.go:161\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/store/database/image.go:166\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/store/database/image.go:188\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:store/database/util.go:59\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:store/database/util.go:60\",\"c7ab87ec7d140d202a174108a08d4988ac35d4c1:registry/app/api/openapi/contracts/artifact/services.gen.go:4511\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"registry/app/api/openapi/api.yaml\": {\"parent_lines\": [779, 1685], \"parent_numbered_excerpt\": \"774:           $ref: \\\"#/components/responses/InternalServerError\\\"\\n775:   /registry/{registry_ref}/artifact/{artifact}/version/{version}/files:\\n776:     get:\\n777:       summary: Describe Artifact files\\n778:       description: Get Artifact files\\n779:       operationId: GetArtifactFiles\\n780:       tags:\\n781:         - Artifacts\\n782:       parameters:\\n783:         - $ref: \\\"#/components/parameters/registryRefPathParam\\\"\\n784:         - $ref: \\\"#/components/parameters/artifactPathParam\\\"\\n1680:       content:\\n1681:         application/json:\\n1682:           schema:\\n1683:             $ref: \\\"#/components/schemas/Error\\\"\\n1684:     NotFound:\\n1685:       description: The specified resource was not found\\n1686:       content:\\n1687:         application/json:\\n1688:           schema:\\n1689:             $ref: \\\"#/components/schemas/Error\\\"\\n1690:     InternalServerError:\"}, \"registry/app/api/controller/metadata/get_artifact_files.go\": {\"parent_lines\": [78, 95, 98, 107, 168, 211], \"parent_numbered_excerpt\": \"73: \\tversion := string(r.Version)\\n74: \\n75: \\tregistry, err := c.RegistryRepository.GetByParentIDAndName(ctx, reqInfo.ParentID, reqInfo.RegistryIdentifier)\\n76: \\n77: \\tif err != nil {\\n78: \\t\\treturn artifact.GetArtifactFiles500JSONResponse{\\n79: \\t\\t\\tInternalServerErrorJSONResponse: artifact.InternalServerErrorJSONResponse(\\n80: \\t\\t\\t\\t*GetErrorResponse(http.StatusInternalServerError, err.Error()),\\n81: \\t\\t\\t),\\n82: \\t\\t}, nil\\n83: \\t}\\n90: \\t\\t\\t\\t\\t*GetErrorResponse(http.StatusBadRequest, err.Error()),\\n91: \\t\\t\\t\\t),\\n92: \\t\\t\\t}, nil\\n93: \\t\\t}\\n94: \\t}\\n95: \\timg, err := c.ImageStore.GetByNameAndType(ctx, reqInfo.RegistryID, image, artifactType)\\n96: \\n97: \\tif err != nil {\\n98: \\t\\treturn artifact.GetArtifactFiles500JSONResponse{\\n99: \\t\\t\\tInternalServerErrorJSONResponse: artifact.InternalServerErrorJSONResponse(\\n100: \\t\\t\\t\\t*GetErrorResponse(http.StatusInternalServerError, err.Error()),\\n101: \\t\\t\\t),\\n102: \\t\\t}, nil\\n103: \\t}\\n104: \\tart, err := c.ArtifactStore.GetByName(ctx, img.ID, version)\\n105: \\n106: \\tif err != nil {\\n107: \\t\\treturn artifact.GetArtifactFiles500JSONResponse{\\n108: \\t\\t\\tInternalServerErrorJSONResponse: artifact.InternalServerErrorJSONResponse(\\n109: \\t\\t\\t\\t*GetErrorResponse(http.StatusInternalServerError, err.Error()),\\n110: \\t\\t\\t),\\n111: \\t\\t}, nil\\n112: \\t}\\n163: \\n164: \\tcount, err := c.fileManager.CountFilesByPath(ctx, filePathPattern, img.RegistryID)\\n165: \\n166: \\tif err != nil {\\n167: \\t\\tlog.Ctx(ctx).Error().Msgf(\\\"Failed to count files for artifact, err: %v\\\", err.Error())\\n168: \\t\\treturn artifact.GetArtifactFiles500JSONResponse{\\n169: \\t\\t\\tInternalServerErrorJSONResponse: artifact.InternalServerErrorJSONResponse(\\n170: \\t\\t\\t\\t*GetErrorResponse(http.StatusInternalServerError,\\n171: \\t\\t\\t\\t\\tfmt.Sprintf(\\\"Failed to count files for artifact with name: [%s]\\\", art.Version)),\\n172: \\t\\t\\t),\\n173: \\t\\t}, nil\\n206: \\tctx context.Context,\\n207: \\terr error,\\n208: \\tart *types.Artifact,\\n209: ) (artifact.GetArtifactFilesResponseObject, error) {\\n210: \\tlog.Ctx(ctx).Error().Msgf(\\\"Failed to fetch files for artifact, err: %v\\\", err.Error())\\n211: \\treturn artifact.GetArtifactFiles500JSONResponse{\\n212: \\t\\tInternalServerErrorJSONResponse: artifact.InternalServerErrorJSONResponse(\\n213: \\t\\t\\t*GetErrorResponse(http.StatusInternalServerError,\\n214: \\t\\t\\t\\tfmt.Sprintf(\\\"Failed to fetch files for artifact with name: [%s]\\\", art.Version)),\\n215: \\t\\t),\\n216: \\t}, nil\"}, \"registry/app/store/database/image.go\": {\"parent_lines\": [101, 161, 166, 188], \"parent_numbered_excerpt\": \"96: \\n97: \\tdb := dbtx.GetAccessor(ctx, i.db)\\n98: \\n99: \\tdst := new(imageDB)\\n100: \\tif err = db.GetContext(ctx, dst, sql, args...); err != nil {\\n101: \\t\\treturn nil, databaseg.ProcessSQLErrorf(ctx, err, \\\"Failed to get image\\\")\\n102: \\t}\\n103: \\treturn i.mapToImage(ctx, dst)\\n104: }\\n105: \\n106: func (i ImageDao) DeleteByImageNameAndRegID(ctx context.Context, regID int64, image string) (err error) {\\n156: \\n157: \\tdb := dbtx.GetAccessor(ctx, i.db)\\n158: \\n159: \\tdst := new(imageDB)\\n160: \\tif err = db.GetContext(ctx, dst, sql, args...); err != nil {\\n161: \\t\\treturn nil, databaseg.ProcessSQLErrorf(ctx, err, \\\"Failed to get image\\\")\\n162: \\t}\\n163: \\treturn i.mapToImage(ctx, dst)\\n164: }\\n165: \\n166: func (i ImageDao) GetByNameAndType(\\n167: \\tctx context.Context, registryID int64, name string,\\n168: \\tartifactType *artifact.ArtifactType,\\n169: ) (*types.Image, error) {\\n170: \\tif artifactType == nil || *artifactType == \\\"\\\" {\\n171: \\t\\treturn i.GetByName(ctx, registryID, name)\\n183: \\n184: \\tdb := dbtx.GetAccessor(ctx, i.db)\\n185: \\n186: \\tdst := new(imageDB)\\n187: \\tif err = db.GetContext(ctx, dst, sql, args...); err != nil {\\n188: \\t\\treturn nil, databaseg.ProcessSQLErrorf(ctx, err, \\\"Failed to get image\\\")\\n189: \\t}\\n190: \\treturn i.mapToImage(ctx, dst)\\n191: }\\n192: \\n193: func (i ImageDao) CreateOrUpdate(ctx context.Context, image *types.Image) error {\"}, \"store/database/util.go\": {\"parent_lines\": [59, 60], \"parent_numbered_excerpt\": \"54: //nolint:unparam // revisit error processing\\n55: func ProcessSQLErrorf(ctx context.Context, err error, format string, args ...any) error {\\n56: \\t// If it's a known error, return converted error instead.\\n57: \\ttranslatedError := err\\n58: \\tswitch {\\n59: \\tcase errors.Is(err, sql.ErrNoRows):\\n60: \\t\\ttranslatedError = store.ErrResourceNotFound\\n61: \\tcase isSQLUniqueConstraintError(err):\\n62: \\t\\ttranslatedError = store.ErrDuplicate\\n63: \\tcase isSQLForeignKeyViolationError(err):\\n64: \\t\\ttranslatedError = store.ErrForeignKeyViolation\\n65: \\tdefault:\"}, \"registry/app/api/openapi/contracts/artifact/services.gen.go\": {\"parent_lines\": [4511], \"parent_numbered_excerpt\": \"4506: \\n4507: type GetArtifactFiles500JSONResponse struct {\\n4508: \\tInternalServerErrorJSONResponse\\n4509: }\\n4510: \\n4511: func (response GetArtifactFiles500JSONResponse) VisitGetArtifactFilesResponse(w http.ResponseWriter) error {\\n4512: \\tw.Header().Set(\\\"Content-Type\\\", \\\"application/json\\\")\\n4513: \\tw.WriteHeader(500)\\n4514: \\n4515: \\treturn json.NewEncoder(w).Encode(response)\\n4516: }\"}}, \"patch\": \"key/t50_evidence/P3C008645.diff\", \"patch_sha256\": \"15f99fe8b20d435c4bde5c389848189d65e43cd2972ead04ad9b90a08d405552\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

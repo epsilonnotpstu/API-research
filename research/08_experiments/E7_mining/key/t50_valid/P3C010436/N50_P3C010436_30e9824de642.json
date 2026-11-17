@@ -1,0 +1,136 @@
+{
+  "repo": "answer",
+  "fix_commit": "0285a47ae3256ed802ce8b6df706fdac37319f0d",
+  "parent_commit": "47c666200ef1b7d2ffd42e55303afe3562283acf",
+  "date": "2025-01-09",
+  "message_excerpt": "fix: missing ApiKeyAuth configuration in Swagger",
+  "stars": "15712",
+  "changes": [
+    [
+      "M",
+      "docs/docs.go"
+    ],
+    [
+      "M",
+      "docs/swagger.json"
+    ],
+    [
+      "M",
+      "docs/swagger.yaml"
+    ],
+    [
+      "M",
+      "internal/controller/answer_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/badge_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/lang_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/meta_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/question_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/tag_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller/user_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller_admin/plugin_controller.go"
+    ],
+    [
+      "M",
+      "internal/controller_admin/role_controller.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.json",
+    "docs/swagger.yaml",
+    "internal/controller/answer_controller.go",
+    "internal/controller/badge_controller.go",
+    "internal/controller/lang_controller.go",
+    "internal/controller/meta_controller.go",
+    "internal/controller/question_controller.go",
+    "internal/controller/tag_controller.go",
+    "internal/controller/user_controller.go",
+    "internal/controller_admin/plugin_controller.go",
+    "internal/controller_admin/role_controller.go"
+  ],
+  "path_roles": {
+    "docs/swagger.json": [
+      "openapi_root"
+    ],
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ],
+    "internal/controller/answer_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/badge_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/lang_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/meta_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/question_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/tag_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller/user_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller_admin/plugin_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/controller_admin/role_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C010436",
+  "rank": 27,
+  "item_id": "N50_P3C010436_30e9824de642",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "PUT /answer/api/v1/tag",
+  "proposition": "PUT /answer/api/v1/tag: contract says no authentication security requirement is declared; implementation does the router requires authenticated user or administrator middleware before the handler",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "security",
+  "fix_family": "security.authentication_requirement",
+  "proposition_check": "{\"contract\":[\"47c666200ef1b7d2ffd42e55303afe3562283acf:docs/swagger.json:5696\"],\"implementation\":[\"47c666200ef1b7d2ffd42e55303afe3562283acf:internal/router/answer_api_router.go:245\",\"47c666200ef1b7d2ffd42e55303afe3562283acf:internal/base/server/http.go:71\",\"47c666200ef1b7d2ffd42e55303afe3562283acf:internal/base/server/http.go:76\",\"47c666200ef1b7d2ffd42e55303afe3562283acf:internal/base/server/http.go:86\",\"47c666200ef1b7d2ffd42e55303afe3562283acf:internal/base/server/http.go:90\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.json\": {\"parent_lines\": [5696], \"parent_numbered_excerpt\": \"5691:                         }\\n5692:                     }\\n5693:                 }\\n5694:             }\\n5695:         },\\n5696:         \\\"/answer/api/v1/tag\\\": {\\n5697:             \\\"get\\\": {\\n5698:                 \\\"description\\\": \\\"get tag one\\\",\\n5699:                 \\\"consumes\\\": [\\n5700:                     \\\"application/json\\\"\\n5701:                 ],\"}, \"internal/router/answer_api_router.go\": {\"parent_lines\": [245], \"parent_numbered_excerpt\": \"240: \\tr.PUT(\\\"/follow/tags\\\", a.followController.UpdateFollowTags)\\n241: \\n242: \\t// tag\\n243: \\tr.GET(\\\"/question/tags\\\", a.tagController.SearchTagLike)\\n244: \\tr.POST(\\\"/tag\\\", a.tagController.AddTag)\\n245: \\tr.PUT(\\\"/tag\\\", a.tagController.UpdateTag)\\n246: \\tr.POST(\\\"/tag/recover\\\", a.tagController.RecoverTag)\\n247: \\tr.DELETE(\\\"/tag\\\", a.tagController.RemoveTag)\\n248: \\tr.PUT(\\\"/tag/synonym\\\", a.tagController.UpdateTagSynonym)\\n249: \\n250: \\t// collection\"}, \"internal/base/server/http.go\": {\"parent_lines\": [71, 76, 86, 90], \"parent_numbered_excerpt\": \"66: \\tstatic.Use(avatarMiddleware.AvatarThumb(), authUserMiddleware.VisitAuth())\\n67: \\tstaticRouter.RegisterStaticRouter(static)\\n68: \\n69: \\t// The route must be available without logging in\\n70: \\tmustUnAuthV1 := r.Group(\\\"/answer/api/v1\\\")\\n71: \\tanswerRouter.RegisterMustUnAuthAnswerAPIRouter(authUserMiddleware, mustUnAuthV1)\\n72: \\n73: \\t// register api that no need to login\\n74: \\tunAuthV1 := r.Group(\\\"/answer/api/v1\\\")\\n75: \\tunAuthV1.Use(authUserMiddleware.Auth(), authUserMiddleware.EjectUserBySiteInfo())\\n76: \\tanswerRouter.RegisterUnAuthAnswerAPIRouter(unAuthV1)\\n77: \\n78: \\t// register api that must be authenticated but no need to check account status\\n79: \\tauthWithoutStatusV1 := r.Group(\\\"/answer/api/v1\\\")\\n80: \\tauthWithoutStatusV1.Use(authUserMiddleware.MustAuthWithoutAccountAvailable())\\n81: \\tanswerRouter.RegisterAuthUserWithAnyStatusAnswerAPIRouter(authWithoutStatusV1)\\n82: \\n83: \\t// register api that must be authenticated\\n84: \\tauthV1 := r.Group(\\\"/answer/api/v1\\\")\\n85: \\tauthV1.Use(authUserMiddleware.MustAuthAndAccountAvailable())\\n86: \\tanswerRouter.RegisterAnswerAPIRouter(authV1)\\n87: \\n88: \\tadminauthV1 := r.Group(\\\"/answer/admin/api\\\")\\n89: \\tadminauthV1.Use(authUserMiddleware.AdminAuth())\\n90: \\tanswerRouter.RegisterAnswerAdminAPIRouter(adminauthV1)\\n91: \\n92: \\ttemplateRouter.RegisterTemplateRouter(rootGroup, uiConf.BaseURL)\\n93: \\n94: \\t// plugin routes\\n95: \\tpluginAPIRouter.RegisterUnAuthConnectorRouter(mustUnAuthV1)\"}}, \"patch\": \"key/t50_evidence/P3C010436.diff\", \"patch_sha256\": \"27e4ef2cab89ffc2df86ee9a1d5e1dd95d1e22c8ac88ed0f56b5f8e38a40c32d\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "internal/base/middleware/auth.go"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

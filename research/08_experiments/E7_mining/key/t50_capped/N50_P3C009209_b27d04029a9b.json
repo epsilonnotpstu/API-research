@@ -1,0 +1,44 @@
+{
+  "repo": "tyk",
+  "fix_commit": "9a3bbde4d39dfb1706544ef8fc1f643f7d295260",
+  "parent_commit": "b7648059b654acc5eddb434bc3de329d57fcd8b7",
+  "date": "2021-09-27",
+  "message_excerpt": "Fix swagger inconsistencies (#3683)",
+  "stars": "10887",
+  "changes": [
+    [
+      "M",
+      "swagger.yml"
+    ]
+  ],
+  "surface_paths": [
+    "swagger.yml"
+  ],
+  "path_roles": {
+    "swagger.yml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C009209",
+  "rank": 6,
+  "item_id": "N50_P3C009209_b27d04029a9b",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /tyk/org/keys/{keyID}",
+  "proposition": "POST /tyk/org/keys/{keyID}: contract says organisation key creation is documented on /tyk/org/keys without an identifier; implementation does the router allows POST on the organisation key path containing keyName",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "route",
+  "fix_family": "route.organization_key_create_identifier",
+  "proposition_check": "{\"contract\":[\"b7648059b654acc5eddb434bc3de329d57fcd8b7:swagger.yml:954\"],\"implementation\":[\"b7648059b654acc5eddb434bc3de329d57fcd8b7:gateway/server.go:579\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"swagger.yml\": {\"parent_lines\": [954], \"parent_numbered_excerpt\": \"949:               schema:\\n950:                 type: object\\n951:               example:\\n952:                 code: MWY0ZDRkMzktOTYwNi00NDRiLTk2YmQtOWQxOGQ3Mjc5Yzdk\\n953:                 redirect_to: 'http://client-app.com/oauth-redirect/?code=MWY0ZDRkMzktOTYwNi00NDRiLTk2YmQtOWQxOGQ3Mjc5Yzdk'\\n954:   /tyk/org/keys:\\n955:     get:\\n956:       summary: List Organisation Keys\\n957:       description: |-\\n958:         You can now set rate limits at the organisation level by using the following fields - allowance and rate. These are the number of allowed requests for the specified per value, and need to be set to the same value. If you don¿ït want to have organisation level rate limiting, set ¿írate¿ì or ¿íper¿ì to zero, or don¿ït add them to your request.\\n959:       tags:\"}, \"gateway/server.go\": {\"parent_lines\": [579], \"parent_numbered_excerpt\": \"574: \\tr.HandleFunc(\\\"/reload/group\\\", gw.groupResetHandler).Methods(\\\"GET\\\")\\n575: \\tr.HandleFunc(\\\"/reload\\\", gw.resetHandler(nil)).Methods(\\\"GET\\\")\\n576: \\n577: \\tif !gw.isRPCMode() {\\n578: \\t\\tr.HandleFunc(\\\"/org/keys\\\", gw.orgHandler).Methods(\\\"GET\\\")\\n579: \\t\\tr.HandleFunc(\\\"/org/keys/{keyName:[^/]*}\\\", gw.orgHandler).Methods(\\\"POST\\\", \\\"PUT\\\", \\\"GET\\\", \\\"DELETE\\\")\\n580: \\t\\tr.HandleFunc(\\\"/keys/policy/{keyName}\\\", gw.policyUpdateHandler).Methods(\\\"POST\\\")\\n581: \\t\\tr.HandleFunc(\\\"/keys/create\\\", gw.createKeyHandler).Methods(\\\"POST\\\")\\n582: \\t\\tr.HandleFunc(\\\"/apis\\\", gw.apiHandler).Methods(\\\"GET\\\", \\\"POST\\\", \\\"PUT\\\", \\\"DELETE\\\")\\n583: \\t\\tr.HandleFunc(\\\"/apis/{apiID}\\\", gw.apiHandler).Methods(\\\"GET\\\", \\\"POST\\\", \\\"PUT\\\", \\\"DELETE\\\")\\n584: \\t\\tr.HandleFunc(\\\"/health\\\", gw.healthCheckhandler).Methods(\\\"GET\\\")\"}}, \"patch\": \"key/t50_evidence/P3C009209.diff\", \"patch_sha256\": \"19a10a712fbebf6f259faccb4d1c0ca390d572f8b5c2ce5d8c0e631ac86365ee\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "AGPL-3.0",
+  "review_status": "accepted_capped",
+  "reason_code": "FIX_CAP",
+  "reason": "Valid operation excluded by the direction-neutral byte-order item cap."
+}

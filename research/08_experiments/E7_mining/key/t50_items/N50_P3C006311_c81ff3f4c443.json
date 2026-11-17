@@ -1,0 +1,46 @@
+{
+  "repo": "dependency-track",
+  "fix_commit": "108cbec498a579f485e56982697796427a88a65c",
+  "parent_commit": "8b199afba780bf5d3c5a74c00fb30523f3fcf80d",
+  "date": "2020-09-14",
+  "message_excerpt": "Fixed defect that resulted in suppressed findings from showing up in the audit. However, the total count did include the suppressed count, so there was a mismat",
+  "stars": "4466",
+  "changes": [
+    [
+      "M",
+      "src/main/java/org/dependencytrack/persistence/QueryManager.java"
+    ],
+    [
+      "M",
+      "src/main/java/org/dependencytrack/resources/v1/FindingResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/org/dependencytrack/resources/v1/FindingResource.java"
+  ],
+  "path_roles": {
+    "src/main/java/org/dependencytrack/resources/v1/FindingResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C006311",
+  "rank": 4,
+  "item_id": "N50_P3C006311_c81ff3f4c443",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v1/finding/project/{uuid}",
+  "proposition": "GET /api/v1/finding/project/{uuid}: contract says the endpoint returns all project findings with a total-number-of-findings header; implementation does the body excludes suppressed findings while its total count includes them",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "filter",
+  "fix_family": "filter.suppressed_findings_total",
+  "proposition_check": "{\"contract\":[\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/resources/v1/FindingResource.java:57\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/resources/v1/FindingResource.java:60\"],\"implementation\":[\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/resources/v1/FindingResource.java:71\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/resources/v1/FindingResource.java:72\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/resources/v1/FindingResource.java:95\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/persistence/QueryManager.java:1630\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/persistence/QueryManager.java:1636\",\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/java/org/dependencytrack/persistence/QueryManager.java:1901\"],\"route\":[\"8b199afba780bf5d3c5a74c00fb30523f3fcf80d:src/main/webapp/WEB-INF/web.xml:122\"]}",
+  "evidence": "{\"parent\": {\"src/main/java/org/dependencytrack/resources/v1/FindingResource.java\": {\"parent_lines\": [71, 72, 95], \"parent_numbered_excerpt\": \"66:     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)\\n67:     public Response getFindingsByProject(@PathParam(\\\"uuid\\\") String uuid) {\\n68:         try (QueryManager qm = new QueryManager(getAlpineRequest())) {\\n69:             final Project project = qm.getObjectByUuid(Project.class, uuid);\\n70:             if (project != null) {\\n71:                 final long totalCount = qm.getVulnerabilityCount(project, true);\\n72:                 final List<Finding> findings = qm.getFindings(project);\\n73:                 return Response.ok(findings).header(TOTAL_COUNT_HEADER, totalCount).build();\\n74:             } else {\\n75:                 return Response.status(Response.Status.NOT_FOUND).entity(\\\"The project could not be found.\\\").build();\\n76:             }\\n77:         }\\n90:     @PermissionRequired(Permissions.Constants.VULNERABILITY_ANALYSIS)\\n91:     public Response exportFindingsByProject(@PathParam(\\\"uuid\\\") String uuid) {\\n92:         try (QueryManager qm = new QueryManager(getAlpineRequest())) {\\n93:             final Project project = qm.getObjectByUuid(Project.class, uuid);\\n94:             if (project != null) {\\n95:                 final List<Finding> findings = qm.getFindings(project);\\n96:                 final FindingPackagingFormat fpf = new FindingPackagingFormat(UUID.fromString(uuid), findings);\\n97:                 final Response.ResponseBuilder rb = Response.ok(fpf.getDocument().toString(), \\\"application/json\\\");\\n98:                 rb.header(\\\"Content-Disposition\\\", \\\"inline; filename=findings-\\\" + uuid + \\\".fpf\\\");\\n99:                 return rb.build();\\n100:             } else {\"}, \"src/main/java/org/dependencytrack/persistence/QueryManager.java\": {\"parent_lines\": [1630, 1636, 1901], \"parent_numbered_excerpt\": \"1625:     /**\\n1626:      * Returns the number of Vulnerability objects for the specified Project.\\n1627:      * @param project the Project to retrieve vulnerabilities of\\n1628:      * @return the total number of vulnerabilities for the project\\n1629:      */\\n1630:     public long getVulnerabilityCount(Project project, boolean includeSuppressed) {\\n1631:         long total = 0;\\n1632:         long suppressed = 0;\\n1633:         final List<Component> components = getAllComponents(project);\\n1634:         for (final Component component: components) {\\n1635:             total += getCount(pm.newQuery(Vulnerability.class, \\\"components.contains(:component)\\\"), component);\\n1636:             if (! includeSuppressed) {\\n1637:                 suppressed += getSuppressedCount(component); // account for globally suppressed components\\n1638:                 suppressed += getSuppressedCount(project, component); // account for per-project/component\\n1639:             }\\n1640:         }\\n1641:         return total - suppressed;\\n1896:         for (final Object[] o: list) {\\n1897:             final Finding finding = new Finding(project.getUuid(), o);\\n1898:             final Component component = getObjectByUuid(Component.class, (String)finding.getComponent().get(\\\"uuid\\\"));\\n1899:             final Vulnerability vulnerability = getObjectByUuid(Vulnerability.class, (String)finding.getVulnerability().get(\\\"uuid\\\"));\\n1900:             final Analysis analysis = getAnalysis(component, vulnerability);\\n1901:             if (analysis == null || !analysis.isSuppressed()) { // do not add globally suppressed findings\\n1902:                 // These are CLOB fields. Handle these here so that database-specific deserialization doesn't need to be performed (in Finding)\\n1903:                 finding.getVulnerability().put(\\\"description\\\", vulnerability.getDescription());\\n1904:                 finding.getVulnerability().put(\\\"recommendation\\\", vulnerability.getRecommendation());\\n1905:                 findings.add(finding);\\n1906:             }\"}, \"src/main/webapp/WEB-INF/web.xml\": {\"parent_lines\": [122], \"parent_numbered_excerpt\": \"117:         </init-param>\\n118:         <load-on-startup>1</load-on-startup>\\n119:     </servlet>\\n120:     <servlet-mapping>\\n121:         <servlet-name>DependencyTrack</servlet-name>\\n122:         <url-pattern>/api/*</url-pattern>\\n123:     </servlet-mapping>\\n124: \\n125:     <servlet>\\n126:         <servlet-name>NVD Mirror</servlet-name>\\n127:         <servlet-class>org.dependencytrack.servlets.NvdMirrorServlet</servlet-class>\"}}, \"patch\": \"key/t50_evidence/P3C006311.diff\", \"patch_sha256\": \"babe2e4fb3c89960ff63c699139d582670311082ef204d1c4c24c2f51a2cb9b7\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

@@ -1,0 +1,57 @@
+{
+  "repo": "keto",
+  "fix_commit": "ba1bec9fb431331835bfb7655596b363ae9edc74",
+  "parent_commit": "69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c",
+  "date": "2021-10-08",
+  "message_excerpt": "docs: correct `required` annotation for List API parameters (#760)",
+  "stars": "5424",
+  "changes": [
+    [
+      "M",
+      "internal/e2e/sdk_client_test.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/client/read/get_relation_tuples_parameters.go"
+    ],
+    [
+      "M",
+      "internal/relationtuple/read_server.go"
+    ],
+    [
+      "M",
+      "spec/api.json"
+    ]
+  ],
+  "surface_paths": [
+    "internal/relationtuple/read_server.go",
+    "spec/api.json"
+  ],
+  "path_roles": {
+    "spec/api.json": [
+      "openapi_root"
+    ],
+    "internal/relationtuple/read_server.go": [
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 20,
+  "candidate_id": "P3C010661",
+  "rank": 43,
+  "item_id": "N50_P3C010661_3680c02e5c57",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /relation-tuples",
+  "proposition": "GET /relation-tuples: contract says the object and relation query parameters are required; implementation does query parsing accepts omitted object and relation fields, and persistence adds their filters only for nonempty values",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "request",
+  "fix_family": "request.object_relation_optionality",
+  "proposition_check": "{\"contract\":[\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:57\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:64\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:533\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:540\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:776\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:783\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:1046\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:1050\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:1088\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:spec/api.json:1092\"],\"implementation\":[\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/relationtuple/read_server.go:77\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/relationtuple/read_server.go:105\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/relationtuple/definitions.go:488\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/relationtuple/definitions.go:489\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/persistence/sql/relationtuples.go:218\",\"69cefb9ef89cdb2c3f28f8afe38a2f16f5849f7c:internal/persistence/sql/relationtuples.go:221\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"spec/api.json\": {\"parent_lines\": [57, 64, 533, 540, 776, 783, 1046, 1050, 1088, 1092], \"parent_numbered_excerpt\": \"52:             \\\"in\\\": \\\"query\\\",\\n53:             \\\"required\\\": true\\n54:           },\\n55:           {\\n56:             \\\"type\\\": \\\"string\\\",\\n57:             \\\"description\\\": \\\"Object of the Relation Tuple\\\",\\n58:             \\\"name\\\": \\\"object\\\",\\n59:             \\\"in\\\": \\\"query\\\",\\n60:             \\\"required\\\": true\\n61:           },\\n62:           {\\n63:             \\\"type\\\": \\\"string\\\",\\n64:             \\\"description\\\": \\\"Relation of the Relation Tuple\\\",\\n65:             \\\"name\\\": \\\"relation\\\",\\n66:             \\\"in\\\": \\\"query\\\",\\n67:             \\\"required\\\": true\\n68:           },\\n69:           {\\n528:             \\\"in\\\": \\\"query\\\",\\n529:             \\\"required\\\": true\\n530:           },\\n531:           {\\n532:             \\\"type\\\": \\\"string\\\",\\n533:             \\\"description\\\": \\\"Object of the Relation Tuple\\\",\\n534:             \\\"name\\\": \\\"object\\\",\\n535:             \\\"in\\\": \\\"query\\\",\\n536:             \\\"required\\\": true\\n537:           },\\n538:           {\\n539:             \\\"type\\\": \\\"string\\\",\\n540:             \\\"description\\\": \\\"Relation of the Relation Tuple\\\",\\n541:             \\\"name\\\": \\\"relation\\\",\\n542:             \\\"in\\\": \\\"query\\\",\\n543:             \\\"required\\\": true\\n544:           },\\n545:           {\\n771:             \\\"in\\\": \\\"query\\\",\\n772:             \\\"required\\\": true\\n773:           },\\n774:           {\\n775:             \\\"type\\\": \\\"string\\\",\\n776:             \\\"description\\\": \\\"Object of the Relation Tuple\\\",\\n777:             \\\"name\\\": \\\"object\\\",\\n778:             \\\"in\\\": \\\"query\\\",\\n779:             \\\"required\\\": true\\n780:           },\\n781:           {\\n782:             \\\"type\\\": \\\"string\\\",\\n783:             \\\"description\\\": \\\"Relation of the Relation Tuple\\\",\\n784:             \\\"name\\\": \\\"relation\\\",\\n785:             \\\"in\\\": \\\"query\\\",\\n786:             \\\"required\\\": true\\n787:           },\\n788:           {\\n1041:         \\\"namespace\\\": {\\n1042:           \\\"description\\\": \\\"Namespace of the Relation Tuple\\\",\\n1043:           \\\"type\\\": \\\"string\\\"\\n1044:         },\\n1045:         \\\"object\\\": {\\n1046:           \\\"description\\\": \\\"Object of the Relation Tuple\\\",\\n1047:           \\\"type\\\": \\\"string\\\"\\n1048:         },\\n1049:         \\\"relation\\\": {\\n1050:           \\\"description\\\": \\\"Relation of the Relation Tuple\\\",\\n1051:           \\\"type\\\": \\\"string\\\"\\n1052:         },\\n1053:         \\\"subject_id\\\": {\\n1054:           \\\"description\\\": \\\"SubjectID of the Relation Tuple\\\\n\\\\nEither SubjectSet or SubjectID are required.\\\",\\n1055:           \\\"type\\\": \\\"string\\\"\\n1083:         \\\"namespace\\\": {\\n1084:           \\\"description\\\": \\\"Namespace of the Relation Tuple\\\",\\n1085:           \\\"type\\\": \\\"string\\\"\\n1086:         },\\n1087:         \\\"object\\\": {\\n1088:           \\\"description\\\": \\\"Object of the Relation Tuple\\\",\\n1089:           \\\"type\\\": \\\"string\\\"\\n1090:         },\\n1091:         \\\"relation\\\": {\\n1092:           \\\"description\\\": \\\"Relation of the Relation Tuple\\\",\\n1093:           \\\"type\\\": \\\"string\\\"\\n1094:         },\\n1095:         \\\"subject_id\\\": {\\n1096:           \\\"description\\\": \\\"SubjectID of the Relation Tuple\\\\n\\\\nEither SubjectSet or SubjectID can be provided.\\\",\\n1097:           \\\"type\\\": \\\"string\\\"\"}, \"internal/relationtuple/read_server.go\": {\"parent_lines\": [77, 105], \"parent_numbered_excerpt\": \"72: //\\n73: //     Responses:\\n74: //       200: getRelationTuplesResponse\\n75: //       404: genericError\\n76: //       500: genericError\\n77: func (h *handler) getRelations(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {\\n78: \\tq := r.URL.Query()\\n79: \\tquery, err := (&RelationQuery{}).FromURLQuery(q)\\n80: \\tif err != nil {\\n81: \\t\\th.d.Writer().WriteError(w, r, herodot.ErrBadRequest.WithError(err.Error()))\\n82: \\t\\treturn\\n100: \\t\\t\\treturn\\n101: \\t\\t}\\n102: \\t\\tpaginationOpts = append(paginationOpts, x.WithSize(int(s)))\\n103: \\t}\\n104: \\n105: \\trels, nextPage, err := h.d.RelationTupleManager().GetRelationTuples(r.Context(), query, paginationOpts...)\\n106: \\tif err != nil {\\n107: \\t\\th.d.Writer().WriteError(w, r, err)\\n108: \\t\\treturn\\n109: \\t}\\n110: \"}, \"internal/relationtuple/definitions.go\": {\"parent_lines\": [488, 489], \"parent_numbered_excerpt\": \"483: \\t\\t}\\n484: \\tdefault:\\n485: \\t\\treturn nil, errors.WithStack(ErrIncompleteSubject)\\n486: \\t}\\n487: \\n488: \\tq.Object = query.Get(\\\"object\\\")\\n489: \\tq.Relation = query.Get(\\\"relation\\\")\\n490: \\tq.Namespace = query.Get(\\\"namespace\\\")\\n491: \\n492: \\treturn q, nil\\n493: }\\n494: \"}, \"internal/persistence/sql/relationtuples.go\": {\"parent_lines\": [218, 221], \"parent_numbered_excerpt\": \"213: \\n214: \\tsqlQuery := p.QueryWithNetwork(ctx).\\n215: \\t\\tOrder(\\\"nid, namespace_id, object, relation, subject_id, subject_set_namespace_id, subject_set_object, subject_set_relation, commit_time\\\").\\n216: \\t\\tPaginate(pagination.Page, pagination.PerPage)\\n217: \\n218: \\tif query.Relation != \\\"\\\" {\\n219: \\t\\tsqlQuery.Where(\\\"relation = ?\\\", query.Relation)\\n220: \\t}\\n221: \\tif query.Object != \\\"\\\" {\\n222: \\t\\tsqlQuery.Where(\\\"object = ?\\\", query.Object)\\n223: \\t}\\n224: \\tif s := query.Subject(); s != nil {\\n225: \\t\\tif err := p.whereSubject(ctx, sqlQuery, s); err != nil {\\n226: \\t\\t\\treturn nil, \\\"\\\", err\"}}, \"patch\": \"key/t50_evidence/P3C010661.diff\", \"patch_sha256\": \"9b6d7d2b4c37a945fbbf29596a8bc647484a4559ada10eb42cb064c6c7b918ef\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

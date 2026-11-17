@@ -81,3 +81,18 @@ The check uses `licence_at_parent.py` on `accepted_full_t49.csv`. Nothing is res
 - GPL: 4 items (dockstore 2, service-api 2).
 
 Both dockstore and service-api changed licence during their history, so the licence is read per item at its parent commit. The GPL items follow the same rule as rhsm-subscriptions: per-directory GPL text in the replication package. The open-banking-gateway items are Apache-2.0 at their parent commits, although the repository's HEAD is AGPL.
+
+## T50 items (Q01–Q61), checked at each parent commit on 2026-11-17 (Claude)
+The check uses `licence_at_parent.py` on `accepted_full_t50.csv`. Nothing is restrictive or non-commercial:
+- Apache-2.0: 54 items (answer 4, authelia 3, casdoor 1, datarhei-core 6, dependency-track 4, fess 5, flagr 8, harness 2, keto 9, keycloak 2, nifi 5, traccar 5);
+- MPL-2.0: 3 items (tyk);
+- AGPL-3.0: 3 items (photoprism);
+- GPL-3.0: 1 item (halo).
+
+**Classifier correction.** Codex's `licence_at_parent` column in `accepted_full_t50.csv` records AGPL-3.0 for the tyk and halo items. At their parent commits the files are actually MPL-2.0 (`LICENSE.md`) and GPL-3.0 (`LICENSE`).
+- The cause is that both licence texts mention "Affero".
+- `licence_at_parent.py` had the same blind spot, because it had no MPL rule. Claude added an MPL rule, plus a Business Source License → RESTRICTIVE rule, ahead of the AGPL rule. T48 and T49 re-ran with the same results.
+- The gate decision is unaffected: all four classes are OSI-approved.
+- Codex's file is left unmodified, and the classes above are authoritative.
+
+The T50 gate rejected two dependency-track candidates because no open-source licence could be established at their parents (`LICENCE:` reason). The copyleft items follow the existing rule: per-directory licence text in the replication package.

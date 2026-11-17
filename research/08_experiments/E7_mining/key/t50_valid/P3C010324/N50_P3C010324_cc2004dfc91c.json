@@ -1,0 +1,50 @@
+{
+  "repo": "photoprism",
+  "fix_commit": "a75ce62b9d2733646b52667acbb188bde9a5b8b2",
+  "parent_commit": "2a944d931d7fbd16cbf95ecd4e75cd368c1eb02b",
+  "date": "2026-05-29",
+  "message_excerpt": "API: Fix incorrect hash parameter name in GetVideo Swagger annotation",
+  "stars": "40456",
+  "changes": [
+    [
+      "M",
+      "internal/api/swagger.json"
+    ],
+    [
+      "M",
+      "internal/api/video.go"
+    ]
+  ],
+  "surface_paths": [
+    "internal/api/swagger.json",
+    "internal/api/video.go"
+  ],
+  "path_roles": {
+    "internal/api/swagger.json": [
+      "openapi_root"
+    ],
+    "internal/api/video.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C010324",
+  "rank": 5,
+  "item_id": "N50_P3C010324_cc2004dfc91c",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v1/videos/{hash}/{token}/{format}",
+  "proposition": "GET /api/v1/videos/{hash}/{token}/{format}: contract says the required hash path segment is declared as a parameter named thumb; implementation does the route and handler use a path parameter named hash",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "parameter",
+  "fix_family": "parameter.video_hash_name",
+  "proposition_check": "{\"contract\":[\"2a944d931d7fbd16cbf95ecd4e75cd368c1eb02b:internal/api/swagger.json:12511\"],\"implementation\":[\"2a944d931d7fbd16cbf95ecd4e75cd368c1eb02b:internal/api/video.go:38\",\"2a944d931d7fbd16cbf95ecd4e75cd368c1eb02b:internal/api/video.go:39\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"internal/api/swagger.json\": {\"parent_lines\": [12511], \"parent_numbered_excerpt\": \"12506:             }\\n12507:         },\\n12508:         \\\"/api/v1/videos/{hash}/{token}/{format}\\\": {\\n12509:             \\\"get\\\": {\\n12510:                 \\\"description\\\": \\\"For more information see:\\\\n- https://docs.photoprism.app/developer-guide/api/thumbnails/#video-endpoint-uri\\\",\\n12511:                 \\\"operationId\\\": \\\"GetVideo\\\",\\n12512:                 \\\"parameters\\\": [\\n12513:                     {\\n12514:                         \\\"description\\\": \\\"SHA1 video file hash\\\",\\n12515:                         \\\"in\\\": \\\"path\\\",\\n12516:                         \\\"name\\\": \\\"thumb\\\",\"}, \"internal/api/video.go\": {\"parent_lines\": [38, 39], \"parent_numbered_excerpt\": \"33: //\\t@Param\\t\\t\\tthumb\\tpath\\t\\tstring\\ttrue\\t\\\"SHA1 video file hash\\\"\\n34: //\\t@Param\\t\\t\\ttoken\\tpath\\t\\tstring\\ttrue\\t\\\"user-specific security token provided with session\\\"\\n35: //\\t@Param\\t\\t\\tformat\\tpath\\t\\tstring\\ttrue\\t\\\"video format, e.g. mp4\\\"\\n36: //\\t@Router\\t\\t\\t/api/v1/videos/{hash}/{token}/{format} [get]\\n37: func GetVideo(router *gin.RouterGroup) {\\n38: \\trouter.GET(\\\"/videos/:hash/:token/:format\\\", func(c *gin.Context) {\\n39: \\t\\tfileHash := clean.Token(c.Param(\\\"hash\\\"))\\n40: \\n41: \\t\\t// Check if a valid security token was provided.\\n42: \\t\\tif InvalidPreviewToken(c) {\\n43: \\t\\t\\tc.Data(http.StatusForbidden, \\\"image/svg+xml\\\", videoIconSvg)\\n44: \\t\\t\\treturn\"}}, \"patch\": \"key/t50_evidence/P3C010324.diff\", \"patch_sha256\": \"5a4eb8b4d55472c1b9f994e1d392d782645c15f6ec52b7a2dc2128d036a7fdcc\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "AGPL-3.0"
+}

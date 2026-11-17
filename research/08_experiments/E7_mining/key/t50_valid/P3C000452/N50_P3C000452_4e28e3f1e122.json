@@ -1,0 +1,41 @@
+{
+  "repo": "fess",
+  "fix_commit": "157bc97f66513171d3af7746255b6a419b16d6e1",
+  "parent_commit": "51237cee1fcc7c2fadc7b2572351ff32efff33b4",
+  "date": "2026-10-09",
+  "message_excerpt": "docs(api): align the v2 OpenAPI document with what the API returns (#3599)",
+  "stars": "1151",
+  "changes": [
+    [
+      "M",
+      "src/main/config/openapi/v2/openapi-user.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/config/openapi/v2/openapi-user.yaml"
+  ],
+  "path_roles": {
+    "src/main/config/openapi/v2/openapi-user.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C000452",
+  "rank": 1,
+  "item_id": "N50_P3C000452_4e28e3f1e122",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v2/related-queries",
+  "proposition": "GET /api/v2/related-queries: contract says the listed responses omit 400 for undecodable query parameters; implementation does undecodable query parameters produce 400 invalid_request before dispatch",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "status",
+  "fix_family": "status.undecodable_parameters",
+  "proposition_check": "{\"contract\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/config/openapi/v2/openapi-user.yaml:569\"],\"implementation\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:246\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:254\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java:29\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java:221\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/config/openapi/v2/openapi-user.yaml\": {\"parent_lines\": [569], \"parent_numbered_excerpt\": \"564:       summary: Related query suggestions for a query\\n565:       description: |-\\n566:         Returns related query terms for the `q` parameter. A blank or absent\\n567:         `q` yields an empty `queries` array rather than an error; the response\\n568:         is always a success envelope.\\n569:       operationId: relatedQueriesV2\\n570:       parameters:\\n571:         - { $ref: '#/components/parameters/Q' }\\n572:       responses:\\n573:         '200':\\n574:           description: Related queries returned.\"}, \"src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java\": {\"parent_lines\": [246, 254], \"parent_numbered_excerpt\": \"241:         // and the first read can come from any layer or handler below. Reading them here first\\n242:         // answers the caller's mistake as the 400 it is, instead of the 500 the generic catch\\n243:         // further down makes of it. The layers ahead of that try block (the login gate may read the\\n244:         // access token parameter) have no catch of their own at all.\\n245:         try {\\n246:             request.getParameterNames();\\n247:         } catch (final InvalidParameterException e) {\\n248:             if (logger.isDebugEnabled()) {\\n249:                 logger.debug(\\\"/api/v2 rejected undecodable parameters for {}\\\", sub, e);\\n250:             }\\n251:             if (e.getErrorCode() == V2ErrorCode.PAYLOAD_TOO_LARGE.defaultHttpStatus()) {\\n252:                 ComponentUtil.getV2EnvelopeWriter().writeError(response, V2ErrorCode.PAYLOAD_TOO_LARGE, \\\"request parameters are too large\\\");\\n253:             } else {\\n254:                 ComponentUtil.getV2EnvelopeWriter().writeError(response, V2ErrorCode.INVALID_REQUEST, \\\"malformed request parameters\\\");\\n255:             }\\n256:             return;\\n257:         }\\n258: \\n259:         // Layer 1: baseline Origin check (always applied). Rejects browser-driven\"}, \"src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java\": {\"parent_lines\": [29], \"parent_numbered_excerpt\": \"24:  * the envelope if a more specific code is appropriate.</p>\\n25:  */\\n26: public enum V2ErrorCode {\\n27: \\n28:     /** Malformed or otherwise unprocessable request. */\\n29:     INVALID_REQUEST(\\\"invalid_request\\\", 400),\\n30: \\n31:     /** The endpoint requires authentication and none was supplied. */\\n32:     AUTH_REQUIRED(\\\"auth_required\\\", 401),\\n33: \\n34:     /** The caller is authenticated but not permitted to perform the action. */\"}, \"src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java\": {\"parent_lines\": [221], \"parent_numbered_excerpt\": \"216:         }\\n217:         // Discard any partial body a streaming handler may have buffered (NDJSON / SSE)\\n218:         // before failing — otherwise the wire frame becomes a hybrid of pre-error bytes\\n219:         // and the JSON envelope. Safe to call on an uncommitted response per servlet spec.\\n220:         res.resetBuffer();\\n221:         res.setStatus(code.defaultHttpStatus());\\n222:         res.setCharacterEncoding(\\\"UTF-8\\\");\\n223:         res.setContentType(CONTENT_TYPE);\\n224:         // Override any Cache-Control that may have been set by an SSE/NDJSON handler before\\n225:         // it errored out. The SSE prelude uses `no-cache` which permits revalidation; for\\n226:         // an error envelope `no-store` is semantically correct (and equally correct for the\"}}, \"patch\": \"key/t50_evidence/P3C000452.diff\", \"patch_sha256\": \"68e32169306dc98754268d23e1b28a671903bfe729a45d74e4ae918309ea9582\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

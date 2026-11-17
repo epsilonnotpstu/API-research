@@ -1,0 +1,70 @@
+{
+  "repo": "dependency-track",
+  "fix_commit": "115ad15093ba5fb26801208325a00d5196770224",
+  "parent_commit": "caf416bdc6ff8265a18ab272e0f6257f353f8562",
+  "date": "2026-10-06",
+  "message_excerpt": "Fix missing pagination in /v1/vulnerability/component/{uuid}",
+  "stars": "4466",
+  "changes": [
+    [
+      "M",
+      "apiserver/src/main/java/org/dependencytrack/persistence/QueryManager.java"
+    ],
+    [
+      "M",
+      "apiserver/src/main/java/org/dependencytrack/persistence/VulnerabilityQueryManager.java"
+    ],
+    [
+      "M",
+      "apiserver/src/main/java/org/dependencytrack/persistence/jdbi/VulnerabilityDao.java"
+    ],
+    [
+      "M",
+      "apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java"
+    ],
+    [
+      "M",
+      "apiserver/src/test/java/org/dependencytrack/persistence/jdbi/DaoArchitectureTest.java"
+    ],
+    [
+      "M",
+      "apiserver/src/test/java/org/dependencytrack/resources/v1/ProjectResourceTest.java"
+    ],
+    [
+      "M",
+      "apiserver/src/test/java/org/dependencytrack/resources/v1/VulnerabilityResourceTest.java"
+    ],
+    [
+      "M",
+      "apiserver/src/test/resources/archunit_store/b14ffbfd-8a5e-4750-be1c-767673f81c48"
+    ]
+  ],
+  "surface_paths": [
+    "apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java"
+  ],
+  "path_roles": {
+    "apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C006350",
+  "rank": 43,
+  "item_id": "N50_P3C006350_14bc323a707d",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /v1/vulnerability/component/{uuid}",
+  "proposition": "GET /v1/vulnerability/component/{uuid}: contract says pagination parameters select the page and number of component vulnerabilities returned; implementation does the DAO query selects all matching vulnerabilities without offset or limit and the handler returns the entire result",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "jvm_annotation",
+  "mismatch_type": "response",
+  "fix_family": "response.component_vulnerability_pagination",
+  "proposition_check": "{\"contract\":[\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:96\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:101\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:313\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:369\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/openapi/PaginatedApi.java:43\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/openapi/PaginatedApi.java:49\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/openapi/PaginatedApi.java:58\"],\"implementation\":[\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:139\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:140\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:388\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java:1009\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/persistence/VulnerabilityQueryManager.java:461\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/persistence/VulnerabilityQueryManager.java:467\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/persistence/VulnerabilityQueryManager.java:480\",\"caf416bdc6ff8265a18ab272e0f6257f353f8562:apiserver/src/main/java/org/dependencytrack/persistence/jdbi/VulnerabilityDao.java:394\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"apiserver/src/main/java/org/dependencytrack/resources/v1/VulnerabilityResource.java\": {\"parent_lines\": [139, 140, 388, 1009], \"parent_numbered_excerpt\": \"134:                     boolean suppressed) {\\n135:         try (QueryManager qm = new QueryManager(getAlpineRequest())) {\\n136:             final Component component = qm.getObjectByUuid(Component.class, uuid);\\n137:             if (component != null) {\\n138:                 requireAccess(qm, component.getProject());\\n139:                 final PaginatedResult result = qm.getVulnerabilities(component, suppressed);\\n140:                 return Response.ok(result.getObjects())\\n141:                         .header(TOTAL_COUNT_HEADER, result.getTotal())\\n142:                         .build();\\n143:             } else {\\n144:                 return Response.status(Response.Status.NOT_FOUND)\\n145:                         .entity(\\\"The component could not be found.\\\")\\n383:             })\\n384:     @PermissionRequired(Permissions.Constants.VIEW_PORTFOLIO)\\n385:     public Response getAllVulnerabilities() {\\n386:         try (QueryManager qm = new QueryManager(getAlpineRequest())) {\\n387:             final PaginatedResult result = qm.getVulnerabilities();\\n388:             return Response.ok(result.getObjects())\\n389:                     .header(TOTAL_COUNT_HEADER, result.getTotal())\\n390:                     .build();\\n391:         }\\n392:     }\\n393: \\n1004:     public Response getVulnerabilitiesByTag(\\n1005:             @Parameter(description = \\\"The tag to query on\\\", required = true) @PathParam(\\\"tag\\\") String tagString) {\\n1006:         try (QueryManager qm = new QueryManager(getAlpineRequest())) {\\n1007:             final Tag tag = qm.getTagByName(tagString);\\n1008:             final PaginatedResult result = qm.getVulnerabilities(tag);\\n1009:             return Response.ok(result.getObjects())\\n1010:                     .header(TOTAL_COUNT_HEADER, result.getTotal())\\n1011:                     .build();\\n1012:         }\\n1013:     }\\n1014: \"}, \"apiserver/src/main/java/org/dependencytrack/resources/v1/openapi/PaginatedApi.java\": {\"parent_lines\": [43, 49, 58], \"parent_numbered_excerpt\": \"38: @Parameters({\\n39:     @Parameter(\\n40:             name = \\\"pageNumber\\\",\\n41:             in = ParameterIn.QUERY,\\n42:             schema = @Schema(defaultValue = \\\"1\\\"),\\n43:             description = \\\"The page to return. To be used in conjunction with <code>pageSize</code>.\\\"),\\n44:     @Parameter(\\n45:             name = \\\"pageSize\\\",\\n46:             in = ParameterIn.QUERY,\\n47:             schema = @Schema(defaultValue = \\\"100\\\"),\\n48:             description =\\n49:                     \\\"Number of elements to return per page. To be used in conjunction with <code>pageNumber</code>.\\\"),\\n50:     @Parameter(\\n51:             name = \\\"offset\\\",\\n52:             in = ParameterIn.QUERY,\\n53:             description =\\n54:                     \\\"Offset to start returning elements from. To be used in conjunction with <code>limit</code>.\\\"),\\n55:     @Parameter(\\n56:             name = \\\"limit\\\",\\n57:             in = ParameterIn.QUERY,\\n58:             description = \\\"Number of elements to return per page. To be used in conjunction with <code>offset</code>.\\\"),\\n59:     @Parameter(name = \\\"sortName\\\", in = ParameterIn.QUERY, description = \\\"Name of the resource field to sort on.\\\"),\\n60:     @Parameter(\\n61:             name = \\\"sortOrder\\\",\\n62:             in = ParameterIn.QUERY,\\n63:             schema = @Schema(allowableValues = \\\"asc, desc\\\"),\"}, \"apiserver/src/main/java/org/dependencytrack/persistence/VulnerabilityQueryManager.java\": {\"parent_lines\": [461, 467, 480], \"parent_numbered_excerpt\": \"456:      * Returns a List of Vulnerability for the specified Component.\\n457:      * @param component the Component to retrieve vulnerabilities of\\n458:      * @return a List of Vulnerability objects\\n459:      */\\n460:     @Override\\n461:     public PaginatedResult getVulnerabilities(Component component, boolean includeSuppressed) {\\n462:         List<Vulnerability> componentVulnerabilities;\\n463:         List<AffectedProjectCountRow> affectedProjectCounts;\\n464: \\n465:         try (final Handle jdbiHandle = openJdbiHandle(this.request)) {\\n466:             final var dao = jdbiHandle.attach(VulnerabilityDao.class);\\n467:             componentVulnerabilities = dao.getVulnerabilitiesByComponent(component.getId(), includeSuppressed);\\n468:             affectedProjectCounts = dao.getAffectedProjectCount(\\n469:                     componentVulnerabilities.stream().map(Vulnerability::getId).toList(), includeSuppressed);\\n470:         }\\n471:         Map<Long, Vulnerability> vulnById = componentVulnerabilities.stream()\\n472:                 .collect(Collectors.toMap(Vulnerability::getId, vulnerability -> vulnerability));\\n475:             vulnerability.setAffectedProjectCount(vulnerabilityProjectCount.totalProjectCount());\\n476:             vulnerability.setAffectedActiveProjectCount(vulnerabilityProjectCount.activeProjectCount());\\n477:             vulnerability.setAffectedInactiveProjectCount(\\n478:                     vulnerabilityProjectCount.totalProjectCount() - vulnerabilityProjectCount.activeProjectCount());\\n479:         }\\n480:         return new PaginatedResult().objects(componentVulnerabilities).total(componentVulnerabilities.size());\\n481:     }\\n482: \\n483:     /**\\n484:      * Returns a List of Components affected by a specific vulnerability.\\n485:      * This method if designed NOT to provide paginated results.\"}, \"apiserver/src/main/java/org/dependencytrack/persistence/jdbi/VulnerabilityDao.java\": {\"parent_lines\": [394], \"parent_numbered_excerpt\": \"389:                     AND fa.\\\"DELETED_AT\\\" IS NULL\\n390:                )\\n391:             ORDER BY \\\"V\\\".\\\"ID\\\"\\n392:             \\\"\\\"\\\")\\n393:     @RegisterRowMapper(VulnerabilityRowMapper.class)\\n394:     List<Vulnerability> getVulnerabilitiesByComponent(@Bind Long componentId, @Define boolean includeSuppressed);\\n395: \\n396:     @SqlQuery(/* language=InjectedFreeMarker */ \\\"\\\"\\\"\\n397:             <#-- @ftlvariable name=\\\"includeSuppressed\\\" type=\\\"boolean\\\" -->\\n398:             <#-- @ftlvariable name=\\\"apiProjectAclCondition\\\" type=\\\"String\\\" -->\\n399:             SELECT \\\"VULNERABILITY\\\".\\\"ID\\\" AS \\\"id\\\"\"}}, \"patch\": \"key/t50_evidence/P3C006350.diff\", \"patch_sha256\": \"4d6179c745f272fa4effd73933584b323153e69f73d439f4fd4b90813f675038\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

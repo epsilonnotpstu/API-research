@@ -1,0 +1,99 @@
+{
+  "repo": "nifi",
+  "fix_commit": "78fbb8f2ee70d264787856e4a6337217bcfeba79",
+  "parent_commit": "87e062ff557d18aa3f1f7e2906357c81236f0328",
+  "date": "2017-07-10",
+  "message_excerpt": "NIFI-3939: Reviewed and corrected all incorrect nifi-web-api resource response types. This closes #1999",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+  ],
+  "path_roles": {
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C012112",
+  "rank": 23,
+  "item_id": "N50_P3C012112_059222f3269e",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "DELETE /flowfile-queues/{id}/listing-requests/{listing-request-id}",
+  "proposition": "DELETE /flowfile-queues/{id}/listing-requests/{listing-request-id}: contract says the successful response is documented using DropRequestEntity; implementation does the resource returns the structurally different ListingRequestEntity envelope",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "schema",
+  "fix_family": "schema.resource_response_type",
+  "proposition_check": "{\"contract\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:432\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:522\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:593\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:655\"],\"implementation\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:347\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:412\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java:483\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java\": {\"parent_lines\": [347, 412, 483], \"parent_numbered_excerpt\": \"342:                     // submit the listing request\\n343:                     final ListingRequestDTO listingRequest = serviceFacade.createFlowFileListingRequest(connectionEntity.getId(), listingRequestId);\\n344:                     populateRemainingFlowFileListingContent(connectionEntity.getId(), listingRequest);\\n345: \\n346:                     // create the response entity\\n347:                     final ListingRequestEntity entity = new ListingRequestEntity();\\n348:                     entity.setListingRequest(listingRequest);\\n349: \\n350:                     // generate the URI where the response will be\\n351:                     final URI location = URI.create(listingRequest.getUri());\\n352:                     return Response.status(Status.ACCEPTED).location(location).entity(entity).build();\\n407:         // get the listing request\\n408:         final ListingRequestDTO listingRequest = serviceFacade.getFlowFileListingRequest(connectionId, listingRequestId);\\n409:         populateRemainingFlowFileListingContent(connectionId, listingRequest);\\n410: \\n411:         // create the response entity\\n412:         final ListingRequestEntity entity = new ListingRequestEntity();\\n413:         entity.setListingRequest(listingRequest);\\n414: \\n415:         return generateOkResponse(entity).build();\\n416:     }\\n417: \\n478: \\n479:                     // populate remaining content\\n480:                     populateRemainingFlowFileListingContent(listingEntity.getConnectionId(), listingRequest);\\n481: \\n482:                     // create the response entity\\n483:                     final ListingRequestEntity entity = new ListingRequestEntity();\\n484:                     entity.setListingRequest(listingRequest);\\n485: \\n486:                     return generateOkResponse(entity).build();\\n487:                 }\\n488:         );\"}}, \"patch\": \"key/t50_evidence/P3C012112.diff\", \"patch_sha256\": \"3f54b2c10e5b01e565e51b15c2a36238051fccec53b367002811fb3988de40a8\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ListingRequestEntity.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

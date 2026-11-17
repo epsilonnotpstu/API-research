@@ -8,7 +8,7 @@ from pathlib import Path
 UP = Path('/run/media/afridi/Shared Data/api_research_upstream')
 NAMES = ('LICENSE', 'LICENSE_SOURCE', 'LICENSE.txt', 'LICENSE.md', 'LICENCE', 'COPYING', 'LICENSE-2.0.txt', 'epl-2.0.html')
 RULES = [('Personal Evaluation', 'RESTRICTIVE'), ('SPDX-License-Identifier: Apache-2.0', 'Apache-2.0'), ('Apache License', 'Apache-2.0'), ('MIT License', 'MIT'), ('Permission is hereby granted, free of charge', 'MIT'),
-         ('Eclipse Public License', 'EPL-2.0'), ('GNU AFFERO', 'AGPL-3.0'), ('GNU GENERAL PUBLIC LICENSE', 'GPL'),
+         ('Eclipse Public License', 'EPL-2.0'), ('Mozilla Public License', 'MPL-2.0'), ('Business Source License', 'RESTRICTIVE'), ('GNU AFFERO', 'AGPL-3.0'), ('GNU GENERAL PUBLIC LICENSE', 'GPL'),
          ('Attribution-NonCommercial', 'CC-BY-NC')]
 
 

@@ -1,0 +1,42 @@
+{
+  "repo": "dependency-track",
+  "fix_commit": "0a2f831e6ec95219eb7d13c3fa8cd9a78f76f0ee",
+  "parent_commit": "22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74",
+  "date": "2018-09-11",
+  "message_excerpt": "Corrected bom upload issue with new multipart POST APIs",
+  "stars": "4466",
+  "changes": [
+    [
+      "M",
+      "src/main/java/org/dependencytrack/resources/v1/BomResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/org/dependencytrack/resources/v1/BomResource.java"
+  ],
+  "path_roles": {
+    "src/main/java/org/dependencytrack/resources/v1/BomResource.java": [
+      "contract_annotations",
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C006340",
+  "rank": 33,
+  "item_id": "N50_P3C006340_f13d6571f237",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /v1/bom",
+  "proposition": "POST /v1/bom: contract says uploaded bill-of-material documents are CycloneDX or SPDX; implementation does the upload dispatches ScanUploadEvent to dependency-check scan processing instead of the BOM processor",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "upload",
+  "fix_family": "upload.bom_event_dispatch",
+  "proposition_check": "{\"contract\":[\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/resources/v1/BomResource.java:67\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/resources/v1/BomResource.java:110\"],\"implementation\":[\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/resources/v1/BomResource.java:168\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/ScanUploadProcessingTask.java:32\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/ScanUploadProcessingTask.java:68\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/ScanUploadProcessingTask.java:75\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/ScanUploadProcessingTask.java:76\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/BomUploadProcessingTask.java:29\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/BomUploadProcessingTask.java:54\",\"22b05cfa9b0a792ea5a6a8cb9fc3fdfaefaf0c74:src/main/java/org/dependencytrack/tasks/BomUploadProcessingTask.java:69\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/java/org/dependencytrack/resources/v1/BomResource.java\": {\"parent_lines\": [168], \"parent_numbered_excerpt\": \"163:             if (project != null) {\\n164:                 try {\\n165:                     final byte[] content = IOUtils.toByteArray(bodyPartEntity.getInputStream());\\n166:                     // todo: make option to combine all the bom data so components are reconciled in a single pass.\\n167:                     // todo: https://github.com/DependencyTrack/dependency-track/issues/130\\n168:                     Event.dispatch(new ScanUploadEvent(project.getUuid(), content));\\n169:                 } catch (IOException e) {\\n170:                     return Response.status(Response.Status.BAD_REQUEST).build();\\n171:                 }\\n172:             } else {\\n173:                 return Response.status(Response.Status.NOT_FOUND).entity(\\\"The project could not be found.\\\").build();\"}, \"src/main/java/org/dependencytrack/tasks/ScanUploadProcessingTask.java\": {\"parent_lines\": [32, 68, 75, 76], \"parent_numbered_excerpt\": \"27: import org.dependencytrack.model.Component;\\n28: import org.dependencytrack.model.License;\\n29: import org.dependencytrack.model.Project;\\n30: import org.dependencytrack.model.Scan;\\n31: import org.dependencytrack.model.Vulnerability;\\n32: import org.dependencytrack.parser.dependencycheck.DependencyCheckParser;\\n33: import org.dependencytrack.parser.dependencycheck.model.Analysis;\\n34: import org.dependencytrack.parser.dependencycheck.model.Dependency;\\n35: import org.dependencytrack.parser.dependencycheck.model.Evidence;\\n36: import org.dependencytrack.parser.dependencycheck.resolver.ComponentGroupResolver;\\n37: import org.dependencytrack.parser.dependencycheck.resolver.ComponentNameResolver;\\n63: \\n64:     /**\\n65:      * {@inheritDoc}\\n66:      */\\n67:     public void inform(Event e) {\\n68:         if (e instanceof ScanUploadEvent) {\\n69:             final ScanUploadEvent event = (ScanUploadEvent) e;\\n70: \\n71:             final File file = event.getFile();\\n72:             final byte[] scanData = CompressUtil.optionallyDecompress(event.getScan());\\n73:             try {\\n74:                 final Analysis analysis = (file != null)\\n75:                         ? new DependencyCheckParser().parse(file)\\n76:                         : new DependencyCheckParser().parse(scanData);\\n77:                 qm = new QueryManager();\\n78:                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());\\n79:                 final Date date = new Date();\\n80:                 scan = qm.createScan(project, analysis.getProjectInfo().getReportDate(), date);\\n81: \"}, \"src/main/java/org/dependencytrack/tasks/BomUploadProcessingTask.java\": {\"parent_lines\": [29, 54, 69], \"parent_numbered_excerpt\": \"24: import org.dependencytrack.event.RepositoryMetaEvent;\\n25: import org.dependencytrack.event.VulnerabilityAnalysisEvent;\\n26: import org.dependencytrack.model.Bom;\\n27: import org.dependencytrack.model.Component;\\n28: import org.dependencytrack.model.Project;\\n29: import org.dependencytrack.parser.cyclonedx.CycloneDxParser;\\n30: import org.dependencytrack.parser.dependencycheck.resolver.ComponentResolver;\\n31: import org.dependencytrack.parser.spdx.rdf.SpdxDocumentParser;\\n32: import org.dependencytrack.persistence.QueryManager;\\n33: import org.dependencytrack.util.CompressUtil;\\n34: import java.nio.charset.StandardCharsets;\\n49: \\n50:     /**\\n51:      * {@inheritDoc}\\n52:      */\\n53:     public void inform(Event e) {\\n54:         if (e instanceof BomUploadEvent) {\\n55:             final BomUploadEvent event = (BomUploadEvent) e;\\n56:             final byte[] bomBytes = CompressUtil.optionallyDecompress(event.getBom());\\n57:             QueryManager qm = new QueryManager();\\n58:             try {\\n59:                 final Project project = qm.getObjectByUuid(Project.class, event.getProjectUuid());\\n64:                 final List<Component> existingProjectDependencies = new ArrayList<>();\\n65:                 qm.getAllDependencies(project).forEach(item -> existingProjectDependencies.add(item.getComponent()));\\n66: \\n67:                 final String bomString = new String(bomBytes, StandardCharsets.UTF_8);\\n68:                 if (bomString.startsWith(\\\"<?xml\\\") && bomString.contains(\\\"<bom\\\") && bomString.contains(\\\"http://cyclonedx.org/schema/bom\\\")) {\\n69:                     final CycloneDxParser parser = new CycloneDxParser(qm);\\n70:                     components = parser.convert(parser.parse(bomBytes));\\n71:                 } else {\\n72:                     final SpdxDocumentParser parser = new SpdxDocumentParser(qm);\\n73:                     components = parser.parse(bomBytes);\\n74:                 }\"}}, \"patch\": \"key/t50_evidence/P3C006340.diff\", \"patch_sha256\": \"47aeb402119eba84cf1c6edee8720b95155eefe418fbdaae818ef01be3ebebf2\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

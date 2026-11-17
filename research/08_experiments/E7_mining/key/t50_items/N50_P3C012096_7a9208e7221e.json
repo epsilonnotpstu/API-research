@@ -1,0 +1,49 @@
+{
+  "repo": "nifi",
+  "fix_commit": "1b88552b4677ceb1dfef0119c9c5a0306761ec95",
+  "parent_commit": "be85d9ddff1a3c39631718d936afdf5a6199c335",
+  "date": "2016-09-26",
+  "message_excerpt": "NIFI-2796: - Fixing incorrect documentation for the cluster summary endpoint.",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ClusteSummaryEntity.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ClusteSummaryEntity.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java"
+  ],
+  "path_roles": {
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ClusteSummaryEntity.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C012096",
+  "rank": 7,
+  "item_id": "N50_P3C012096_7a9208e7221e",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /flow/cluster/summary",
+  "proposition": "GET /flow/cluster/summary: contract says the successful JSON response is documented as ControllerStatusEntity with controllerStatus; implementation does the resource serializes ClusteSummaryEntity containing clusterSummary",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "schema",
+  "fix_family": "schema.cluster_summary_entity",
+  "proposition_check": "{\"contract\":[\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:730\",\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:773\",\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ControllerStatusEntity.java:35\"],\"implementation\":[\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:811\",\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:812\",\"be85d9ddff1a3c39631718d936afdf5a6199c335:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ClusteSummaryEntity.java:36\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java\": {\"parent_lines\": [811, 812], \"parent_numbered_excerpt\": \"806: \\n807:         clusterConfiguration.setClustered(isClustered());\\n808:         clusterConfiguration.setConnectedToCluster(isConnectedToCluster());\\n809: \\n810:         // create the response entity\\n811:         final ClusteSummaryEntity entity = new ClusteSummaryEntity();\\n812:         entity.setClusterSummary(clusterConfiguration);\\n813: \\n814:         // generate the response\\n815:         return clusterContext(generateOkResponse(entity)).build();\\n816:     }\\n817: \"}, \"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ControllerStatusEntity.java\": {\"parent_lines\": [35], \"parent_numbered_excerpt\": \"30:     /**\\n31:      * The ControllerStatusDTO that is being serialized.\\n32:      *\\n33:      * @return The ControllerStatusDTO object\\n34:      */\\n35:     public ControllerStatusDTO getControllerStatus() {\\n36:         return controllerStatus;\\n37:     }\\n38: \\n39:     public void setControllerStatus(ControllerStatusDTO controllerStatus) {\\n40:         this.controllerStatus = controllerStatus;\"}, \"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ClusteSummaryEntity.java\": {\"parent_lines\": [36], \"parent_numbered_excerpt\": \"31:     /**\\n32:      * The ClusterSummaryDTO that is being serialized.\\n33:      *\\n34:      * @return The ClusterSummaryDTO object\\n35:      */\\n36:     public ClusterSummaryDTO getClusterSummary() {\\n37:         return clusterSummary;\\n38:     }\\n39: \\n40:     public void setClusterSummary(ClusterSummaryDTO clusterSummary) {\\n41:         this.clusterSummary = clusterSummary;\"}}, \"patch\": \"key/t50_evidence/P3C012096.diff\", \"patch_sha256\": \"6e8bf5b39220f5501734126ddea0d4fca8a6cc2d6810bde7569f87848262747e\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

@@ -1,0 +1,62 @@
+{
+  "repo": "datarhei-core",
+  "fix_commit": "094e666926d0e7a0f6037b2e2ea3da194a7c5db6",
+  "parent_commit": "99c571d623efe637501d4c9f64ac4ec4f9daaf4e",
+  "date": "2023-03-23",
+  "message_excerpt": "Fix swagger documentation for /api/v3/events",
+  "stars": "282",
+  "changes": [
+    [
+      "M",
+      "docs/docs.go"
+    ],
+    [
+      "M",
+      "docs/swagger.json"
+    ],
+    [
+      "M",
+      "docs/swagger.yaml"
+    ],
+    [
+      "M",
+      "http/handler/api/events.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.json",
+    "docs/swagger.yaml",
+    "http/handler/api/events.go"
+  ],
+  "path_roles": {
+    "docs/swagger.json": [
+      "openapi_root"
+    ],
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ],
+    "http/handler/api/events.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C000323",
+  "rank": 8,
+  "item_id": "N50_P3C000323_e67ae35ace7c",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /api/v3/events",
+  "proposition": "POST /api/v3/events: contract says the request consumes text/event-stream or application/x-json-stream; implementation does request binding requires an application/json Content-Type and JSON event filters",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "content_type",
+  "fix_family": "content_type.event_filter_request",
+  "proposition_check": "{\"contract\":[\"99c571d623efe637501d4c9f64ac4ec4f9daaf4e:docs/swagger.yaml:2201\"],\"implementation\":[\"99c571d623efe637501d4c9f64ac4ec4f9daaf4e:http/handler/api/events.go:45\",\"99c571d623efe637501d4c9f64ac4ec4f9daaf4e:http/handler/util/util.go:14\",\"99c571d623efe637501d4c9f64ac4ec4f9daaf4e:http/handler/util/util.go:23\",\"99c571d623efe637501d4c9f64ac4ec4f9daaf4e:http/handler/util/util.go:46\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [2201], \"parent_numbered_excerpt\": \"2196:       security:\\n2197:       - ApiKeyAuth: []\\n2198:       summary: Reload the currently active configuration\\n2199:       tags:\\n2200:       - v16.7.2\\n2201:   /api/v3/events:\\n2202:     post:\\n2203:       consumes:\\n2204:       - text/event-stream\\n2205:       - application/x-json-stream\\n2206:       description: Stream of event of whats happening in the core\"}, \"http/handler/api/events.go\": {\"parent_lines\": [45], \"parent_numbered_excerpt\": \"40: // @Security ApiKeyAuth\\n41: // @Router /api/v3/events [post]\\n42: func (h *EventsHandler) Events(c echo.Context) error {\\n43: \\tfilters := api.EventFilters{}\\n44: \\n45: \\tif err := util.ShouldBindJSON(c, &filters); err != nil {\\n46: \\t\\treturn api.Err(http.StatusBadRequest, \\\"Invalid JSON\\\", \\\"%s\\\", err)\\n47: \\t}\\n48: \\n49: \\tfilter := map[string]*api.EventFilter{}\\n50: \"}, \"http/handler/util/util.go\": {\"parent_lines\": [14, 23, 46], \"parent_numbered_excerpt\": \"9: \\t\\\"github.com/datarhei/core/v16/encoding/json\\\"\\n10: \\n11: \\t\\\"github.com/labstack/echo/v4\\\"\\n12: )\\n13: \\n14: func ShouldBindJSONValidation(c echo.Context, obj interface{}, validate bool) error {\\n15: \\treq := c.Request()\\n16: \\n17: \\tif req.ContentLength == 0 {\\n18: \\t\\treturn fmt.Errorf(\\\"request doesn't contain any content\\\")\\n19: \\t}\\n20: \\n21: \\tctype := req.Header.Get(echo.HeaderContentType)\\n22: \\n23: \\tif !strings.HasPrefix(ctype, echo.MIMEApplicationJSON) {\\n24: \\t\\treturn fmt.Errorf(\\\"request doesn't contain JSON content\\\")\\n25: \\t}\\n26: \\n27: \\tbody, err := io.ReadAll(req.Body)\\n28: \\tif err != nil {\\n41: }\\n42: \\n43: // ShouldBindJSON binds the body data of the request to the given object. An error is\\n44: // returned if the body data is not valid JSON or the validation of the unmarshalled\\n45: // data failed.\\n46: func ShouldBindJSON(c echo.Context, obj interface{}) error {\\n47: \\treturn ShouldBindJSONValidation(c, obj, true)\\n48: }\\n49: \\n50: func PathWildcardParam(c echo.Context) string {\\n51: \\treturn \\\"/\\\" + PathParam(c, \\\"*\\\")\"}}, \"patch\": \"key/t50_evidence/P3C000323.diff\", \"patch_sha256\": \"5fa208af9ec516e65842008e47a09f55d32b980dcfeafb685fe2858b8e460fc5\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

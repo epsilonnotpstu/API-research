@@ -1,0 +1,44 @@
+{
+  "repo": "fess",
+  "fix_commit": "aaf548a5dc9c505073177b59e8649a5f273ad59b",
+  "parent_commit": "e2f662fb3eba5d7ebc30c23284a46dbc9b35a218",
+  "date": "2026-06-20",
+  "message_excerpt": "docs(openapi): align v2 Chat API spec with implementation (#3156)",
+  "stars": "1151",
+  "changes": [
+    [
+      "M",
+      "src/main/config/openapi/v2/openapi-user.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/config/openapi/v2/openapi-user.yaml"
+  ],
+  "path_roles": {
+    "src/main/config/openapi/v2/openapi-user.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C000453",
+  "rank": 2,
+  "item_id": "N50_P3C000453_cc7096db331e",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /api/v2/chat/stream",
+  "proposition": "POST /api/v2/chat/stream: contract says message is a required string with no stated maximum length; implementation does messages above the configured character limit return 400, with a default limit of 4000",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "validation",
+  "fix_family": "validation.chat_message_length",
+  "proposition_check": "{\"contract\":[\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/config/openapi/v2/openapi-user.yaml:708\",\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/config/openapi/v2/openapi-user.yaml:1562\"],\"implementation\":[\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/java/org/codelibs/fess/api/v2/handlers/ChatStreamHandler.java:227\",\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/java/org/codelibs/fess/api/v2/handlers/ChatStreamHandler.java:231\",\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/java/org/codelibs/fess/api/v2/handlers/ChatRequestBody.java:148\",\"e2f662fb3eba5d7ebc30c23284a46dbc9b35a218:src/main/java/org/codelibs/fess/helper/ChatApiHelper.java:247\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/config/openapi/v2/openapi-user.yaml\": {\"parent_lines\": [1562], \"parent_numbered_excerpt\": \"1557: \\n1558:     ChatMessageRequest:\\n1559:       type: object\\n1560:       required: [message]\\n1561:       properties:\\n1562:         message: { type: string }\\n1563:         session_id: { type: string }\\n1564:         fields:\\n1565:           type: object\\n1566:           description: Optional filter fields for the retrieval step.\\n1567:           properties:\"}, \"src/main/java/org/codelibs/fess/api/v2/handlers/ChatStreamHandler.java\": {\"parent_lines\": [227, 231], \"parent_numbered_excerpt\": \"222:         } catch (final V2JsonBody.MalformedJsonException e) {\\n223:             V2EnvelopeWriter.writeError(res, V2ErrorCode.INVALID_REQUEST, e.getMessage());\\n224:             return;\\n225:         }\\n226: \\n227:         final int maxLen = ComponentUtil.getChatApiHelper().getMaxMessageLength(fessConfig);\\n228:         final ChatRequestBody body;\\n229:         try {\\n230:             body = ChatRequestBody.from(raw, maxLen);\\n231:         } catch (final ChatRequestBody.MessageTooLongException e) {\\n232:             V2EnvelopeWriter.writeError(res, V2ErrorCode.INVALID_REQUEST, e.getMessage());\\n233:             return;\\n234:         }\\n235: \\n236:         if (StringUtil.isBlank(body.message())) {\"}, \"src/main/java/org/codelibs/fess/api/v2/handlers/ChatRequestBody.java\": {\"parent_lines\": [148], \"parent_numbered_excerpt\": \"143:      * @throws IOException if validation reports an unrecoverable error\\n144:      */\\n145:     public static ChatRequestBody from(final Map<String, Object> raw, final int maxMessageLength) throws IOException {\\n146:         final String message = trimmedOrNull(raw.get(\\\"message\\\"));\\n147:         final String sessionId = trimmedOrNull(raw.get(\\\"session_id\\\"));\\n148:         if (message != null && message.length() > maxMessageLength) {\\n149:             throw new MessageTooLongException(\\\"message exceeds max length: \\\" + message.length() + \\\" > \\\" + maxMessageLength);\\n150:         }\\n151:         final Map<String, List<String>> warnings = new HashMap<>();\\n152:         final ChatApiHelper chatApiHelper = ComponentUtil.getChatApiHelper();\\n153:         final Map<String, String[]> fields = chatApiHelper.parseFieldFilters(raw, warnings);\"}, \"src/main/java/org/codelibs/fess/helper/ChatApiHelper.java\": {\"parent_lines\": [247], \"parent_numbered_excerpt\": \"242:      * @param fessConfig active Fess config\\n243:      * @return max chat message length in characters\\n244:      */\\n245:     public int getMaxMessageLength(final FessConfig fessConfig) {\\n246:         try {\\n247:             return Integer.parseInt(fessConfig.getSystemProperty(\\\"rag.chat.message.max.length\\\", \\\"4000\\\"));\\n248:         } catch (final NumberFormatException e) {\\n249:             return 4000;\\n250:         }\\n251:     }\\n252: \"}}, \"patch\": \"key/t50_evidence/P3C000453.diff\", \"patch_sha256\": \"c4b61fcd4778ed0e0d10069b01df001ed5a9b44722b9b1c90f4dae261ee37984\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java",
+    "src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

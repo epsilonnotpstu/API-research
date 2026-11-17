@@ -1,0 +1,47 @@
+{
+  "repo": "flagr",
+  "fix_commit": "e61bebb54baec9eafa06f6edeced0720f0959df3",
+  "parent_commit": "916baf2707db8feb0704ab606b31e978e2387b93",
+  "date": "2020-04-03",
+  "message_excerpt": "Fix enabled query param",
+  "stars": "2615",
+  "changes": [
+    [
+      "M",
+      "pkg/handler/crud.go"
+    ],
+    [
+      "M",
+      "pkg/handler/crud_test.go"
+    ]
+  ],
+  "surface_paths": [
+    "pkg/handler/crud.go"
+  ],
+  "path_roles": {
+    "pkg/handler/crud.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C000308",
+  "rank": 34,
+  "item_id": "N50_P3C000308_11f8343ff405",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v1/flags",
+  "proposition": "GET /api/v1/flags: contract says the enabled query parameter returns flags having the given enabled status; implementation does enabled=false is stored in a zero-valued struct field that the vendored query builder omits from SQL predicates",
+  "truth_direction": "IMPL",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "query",
+  "fix_family": "query.enabled_false",
+  "proposition_check": "{\"contract\":[\"916baf2707db8feb0704ab606b31e978e2387b93:docs/api_docs/bundle.yaml:62\"],\"implementation\":[\"916baf2707db8feb0704ab606b31e978e2387b93:pkg/handler/crud.go:78\",\"916baf2707db8feb0704ab606b31e978e2387b93:pkg/handler/crud.go:102\",\"916baf2707db8feb0704ab606b31e978e2387b93:vendor/github.com/jinzhu/gorm/scope.go:593\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/api_docs/bundle.yaml\": {\"parent_lines\": [62], \"parent_numbered_excerpt\": \"57:           format: int64\\n58:           description: the numbers of flags to return\\n59:         - in: query\\n60:           name: enabled\\n61:           type: boolean\\n62:           description: return flags having given enabled status\\n63:         - in: query\\n64:           name: description\\n65:           type: string\\n66:           description: return flags exactly matching given description\\n67:         - in: query\"}, \"pkg/handler/crud.go\": {\"parent_lines\": [78, 102], \"parent_numbered_excerpt\": \"73: \\ttx := getDB()\\n74: \\tfs := []entity.Flag{}\\n75: \\tq := entity.Flag{}\\n76: \\n77: \\tif params.Enabled != nil {\\n78: \\t\\tq.Enabled = *params.Enabled\\n79: \\t}\\n80: \\tif params.Description != nil {\\n81: \\t\\tq.Description = *params.Description\\n82: \\t}\\n83: \\tif params.Key != nil {\\n97: \\t\\t\\t\\\"lower(description) like ?\\\",\\n98: \\t\\t\\tfmt.Sprintf(\\\"%%%s%%\\\", strings.ToLower(*params.DescriptionLike)),\\n99: \\t\\t)\\n100: \\t}\\n101: \\n102: \\terr := tx.Order(\\\"id\\\").Where(q).Find(&fs).Error\\n103: \\tif err != nil {\\n104: \\t\\treturn flag.NewFindFlagsDefault(500).WithPayload(\\n105: \\t\\t\\tErrorMessage(\\\"cannot query all flags. %s\\\", err))\\n106: \\t}\\n107: \\tresp := flag.NewFindFlagsOK()\"}, \"vendor/github.com/jinzhu/gorm/scope.go\": {\"parent_lines\": [593], \"parent_numbered_excerpt\": \"588: \\t\\t\\tscope.Err(fmt.Errorf(\\\"invalid query condition: %v\\\", value))\\n589: \\t\\t\\treturn\\n590: \\t\\t}\\n591: \\t\\tscopeQuotedTableName := newScope.QuotedTableName()\\n592: \\t\\tfor _, field := range newScope.Fields() {\\n593: \\t\\t\\tif !field.IsIgnored && !field.IsBlank {\\n594: \\t\\t\\t\\tsqls = append(sqls, fmt.Sprintf(\\\"(%v.%v %s %v)\\\", scopeQuotedTableName, scope.Quote(field.DBName), equalSQL, scope.AddToVars(field.Field.Interface())))\\n595: \\t\\t\\t}\\n596: \\t\\t}\\n597: \\t\\treturn strings.Join(sqls, \\\" AND \\\")\\n598: \\tdefault:\"}}, \"patch\": \"key/t50_evidence/P3C000308.diff\", \"patch_sha256\": \"c4a914d61557ad3ac3a5a41e6008a6086c05186b1e3cb0b3dcc0d8cf8f8a1c53\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "vendor/github.com/jinzhu/gorm/utils.go"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

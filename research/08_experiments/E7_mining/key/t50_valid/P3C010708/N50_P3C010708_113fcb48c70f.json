@@ -1,0 +1,93 @@
+{
+  "repo": "keycloak",
+  "fix_commit": "5828fab2583d1663b58236994090ad6b8a810293",
+  "parent_commit": "ae7e7ba084db880b7013df6b3adfade794a4179d",
+  "date": "2025-12-03",
+  "message_excerpt": "[admin-api-v2] Incorrect DTO/DAO mapping (#44587)",
+  "stars": "37892",
+  "changes": [
+    [
+      "M",
+      "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/ClientModelMapper.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/api/src/main/java/org/keycloak/services/client/ClientService.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/api/src/main/java/org/keycloak/services/client/DefaultClientService.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/DefaultClientApi.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/DefaultClientsApi.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/DefaultRealmApi.java"
+    ],
+    [
+      "M",
+      "rest/admin-v2/tests/src/test/java/org/keycloak/tests/admin/client/v2/ClientApiV2Test.java"
+    ],
+    [
+      "M",
+      "services/src/main/java/org/keycloak/services/resources/admin/ClientResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/ClientModelMapper.java",
+    "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java",
+    "rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java",
+    "rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/DefaultRealmApi.java",
+    "services/src/main/java/org/keycloak/services/resources/admin/ClientResource.java"
+  ],
+  "path_roles": {
+    "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/ClientModelMapper.java": [
+      "production_behaviour"
+    ],
+    "rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java": [
+      "production_behaviour"
+    ],
+    "rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java": [
+      "production_behaviour"
+    ],
+    "rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/DefaultRealmApi.java": [
+      "production_behaviour"
+    ],
+    "services/src/main/java/org/keycloak/services/resources/admin/ClientResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C010708",
+  "rank": 41,
+  "item_id": "N50_P3C010708_113fcb48c70f",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "PATCH /admin/api/v2/realms/{name}/clients/{id}",
+  "proposition": "PATCH /admin/api/v2/realms/{name}/clients/{id}: contract says displayName, appUrl and appRedirectUrls carry the client name, application homepage and redirect URLs; implementation does the DTO-to-model mapper has no mappings from those renamed fields to name, baseUrl and redirectUris, so submitted values are not transferred",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "jvm_annotation",
+  "mismatch_type": "request",
+  "fix_family": "request.client_aliased_field_mapping",
+  "proposition_check": "{\"contract\":[\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java:24\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java:38\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java:42\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/ClientApi.java:34\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminRootV2.java:16\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminRootV2.java:22\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminRootV2.java:28\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminApi.java:9\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/RealmsApi.java:8\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/RealmsApi.java:9\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/RealmApi.java:9\"],\"implementation\":[\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java:20\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java:21\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java:22\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java:33\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructModelMapper.java:9\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/services/client/DefaultClientService.java:30\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/services/client/DefaultClientService.java:59\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/api/src/main/java/org/keycloak/services/client/DefaultClientService.java:70\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:server-spi/src/main/java/org/keycloak/models/ClientModel.java:103\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:server-spi/src/main/java/org/keycloak/models/ClientModel.java:139\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:server-spi/src/main/java/org/keycloak/models/ClientModel.java:155\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/DefaultClientApi.java:67\",\"ae7e7ba084db880b7013df6b3adfade794a4179d:rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/DefaultClientApi.java:89\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"rest/admin-v2/api/src/main/java/org/keycloak/representations/admin/v2/ClientRepresentation.java\": {\"parent_lines\": [24, 38, 42], \"parent_numbered_excerpt\": \"19: \\n20:     @NotBlank(groups = CreateClient.class)\\n21:     @JsonPropertyDescription(\\\"ID uniquely identifying this client\\\")\\n22:     private String clientId;\\n23: \\n24:     @JsonPropertyDescription(\\\"Human readable name of the client\\\")\\n25:     private String displayName;\\n26: \\n27:     @JsonPropertyDescription(\\\"Human readable description of the client\\\")\\n28:     private String description;\\n29: \\n33: \\n34:     @JsonPropertyDescription(\\\"Whether this client is enabled\\\")\\n35:     private Boolean enabled;\\n36: \\n37:     @URL\\n38:     @JsonPropertyDescription(\\\"URL to the application's homepage that is represented by this client\\\")\\n39:     private String appUrl;\\n40: \\n41:     @JsonInclude(JsonInclude.Include.NON_EMPTY)\\n42:     @JsonPropertyDescription(\\\"URLs that the browser can redirect to after login\\\")\\n43:     private Set<@NotBlank @URL(message = \\\"Each redirect URL must be valid\\\") String> appRedirectUrls = new LinkedHashSet<String>();\\n44: \\n45:     @JsonInclude(JsonInclude.Include.NON_EMPTY)\\n46:     @JsonPropertyDescription(\\\"Login flows that are enabled for this client\\\")\\n47:     private Set<@NotBlank String> loginFlows = new LinkedHashSet<String>();\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/ClientApi.java\": {\"parent_lines\": [34], \"parent_numbered_excerpt\": \"29:     @PUT\\n30:     @Consumes(MediaType.APPLICATION_JSON)\\n31:     @Produces(MediaType.APPLICATION_JSON)\\n32:     Response createOrUpdateClient(@Valid ClientRepresentation client);\\n33: \\n34:     @PATCH\\n35:     @Consumes(CONTENT_TYPE_MERGE_PATCH)\\n36:     @Produces(MediaType.APPLICATION_JSON)\\n37:     ClientRepresentation patchClient(JsonNode patch);\\n38: \\n39:     @DELETE\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminRootV2.java\": {\"parent_lines\": [16, 22, 28], \"parent_numbered_excerpt\": \"11: import org.keycloak.services.resources.admin.AdminCorsPreflightService;\\n12: \\n13: import org.eclipse.microprofile.openapi.annotations.Operation;\\n14: \\n15: @Provider\\n16: @Path(\\\"admin/api\\\")\\n17: public class AdminRootV2 {\\n18: \\n19:     @Context\\n20:     protected KeycloakSession session;\\n21: \\n22:     @Path(\\\"v2\\\")\\n23:     public AdminApi adminApi() {\\n24:         checkApiEnabled();\\n25:         return new DefaultAdminApi(session);\\n26:     }\\n27: \\n28:     @Path(\\\"{any:.*}\\\")\\n29:     @OPTIONS\\n30:     @Operation(hidden = true)\\n31:     public Object preFlight() {\\n32:         checkApiEnabled();\\n33:         return new AdminCorsPreflightService();\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/AdminApi.java\": {\"parent_lines\": [9], \"parent_numbered_excerpt\": \"4: \\n5: import org.keycloak.admin.api.realm.RealmsApi;\\n6: \\n7: public interface AdminApi {\\n8: \\n9:     @Path(\\\"realms\\\")\\n10:     RealmsApi realms();\\n11: }\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/RealmsApi.java\": {\"parent_lines\": [8, 9], \"parent_numbered_excerpt\": \"3: import jakarta.ws.rs.Path;\\n4: import jakarta.ws.rs.PathParam;\\n5: \\n6: public interface RealmsApi {\\n7: \\n8:     @Path(\\\"{name}\\\")\\n9:     RealmApi realm(@PathParam(\\\"name\\\") String name);\\n10: }\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/realm/RealmApi.java\": {\"parent_lines\": [9], \"parent_numbered_excerpt\": \"4: \\n5: import org.keycloak.admin.api.client.ClientsApi;\\n6: \\n7: public interface RealmApi {\\n8: \\n9:     @Path(\\\"clients\\\")\\n10:     ClientsApi clients();\\n11: }\"}, \"rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructClientModelMapper.java\": {\"parent_lines\": [20, 21, 22, 33], \"parent_numbered_excerpt\": \"15: import org.mapstruct.MappingTarget;\\n16: import org.mapstruct.Named;\\n17: \\n18: @Mapper\\n19: public interface MapStructClientModelMapper extends ClientModelMapper {\\n20:     @Mapping(target = \\\"displayName\\\", source = \\\"name\\\")\\n21:     @Mapping(target = \\\"appUrl\\\", source = \\\"baseUrl\\\")\\n22:     @Mapping(target = \\\"appRedirectUrls\\\", source = \\\"redirectUris\\\")\\n23:     @Mapping(target = \\\"loginFlows\\\", source = \\\"authenticationFlowBindingOverrides\\\", ignore = true)\\n24:     @Mapping(target = \\\"auth\\\", ignore = true) // TODO\\n25:     @Mapping(target = \\\"roles\\\", source = \\\"rolesStream\\\", qualifiedByName = \\\"getRoleStrings\\\")\\n26:     @Mapping(target = \\\"serviceAccount.enabled\\\", source = \\\"serviceAccountsEnabled\\\")\\n27:     @Mapping(target = \\\"serviceAccount.roles\\\", source = \\\"rolesStream\\\", qualifiedByName = \\\"getServiceAccountRoles\\\")\\n28:     @Override\\n29:     ClientRepresentation fromModel(ClientModel model);\\n30: \\n31:     // we don't want to ignore nulls so that we completely overwrite the state\\n32:     @Override\\n33:     void toModel(@MappingTarget ClientModel model, ClientRepresentation rep, @Context RealmModel realm);\\n34: \\n35:     @Named(\\\"getRoleStrings\\\")\\n36:     default Set<String> getRoleStrings(Stream<RoleModel> stream) {\\n37:         return stream.map(RoleModel::getName).collect(Collectors.toSet());\\n38:     }\"}, \"rest/admin-v2/api/src/main/java/org/keycloak/models/mapper/MapStructModelMapper.java\": {\"parent_lines\": [9], \"parent_numbered_excerpt\": \"4: \\n5: public class MapStructModelMapper implements ModelMapper {\\n6:     private final MapStructClientModelMapper clientMapper;\\n7: \\n8:     public MapStructModelMapper() {\\n9:         this.clientMapper = Mappers.getMapper(MapStructClientModelMapper.class);\\n10:     }\\n11: \\n12:     @Override\\n13:     public ClientModelMapper clients() {\\n14:         return clientMapper;\"}, \"rest/admin-v2/api/src/main/java/org/keycloak/services/client/DefaultClientService.java\": {\"parent_lines\": [30, 59, 70], \"parent_numbered_excerpt\": \"25:     private final ClientModelMapper mapper;\\n26:     private final JakartaValidatorProvider validator;\\n27: \\n28:     public DefaultClientService(KeycloakSession session) {\\n29:         this.session = session;\\n30:         this.mapper = new MapStructModelMapper().clients();\\n31:         this.validator = new HibernateValidatorProvider();\\n32:     }\\n33: \\n34:     @Override\\n35:     public Optional<ClientRepresentation> getClient(ClientResource clientResource, RealmModel realm, String clientId,\\n54:         if (clientResource != null) {\\n55:             if (!allowUpdate) {\\n56:                 throw new ServiceException(\\\"Client already exists\\\", Response.Status.CONFLICT);\\n57:             }\\n58:             model = clientResource.viewClientModel();\\n59:             mapper.toModel(model, client, realm);\\n60:             var rep = ModelToRepresentation.toRepresentation(model, session);\\n61:             clientResource.update(rep);\\n62:         } else {\\n63:             created = true;\\n64:             validator.validate(client, CreateClientDefault.class); // TODO improve it to avoid second validation when we know it is create and not update\\n65: \\n66:             // dummy add/remove to obtain a detached model\\n67:             model = realm.addClient(client.getClientId());\\n68:             realm.removeClient(model.getId());\\n69: \\n70:             mapper.toModel(model, client, realm);\\n71:             var rep = ModelToRepresentation.toRepresentation(model, session);\\n72:             model = clientsResource.createClientModel(rep);\\n73:         }\\n74: \\n75:         var updated = mapper.fromModel(model);\"}, \"server-spi/src/main/java/org/keycloak/models/ClientModel.java\": {\"parent_lines\": [103, 139, 155], \"parent_numbered_excerpt\": \"98: \\n99:     void setClientId(String clientId);\\n100: \\n101:     String getName();\\n102: \\n103:     void setName(String name);\\n104: \\n105:     String getDescription();\\n106: \\n107:     void setDescription(String description);\\n108: \\n134: \\n135:     void removeWebOrigin(String webOrigin);\\n136: \\n137:     Set<String> getRedirectUris();\\n138: \\n139:     void setRedirectUris(Set<String> redirectUris);\\n140: \\n141:     void addRedirectUri(String redirectUri);\\n142: \\n143:     void removeRedirectUri(String redirectUri);\\n144: \\n150: \\n151:     void setRootUrl(String url);\\n152: \\n153:     String getBaseUrl();\\n154: \\n155:     void setBaseUrl(String url);\\n156: \\n157:     boolean isBearerOnly();\\n158:     void setBearerOnly(boolean only);\\n159: \\n160:     int getNodeReRegistrationTimeout();\"}, \"rest/admin-v2/rest/src/main/java/org/keycloak/admin/api/client/DefaultClientApi.java\": {\"parent_lines\": [67, 89], \"parent_numbered_excerpt\": \"62:         try {\\n63:             if (!Objects.equals(clientId, client.getClientId())) {\\n64:                 throw new WebApplicationException(\\\"cliendId in payload does not match the clientId in the path\\\", Response.Status.BAD_REQUEST);\\n65:             }\\n66:             validateUnknownFields(client);\\n67:             var result = clientService.createOrUpdate(clientsResource, clientResource, realm, client, true);\\n68:             return Response.status(result.created() ? Response.Status.CREATED : Response.Status.OK).entity(result.representation()).build();\\n69:         } catch (ServiceException e) {\\n70:             throw new WebApplicationException(e.getMessage(), e.getSuggestedResponseStatus().orElse(Response.Status.BAD_REQUEST));\\n71:         }\\n72:     }\\n84: \\n85:             final ObjectReader objectReader = objectMapper.readerForUpdating(client);\\n86:             ClientRepresentation updated = objectReader.readValue(patch);\\n87: \\n88:             validateUnknownFields(updated);\\n89:             return clientService.createOrUpdate(clientsResource, clientResource, realm, updated, true).representation();\\n90:         } catch (IllegalArgumentException e) {\\n91:             throw new WebApplicationException(\\\"Unsupported media type\\\", Response.Status.UNSUPPORTED_MEDIA_TYPE);\\n92:         } catch (JsonProcessingException e) {\\n93:             throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);\\n94:         } catch (IOException e) {\"}}, \"patch\": \"key/t50_evidence/P3C010708.diff\", \"patch_sha256\": \"3f3af00de66213bb32dc73db760af0bae6100becc6aa03ebdb0ae9c6906df868\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}
