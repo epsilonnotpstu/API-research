@@ -1,0 +1,33 @@
+import csv
+D,A,U='DELIBERATE','ACCIDENTAL','UNCLEAR'
+S,G='SPECIFIC','GENERIC'
+R=[
+('Q22',D,S,2,'Q22/impl/src/org/traccar/api/resource/CommandTypeResource.java:30','Q22/contract/swagger.json#/paths/~1commandtypes/post','Explicit @GET on the resource method; contract path entry lists only post with deviceId and array response.'),
+('Q23',D,S,2,'Q23/impl/pkg/handler/eval.go:84','Q23/contract/docs/api_docs/bundle.yaml:1118','BlankResult explicitly builds result with flagID 0 when flag not found; schema field declares minimum 1.'),
+('Q24',D,S,3,'Q24/impl/gateway/server.go:579','Q24/contract/swagger.yml:1009','Router explicitly registers /org/keys/{keyName}; contract has dedicated /tyk/orgs/keys/{keyID} path.'),
+('Q25',D,S,2,'Q25/impl/http/server.go:590;Q25/impl/http/server.go:591','Q25/contract/docs/swagger.json:482','Explicit routes: GET /fs/mem to ListFiles and /fs/mem/* to GetFile; contract path has trailing slash with list operation.'),
+('Q26',D,G,2,'Q26/impl/internal/base/server/http.go:85;Q26/impl/internal/base/server/http.go:89;Q26/impl/internal/router/answer_api_router.go:247','Q26/contract/docs/swagger.json#/paths/~1answer~1api~1v1~1tag/delete','DELETE /tag registered in groups using explicit Auth/AdminAuth middleware; contract has no security entry (silence).'),
+('Q27',D,S,2,'Q27/impl/internal/relationtuple/definitions.go:488;Q27/impl/internal/persistence/sql/relationtuples.go:230','Q27/contract/spec/api.json:538','FromURLQuery just reads namespace; persistence has explicit if Namespace != "" branch. Contract marks namespace required with prose. Borderline: no required-guard.'),
+('Q28',D,S,2,'Q28/impl/internal/api/video.go:38;Q28/impl/internal/api/video.go:39','Q28/contract/internal/api/swagger.json:37','Route and c.Param use hash explicitly; annotation explicitly names the path param thumb.'),
+('Q29',D,S,2,'Q29/impl/http/handler/api/restream.go:189;Q29/impl/restream/restream.go:844','Q29/contract/docs/swagger.yaml#/paths/~1api~1v3~1process~1{id}/put/responses','UpdateProcess returns unknown-ID error; handler explicitly wraps any error as 400 (no 404 branch). Contract lists 404 explicitly. Borderline blanket mapping.'),
+('Q30',D,G,3,'Q30/impl/src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:240-254','Q30/contract/src/main/config/openapi/v2/openapi-user.yaml:625','Explicit try/catch around getParameterNames writes INVALID_REQUEST 400 before dispatch; auth/me spec lists no 400 (silence).'),
+('Q31',D,S,2,'Q31/impl/internal/controller_backyard/siteinfo_controller.go:43;Q31/impl/internal/router/answer_api_router.go:224','Q31/contract/docs/swagger.yaml:1717','GET handler explicitly just calls service with no binding; annotation/spec declares required body AddCommentReq (likely copy-paste, but explicit).'),
+('Q32',D,S,3,'Q32/impl/pkg/handler/enricher.go:116;Q32/impl/pkg/handler/enricher.go:191','Q32/contract/docs/api_docs/bundle.yaml:1350','enabledEnrichers explicitly filters all effective enrichers by enabled; contract prose states only enabled built-ins.'),
+('Q33',D,S,2,'Q33/impl/apiserver/src/main/java/org/dependencytrack/persistence/ProjectQueryManager.java:302','Q33/contract/apiserver/src/main/java/org/dependencytrack/resources/v1/ProjectResource.java:735','Explicit else branch sets parent null when parent absent/null; contract javadoc prose says omit/null leaves parent unchanged.'),
+('Q34',D,S,2,'Q34/impl/nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java:407-408','Q34/contract/nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java:388','Method explicitly types and returns ControllerServiceReferencingComponentsEntity; @ApiOperation declares response ControllerServiceEntity.'),
+('Q35',D,S,2,'Q35/impl/internal/api/labels_search.go:57;Q35/impl/internal/api/labels_search.go:68','Q35/contract/internal/api/swagger.json#/paths/~1api~1v1~1labels/get; Q35/impl/internal/api/labels_search.go:22','search.Labels returns []Label and c.JSON writes it; @Success declares single search.Label object.'),
+('Q36',A,S,2,'Q36/impl/src/main/java/org/traccar/api/resource/SessionResource.java:98-103','Q36/contract/swagger.json#/paths/~1session/post','add() logs in and returns user but never sets USER_ID_KEY, unlike token/cookie paths that do; looks like omission. Contract summary: Create a new Session.'),
+('Q37',D,G,2,'Q37/impl/internal/relationtuple/definitions.go:488-489;Q37/impl/internal/persistence/sql/relationtuples.go:218-223','Q37/contract/spec/api.json:534;Q37/contract/spec/api.json:541','Object/relation read without guard; persistence has explicit nonempty-conditional filters. Required flags come from inherited queryRelationTuple while prose says only namespace required.'),
+('Q38',A,S,3,'Q38/impl/storage/handler.go:101-108','Q38/contract/.schema/api.swagger.json#/paths/~1engines~1acp~1ory~1{flavor}~1policies/get/responses/200','ListByQuery uses var res Policies (nil), appended only on match, so empty result serializes as null; no empty-slice handling.'),
+('Q39',D,S,2,'Q39/impl/src/org/traccar/api/resource/UserResource.java:43','Q39/contract/swagger.json#/paths/~1users/get/responses/200','Method explicitly declared returning Collection<User>; contract declares array of Position.'),
+('Q40',A,S,3,'Q40/impl/pkg/handler/crud.go:670','Q40/contract/docs/api_docs/bundle.yaml (constraint DELETE path)','tx.Delete by constraintID only; flagID used just for commit/notification, no membership check (missing guard).'),
+('Q41',A,G,2,'Q41/impl/http/api/process.go:176-181','Q41/contract/docs/swagger.yaml:704','Unmarshal to API copies Pattern/MaxFiles/MaxFileAge but omits PurgeOnDelete, unlike Marshal at line 98; looks like field omission. Contract from shared ProcessConfig schema.'),
+('Q42',A,S,3,'Q42/impl/pkg/handler/crud.go:579','Q42/contract/docs/api_docs/bundle.yaml:548-560','tx.Delete(Segment, segmentID) with no flag membership check; flagID only used for notification/commit.'),
+]
+ids=[r['item_id'] for r in csv.DictReader(open('items.csv'))]
+assert ids==[r[0] for r in R],ids
+with open('codes_K6.csv','w',newline='') as f:
+    w=csv.writer(f);w.writerow('item_id,divergence_kind,contract_specificity,confidence,impl_locators,contract_locators,rationale'.split(','))
+    for r in R:
+        assert len(r[6].split())<=40,r[0]
+        w.writerow(r)

@@ -1,0 +1,37 @@
+== E13: n=61 (SPEC 34, IMPL 27; BOTH excluded 0); clusters 42; repos 15
+   C13-C14 kappa 1.000; K5-K6 kappa 0.890
+   GPT final D/A/U = 43/18/0
+   Claude final D/A/U = 40/18/3
+   H-E13-1 GPT kinds: items 33/43 vs 1/18 p=2.22e-07; clusters 22/29 vs 1/13 p=4.65e-05 -> PASS
+   H-E13-2 Claude kinds: items 34/40 vs 0/18 p=2.99e-10; clusters 23/28 vs 0/12 p=1.11e-06 -> PASS
+   H-E13-3 GPT vs Claude on 58 both-decided: agree 55, kappa 0.877 -> PASS
+   H-E13-4 R vs F4 on 61 R-decided: R-only correct 0, F4-only correct 7; McNemar exact two-sided p=0.0156 -> SIGNIFICANT
+   R_gpt: macro-F1 0.806 acc 0.82 cov 1.00
+   R_claude: macro-F1 0.859 acc 0.90 cov 0.95
+   M1_L6: macro-F1 0.899 acc 0.90 cov 1.00
+   M1F_F4: macro-F1 0.932 acc 0.93 cov 1.00
+   FB_L6: macro-F1 0.899 acc 0.90 cov 1.00
+   precision ACCIDENTAL->IMPL: 17/18 = 0.944 [0.742, 0.990]
+   precision DELIBERATE->SPEC: 33/43 = 0.767 [0.623, 0.868]
+      repo answer: items 4, clusters 3
+      repo authelia: items 3, clusters 2
+      repo casdoor: items 1, clusters 1
+      repo datarhei-core: items 6, clusters 4
+      repo dependency-track: items 4, clusters 4
+      repo fess: items 5, clusters 3
+      repo flagr: items 8, clusters 5
+      repo halo: items 1, clusters 1
+      repo harness: items 2, clusters 1
+      repo keto: items 9, clusters 6
+      repo keycloak: items 2, clusters 1
+      repo nifi: items 5, clusters 4
+      repo photoprism: items 3, clusters 2
+      repo traccar: items 5, clusters 3
+      repo tyk: items 3, clusters 2
+   leave-one-repo-out H-E13-1 item p: max 8.71e-06 (without keto)
+   POOLED E10+E12+E13 (n=137) GPT kinds: items 69/84 vs 6/50 p=4.18e-16; clusters 40/51 vs 4/35 p=3.98e-10
+   POOLED precision ACCIDENTAL->IMPL: 44/50 = 0.880 [0.762, 0.944]
+   POOLED precision DELIBERATE->SPEC: 69/84 = 0.821 [0.726, 0.889]
+   POOLED R: macro-F1 0.827 acc 0.84 cov 0.98
+   POOLED M1 (L3+L5+L6): macro-F1 0.821 acc 0.84 cov 0.96
+   POOLED M1F (F1+F3+F4): macro-F1 0.876 acc 0.88 cov 1.00

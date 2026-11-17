@@ -14,6 +14,8 @@ SAMPLES = [
     ('E10 new\n(T48, new coders)', 'E10_RESULTS.md H-E10-3', 19, 24, 2, 13),
     ('E12 new, fix-capped\n(T49, GPT coders)', 'E12_RESULTS.md H-E12-1', 17, 17, 3, 19),
     ('E12 new, fix-capped\n(T49, Claude coders)', 'E12_RESULTS.md H-E12-2', 17, 17, 1, 17),
+    ('E13 new repositories\n(T50, GPT coders)', 'E13_RESULTS.md H-E13-1', 33, 43, 1, 18),
+    ('E13 new repositories\n(T50, Claude coders)', 'E13_RESULTS.md H-E13-2', 34, 40, 0, 18),
     ('E6 items\n(exploratory)', 'E7_RESULTS.md exploratory', 11, 15, 0, 10),
 ]
 INK, INK2, MUTED, GRID, BASE, SURF = '#0b0b0b', '#52514e', '#898781', '#e1e0d9', '#c3c2b7', '#fcfcfb'
@@ -29,7 +31,7 @@ def wilson(k, n, z=1.96):
 def main():
     plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 9, 'axes.edgecolor': BASE,
                          'axes.labelcolor': INK2, 'xtick.color': MUTED, 'ytick.color': INK2})
-    fig, ax = plt.subplots(figsize=(6.4, 4.8), facecolor=SURF)
+    fig, ax = plt.subplots(figsize=(6.4, 5.6), facecolor=SURF)
     ax.set_facecolor(SURF)
     off = 0.17
     for r, (lab, _, dk, dn, ak, an) in enumerate(SAMPLES):
