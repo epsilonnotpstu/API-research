@@ -25,6 +25,20 @@ def bases(f):
     return b
 
 
+# Inside a replication archive (built by build_archive.py): files deliberately left out are not failures,
+# and in the anonymised review copy, files whose local paths were replaced by placeholders are listed in ANONYMIZATION.md.
+ARCH = R.parents[1] if (R.parents[1] / 'MANIFEST.sha256').exists() else None
+ANONYMIZED = set()
+if ARCH and (ARCH / 'ANONYMIZATION.md').exists():
+    ANONYMIZED = {l[2:].strip() for l in (ARCH / 'ANONYMIZATION.md').read_text().splitlines() if l.startswith('- ')}
+REGENERABLE = re.compile(r'(^|/)(pool[234]?\.json|candidate_pool\.json|[a-z0-9_]*_sources\.json)$')
+
+
+def arch_rel(q):
+    try: return str(q.resolve().relative_to(ARCH.resolve()))
+    except (ValueError, AttributeError): return None
+
+
 bad_total = 0
 for f in sorted(X.glob('*/*freeze*.sha256')):
     entries = []
@@ -33,17 +47,21 @@ for f in sorted(X.glob('*/*freeze*.sha256')):
         if m: entries.append(m.groups())
     files = [(h, p) for h, p in entries if not TREE.match(p)]
     trees = len(entries) - len(files)
-    ok, mism, miss = 0, [], []
+    ok, mism, miss, anon, excl = 0, [], [], [], []
     for h, p in files:
         cands = [b / p for b in bases(f) if (b / p).is_file()]
         if any(sha(q) == h for q in cands): ok += 1          # a matching hash cannot be a coincidence
+        elif cands and ARCH and any(arch_rel(q) in ANONYMIZED for q in cands): anon.append(p)
         elif cands: mism.append(p)
+        elif ARCH and REGENERABLE.search(p): excl.append(p)
         else: miss.append(p)
     expl = [p for p in mism if p in EXPLAINED]; mism = [p for p in mism if p not in EXPLAINED]
     bad_total += len(mism) + len(miss)
-    status = 'MISMATCH' if mism else ('MISSING' if miss else ('OK*' if expl else 'OK'))
+    status = 'MISMATCH' if mism else ('MISSING' if miss else ('OK*' if expl or anon or excl else 'OK'))
     print(f'{status:8s} {f.relative_to(X)}  files ok {ok}/{len(files)}  tree-entries {trees}')
     for p in expl: print(f'         documented change: {p} ({EXPLAINED[p]})')
+    for p in anon: print(f'         anonymised path strings (review copy): {p}')
+    for p in excl: print(f'         not in archive, regenerable: {p}')
     for p in mism: print(f'         changed after freeze: {p}')
     for p in miss: print(f'         not found: {p}')
 print('unexplained content mismatches or missing files:', bad_total)

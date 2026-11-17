@@ -23,14 +23,20 @@ TIER_A = ['research/08_experiments', 'research/09_collab/PROTOCOL.md', 'research
           'research/09_collab/logs', 'research/09_collab/human_check', 'research/10_paper', 'research/RESEARCH_STATE.md']
 ICED_NOTE = ('NOTE: this excerpt comes from an earlier version of the project that was released under the licence above '
              '(checked at the parent commit). The project\'s current licence is different and restrictive; it does not apply to this excerpt.\n')
-SECRET = re.compile(r'aXZhbi5wZXRyb3Y|-----BEGIN [A-Z ]*PRIVATE KEY-----\s*\n[A-Za-z0-9+/=]{40,}|ghp_[A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}')
+SECRET = re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----\s*\n[A-Za-z0-9+/=]{40,}|ghp_[A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}')
 AUTH = re.compile(r'[Aa]uthorization: *(?:Bearer|Basic) +([A-Za-z0-9+/=._-]{20,})')
 # sha256 of known synthetic test tokens (E1 harness tests); the values themselves are never stored here
 SYNTHETIC = {'944a6ad5f20da2203adf726cece7b369cd6725de077e29a3ede769c30f4d151d'}
 
 
+# sha256 of the first 15 characters of a known benchmark demo credential (the value itself is never stored)
+KNOWN_PREFIX = {'dd2eaf50560d39c2b280f9ca7671b8000b8d582afcc913f88df2028dc16cd31d'}
+B64 = re.compile(r'[A-Za-z0-9+/]{15,}={0,2}')
+
+
 def secret_hit(t):
     if SECRET.search(t): return True
+    if any(hashlib.sha256(m.group(0)[:15].encode()).hexdigest() in KNOWN_PREFIX for m in B64.finditer(t)): return True
     return any(hashlib.sha256(m.group(1).encode()).hexdigest() not in SYNTHETIC for m in AUTH.finditer(t))
 
 
@@ -96,6 +102,14 @@ def main():
     with tarfile.open(fileobj=io.BytesIO(tar)) as t:
         members = [m for m in t.getmembers() if '__pycache__' not in m.name and not m.name.endswith('.pyc')]
         t.extractall(out / 'repo', members=members, filter='data')
+    crlf = 0
+    for m in members:
+        if not m.isfile(): continue
+        a_ = out / 'repo' / m.name; w_ = REPO / m.name
+        if w_.is_file():
+            wb, ab = w_.read_bytes(), a_.read_bytes()
+            if wb != ab and wb.replace(b'\r\n', b'\n') == ab:
+                a_.write_bytes(wb); crlf += 1     # freezes hash the working-tree bytes (Codex CSVs use CRLF)
     # tier B
     src = item_sources(); licrows = {}; cache = {}
     for pkg in PKGS:
