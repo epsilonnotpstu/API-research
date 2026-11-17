@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B043,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,2,diff.patch:updateCompatibilityLevel; getCompatibilityLevel,Setting level NONE previously deleted the rule; now stores a NONE rule. Missing-rule GET falls back to configured default global compat rule instead of fixed NONE.
+B044,NO,NA,NA,NA,2,diff.patch:createSubmodelElement,Only the path in the Kafka event published after creation changes; the HTTP response and stored state are unchanged.
+B045,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:Binding.java routingKey; contract Binding schema,"Binding model gains routingKey property with getter/setter, so serialized bindings may include a new field. Contract Binding does not list it."
+B046,NO,NA,NA,NA,2,diff.patch:InfinispanOrganizationProvider,"Caches identity provider links and domains in the organization cache; results returned should be identical, only lookup path changes."
+B047,YES,RESPONSE_CONTENT,UNCLEAR,UNSPECIFIED,2,after/internal/handlers/response.go:137,Passkey two-factor path previously ran 2FA response then also the 1FA response (second could overwrite reply); now returns after the 2FA response only.
+B048,NO,NA,NA,NA,1,after/.../RequestPathUtils.java:19-33,"Helper classifying paths as internet noise now also treats the bare root paths as non-noise; no caller shown, apparently logging or filtering only."
+B049,NO,NA,NA,NA,3,diff.patch,Comment reformatting in a test stub file only.
+B050,NO,NA,NA,NA,3,diff.patch:mw_protected_resource.go,Refactor extracting identical condition into IsPRMEnabled helper; same behaviour.
+B051,NO,NA,NA,NA,2,diff.patch:DeviceEndpoint.java,Injected session repository type changed to a broader interface; no behavioural change visible.
+B052,NO,NA,NA,NA,3,diff.patch:authentication.go,Configuration validation renames and scrypt variant validation at startup; not reached by an HTTP operation.
+B053,NO,NA,NA,NA,2,diff.patch:model.go,Adds a new model file for audit log ext; no endpoint wiring in this commit.
+B054,NO,NA,NA,NA,2,diff.patch:Component.java,Removes two internal persistence fetch groups; no serialization change.
+B055,NO,NA,NA,NA,3,diff.patch:LaunchNotificationRunner.java:141,Email notification link path changes from /ui# to /ui/#; not an HTTP response.
+B056,YES,RESPONSE_CONTENT,UNCLEAR,UNSPECIFIED,2,after/.../TimeSeriesRecentController.java:182,"Recent-values query by ts ids now also receives the office, so results are scoped by office where previously they were not. DAO not provided."

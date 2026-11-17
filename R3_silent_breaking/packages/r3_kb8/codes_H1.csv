@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B099,YES,ORDERING_PAGINATION_LIMITS,COMPATIBLE,UNSPECIFIED,3,diff.patch:105-109,Command list query previously had no explicit order; now sorted by description.
+B100,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:12-24,Merge-queue branch-update rule check removed from ref rule checks; pushes/API ref updates to branches with a merge queue previously rejected are now accepted.
+B101,NO,NA,NA,NA,3,diff.patch:6-14,Pure rename of txManager method executeWithResult to execute; behaviour identical.
+B102,YES,STATUS_OR_ERROR_MAPPING,BREAKING,UNSPECIFIED,3,diff.patch:5-80,"Stub endpoints oauth/authorize and oidc/login now return 405 instead of 200; /oauth/redirect removed (now unrouted), /oauth/userinfo and /oidc/redirect added returning 405."
+B103,NO,NA,NA,NA,2,diff.patch:30-45,"Removes env flag (default true) and automated-sync/source-type preconditions for revision-update optimisation in manifest generation; intended as performance-only, results same; parameter list reformatting."
+B104,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,2,diff.patch:12-17,Implicit subscription now inserted even when an inherited subscription exists; before it was skipped. Later subscription queries can show an extra own row.
+B105,UNCLEAR,NA,NA,NA,1,after/pkg/handler/crud.go:217-218,Snapshots list applies a default limit from a new config value when no limit given; the config default is not in provided files.
+B106,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,2,"after WorkflowResource.java:2259,2286",Recommended-action notification on GitHub install webhook now attributed to the user matching the GitHub sender (optional) instead of the authenticated caller.
+B107,NO,NA,NA,NA,3,diff.patch:1-120,ViewNameResolver replaced by an interface relocated to another package with import changes only; no endpoint logic modified.
+B108,NO,NA,NA,NA,2,"after widget.go:28-30,73-75",Nil registry now replaced by an empty registry; output for sessions remains zero counts.
+B109,NO,NA,NA,NA,2,diff.patch:8,Import path swapped from gobuffalo/pop to ory/pop fork; no code logic change.
+B110,NO,NA,NA,NA,2,diff.patch:15-22,"Helper no longer treats TimeoutException as interrupted; internal utility, no visible HTTP effect shown."
+B111,NO,NA,NA,NA,2,diff.patch:40-52,Prometheus metrics servlet added on admin port only if an optional ECS metadata URI is configured; no API operation changed.
+B112,YES,INPUT_STRICTER,BREAKING,UNSPECIFIED,3,after handler_import.go:166-173,Identity import with passkey credentials lacking a user handle or credentials is now rejected with 400; previously accepted. TOTP import unchanged.

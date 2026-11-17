@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B099,YES,ORDERING_PAGINATION_LIMITS,COMPATIBLE,UNSPECIFIED,2,diff.patch:105-109,Command list query now ordered by description; previously unordered.
+B100,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:394-405,"Pre-receive hook no longer checks merge-queue branch updates, so pushes/API ref updates previously rejected for merge queue branches are now accepted."
+B101,NO,NA,NA,NA,3,diff.patch:18-27,Method rename executeWithResult to execute only; same behaviour.
+B102,YES,STATUS_OR_ERROR_MAPPING,BREAKING,UNSPECIFIED,2,diff.patch:oauth_authorize.go:41-46,"OAuth authorize/userinfo and OIDC login placeholders now return 405 failed instead of 200 success; /oauth/redirect route removed, /oidc/redirect added returning 405."
+B103,NO,NA,NA,NA,2,diff.patch:state.go:256-262,"Removes env toggle and automated-sync condition for revision-update optimisation; intended same manifests, performance only; signature edits cosmetic."
+B104,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,2,diff.patch:249-262,Implicit subscription no longer skipped when an inherited subscription exists; now creates own subscription row.
+B105,YES,ORDERING_PAGINATION_LIMITS,UNCLEAR,UNSPECIFIED,2,diff.patch:pkg/handler/crud.go:214-218,Snapshots list applies configured default limit when no limit param given; no effect if config is 0.
+B106,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,1,diff.patch:2283-2286,Webhook handler passes triggerUser instead of user to notification of potentially containing entries; recipient/context of recommended action may differ.
+B107,NO,NA,NA,NA,3,diff.patch:ViewNameResolver,ViewNameResolver replaced by TemplateNameResolver interface; imports moved; no visible behaviour change shown.
+B108,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,1,diff.patch:25-31,"Widget handler creates default session registry when none configured; previously nil registry, likely failing on use."
+B109,NO,NA,NA,NA,3,diff.patch:17-20,Import path change of pop library only.
+B110,NO,NA,NA,NA,1,diff.patch:22-26,Utility no longer treats TimeoutException as interrupt; HTTP-visible effect not determinable.
+B111,NO,NA,NA,NA,2,diff.patch:156-168,Adds optional Prometheus metrics servlet on admin port when configured; not an API operation.
+B112,YES,INPUT_STRICTER,BREAKING,UNSPECIFIED,3,diff.patch:150-170,Identity import of passkey credentials now returns 400 when user handle or credentials are empty; previously stored.

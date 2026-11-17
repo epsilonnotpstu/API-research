@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B057,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:WalletApi.kt walletResponse(),POST wallet response now also accepts a JARM 'response' form field (signature-verified); malformed form or invalid JWT now returns 400 instead of an uncaught failure.
+B058,NO,NA,NA,NA,3,diff.patch:PaymentsResource.java,"Whitespace, log message redaction and switch-to-arrow syntax only; same statuses and bodies."
+B059,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:comment_controller.go:249,comment_id in comment page request is now decoded from short ID; short IDs previously unresolved are now accepted.
+B060,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,1,diff.patch:ContractEntityMapper.java:112-135,Entitlements with null purchase or null contracts previously threw NPE in billing id extraction; now null id is returned and entry skipped with a warning.
+B061,NO,NA,NA,NA,3,diff.patch:handlers.go,"Visitor handler function types gain a context parameter; internal, no HTTP behaviour change."
+B062,YES,INPUT_STRICTER,BREAKING,UNSPECIFIED,2,diff.patch:ProjectController.java update(),"PATCH project formerly took a Project body; now requires query parameters name and office and renames via dao.renameProject, ignoring the body."
+B063,NO,NA,NA,NA,2,diff.patch:WellKnownResourceImpl.java:570,Import/package changes of bean classes and removal of duplicate local variable declarations; logic unchanged.
+B064,NO,NA,NA,NA,3,diff.patch:JobExecutionRepository.java,"Only interface declarations added (countByJobId, JobTargetRepository); no implementation or HTTP path."
+B065,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,"diff.patch:GroupSimpleEntity.java, GroupServiceImpl.java mapToSimple",Simple group entity now also returns environmentId and environmentName. Files contain unresolved merge-conflict markers.
+B066,YES,OTHER,COMPATIBLE,UNSPECIFIED,2,"diff.patch:WalletApi.kt jarmJwksPath, handleGetJarmJwks",New GET /wallet/jarm/{requestId}/jwks.json operation; by-reference client metadata jwks URI now points to it instead of public-keys.json.
+B067,NO,NA,NA,NA,3,diff.patch:KafkaConfig.java,Javadoc deprecation text only.
+B068,YES,HEADER_OR_MEDIA_TYPE,UNCLEAR,UNSPECIFIED,2,diff.patch:DittoHeaderDefinition.java:119,"ACCEPT header definition's writeToExternalHeaders flag changes true to false, so accept is no longer published in outgoing external headers."
+B069,NO,NA,NA,NA,3,"diff.patch:user.go, user_util.go",Function moved to a new file with variable renames; logic identical.
+B070,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,3,diff.patch:commits.go:198,Listing commits with a non-existent sha returned 500 on GetCommit error; now returns 404 when the error is not-exist.

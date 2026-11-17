@@ -1,0 +1,11 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B127,NO,NA,NA,NA,2,diff.patch:25-60,"Internal privilege-set constant semantics (containsAll, toArray, equals, hashCode) adjusted; no HTTP operation outcome evident."
+B128,NO,NA,NA,NA,3,diff.patch:10-25,"Exception message built via helper and ids copied; same message text and same ids; no observable difference."
+B129,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,1,diff.patch:30-45,"Hook resources created during sync now get tracking metadata per configured tracking method (annotation/label) instead of always a label; stored resource metadata visible through API changes."
+B130,NO,NA,NA,NA,2,after/pkg/handler/eval.go:228-232,"Debug log construction skipped when debug off; caller already discarded logs in that case. Rollout salt now precomputed string of flag ID; same value."
+B131,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:50-70,"New optional include-aliases query parameter (default false) on list levels; when true, location levels include aliases field. Default responses unchanged."
+B132,NO,NA,NA,NA,3,diff.patch:8,"Only adds a log line on config reload; no client-visible effect."
+B133,NO,NA,NA,NA,2,diff.patch:1-60,"Adds model Run setting, run-type parser and renames a parse function in internal vision code; no HTTP operation shown to use it."
+B134,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:8-25,"VariantAnnotation gains genomicLocationExplanation property with getter/setter, so serialized responses carry a new (possibly null) field."
+B135,UNCLEAR,NA,NA,NA,1,diff.patch:50-80,"New Finding method adds deduplicated aliases map to vulnerability, but no caller is in provided files, so whether any response changes cannot be determined."
+B136,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:8,"Max field ID computation no longer pre-registers the initial column ID, so a schema with a field using that ID is no longer rejected as duplicate."

@@ -1,0 +1,19 @@
+import csv
+H="item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale".split(",")
+R=[
+("B015","NO","NA","NA","NA",3,"diff.patch","Formatting, indentation, import order and NOPMD comment removal only; no behaviour change."),
+("B016","YES","INPUT_LOOSER","COMPATIBLE","UNSPECIFIED",3,"diff.patch:GenerateDto.java @@ -16","Validation on path and build changes from size 2..20 to 2..120; longer values previously rejected are now accepted. Contract has no constraint."),
+("B017","NO","NA","NA","NA",3,"diff.patch","Adds test-only router constructors and renames a parameter; no HTTP behaviour change."),
+("B018","YES","AUTHZ_OR_AUTH","UNCLEAR","UNSPECIFIED",2,"after/AzureAdCredential.java (permissions, refresh)","Azure AD SSO library switched from adal4j to msal4j; role lookup now uses homeAccountId instead of uniqueId, and refresh logic differs (refresh failures now return true). Resulting permissions and session behaviour may differ."),
+("B019","NO","NA","NA","NA",2,"diff.patch:models/db/context.go","Internal DB transaction helper refactor; WithTx now reuses an existing transaction instead of erroring. Callers shown were already AutoTx; no clear HTTP-visible change."),
+("B020","NO","NA","NA","NA",3,"diff.patch","Import reordering only."),
+("B021","YES","RESPONSE_CONTENT","COMPATIBLE","UNSPECIFIED",2,"diff.patch:template_controller.go:321","Question page canonical URL now uses the short /questions/{id} form also for the new PermalinkQuestionIDByShortID setting; previously it kept the title-suffixed form."),
+("B022","NO","NA","NA","NA",2,"diff.patch:model.go","Adds severity-count fields to an ORM model struct only; no visible request outcome changes in the provided code."),
+("B023","NO","NA","NA","NA",3,"diff.patch","Lambda parameter cleanup, parameter rename and fun interface conversion; no behaviour change."),
+("B024","YES","SIDE_EFFECT_OR_STATE","COMPATIBLE","UNSPECIFIED",2,"diff.patch:scan_all.go; base_controller.go StopScanAll","Stop scan-all endpoint now also sets a cache stop mark so the scan-all loop ends and no further artifacts are scanned; previously only the execution was stopped. Handler can now return an error from the stop call."),
+("B025","YES","OTHER","COMPATIBLE","UNSPECIFIED",1,"diff.patch:JettyServer.java:640","Only required web contexts now fail startup on unavailability; before, any failing web app caused server exit. Otherwise-failing optional apps no longer prevent the API from being served."),
+("B026","NO","NA","NA","NA",3,"diff.patch","Adds a deprecation log call on flow initialisation only."),
+("B027","YES","SIDE_EFFECT_OR_STATE","BREAKING","SPECIFIED",2,"after/http/handler/api/restream.go:192-198; contract docs/swagger.json:1056 (PUT replace)","PUT process update now prefills config from the existing process, so omitted fields keep current values instead of defaults; unknown id now returns 404 before JSON validation. Contract describes the operation as replace."),
+("B028","UNCLEAR","NA","NA","NA",1,"diff.patch","Callers adapted to a changed file manager interface (renamed methods, swapped args, temp upload flow); implementation not provided so effect on requests cannot be judged."),
+]
+w=csv.writer(open("codes_H1.csv","w",newline=""));w.writerow(H);w.writerows(R)

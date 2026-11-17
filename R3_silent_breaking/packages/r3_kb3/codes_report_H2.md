@@ -1,0 +1,2 @@
+# H2 report (r3_kb3)
+14 items coded. All opened. Hard cases: B029/B030 (DTO/new classes with no visible wiring, coded NO); B033 (refactor with ignored flag, NO); B037 (503 on overload, BREAKING judged on new failure mode); B041 (error field newly populated in strict mode, COMPATIBLE, low certainty); B034 (clamping previously rejected values). B032, B034, B042 had no contract files, so UNSPECIFIED.

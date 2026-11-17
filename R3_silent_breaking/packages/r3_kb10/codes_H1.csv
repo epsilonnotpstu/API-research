@@ -1,0 +1,11 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B127,NO,NA,NA,NA,2,diff.patch:1-40,"Internal empty privilege-set constant: containsAll, toArray, equals, hashCode adjusted to collection contract; no HTTP-visible outcome evident."
+B128,NO,NA,NA,NA,3,diff.patch:10-25,Exception message built via helper method with identical text; productIds copied defensively. Output unchanged.
+B129,YES,SIDE_EFFECT_OR_STATE,COMPATIBLE,UNSPECIFIED,2,after/controller/hook.go:99-115; diff.patch SetAppInstance,"Hook resources now get tracking metadata via configured tracking method (annotation and/or label, label truncated) instead of always a raw label; resource state visible via API differs."
+B130,NO,NA,NA,NA,2,after/pkg/handler/eval.go:324-349,"Segment debug logs now only built when debug enabled, which is already the only case they are appended to the response; salt string pre-formatted, same value."
+B131,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,"after/.../LevelsController.java:240,270,301; LocationLevel.java aliases",New optional include-aliases query parameter (default false) on levels listing; response may add aliases field when true. Contract lacks the parameter.
+B132,NO,NA,NA,NA,3,diff.patch:8-12,Adds a log line on config reload only.
+B133,NO,NA,NA,NA,2,diff.patch model_run.go,"Adds model Run setting, run-type parsing and rename of an internal parse function; no HTTP operation reached in provided files."
+B134,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:10-25,"Adds genomicLocationExplanation property with getter/setter to the annotation DTO, serialized as a new (initially null) field; nothing here populates it."
+B135,UNCLEAR,NA,NA,NA,1,diff.patch:addVulnerabilityAliases,"New method adds an aliases set to the finding vulnerability map, but no caller appears in provided files, so reachability from an HTTP operation is undecidable."
+B136,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,2,diff.patch:6-10,"Max-field-id computation no longer pre-registers the initial column id, so a schema field using that id is no longer rejected as duplicate."

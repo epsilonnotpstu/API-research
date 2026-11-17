@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B029,UNCLEAR,NA,NA,NA,1,diff.patch:12,"Record gains adressesperreTilganger component; DTO appears to model an upstream Altinn response, but no file shows it exposed or consumed by an HTTP operation."
+B030,NO,NA,NA,NA,2,diff.patch,"Adds new model classes (Package, PackageDescription, PackagesBody) with no changes to existing handlers shown; no operation behaviour changes."
+B031,NO,NA,NA,NA,3,diff.patch:9-30,"Only struct tag additions (readOnly, doc) for documentation generation; json/validation tags unchanged."
+B032,YES,INPUT_STRICTER,BREAKING,UNSPECIFIED,2,"diff.patch:44-52,66",createProject now trims the name and rejects names shorter than minimum after trimming (INCORRECT_REQUEST); patch name replace also trims. Previously whitespace-padded short names were accepted.
+B033,NO,NA,NA,NA,2,diff.patch:40-75,"SetTrustedLocation merged into SetLocation with a JsonIgnore trusted flag; client-sent locations remain ignored, trusted ones applied. Refactor."
+B034,YES,ORDERING_PAGINATION_LIMITS,UNCLEAR,UNSPECIFIED,2,diff.patch:13-24,PageRequestImpl no longer asserts on invalid page: number below 1 (including 0 and negatives) becomes 1; previously 0 was accepted as index 0 and negatives threw. Page output for such requests differs.
+B035,NO,NA,NA,NA,3,diff.patch:10,Only adds a timeout cause message to the context; same timeout and result.
+B036,NO,NA,NA,NA,3,diff.patch,Diagnostics service held in a field and passed to a constructor; no behavioural change.
+B037,YES,STATUS_OR_ERROR_MAPPING,BREAKING,UNSPECIFIED,2,diff.patch:440-448,"Kafka operations now run on a bounded executor; when pool and queue are full, consumer operations return 503 'Bridge is overloaded'. Previously no such rejection; requests were processed. Contract lists no 503."
+B038,NO,NA,NA,NA,2,diff.patch:6-20,Changes charge due-date used in a business event payload (effective due date); event serializer is not an HTTP response.
+B039,NO,NA,NA,NA,2,diff.patch,Preview generation refactored into helpers; cache errors now logged and fall back to rendering. Same preview bytes returned.
+B040,NO,NA,NA,NA,2,diff.patch:6,Adds primarySpec yaml field to a version data struct used for file/config representation; no HTTP operation shown reaching it.
+B041,YES,RESPONSE_CONTENT,COMPATIBLE,UNSPECIFIED,2,diff.patch:5-45,Batch check now sets the per-result error text to the limitation when membership is unknown and strict mode is on; previously empty. Allowed value unchanged.
+B042,YES,INPUT_STRICTER,BREAKING,UNSPECIFIED,2,diff.patch:12-24,"Settings key enum value server.footer.links renamed to server.sidebar.links; requests using the old key are no longer matched, new key now required."

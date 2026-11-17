@@ -1,0 +1,20 @@
+import csv
+R=[
+("B085","NO","NA","NA","NA",3,"diff.patch:1","Modifier order, final parameters and a stray semicolon only; no behaviour change."),
+("B086","NO","NA","NA","NA",2,"after/gateway/handler_error.go","Adds access-log output on error and success paths when enabled; log only, responses unchanged."),
+("B087","NO","NA","NA","NA",3,"diff.patch:1","Only nolint comments added; response unchanged."),
+("B088","YES","RESPONSE_SHAPE","BREAKING","UNSPECIFIED",2,"diff.patch:9","V2 plan conversion now applies serializeConfiguration to securityDefinition, so security.configuration is produced through the serializer instead of default direct mapping; value form changes."),
+("B089","YES","INPUT_STRICTER","COMPATIBLE","UNSPECIFIED",1,"diff.patch ConnectionValidator +227; ResponseDiversionValidator","Connection validation now rejects invalid response-diversion settings (bad IDs, self-diversion, topics on diversion target); new headers added. Concerns newly introduced configuration."),
+("B090","UNCLEAR","NA","UNCLEAR","UNSPECIFIED",1,"diff.patch:1","Validation annotation import moves javax to jakarta; whether constraints were enforced before depends on framework version not shown."),
+("B091","NO","NA","NA","NA",2,"diff.patch EndpointInfoServiceImpl:365","Count query now runs inside a transaction manager call and constructor wiring reordered; same result."),
+("B092","NO","NA","NA","NA",3,"diff.patch","Only event tracing arguments changed; HTTP responses unchanged."),
+("B093","YES","INPUT_STRICTER","BREAKING","UNSPECIFIED",2,"diff.patch create.go:81; action.go:70","Internal repo lookup now uses new code_repo_ref instead of code_repo_url; gitness requests without code_repo_ref fail (nil dereference in create, error in action)."),
+("B094","NO","NA","NA","NA",3,"diff.patch:1","Import path bump of a cache library; no behaviour change shown."),
+("B095","NO","NA","NA","NA",3,"diff.patch:1","Only a test added."),
+("B096","NO","NA","NA","NA",2,"diff.patch:1","Adds an unused string constant; nothing reads it in the diff."),
+("B097","NO","NA","NA","NA",2,"diff.patch track_endpoint.go","New file defining fill/extract helpers; no caller added in the diff, so no operation reaches it."),
+("B098","NO","NA","NA","NA",3,"diff.patch:1","Comment typo fix."),
+]
+w=csv.writer(open("codes_H2.csv","w",newline=""))
+w.writerow("item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale".split(","))
+w.writerows(R)
