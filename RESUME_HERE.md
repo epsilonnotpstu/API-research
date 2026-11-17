@@ -19,27 +19,22 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
   4. Rebuild the archive with `10_paper/reproduce/build_archive.py --anonymize`.
 - **Open user decision:** a 15-character prefix of a public demo credential is in the history of commit 930ba0a. It has since been replaced by a hash. Rewriting history needs a force push, so ask the user before doing anything.
 
-## R3 ("Silent behavioural changes in REST APIs"), `R3_silent_breaking/`
-- **Done:**
-  - Pre-registration and plan freeze (`plan/r3_plan_freeze.sha256`, commit ed528bd). Verify it with `sha256sum -c` from `R3_silent_breaking/`.
-  - Related work verified from full text (`notes/NOVELTY_VERIFIED.md`). Paper draft v0.1 at `paper/R3_draft.md`.
-  - **pool4 frozen:** 18,590 candidates from 54 repositories (`mining/freeze4.json`, `pool4_inventory.json`; `pool4.json` is local and gitignored).
-  - **Sample frozen:** 136 commits (`mining/sample4.json`, `freeze4_sample.json`).
-  - Codex's T53 scripts carry Claude fixes F1–F5. All are logged in `plan/R3_DEVIATIONS.md` (D1). Codex reviewed F1–F3 in T54 (`collab/reports/T54_report.md`). Tests: `test_t53.py --synthetic-only` 29/29. In `test_t54.py`, 23 tests pass and 1 characterisation test fails, as expected after F4.
-- **Next step: build the packages, which has not succeeded yet.**
-  - Run from `R3_silent_breaking/mining`: `/usr/bin/python3 -I -B t53_build.py`. It takes about 10 minutes and publishes nothing if it fails.
-  - Last attempt: failed at the package scan, before F5 and the improved error message were in place. The re-run with the informative error (`Package scan failed; kinds=...`) was stopped by the pause. **Run it again first.**
-  - If a scan kind appears, fix it mechanically, log it as F6 in `R3_DEVIATIONS.md`, re-run `test_t53.py --synthetic-only`, and rebuild.
-- **After the build:**
-  0. **First, the drive must be mounted.** The machine rebooted at 23:05, and "Shared Data" (`/dev/nvme0n1p4`, holding the clones and the archive) was not mounted afterwards. Claude does not enter passwords. The user mounts it by clicking "Shared Data" in the file manager.
-1. Run `R3_silent_breaking/collab/scripts/r3_prepare.py` to build the `r3_kb*` Claude batches (at most 15 items each).
-  2. Run `collab/scripts/r3_freeze_packages.sh`, which writes `plan/r3_packages_freeze.sha256`.
-  3. Commit and push.
-  4. Start coding:
-     - **G1/G2 (Codex, blind):** `collab/scripts/r3_launch_gpt.sh`. To resume after a usage limit: `r3_launch_gpt.sh resume K G1 G2`.
-     - **H1/H2 (Claude sonnet subagents, fresh context):** one per `r3_kb*` batch, with the prompt in `collab/scripts/r3_claude_prompt.txt` (replace @ID@ and @B@).
-  5. Audit, write the output freeze, and score once: `/usr/bin/python3 -I -B plan/score_r3.py --out plan/r3_scores.csv`.
-  6. Write the results into `paper/R3_draft.md`.
+## R3 ("Silent behavioural changes in REST APIs"), `R3_silent_breaking/`: scored (2026-11-18)
+- Everything is done up to and including the single scoring run, as commit 286ffad.
+  - **Push status:** the push failed because the network was down (DNS). Run `git push origin main` once the network is back.
+  - **Results** (`plan/R3_RESULTS.md`):
+    - 136 commits from 47 repositories.
+    - Observable change: 60/136 = 0.44.
+    - Breaking: 32/136 = 0.24 with GPT codes, versus 12/136 with Claude codes. **The breaking label is model-dependent.**
+    - H-R3-1 PASS: 29/32 breaking changes edit no contract annotation.
+    - H-R3-2 INSUFFICIENT: only 1 change concerns specified behaviour.
+    - H-R3-3 PASS: κ 0.94.
+  - Paper draft v0.2: `paper/R3_draft.md` (abstract, results, discussion and conclusion written).
+- **Remaining for R3:**
+  1. A human spot-check of about 20 items, focused on `client_impact`, by the user.
+  2. A venue decision, and LaTeX via a copy of `research/10_paper/latex/md2acm.py`.
+  3. A replication archive like R1's.
+  4. A final paper polish. A Codex numeric-consistency review like T52 is recommended.
 - **Rules:**
   - Blind roles (G1/G2, H1/H2) are never done by Claude itself.
   - If Codex hits its limit, resume the same session after the reset.
