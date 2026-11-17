@@ -31,6 +31,11 @@
   - Pooled E10+E12+E13 (১৩৭টি item): 69/84 বনাম 6/50, p = 4e-16।
   - Deviation P1: T50-এর অকাল budget stop-এর পর একই pool-এ mining চালিয়ে যাওয়া (T50b)। সিদ্ধান্তের সময় direction দেখা হয়নি।
   - বিস্তারিত: `08_experiments/E13_newrepos/E13_RESULTS.md`।
+- **R1 submission-এর প্রস্তুতি (২০২৬-১১-১৭):**
+  - Venue ISSTA 2027 (ACM acmsmall, double-anonymous)। LaTeX: `10_paper/latex/main.tex` (`md2acm.py` দিয়ে তৈরি)।
+  - Codex T52-এর ২৫টি consistency finding সব ঠিক করা হয়েছে।
+  - Anonymous replication archive `R1_anon_49f92e2` তৈরি হয়েছে; reproduction 15/15।
+  - বাকি: শুধু user-এর human spot-check।
 - **Paper খসড়া v0.4:** `10_paper/R1_draft.md`। E13 অংশ (§4.8), abstract-এর item 7 আর Figure 1-এর E13 row যোগ হয়েছে।
 - **পরের ধাপ:**
   - user-এর human spot-check (`09_collab/human_check/`);
