@@ -76,6 +76,23 @@ def context_for_repo(git,rows):
             if oid:shas.update([oid,oid[:7]])
     return dict(messages=sorted(messages,key=lambda s:(-len(s),s)),identifiers=sorted(identifiers),shas=sorted(shas))
 
+def redact_fix(raw,**context):
+    """F6 (Claude): apply redaction to a fixpoint (at most 5 passes). Redaction output can itself match another rule
+    (observed only in projected JSON contracts); iterating only ever redacts more, and is identical for idempotent input."""
+    data=V['redact'](raw,**context)
+    for _ in range(4):
+        again=V['redact'](data,**context)
+        if again==data:break
+        data=again
+    if V['redact'](data,**context)!=data:
+        # F6c: still no fixpoint -> replace every line that redaction would still change by a whole-line marker.
+        out=[]
+        for line in data.splitlines(keepends=True):
+            body=line.rstrip(b'\r\n');end=line[len(body):]
+            out.append(b'[REDACTED]'+end if V['redact'](body,**context)!=body else line)
+        data=b''.join(out)
+    return data
+
 def build_item(row,item_id,git,history,context):
     files={};sources=[]
     for path in row['files']:
@@ -86,17 +103,19 @@ def build_item(row,item_id,git,history,context):
             if b'\0' in raw:raise ValueError('Binary behaviour source')
             raw.decode('utf-8','strict')
             sources.append((path,raw))
-            files[role+'/'+path]=V['redact'](raw,**context)
+            files[role+'/'+path]=redact_fix(raw,**context)
     patch=git.run('diff','--no-ext-diff','--no-textconv','--no-color','--find-renames=50%',
                   row['parent'] or P['EMPTY'],row['sha'],'--',*row['files'])
-    files['diff.patch']=V['redact'](strip_patch(patch),**context)
+    files['diff.patch']=redact_fix(strip_patch(patch),**context)
     try:
         mapped=C['routes'](sources)
         roots=history['roots'][row['parent'] or 'ROOT']
         contracts,modes,remote=C['build'](roots,lambda path:git.blob(row['parent'],path),mapped)
         for path,raw in contracts.items():
             if not P['safe_path'](path):raise ValueError('Unsafe contract path')
-            data=V['redact'](raw,**context)
+            data=redact_fix(raw,**context)
+            # F6b: a projection whose redaction has no fixpoint goes to the raw fallback instead of failing the item.
+            if V['redact'](data,**context)!=data:raise C['ContractError']('Projected contract redaction has no fixpoint')
             # JSON representation under an original YAML filename is valid YAML 1.2.
             json.loads(data)
             files['contract/'+path]=data
@@ -118,11 +137,12 @@ def build_item(row,item_id,git,history,context):
             if not P['safe_path'](path):raise ValueError('Unsafe contract path')
             raw=git.blob(row['parent'],path)
             if raw is None or total>=2000:continue
-            text=V['redact'](raw,**context).decode('utf-8','replace').splitlines(keepends=True)[:2000-total]
-            files['contract/'+path]=''.join(text).encode();total+=len(text)
+            text=redact_fix(raw,**context).decode('utf-8','replace').splitlines(keepends=True)[:2000-total]
+            # F6d: re-redact the truncated prefix (a JSON document's prefix is no longer JSON, so other rules apply)
+            files['contract/'+path]=redact_fix(''.join(text).encode(),**context);total+=len(text)
         modes=[dict(path='*',mode='raw_fallback',operations=0,reason=type(error).__name__)];remote=0
     files['item.md']=('Repository: '+row['repo']+'\nLanguage: '+row['language']+'\nFiles:\n'+''.join('- '+p+'\n' for p in row['files'])).encode()
-    files['item.md']=V['redact'](files['item.md'],**context)
+    files['item.md']=redact_fix(files['item.md'],**context)
     for data in files.values():
         if V['findings'](data,**context):raise ValueError('Delivered privacy/leakage finding; values suppressed')
     mode='no_checked_in_document' if not modes else ';'.join(sorted({m['mode'] for m in modes}))
@@ -134,13 +154,27 @@ def build_item(row,item_id,git,history,context):
                files={p:dict(sha256=P['sha'](data),bytes=len(data)) for p,data in sorted(files.items())})
     return files,key,audit
 
+def path_flag(path,context):
+    """F4 (revised): content rules (e.g. ENCODED, which matches any long '/'-joined token) do not apply to paths.
+    A delivered path is flagged only if a segment contains a sample SHA (>= 7 hex), a ticket-style id, a '#'-number
+    id written with '#', an email address, or a distinctive commit-message line."""
+    low=path.lower()
+    if any(len(v)>=7 and v.lower() in low for v in context['shas']):return True
+    if any(m.lower() in low for m in context['messages']):return True
+    for seg in path.split('/'):
+        if V['EMAIL'].search(seg):return True
+        for i in context['identifiers']:
+            if i.startswith('#'):
+                if i in seg:return True
+            elif re.search(r'(?<![A-Za-z0-9])'+re.escape(i)+r'(?![A-Za-z0-9])',seg):return True
+    return False
+
 def scan_package(files,contexts):
     findings=Counter()
     for path,data in files.items():
         # F4 (Claude, after T54 review): delivered relative paths are scanned like contents.
-        pb=path.encode();parts=path.split('/');role=parts[0] if len(parts)==1 else parts[1] if parts[1] in ('contract','before','after') else parts[-1]
-        if V['findings'](pb):findings['path_findings:'+role]+=1
-        if any(V['redact'](pb,**c)!=pb for c in contexts.values()):findings['path_metadata:'+role]+=1
+        parts=path.split('/');role=parts[0] if len(parts)==1 else parts[1] if parts[1] in ('contract','before','after') else parts[-1]
+        if any(path_flag(path,c) for c in contexts.values()):findings['path_metadata:'+role]+=1
         for kind in V['findings'](data):findings[kind]+=1
         for context in contexts.values():
             if V['redact'](data,**context)!=data:findings['sample_metadata']+=1
