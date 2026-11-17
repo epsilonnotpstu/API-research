@@ -5,32 +5,19 @@
 ---
 
 ## Abstract
-When a REST implementation and its OpenAPI contract disagree, a test failure does not say which artifact is wrong. Tools and practitioners usually assume that the code is wrong. We study this question on real contract-alignment fixes mined from open-source Java, Kotlin and Go REST projects.
+When a REST implementation and its OpenAPI contract disagree, a failing test does not say which artifact is wrong, and testing tools implicitly blame the code. We ask which side developers actually repair, and whether that can be predicted.
 
-**Main findings:**
-1. **Developers often repair the contract, not the code:** SPEC was the repair direction in 26 of 45 new fixes.
-2. **The kind of divergence predicts the repair direction.**
-   - We separate *deliberate* divergences, where code explicitly written for the behaviour produces it, from *accidental* ones, where the behaviour is a side effect of an omission.
-   - Deliberate divergences were repaired in the contract in 79% of cases (26/33). Accidental divergences were never repaired in the contract (0/11; one-sided Fisher p < 10⁻⁴).
-   - The association survives propositions written by a direction-blind reader (39/48 vs 0/10, p = 1.8 × 10⁻⁶).
-3. **A zero-shot LLM already triages real fixes well** (macro-F1 0.86–0.88), and better than an explicit intent-evidence codebook (0.70–0.72).
-4. **An explicit kind rule does not improve on the LLM.** A pre-registered hybrid that routes accidental divergences to the implementation changed only 1 of 85 labels, because the LLM already labels accidental divergences correctly. In that sample the LLM's residual errors were abstentions on deliberate divergences, and a post-hoc fallback to the kind rule reached macro-F1 0.98.
-5. **The fallback did not replicate, but the kind effect did.** On 40 further pre-registered items (E10):
-   - The LLM rarely abstained. Instead it confidently mislabelled a cluster of deliberate divergences, and its macro-F1 fell to 0.58–0.64.
-   - The fallback lost to a forced-choice LLM.
-   - The kind rule held at 0.77, and the kind × direction association replicated: 19/24 vs 2/13, p = 2.7 × 10⁻⁴.
-   - LLM triage accuracy varies strongly between clustered samples. The divergence kind is the more stable signal.
-6. **The association replicates across model families and with fix capping.**
-   - Claude coders re-coded all 125 earlier confirmatory items: 67/81 vs 1/39, κ 0.96 against the GPT coders.
-   - On 36 new fix-capped items (E12) it held with both families: 17/17 vs 3/19 (GPT) and 17/17 vs 1/17 (Claude), with κ = 1.00 across families.
-   - On E12, the kind rule and the LLM labellers agreed on every item.
-7. **The association generalises to repositories never used before.**
-   - E13 mined 61 items from 15 new repositories, chosen by metadata alone.
-   - The association held with GPT coders (33/43 vs 1/18; by cluster 22/29 vs 1/13) and with Claude coders (34/40 vs 0/18), with κ = 0.88 across families.
-   - Here, though, a forced-choice LLM triaged better than the kind rule: macro-F1 0.93 vs 0.81, McNemar p = 0.016.
+We mined 248 real contract-alignment fixes from 40 open-source Java, Kotlin and Go services. For each fix we packaged only the parent state, and had blind LLM coders classify each divergence as *deliberate* (behaviour produced by code written for it) or *accidental* (a side effect of an omission). All hypotheses, scorers and packages were hash-frozen before use.
 
-All hypotheses were pre-registered with hash-frozen scorers. All coders were blind to the hypothesis and to the repair direction.
+Developers repaired the contract in 26 of 45 new fixes. Divergence kind predicted the repair side:
+- In the first confirmatory sample, 26/33 deliberate divergences were repaired in the contract, against 0/11 accidental ones (p < 10⁻⁴).
+- The association held with propositions written by a direction-blind reader (39/48 vs 0/10).
+- It held in three further pre-registered samples, the last from 15 repositories never used before (33/43 vs 1/18). Pooled over these three samples it was 69/84 vs 6/50 (p = 4.2 × 10⁻¹⁶), also at the level of fix clusters.
+- Coders from a second model family agreed with the first at κ 0.88–1.00.
 
+On real fixes, LLM triage was accurate on average but unstable across samples, with macro-F1 ranging from 0.58 to 0.93. A pre-registered rule that routes divergences by kind did not beat a forced-choice LLM.
+
+Divergence kind is therefore a robust, interpretable explanation of repair direction. It is not a better triage method than an LLM. Testing tools should stop assuming the implementation is wrong and surface the divergence kind.
 ---
 
 ## 1. Introduction
@@ -49,16 +36,23 @@ All hypotheses were pre-registered with hash-frozen scorers. All coders were bli
 - **RQ2 (Triage methods).** How well do a zero-shot LLM and an intent-evidence codebook predict the repaired side, on injected faults and on real fixes?
 - **RQ3 (Predictors).** Does the *kind* of divergence (deliberate vs accidental) predict the repair direction? Does this hold when the divergence is described by someone who does not know the direction?
 - **RQ4 (Hybrid).** Does routing accidental divergences to the implementation improve LLM triage?
+- **RQ5 (Robustness).** Does the kind → direction association replicate on new samples, with fix capping, with coders from another model family, and on repositories never used before?
 
 **Contributions:**
-1. **A labelled corpus.** 111 real contract-alignment fixes (25 E6, 45 E7, 41 T47), labelled with repair direction, plus excerpt packages of each item's parent state.
-2. **A blind coding instrument for divergence kind.** Its within-model reliability is κ 0.89–1.00.
-3. **Confirmatory evidence of the kind → direction association.** It holds under miner-written and direction-blind propositions.
-4. **A comparison of LLM and codebook triage** on synthetic and real faults.
-5. **A fully pre-registered, hash-frozen protocol** for LLM-coded empirical SE studies. Every amendment is disclosed.
+1. **A labelled corpus.** 248 items from real contract-alignment fixes in 40 repositories (E6 25, E7 45, T47 41, T48 40, T49 36, T50 61), labelled with repair direction, plus licence-checked excerpt packages of each item's parent state.
+2. **A blind coding instrument for divergence kind.** Its within-family reliability is κ 0.85–1.00, and its cross-family reliability is κ 0.88–1.00.
+3. **Confirmatory evidence of the kind → direction association.** It holds:
+   - under miner-written and direction-blind propositions;
+   - in three further pre-registered samples;
+   - at the level of fix clusters;
+   - on repositories never used before.
+4. **A comparison of LLM, codebook and kind-rule triage** on synthetic and real faults. It shows that LLM triage accuracy varies strongly between samples.
+5. **A fully pre-registered, hash-frozen protocol** for LLM-coded empirical SE studies.
+   - Every amendment is disclosed.
+   - A reproduction script recomputes every reported number from the frozen data.
 
 ## 2. Background and Related Work
-*Citation keys `[Pnnn]` refer to `02_screening/final_papers.md`. Items marked ⚠️ were verified only from the abstract, HTML or vendor documentation (`06_final_recommendations/R1_novelty_check_E0.md`). BibTeX: `references.bib`, generated by `make_bib.py` from the verified catalogue. The three arXiv-only works were verified from their abstract pages (2026-11-17).*
+*Works marked ⚠️ were verified only from their abstracts, web pages or vendor documentation.*
 
 ### 2.1 The contract as oracle in REST testing
 - **Black-box and white-box REST fuzzers use the OpenAPI document as both input model and oracle.** Examples are RESTler [P006], EvoMaster [P011], Schemathesis and RESTest [P001]; surveys and tool comparisons are [P002, P003, P004].
@@ -103,6 +97,10 @@ This paper addresses all three.
 | E7 | 45 new real fixes, 15 repos (+25 E6 items, exploratory) | RQ3 | confirmatory |
 | E8 / E8b | E7 items + 41 new (T47) with direction-blind propositions | RQ3, leakage control | confirmatory (pooled) |
 | E9 | 85 new items (44 E7 + 41 T47) | RQ4 | confirmatory (INSUFFICIENT) |
+| E10 | 40 new items (T48), 21 fixes | RQ4 fallback, RQ5 | confirmatory |
+| E11 | the 125 earlier confirmatory items, re-coded by a second model family | RQ5 | confirmatory |
+| E12 | 36 new items (T49), at most 2 per fix | RQ5 | confirmatory |
+| E13 | 61 new items (T50/T50b) from 15 repositories never used before | RQ5 | confirmatory |
 
 ### 3.2 Mining real contract-alignment fixes
 Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
@@ -131,7 +129,11 @@ Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
   - **IMPL:** only the behaviour changes;
   - **BOTH:** excluded from the primary analyses.
 - **Miner:** a Codex agent that knew neither hypothesis. It wrote each proposition from the parent state and recorded a direction key.
-- **Cap:** at most 6 items per repository.
+- **Cap:** at most 6 items per repository (T45–T47).
+- **Later mining (T48–T50):**
+  - T48 kept the T46 pool.
+  - T49 added a per-fix cap of 2 items.
+  - T50 drew a new frozen pool from 20 repositories selected by metadata only. Selection required a checked-in OpenAPI document, ≥ 300 commits and an OSI licence. T50 reviewed candidates round-robin across repositories and checked the licence at each item's parent commit.
 - **Upstream code was never executed.**
 
 ### 3.3 Packages and blinding
@@ -143,11 +145,12 @@ Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
 | Role | Knows the hypothesis? | Knows the direction? | Sees |
 |---|---|---|---|
 | Miner | no | yes (writes the key) | repo history |
-| Coder (C1–C8) | no | no | proposition + package |
+| Coder (GPT family, C1–C14) | no | no | proposition + package |
+| Coder (Claude family, K1–K6) | no | no | proposition + package |
 | Proposition-only coder (P1–P4) | no | no | proposition only |
 | Direction-blind writer (W1, W2) | no | no | operation + package |
 | Matcher (J1, J2) | no | no | W and miner propositions |
-| Triage labeller (Y, G, L) | no | no | proposition + package |
+| Triage labeller (Y, G, L1–L6, F1–F4) | no | no | proposition + package |
 
 **Protocol controls:**
 - Boundary compliance was checked in every log.
