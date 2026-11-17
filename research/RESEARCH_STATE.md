@@ -20,9 +20,18 @@
   - H-E12-2 PASS (Claude coder): 17/17 বনাম 1/17।
   - H-E12-3 PASS: দুই পরিবারের মধ্যে κ 1.00।
   - H-E12-4 INSUFFICIENT: R, M1 আর M1F ৩৬টি item-এর সবকটিতে একই সিদ্ধান্ত দিয়েছে।
-  - Pool2 শেষ; আরও item-এর জন্য নতুন pool লাগবে।
+  - Pool2 শেষ; আরও item-এর জন্য নতুন pool লাগবে (T50-এ তা হয়েছে)।
   - বিস্তারিত: `08_experiments/E12_extend/E12_RESULTS.md`।
-- **Paper খসড়া v0.3:** `10_paper/R1_draft.md`। E12 অংশ (§4.7) আর Figure 1-এর E12 row যোগ হয়েছে।
+- **T50/T50b / E13 (নতুন ২০টি repo থেকে ৬১টি item; ১৫টি repo থেকে item এসেছে, ৪২টি fix):**
+  - Repo বাছাই শুধু metadata দিয়ে। Frozen pool3-এ ১২,৮৩২টি candidate; round-robin-এ ৯৪৭টি review।
+  - H-E13-1 PASS (GPT): 33/43 বনাম 1/18, cluster ধরে 22/29 বনাম 1/13।
+  - H-E13-2 PASS (Claude): 34/40 বনাম 0/18।
+  - H-E13-3 PASS: দুই পরিবারের মধ্যে κ 0.88।
+  - **H-E13-4 SIGNIFICANT, তবে F4-এর পক্ষে:** forced-choice LLM kind rule-এর চেয়ে ভালো (0.93 বনাম 0.81, p = 0.016)।
+  - Pooled E10+E12+E13 (১৩৭টি item): 69/84 বনাম 6/50, p = 4e-16।
+  - Deviation P1: T50-এর অকাল budget stop-এর পর একই pool-এ mining চালিয়ে যাওয়া (T50b)। সিদ্ধান্তের সময় direction দেখা হয়নি।
+  - বিস্তারিত: `08_experiments/E13_newrepos/E13_RESULTS.md`।
+- **Paper খসড়া v0.4:** `10_paper/R1_draft.md`। E13 অংশ (§4.8), abstract-এর item 7 আর Figure 1-এর E13 row যোগ হয়েছে।
 - **পরের ধাপ:**
   - user-এর human spot-check (`09_collab/human_check/`);
   - Q1-এর জন্য বড় পরিসরে মানুষের validation আর বড় sample;
@@ -163,6 +172,7 @@
 | E10 fallback triage (T48, ৪০টি নতুন item) | ✅ H-E10-1 INSUFFICIENT (৬টি pair); H-E10-2 NOT_BETTER (forced choice > FB, cluster ধরে n.s.); **H-E10-3 PASS** (19/24 বনাম 2/13, p = 2.7e-4)। M1 0.58–0.64, R 0.77। | `08_experiments/E10_fallback/E10_PLAN.md`, `E10_ADDENDUM.md`, `E10_RESULTS.md` |
 | E11 ভিন্ন পরিবারের coding | ✅ H-E11-1 PASS (67/81 বনাম 1/39; cluster ধরে 38/51 বনাম 1/30); H-E11-2 PASS (κ 0.96) | `08_experiments/E11_crossfamily/E11_PLAN.md`, `E11_RESULTS.md` |
 | E12 fix-capped extension (T49, ৩৬টি item) | ✅ H-E12-1 PASS (17/17 বনাম 3/19; cluster ধরে 11/11 বনাম 2/13); H-E12-2 PASS (Claude: 17/17 বনাম 1/17); H-E12-3 PASS (κ 1.00); H-E12-4 INSUFFICIENT (discordant 0)। R = M1 = M1F (0.917) | `08_experiments/E12_extend/E12_PLAN.md`, `E12_DEVIATIONS.md`, `E12_RESULTS.md` |
+| E13 new repositories (T50/T50b, ৬১টি item, ১৫টি repo) | ✅ H-E13-1 PASS (33/43 বনাম 1/18; cluster ধরে 22/29 বনাম 1/13); H-E13-2 PASS (Claude: 34/40 বনাম 0/18); H-E13-3 PASS (κ 0.88); H-E13-4 SIGNIFICANT, F4-এর পক্ষে (0 বনাম 7, p = 0.016)। macro-F1: R 0.81, M1 0.90, M1F 0.93 | `08_experiments/E13_newrepos/E13_PLAN.md`, `E13_DEVIATIONS.md`, `E13_RESULTS.md` |
 | E5 (roadmap) LLM triage + patch (RQ3) | ⏳ | — |
 
 - সৎ মূল্যায়ন আর দিনের সারাংশ: `09_collab/reports/DAY_2026-11-15.md`, `DAY_2026-11-16.md`।
