@@ -5,19 +5,16 @@
 ---
 
 ## Abstract
-When a REST implementation and its OpenAPI contract disagree, a failing test does not say which artifact is wrong, and testing tools implicitly blame the code. We ask which side developers actually repair, and whether that can be predicted.
+When a REST implementation and its OpenAPI contract disagree, a failing test does not say which artifact is wrong, and the schema-based testing tools we reviewed report the violation without saying which side to repair. We ask which side developers actually repair, and whether that can be predicted.
 
-We mined 248 real contract-alignment fixes from 40 open-source Java, Kotlin and Go services. For each fix we packaged only the parent state, and had blind LLM coders classify each divergence as *deliberate* (behaviour produced by code written for it) or *accidental* (a side effect of an omission). All hypotheses, scorers and packages were hash-frozen before use.
+We mined 248 divergence items from 174 real contract-alignment fixes in 40 open-source Java, Kotlin and Go services. For each item we packaged only the parent state, and had blind LLM coders classify each divergence as *deliberate* (behaviour produced by code written for it) or *accidental* (a side effect of an omission). Confirmatory hypotheses, scorers and packages were hash-frozen before use; exploratory analyses are labelled as such.
 
-Developers repaired the contract in 26 of 45 new fixes. Divergence kind predicted the repair side:
-- In the first confirmatory sample, 26/33 deliberate divergences were repaired in the contract, against 0/11 accidental ones (p < 10⁻⁴).
-- The association held with propositions written by a direction-blind reader (39/48 vs 0/10).
-- It held in three further pre-registered samples, the last from 15 repositories never used before (33/43 vs 1/18). Pooled over these three samples it was 69/84 vs 6/50 (p = 4.2 × 10⁻¹⁶), also at the level of fix clusters.
-- Coders from a second model family agreed with the first at κ 0.88–1.00.
+In the first confirmatory sample, developers repaired the contract for 26 of 45 items, and divergence kind predicted the repair side: 26/33 deliberate divergences were repaired in the contract, against 0/11 accidental ones (p < 10⁻⁴). The association held with propositions written by a direction-blind reader (39/48 vs 0/10). It also held in three further pre-registered samples, the last drawn from 15 repositories never used before (33/43 vs 1/18). Pooled over these three samples it was 69/84 vs 6/50 (p = 4.2 × 10⁻¹⁶), and it held at the level of fix clusters. Coders from a second model family agreed with the first at κ 0.88–1.00.
 
-On real fixes, LLM triage was accurate on average but unstable across samples, with macro-F1 ranging from 0.58 to 0.93. A pre-registered rule that routes divergences by kind did not beat a forced-choice LLM.
+On real fixes, LLM triage was accurate on average but unstable across samples, with macro-F1 between 0.57 and 0.93 depending on the sample and the labelling method. A pre-registered rule that routes divergences by kind did not beat a forced-choice LLM.
 
 Divergence kind is therefore a robust, interpretable explanation of repair direction. It is not a better triage method than an LLM. Testing tools should stop assuming the implementation is wrong and surface the divergence kind.
+
 ---
 
 ## 1. Introduction
@@ -47,21 +44,21 @@ Divergence kind is therefore a robust, interpretable explanation of repair direc
    - at the level of fix clusters;
    - on repositories never used before.
 4. **A comparison of LLM, codebook and kind-rule triage** on synthetic and real faults. It shows that LLM triage accuracy varies strongly between samples.
-5. **A fully pre-registered, hash-frozen protocol** for LLM-coded empirical SE studies.
-   - Every amendment is disclosed.
-   - A reproduction script recomputes every reported number from the frozen data.
+5. **A pre-registered, hash-frozen protocol** for LLM-coded empirical SE studies.
+   - Every amendment and deviation is disclosed with its timing.
+   - A reproduction script re-runs the frozen E6–E13 scorers and reproduces their outputs byte for byte.
 
 ## 2. Background and Related Work
 *Works marked ⚠️ were verified only from their abstracts, web pages or vendor documentation.*
 
 ### 2.1 The contract as oracle in REST testing
-- **Black-box and white-box REST fuzzers use the OpenAPI document as both input model and oracle.** Examples are RESTler [P006], EvoMaster [P011], Schemathesis and RESTest [P001]; surveys and tool comparisons are [P002, P003, P004].
+- **Black-box and white-box REST fuzzers use the OpenAPI document as both input model and oracle.** Examples are RESTler [P006], EvoMaster, Schemathesis and RESTest [P001]; surveys and tool comparisons, which include EvoMaster, are [P002, P003, P004].
 - **The usual oracles are 5xx responses and schema violations.** Their findings are often of doubtful severity [P015].
 - **Spec–response disconformity dominates what such tools report.**
   - In fifteen days of online testing of 13 industrial APIs, 63% of failures and 50% of faults were disconformities between the specification and the response [P001].
   - Nearly all of more than 1,000 public specifications showed mismatches [P004].
   - Faulty or under-specified schemas are a main obstacle to fuzzer coverage [P003].
-- **Such a failure has two possible causes:** the implementation is wrong, or the contract is wrong. No tool says which.
+- **Such a failure has two possible causes:** the implementation is wrong, or the contract is wrong. None of the tools we reviewed predicts which.
 - **The RESTest authors name the gap.** They list automated classification of failures into faults as an open opportunity (replication package of [P001]).
 
 ### 2.2 Contract quality, inference and repair
@@ -94,9 +91,9 @@ This paper addresses all three.
 | E4 | injected faults (spec and code side) | RQ2, synthetic | confirmatory |
 | E5 | code mutants; codebook v3 | RQ2, safety of the codebook | confirmatory |
 | E6 | 18 real fixes, 11 repos | RQ2, real | confirmatory |
-| E7 | 45 new real fixes, 15 repos (+25 E6 items, exploratory) | RQ3 | confirmatory |
+| E7 | 45 new items from 36 real fixes, 15 repos (+25 E6 items, exploratory) | RQ3 | confirmatory |
 | E8 / E8b | E7 items + 41 new (T47) with direction-blind propositions | RQ3, leakage control | confirmatory (pooled) |
-| E9 | 85 new items (44 E7 + 41 T47) | RQ4 | confirmatory (INSUFFICIENT) |
+| E9 | 85 previously mined items (44 E7 + 41 T47), newly labelled | RQ4 | confirmatory (INSUFFICIENT) |
 | E10 | 40 new items (T48), 21 fixes | RQ4 fallback, RQ5 | confirmatory |
 | E11 | the 125 earlier confirmatory items, re-coded by a second model family | RQ5 | confirmatory |
 | E12 | 36 new items (T49), at most 2 per fix | RQ5 | confirmatory |
@@ -129,7 +126,7 @@ Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
   - **IMPL:** only the behaviour changes;
   - **BOTH:** excluded from the primary analyses.
 - **Miner:** a Codex agent that knew neither hypothesis. It wrote each proposition from the parent state and recorded a direction key.
-- **Cap:** at most 6 items per repository (T45–T47).
+- **Cap:** at most 6 items per repository in T45–T46; from T47 on, a combined cap of 10.
 - **Later mining (T48–T50):**
   - T48 kept the T46 pool.
   - T49 added a per-fix cap of 2 items.
@@ -155,6 +152,7 @@ Protocol sources: `09_collab/tasks/T42.md`, `T45.md`, `T46.md`, `T47.md`.
 **Protocol controls:**
 - Boundary compliance was checked in every log.
 - Every plan, task text, package tree and scorer was SHA-256 frozen and committed before the run that used it.
+- One frozen scorer received a mechanical fix after it crashed on first load (E12 D1: a CSV field-size limit). The fix changed no logic and came before any output.
 - Every freeze was re-verified before scoring.
 
 ### 3.4 Divergence-kind instrument
@@ -199,9 +197,9 @@ The coders read "the implementation does Y" and judge whether Y comes from proje
 ### 4.1 RQ1: Visibility (pilot, descriptive)
 Source: `PILOT_SUMMARY.md` H1, H2, H6, H7, H9.
 - **Spec faults are often invisible to positive-only fuzzing.** Replay and negative data expose them, but with noise. A mutated operation's signal cleared the noise floor in 34 of 61 fresh runs. For REQUEST_LOOSE it cleared in only 6 of 25.
-- **Single-sided blame is inadequate.** 27% of baseline divergences (30/112) needed both the spec and the code changed.
+- **Single-sided blame is inadequate.** 27% of the decidable baseline defects (30/112; 161 in total) needed both the spec and the code changed.
 - **The test oracle is itself a source of error:** 16% of baseline failures (26/161) were caused by the test.
-- **Code faults surface in fresh fuzzing:** 25 of 31 mutants cleared the noise floor across paired seeds.
+- **Code faults surface in fresh fuzzing:** 25 of 31 paired-seed runs, spanning 12 mutants, cleared the noise floor.
 - **The pattern repeats across fuzzers.** The same fault-class pattern appears under EvoMaster (20/26) and Schemathesis (19/26).
 
 ### 4.2 RQ2: Triage methods
@@ -230,7 +228,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - **H-E7-2 (secondary):** P(SPEC | GENERIC) = 15/18 vs P(SPEC | SPECIFIC) = 11/26, p = 0.007.
 
 **Leakage control (A3, proposition-only coder).**
-- A coder that saw only the one-line proposition reproduced every kind code (κ = 1.0).
+- A coder that saw only the one-line proposition reproduced the kind code of all 44 primary items (44/44, κ = 1.0).
 - The kind is therefore recoverable from the proposition text. That leaves two explanations:
   - kind is an inherent property of the described behaviour;
   - the direction-aware miner phrased the behaviour in a way that leaks the direction.
@@ -256,7 +254,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - The E10 row is disjoint from the earlier rows: new items mined by T48, coded by new coders C9 and C10. It is the first sample with accidental divergences repaired in the contract (2/13, from one fix).
   - The two E12 rows are disjoint from all earlier rows: 36 new items mined by T49, at most 2 per fix. The two rows code the same items, once with GPT coders (C11/C12) and once with Claude coders (K3/K4).
   - The two E13 rows are disjoint from all earlier rows: 61 items from 15 repositories never used before, mined by T50. They code the same items with GPT coders (C13/C14) and with Claude coders (K5/K6).
-- **In the first four rows, no accidental divergence was repaired in the contract.** In E10, E12 and E13 a few were: 2/13, 3/19, 1/17, 1/18 and 0/18.
+- **In the E7, E8 + E8b, T47 and exploratory E6 rows, no accidental divergence was repaired in the contract.** In the E10, E12 and E13 rows a few were: 2/13, 3/19 (GPT coders), 1/17 (Claude coders), 1/18 (GPT) and 0/18 (Claude).
 
 - **The rule's errors are asymmetric.**
   - ACCIDENTAL → IMPL had precision 1.00 on the E7–E9 sets, 0.85 in E10, 0.84 in E12 and 0.94 in E13 (GPT kinds).
@@ -278,7 +276,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 
 - **H-E9-1 is INSUFFICIENT.** HYB and M1 disagreed on only 1 item (pooled 1 win, 0 losses), below the pre-registered minimum of 5 discordant items.
 - **M1 already labels accidental divergences correctly:** 24/24 and 23/24.
-- **The override was always right:** precision 24/24. This is the third sample with no accidental divergence repaired in the spec.
+- **The ACCIDENTAL → IMPL rule was correct on all 24 eligible items.** The only prediction it changed was also correct. This is the third sample with no accidental divergence repaired in the spec.
 - **M1's residual errors are almost all on DELIBERATE items:** 47/61 correct for each labeller. Most misses are UNDECIDABLE on items whose spec was later repaired (12 per labeller).
 - **Post-hoc (exploratory):** using R only when M1 abstains raised macro-F1 to 0.976 for both labellers, with full coverage. This rule was formed after seeing the data and needs a new pre-registered test.
 
@@ -297,7 +295,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - **H-E10-3 (kind × direction) PASSES again:** DELIBERATE → SPEC 19/24 vs ACCIDENTAL → SPEC 2/13, p = 2.7 × 10⁻⁴. By cluster: 7/11 vs 1/9, p = 0.025.
 - **Exploratory: why M1 dropped.**
   - One repository contributed 10 items from 2 fixes, 9 of them repaired in the spec.
-  - Every LLM labeller called 9 of these 10 IMPL; the kind rule was right on 9/10.
+  - Every LLM labeller called all 10 IMPL and was wrong on 9; the kind rule was right on 9/10.
   - So M1's errors here were confident wrong labels, not abstentions.
 - **Exploratory: the first accidental divergences repaired in the contract.** Two items from one fix.
 
@@ -310,7 +308,7 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 | Agreement between the two Claude coders | κ = 0.91 |
 | Agreement with the GPT final kinds | 116/118, κ = 0.96 |
 
-**The association therefore does not depend on the coders' model family.** Both families read the same miner-written propositions, though, so this agreement cannot rule out a shared textual cue. E8b, with direction-blind propositions, and human coding address that cue.
+**The association therefore does not depend on the coders' model family.** Both families read the same miner-written propositions, though, so this agreement cannot rule out a shared textual cue. E8b, with direction-blind propositions, addresses that cue. Planned human coding will give a further check.
 
 ### 4.7 Fix-capped extension with two model families [E12]
 **Design:**
@@ -322,14 +320,14 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 |---|---|
 | Kind × direction, GPT coders | 17/17 vs 3/19, p = 1.3 × 10⁻⁷. By cluster: 11/11 vs 2/13, p = 3.1 × 10⁻⁵ |
 | Kind × direction, Claude coders | 17/17 vs 1/17, p = 7.7 × 10⁻⁹ |
-| GPT vs Claude final kinds | 34/34, κ = 1.00 |
+| GPT vs Claude final kinds | 34/34 both-decided items, κ = 1.00 |
 | R vs forced-choice LLM | 0 discordant items (INSUFFICIENT) |
 | Macro-F1 | R 0.917 (GPT kinds) / 0.944 (Claude kinds; coverage 0.94); M1 0.917; M1F 0.917 |
 | Pooled E10 + E12 (76 items) | Kind × direction: 36/41 vs 5/32, p = 3.0 × 10⁻¹⁰; clusters 18/22 vs 3/22. Macro-F1: R 0.842, M1 0.751, M1F 0.828 |
 
 **Notes:**
 - **The association replicated a third time on new items,** with fix capping, by cluster and in both model families [`E12_RESULTS.md`].
-- **Exploratory:** R, M1 and M1F made identical predictions on all 36 items. The E10 advantage of the kind rule over the LLM did not recur, so E12 gives no evidence that kind is a better *triage* signal than a forced-choice LLM.
+- **Exploratory:** R (GPT kinds), M1 and M1F made identical predictions on all 36 items. The E10 advantage of the kind rule over the LLM did not recur, so E12 gives no evidence that kind is a better *triage* signal than a forced-choice LLM.
 - **R's three errors** were ACCIDENTAL → SPEC items from 2 fixes, so accidental → contract repair is no longer confined to one fix.
 
 ### 4.8 Generalisation to new repositories [E13]
@@ -358,11 +356,12 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
 - **Accidental divergences can usually be routed to code.** In the first three confirmatory samples no accidental divergence was resolved by changing the contract. E10 found the first two, both from one fix, and E12 found three more, from two fixes (GPT kinds). E13, on new repositories, found one more (1/18). Routing accidental divergences to the code is therefore high-precision, not infallible: pooled E10 + E12 + E13, 6 of 50 went to the contract (precision 0.88 [0.76, 0.94]).
 - **Deliberate divergences need a human decision.** They lean towards spec repair, but about one in five is still repaired in the code. This matches practitioner tools, where a human decides whether drift is intended.
 - **How reliable is LLM triage?**
-  - In E9 the LLM seemed to recognise the deliberate/accidental distinction implicitly. It never needed the accidental override, and its errors were abstentions on deliberate divergences.
+  - In E9 the LLM seemed to recognise the deliberate/accidental distinction implicitly. It almost never needed the accidental override: one label changed. Most of its errors were abstentions on deliberate divergences, with a few confident errors.
   - E10 shows that this picture is sample-dependent. On a new, more clustered sample the LLM confidently mislabelled deliberate divergences as implementation bugs.
-  - The kind rule was the more stable of the two: macro-F1 0.85 in E9 and 0.77 in E10, against 0.90 and 0.58–0.64 for the LLM.
+  - The kind rule was the more stable of the two: macro-F1 0.85 in E9 and 0.77 in E10, against 0.90 and 0.575–0.639 for the LLM.
   - No single combination rule was best in both samples. Each sample's apparent winner (fallback in E9; kind rule first plus forced choice in E10, macro-F1 0.82) was found post hoc.
-  - On the fix-capped E12 sample, the LLM labellers and the kind rule agreed on every item (macro-F1 0.917 each). So the E10 gap was driven by particular clusters, not by a systematic LLM weakness.
+  - On the fix-capped E12 sample, the LLM labellers and the kind rule (GPT kinds) agreed on every item (macro-F1 0.917 each).
+  - This is consistent with the E10 gap being sample- and cluster-dependent. It gives no evidence of a general advantage for the kind rule.
   - On the new-repository E13 sample, the forced-choice LLM beat the kind rule (0.93 vs 0.81, p = 0.016). Pooled over the three new-item samples, it has the highest macro-F1 (M1F 0.88, R 0.83, M1 0.82).
   - So the kind is best read as an *explanation* of repair direction, not as a triage method that beats LLMs.
   - The practical lesson: report LLM triage accuracy over many fixes and clusters, and use the divergence kind as an interpretable check on it.
@@ -381,9 +380,9 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - The truth label is the developer's repair direction, not an objective fault location.
   - Some SPEC repairs may legitimise a bug.
 - **Same-model coders.**
-  - Until E11, every coder, labeller and judge was from one LLM family. E11, E12 and E13 add Claude coders, who agree with the GPT coders at κ 0.96, 1.00 and 0.88. Both families are still LLMs reading the same text, so human validation remains necessary.
+  - Before E11, the independent divergence-kind coders were all GPT-family models. Pilot labelling and adjudication are excepted. E11, E12 and E13 add Claude coders, who agree with the GPT coders at κ 0.96, 1.00 and 0.88. Both families are still LLMs reading the same text, so human validation remains necessary.
   - **[TODO]** Report the human spot-check: 20 items, coded by the author, with κ against the model codes.
-- **Proposition authorship.** Addressed by E8 and E8b. The remaining limits are a single writer and a single matcher.
+- **Proposition authorship.** Addressed by E8 and E8b. The remaining limit is one writer and one matcher per round, all from the same model family.
 - **Sampling.**
   - Only correction-cue commits, and only OSS Java, Kotlin and Go projects.
   - Items cluster by repository and fix.
@@ -393,14 +392,20 @@ Sources: `E4_RESULTS.md`, `E5_*`, `E6_RESULTS.md`.
   - E13 addressed this with 20 new repositories, chosen mechanically. Only 7% of its pool was reviewed, and 15 repositories contributed items. The yields therefore say nothing about prevalence.
 - **Hypothesis origin and forking paths.**
   - H-E7-1 came from post-hoc coding of the E6 items, which are reported as exploratory only.
-  - All amendments were frozen before use and are disclosed: E7 A1–A3 and E8 B1, the single further look.
+  - All amendments and deviations are disclosed with their timing:
+    - E7 A1–A2, before coding;
+    - E7 A3, a post-hoc control fixed before it ran;
+    - E8 B1, the single further look;
+    - E10 addendum, after mining and before any blind run;
+    - E12 D1, a mechanical scorer fix before any output;
+    - E13 P1, a mining continuation decided without seeing directions.
   - Some mining stages previewed candidates beyond their final prefix, as documented in the T46 and T47 reports.
 
 ## 7. Conclusion
 When an API and its contract disagree, the side developers repair is predictable from what kind of divergence it is.
 - **Deliberate divergences,** behaviour that the code explicitly produces, are mostly resolved by changing the contract.
 - **Accidental divergences,** side effects of omissions, are almost always resolved by changing the code.
-- **How robust this is:** the association held in every confirmatory sample we collected (E7, E8b, E9, E10, E12, E13). It held:
+- **How robust this is:** the association passed every pre-registered kind-association test with adequate arms (E7, pooled E8b, E10, E11, E12, E13). It was descriptively consistent in E9, and E8 alone was insufficient. It held:
   - with direction-blind propositions;
   - at the level of fix clusters;
   - with at most two items per fix;
@@ -416,13 +421,13 @@ Testing tools should therefore not assume that the implementation is wrong. They
 - triage tools evaluated over many fix clusters, not single samples.
 
 ## Data availability
-Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's parent commit. One repository later adopted a restrictive licence, but every excerpt we use comes from versions under MIT, Apache-2.0 or CC BY-NC 4.0, and the excerpts are released under those terms. As a robustness check, the headline results do not change without the three items closest to the restrictive period: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
+Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's parent commit. Excerpts are released under their upstream licences: Apache-2.0, MIT, EPL-2.0, MPL-2.0, GPL-3.0, AGPL-3.0 and CC BY-NC 4.0, with per-directory licence texts for the copyleft ones. One repository later adopted a restrictive licence. Every excerpt from it comes from earlier versions under MIT, Apache-2.0 or CC BY-NC 4.0. As a robustness check, the headline results do not change without the three items closest to the restrictive period: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
 
-**Replication package** (plan: `REPLICATION_PACKAGE_PLAN.md`). It contains:
+**Replication package** (plan: `REPLICATION_PACKAGE_PLAN.md`). It will be released as an anonymous archive for review. It will contain:
 - the plans and freezes;
 - the scorers and keys;
 - all blind codes and labels;
 - the mining scripts;
 - the item excerpts, under per-repository licences.
 
-`reproduce/reproduce_scores.sh` re-runs every frozen scorer and reproduces all reported numbers byte-for-byte. `reproduce/check_freezes.py` verifies every freeze; the two post-freeze changes it finds are both disclosed. Transcripts that echo upstream patches or attribution are withheld.
+`reproduce/reproduce_scores.sh` re-runs the frozen E6–E13 scorers and reproduces their 15 committed outputs byte for byte. The pilot, E4/E5 and the exploratory specificity analysis have their own scripts. `reproduce/check_freezes.py` checks every file hash in the freeze manifests; package-tree hashes were verified separately before each run. The two post-freeze file changes it reports are both disclosed. Transcripts that echo upstream patches or attribution are withheld.
