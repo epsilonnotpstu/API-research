@@ -40,11 +40,11 @@ for f in sorted(X.glob('*/*freeze*.sha256')):
         elif cands: mism.append(p)
         else: miss.append(p)
     expl = [p for p in mism if p in EXPLAINED]; mism = [p for p in mism if p not in EXPLAINED]
-    bad_total += len(mism)
+    bad_total += len(mism) + len(miss)
     status = 'MISMATCH' if mism else ('MISSING' if miss else ('OK*' if expl else 'OK'))
     print(f'{status:8s} {f.relative_to(X)}  files ok {ok}/{len(files)}  tree-entries {trees}')
     for p in expl: print(f'         documented change: {p} ({EXPLAINED[p]})')
     for p in mism: print(f'         changed after freeze: {p}')
     for p in miss: print(f'         not found: {p}')
-print('unexplained content mismatches:', bad_total)
+print('unexplained content mismatches or missing files:', bad_total)
 sys.exit(1 if bad_total else 0)
