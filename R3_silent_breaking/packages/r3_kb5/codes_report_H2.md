@@ -1,0 +1,2 @@
+# H2 report, kb5
+All 14 items opened. Hard cases: B057 (several changes, primary taken as accepted JWT response form), B060 (mapper tolerance of malformed upstream data, judged not directly HTTP-observable), B063 (before state seems not to compile, judged NO), B066 (new endpoint, kind OTHER), B068 (header definition flag, low confidence on HTTP exposure). Contracts for B057, B062 (partial), B070 did not cover the changed operations.

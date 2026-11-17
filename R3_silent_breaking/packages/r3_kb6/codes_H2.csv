@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B071,YES,DEFAULT_OR_OPTIONALITY,BREAKING,UNSPECIFIED,3,"diff.patch:20,40","Omitted channel query parameter previously bound to 0 for playlist and segment; now defaults to 1, so requests without channel address a different stream channel."
+B072,NO,NA,NA,NA,3,diff.patch:1-529,"Replaces slf4j loggers with log4j loggers across bridge endpoints; only log calls change, no request handling differences."
+B073,YES,AUTHZ_OR_AUTH,COMPATIBLE,UNSPECIFIED,1,diff.patch:@@ -197,Expired Entra ID token now triggers a throttled silent renewal instead of returning false; failure still returns false. Session credential and group refresh behaviour changes; HTTP visibility is indirect.
+B074,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,2,diff.patch:CreateChargeExceptionMapper case NON_HTTPS_RETURN_URL,Non-https return URL for live accounts previously fell to default connector error (500); now returns 422 with new code P0920 and message.
+B075,YES,RESPONSE_CONTENT,COMPATIBLE,UNSPECIFIED,2,diff.patch:171-183,Validation error messages in form error fields now get a trailing period and capitalised first letter.
+B076,YES,SIDE_EFFECT_OR_STATE,COMPATIBLE,UNSPECIFIED,2,"diff.patch:AbstractResource, GroupsResourceImpl owner args","Artifact and version creation now passes the authenticated principal as owner to storage, so owner metadata is stored; update path also gets authorization annotation."
+B077,YES,RESPONSE_CONTENT,UNCLEAR,UNSPECIFIED,2,"diff.patch:36,105","addLoanCharges on disbursement period was a no-op; now adds fee charge to chargesDueAtTimeOfDisbursement, changing computed schedule values."
+B078,UNCLEAR,NA,NA,NA,1,diff.patch:2594-2600,"Inline write/admin/curator check replaced by checkCanWrite; its definition is not provided, so equivalence is undecidable."
+B079,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:AggregateSourceInfo,Adds annotationSourcesInfo property with getter to the aggregate source info model; serialised responses gain a field (null unless populated).
+B080,NO,NA,NA,NA,3,diff.patch:1-100,Test stub helper refactored; no production endpoint behaviour changes.
+B081,YES,STATUS_OR_ERROR_MAPPING,BREAKING,UNSPECIFIED,3,diff.patch:52-75,"Import previously always returned 201; now empty file gives 400, non-JSON content type 415, import exceptions 500, success 201."
+B082,NO,NA,NA,NA,3,diff.patch:612-615,Log message uses throwable.toString instead of getMessage; logging only.
+B083,NO,NA,NA,NA,2,diff.patch:header.go,"YAML struct tags gain omitempty and new model structs added; models for serialisation, no HTTP operation outcome evident."
+B084,YES,SIDE_EFFECT_OR_STATE,UNCLEAR,UNSPECIFIED,2,diff.patch:333-340,"Branch delete event now unpublishes a published workflow left with no versions, otherwise updates index; stored publish state visible later."

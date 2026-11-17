@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B043,YES,SIDE_EFFECT_OR_STATE,BREAKING,UNSPECIFIED,2,diff.patch:47-70,PUT config with NONE previously deleted the compatibility rule; now stores NONE as a rule. Unset-rule GET fallback now uses default global rule if configured instead of NONE.
+B044,NO,NA,NA,NA,2,diff.patch:18-35,Kafka event path for created submodel element is computed differently; HTTP response and stored data unchanged. Only a published event differs.
+B045,YES,RESPONSE_SHAPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:8-22; contract/api/microcks-openapi-v1.0.yaml:1270,"Binding model gains routingKey property with getter/setter, so serialized bindings may include a new field not in the Binding schema."
+B046,NO,NA,NA,NA,2,diff.patch:60-100,"Caching of organization IdP links and domains added in Infinispan layer; results returned should be identical, only lookup source differs."
+B047,YES,RESPONSE_CONTENT,COMPATIBLE,UNSPECIFIED,2,after/internal/handlers/response.go:135-141,"Passkey 2FA login previously ran 2FA response then also the 1FA response handler; now returns after the 2FA handler, so only the 2FA redirect response is produced."
+B048,UNCLEAR,NA,NA,NA,1,diff.patch:5-30,Noise-path classifier now also matches the bare root path; the caller is not in the provided files so the effect on HTTP outcomes is unknown.
+B049,NO,NA,NA,NA,3,diff.patch,Test stub javadoc and comment reformatting only.
+B050,NO,NA,NA,NA,3,diff.patch:20-40,Refactor extracting identical PRM-enabled check into a helper method; same logic.
+B051,NO,NA,NA,NA,2,diff.patch:15-30,Session repository field type changed to a supertype interface; no logic change.
+B052,NO,NA,NA,NA,2,diff.patch,Startup configuration validator renames and adds scrypt variant checks; not reached by any HTTP operation.
+B053,NO,NA,NA,NA,2,diff.patch:1-62,"New audit log model file only, no handler change in this commit."
+B054,NO,NA,NA,NA,2,diff.patch:5-25,Unused JDO fetch groups removed from Component; no handler change visible.
+B055,NO,NA,NA,NA,2,diff.patch:5,Link path inside launch-finished notification email changed; not an HTTP response.
+B056,YES,RESPONSE_CONTENT,BREAKING,SPECIFIED,2,after TimeSeriesRecentController.java:182; contract office param,"With ts_ids, office query parameter was previously ignored; it is now passed to the DAO, so results can be restricted to that office."

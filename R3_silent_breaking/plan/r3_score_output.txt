@@ -1,0 +1,67 @@
+== R3: n=136 commits; repos 47
+   kappa observable_change: GPT 0.904  Claude 0.824
+   kappa change_kind: GPT 0.882  Claude 0.832
+   kappa client_impact: GPT 0.854  Claude 0.742
+   kappa contract_specified: GPT 0.871  Claude 0.854
+   GPT final observable_change YES/NO/UNCLEAR = 60/50/26
+   E-R3-1 share YES: 60/136 = 0.441 Wilson [0.360, 0.525]; repo-cluster bootstrap [0.353, 0.525]
+   E-R3-1 share BREAKING: 32/136 = 0.235 Wilson [0.172, 0.313]; repo-cluster bootstrap [0.163, 0.312]
+   H-R3-1 BREAKING without contract-annotation edit: 29/32; one-sided binomial vs 0.5 p=1.28e-06 -> PASS
+   H-R3-2 BREAKING+SPECIFIED with no contract update in 90d: 0/1; p=nan -> INSUFFICIENT (n=1 < 8)
+   H-R3-3 cross-family observable_change on 102 both-decided: agree 99, kappa 0.941 -> PASS
+   kinds (GPT final, YES items): {'RESPONSE_CONTENT': 9, 'STATUS_OR_ERROR_MAPPING': 9, 'RESPONSE_SHAPE': 8, 'SIDE_EFFECT_OR_STATE': 7, 'INPUT_STRICTER': 6, 'INPUT_LOOSER': 5, 'UNCLEAR': 5, 'AUTHZ_OR_AUTH': 4, 'HEADER_OR_MEDIA_TYPE': 2, 'DEFAULT_OR_OPTIONALITY': 2, 'ORDERING_PAGINATION_LIMITS': 2, 'OTHER': 1}
+   impact x kind: {('RESPONSE_SHAPE', 'COMPATIBLE'): 8, ('RESPONSE_CONTENT', 'BREAKING'): 7, ('STATUS_OR_ERROR_MAPPING', 'BREAKING'): 7, ('INPUT_STRICTER', 'BREAKING'): 6, ('INPUT_LOOSER', 'COMPATIBLE'): 5, ('SIDE_EFFECT_OR_STATE', 'COMPATIBLE'): 3, ('UNCLEAR', 'BREAKING'): 3, ('SIDE_EFFECT_OR_STATE', 'UNCLEAR'): 2, ('AUTHZ_OR_AUTH', 'BREAKING'): 2, ('DEFAULT_OR_OPTIONALITY', 'BREAKING'): 2, ('UNCLEAR', 'UNCLEAR'): 2, ('RESPONSE_CONTENT', 'COMPATIBLE'): 2, ('SIDE_EFFECT_OR_STATE', 'BREAKING'): 2, ('ORDERING_PAGINATION_LIMITS', 'BREAKING'): 2, ('AUTHZ_OR_AUTH', 'COMPATIBLE'): 1, ('HEADER_OR_MEDIA_TYPE', 'COMPATIBLE'): 1, ('STATUS_OR_ERROR_MAPPING', 'UNCLEAR'): 1, ('STATUS_OR_ERROR_MAPPING', 'COMPATIBLE'): 1, ('OTHER', 'COMPATIBLE'): 1, ('HEADER_OR_MEDIA_TYPE', 'BREAKING'): 1, ('AUTHZ_OR_AUTH', 'UNCLEAR'): 1}
+   specified x impact: {('UNSPECIFIED', 'BREAKING'): 28, ('UNSPECIFIED', 'COMPATIBLE'): 22, ('UNSPECIFIED', 'UNCLEAR'): 6, ('UNCLEAR', 'BREAKING'): 3, ('SPECIFIED', 'BREAKING'): 1}
+   annotation_touched among YES: 8 / 60
+   lang Go: n=48 YES 21 BREAKING 13
+   lang Java: n=85 YES 37 BREAKING 19
+   lang Kotlin: n=3 YES 2 BREAKING 0
+      repo FAAAST-Service: n=3 YES 3 BREAKING 2
+      repo Iced-Latte: n=3 YES 1 BREAKING 1
+      repo OpenLineage: n=3 YES 0 BREAKING 0
+      repo allure-server: n=2 YES 1 BREAKING 0
+      repo answer: n=3 YES 3 BREAKING 2
+      repo apicurio-registry: n=3 YES 2 BREAKING 2
+      repo apigee-registry: n=3 YES 0 BREAKING 0
+      repo argo-cd: n=3 YES 2 BREAKING 1
+      repo authelia: n=3 YES 1 BREAKING 0
+      repo basyx-java-server-sdk: n=3 YES 1 BREAKING 0
+      repo bibliothek: n=1 YES 0 BREAKING 0
+      repo casdoor: n=3 YES 1 BREAKING 0
+      repo cwms-data-api: n=3 YES 3 BREAKING 2
+      repo datarhei-core: n=3 YES 1 BREAKING 1
+      repo dependency-track: n=3 YES 1 BREAKING 0
+      repo ditto: n=3 YES 2 BREAKING 2
+      repo dockstore: n=3 YES 1 BREAKING 1
+      repo eudi-srv-verifier-endpoint: n=3 YES 2 BREAKING 0
+      repo fess: n=3 YES 3 BREAKING 1
+      repo fineract: n=3 YES 1 BREAKING 1
+      repo flagr: n=3 YES 2 BREAKING 2
+      repo genome-nexus: n=3 YES 3 BREAKING 0
+      repo gitea: n=3 YES 2 BREAKING 1
+      repo gravitee-api-management: n=3 YES 0 BREAKING 0
+      repo halo: n=3 YES 1 BREAKING 0
+      repo harbor: n=3 YES 1 BREAKING 0
+      repo harness: n=3 YES 2 BREAKING 1
+      repo hivemq-edge: n=3 YES 1 BREAKING 0
+      repo hydra: n=3 YES 0 BREAKING 0
+      repo kapua: n=3 YES 0 BREAKING 0
+      repo keto: n=3 YES 1 BREAKING 1
+      repo keycloak: n=3 YES 1 BREAKING 0
+      repo kratos: n=3 YES 2 BREAKING 2
+      repo microcks: n=3 YES 2 BREAKING 1
+      repo nessie: n=3 YES 1 BREAKING 0
+      repo nifi: n=3 YES 0 BREAKING 0
+      repo open-banking-gateway: n=1 YES 0 BREAKING 0
+      repo pay-publicapi: n=3 YES 1 BREAKING 1
+      repo photoprism: n=3 YES 1 BREAKING 1
+      repo polaris: n=3 YES 0 BREAKING 0
+      repo rhsm-subscriptions: n=3 YES 1 BREAKING 0
+      repo service-api: n=3 YES 2 BREAKING 2
+      repo strimzi-kafka-bridge: n=3 YES 2 BREAKING 1
+      repo tiltaksgjennomforing-api: n=3 YES 1 BREAKING 0
+      repo traccar: n=3 YES 2 BREAKING 2
+      repo tyk: n=3 YES 0 BREAKING 0
+      repo vikunja: n=3 YES 2 BREAKING 1
+   leave-one-repo-out BREAKING share: min 0.226 (without FAAAST-Service), max 0.241 (without tyk)
+   Claude-final shares (cross-family check): YES 55/136, BREAKING 12/136

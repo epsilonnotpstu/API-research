@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B015,NO,NA,NA,NA,3,diff.patch:1-260,"Formatting, indentation and import-order changes only in controllers and ResultResponse; no behaviour change."
+B016,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,3,diff.patch:16-23,GenerateDto path and build size limit raised from max 20 to max 120 characters; previously rejected longer values are now accepted.
+B017,NO,NA,NA,NA,3,diff.patch,Adds test-only router constructors and renames a parameter; no handler behaviour changes.
+B018,YES,AUTHZ_OR_AUTH,BREAKING,UNSPECIFIED,2,diff.patch:60-75,"Azure AD SSO migrated to MSAL4J; permission roles now derive from homeAccountId instead of uniqueId, and refresh logic changed, so role mapping and session refresh may differ."
+B019,NO,NA,NA,NA,2,diff.patch,Renames AutoTx to WithTx and lets nested transactions reuse the parent instead of returning an error; no request-visible change shown.
+B020,NO,NA,NA,NA,2,diff.patch:1-15,Only an import path of the session package changes; no logic change visible.
+B021,YES,RESPONSE_CONTENT,COMPATIBLE,UNSPECIFIED,2,after/internal/controller/template_controller.go:321,Question page canonical URL now also omits the title slug when the permalink setting is the short-ID variant; previously it included the encoded title.
+B022,NO,NA,NA,NA,1,diff.patch:1-30,Adds severity count columns to the scan Report ORM struct; no handler or response code shown using them.
+B023,NO,NA,NA,NA,3,diff.patch,"Parameter rename, fun interface and comment fix; same behaviour."
+B024,YES,SIDE_EFFECT_OR_STATE,COMPATIBLE,UNSPECIFIED,2,diff.patch (scan_all.go StopScanAll; base_controller.go markScanAllStopped),Stop scan-all previously only stopped the execution in background; now marks a cache flag so the scan loop exits and returns an error response if stopping fails.
+B025,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,1,diff.patch:20-50,Startup check replaced by Jetty throw-on-unavailable only for required contexts; other web apps failing to start no longer abort server startup.
+B026,NO,NA,NA,NA,3,diff.patch,Adds a deprecation log call at flow initialization; no API-visible effect.
+B027,YES,SIDE_EFFECT_OR_STATE,BREAKING,UNSPECIFIED,2,after/http/handler/api/restream.go:192-198,"Process update now starts from the stored config, so omitted fields keep current values instead of defaults; unknown id returns 404 before binding body."
+B028,NO,NA,NA,NA,2,diff.patch,"Refactor of file manager method names, argument order and upload helpers; no behaviour change evident from provided files."

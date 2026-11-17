@@ -1,17 +1,24 @@
 # Silent by Design? How Often REST Services Change Observable Behaviour Without Changing Their Contract
 
-*Working draft v0.1 (2026-11-17). Written before any data was seen. The design follows the frozen plan `plan/R3_PLAN.md` (`plan/r3_plan_freeze.sha256`). Results sections are empty until the single scoring run.*
+*Working draft v0.2 (2026-11-18). The design follows the frozen plan `plan/R3_PLAN.md`. Results come from the single scoring run (`plan/R3_RESULTS.md`).*
 
 ---
 
 ## Abstract
-**[TODO after scoring]** One paragraph covering:
-- motivation: spec-diff tools cannot see behaviour changes that leave the contract untouched;
-- method: commits from 54 REST services, a frozen random sample, and blind two-family coding;
-- prevalence of observable and breaking silent changes;
-- the share invisible even to contract generation from code;
-- documentation lag;
-- implications for API change detection.
+Spec-diff tools warn API clients only about changes visible in an OpenAPI document. We ask how often REST services change observable behaviour while leaving their contract untouched.
+
+**Method.**
+- From 54 open-source Java, Kotlin and Go services, we froze a pool of 18,590 commits since 2023 that modify behaviour code but no checked-in contract.
+- We drew a seeded sample of 136 commits from 47 repositories.
+- Two GPT-family and two Claude-family LLM coders classified each commit blind to its message and history, under a pre-registered, hash-frozen protocol.
+
+**Results.**
+- 44% of the commits (60/136; 95% CI 36–53%) change what some client can observe.
+- Depending on the coding model family, 9–24% are client-breaking. The two families agree on observable change (κ 0.94) but not on breaking impact.
+- Of the breaking changes, 91% (29/32) edit no contract annotation, so even contract generation from code, as in AutoGuard, would not reveal them (p = 1.3 × 10⁻⁶).
+- The changed behaviour was specified by the prior contract in only 1 of 60 cases.
+
+Silent behavioural change is therefore common, and it lives in the contract's blind spots. API change detection needs behavioural evidence, not only document diffs.
 
 ## 1. Introduction
 REST services evolve continuously, and their clients depend on behaviour they cannot see in the code. The usual safeguard is to diff the service's OpenAPI contract between versions. oasdiff and openapi-diff do this, and so does AutoGuard, which first generates the contract from code. Any change that alters what an operation does but leaves the contract text unchanged is invisible to all of them.
@@ -62,7 +69,7 @@ We therefore ask how often REST services change observable behaviour without tou
 *(Summarised from the frozen plan; see `plan/R3_PLAN.md`.)*
 
 ### 3.1 Corpus
-54 open-source REST services (Java, Kotlin, Go), each with a checked-in OpenAPI/Swagger document. They were selected for an earlier study of contract–implementation divergence; 20 of them were chosen by metadata criteria alone. **[TODO: per-language counts from T53]**
+54 open-source REST services (Java, Kotlin, Go), each with a checked-in OpenAPI/Swagger document. They were selected for an earlier study of contract–implementation divergence; 20 of them were chosen by metadata criteria alone. The sampled commits are Java 85, Go 48 and Kotlin 3.
 
 ### 3.2 Candidate commits and sampling
 A **candidate** is a non-merge commit since 2023-01-01 that meets all of the following:
@@ -72,7 +79,7 @@ A **candidate** is a non-merge commit since 2023-01-01 that meets all of the fol
 - it is not formatting-only;
 - it is not authored by a bot.
 
-The candidate pool was hash-frozen before any commit was read. Three candidates per repository were then drawn with a fixed seed. **[TODO: pool size, sample size]**
+The candidate pool was hash-frozen before any commit was read. Three candidates per repository were then drawn with a fixed seed. The pool held 18,590 candidates. Seven repositories had none and two had fewer than three, so the sample has 136 commits from 47 repositories. All 136 were packaged.
 
 ### 3.3 Packages and blinding
 Each sampled commit becomes a package. The package contains:
@@ -105,10 +112,37 @@ Pre-registered:
 The scorer and its self-test were frozen before mining.
 
 ## 4. Results
-**[TODO after the single scoring run]**
+*All numbers are from `plan/R3_RESULTS.md`, scored once.*
+
+### 4.1 RQ1: prevalence
+| Measure | GPT final codes | Claude final codes |
+|---|---|---|
+| Observable API behaviour change | 60/136 = 0.44 [0.36, 0.53] | 55/136 = 0.40 |
+| Client-breaking change | 32/136 = 0.24 [0.17, 0.31] | 12/136 = 0.09 |
+
+- **Reliability.**
+  - Within-family κ for observable change is 0.90 (GPT) and 0.82 (Claude).
+  - Across families, κ is 0.94 on the 102 items where both families decided (H-R3-3 PASS).
+- **Robustness of the estimates.**
+  - Repository-cluster bootstrap CIs are close to the Wilson CIs.
+  - Leaving one repository out moves the breaking share by less than 0.01.
+
+### 4.2 RQ2: kinds
+- **Most frequent kinds:** response content, status or error mapping, response shape, side effects, and input validation.
+- **Mostly breaking:** stricter input (6/6), changed response content (7/9) and changed status or error mapping (7/9).
+- **Always compatible:** added response fields (response shape, 8/8) and looser input (5/5).
+
+### 4.3 RQ3: visibility to contract generation
+**H-R3-1 PASSES.** 29 of the 32 breaking changes edit no contract annotation or swagger comment (p = 1.3 × 10⁻⁶). Across all 60 observable changes, only 8 touched an annotation.
+
+### 4.4 RQ4: documentation lag
+**H-R3-2 is INSUFFICIENT.** Only 1 breaking change concerned behaviour the prior contract specified. Of the 60 changes, 56 altered behaviour the contract was silent about.
 
 ## 5. Discussion
-**[TODO]**
+- **Silent change is the norm, not the exception.** Roughly two in five behaviour-touching commits that leave the contract unchanged change observable behaviour.
+- **These changes are invisible to document-based tooling.** That covers spec diff, and also contract generation from code: 91% of breaking changes touch no annotation.
+- **The changes fall into what contracts do not say.** Error mapping, response values, validation and side effects are rarely specified. Contract-diff tools therefore cannot even in principle flag a conflict. Better contracts would shrink this blind spot. Behavioural evidence such as differential tests or recorded traffic is needed to cover it.
+- **"Breaking" is a judgement.** Two LLM families agreed almost perfectly on *whether* behaviour changed, but differed by a factor of 2.7 on *how many* changes break clients. Tools that triage breaking impact automatically should expect this variance, and studies should validate impact labels with humans.
 
 ## 6. Threats to Validity
 - **Construct.**
@@ -127,7 +161,7 @@ The scorer and its self-test were frozen before mining.
   - `spec_updated_90d` is measured at repository level. It over-counts updates, which makes H-R3-2 conservative.
 
 ## 7. Conclusion
-**[TODO]**
+In 54 REST services, 44% of behaviour-changing commits that leave the OpenAPI document unchanged alter observable behaviour. 9–24% break clients, depending on the coder family. Almost none of these changes are visible to spec-diff tools or to contract generation from code, because they concern behaviour the contract never described. Detecting API breakage requires behavioural evidence.
 
 ## Data availability
 The plan, scorer, task text, mining scripts, frozen pool hashes, sample, keys, codes and packages will be released in an anonymous archive. Upstream excerpts will carry their licences.

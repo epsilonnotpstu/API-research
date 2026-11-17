@@ -1,0 +1,15 @@
+item_id,observable_change,change_kind,client_impact,contract_specified,confidence,locators,rationale
+B001,YES,STATUS_OR_ERROR_MAPPING,COMPATIBLE,UNSPECIFIED,1,diff.patch:AbstractRequestMapper.java:213,"Multipart body missing file or fileName part now fails a null check in the mapper; before, the map lacked the key and failed later or proceeded. Exact error status unclear."
+B002,NO,NA,NA,NA,3,diff.patch:EntraIdCredential.java:115,"Synchronization added around permissions computation and reset; single-threaded results identical, only a race fixed."
+B003,YES,HEADER_OR_MEDIA_TYPE,COMPATIBLE,UNSPECIFIED,2,diff.patch:WithBasicInfo.java:50-53,"Default contentType changes from Guava JSON_UTF_8.type() ('application') to application/json, and an Accept header (default */*) is now added to outgoing request headers."
+B004,NO,NA,NA,NA,3,diff.patch:LDAPConstants.java:62,Only new constants added; no behaviour changes.
+B005,NO,NA,NA,NA,1,diff.patch:controller/state.go:417-470,"Cluster-scope normalization and dedup merged into one function; namespace defaulting and dedup unchanged, tracking is re-set for defaulted namespaces with the same destination namespace; error message text differs."
+B006,NO,NA,NA,NA,2,diff.patch:TableCleanupTaskHandler.java:204-209,Batch size config lookup passes realm context from call context instead of call context object; refactor of internal task handler.
+B007,NO,NA,NA,NA,1,diff.patch:server.go:132-135,"Config validator sets an empty server address path to '/'; startup config normalization, effect on served requests not shown."
+B008,YES,RESPONSE_CONTENT,BREAKING,UNSPECIFIED,2,"diff.patch:HttpEndpoint.java:229-260,289-345","Endpoint descriptors returned for shells/submodels now use rebuilt hrefs (prefix after server path, callbackAddress option), repository hrefs without id, and subprotocol fields; previous href values differ."
+B009,YES,INPUT_LOOSER,COMPATIBLE,UNSPECIFIED,3,diff.patch:cors_filter.go:60,Requests with Origin starting http://127.0.0.1 now get CORS headers set; before they went through the other origin checks.
+B010,NO,NA,NA,NA,1,diff.patch:run_job.go:853-885,Cancel of reusable-workflow callers restructured: callers with children reloaded instead of re-cancelled; intended end state and returned jobs same.
+B011,YES,RESPONSE_CONTENT,UNCLEAR,UNSPECIFIED,1,"diff.patch:validator.go:183,191,219","Password policy failures now return typed text-package validation errors instead of plain errors; the error message or id rendered to clients likely changes, status unknown."
+B012,UNCLEAR,NA,NA,NA,1,diff.patch:RequestHandler.java:99,"After sending 405 for unknown method, request is now marked handled; effect on final response not determinable."
+B013,UNCLEAR,NA,NA,NA,1,diff.patch:user.go:285-307,"Empty display name check removed from controller and passed as a flag to CheckPermissionForUpdateUser, whose body is not provided."
+B014,YES,RESPONSE_CONTENT,BREAKING,UNSPECIFIED,3,diff.patch:eval.go:235-238,Eval result segmentID is now set only for the segment returning a variant; before it held the last evaluated segment ID even with no match.
