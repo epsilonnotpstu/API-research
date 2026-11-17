@@ -1,5 +1,11 @@
 # R1 replication package: plan
-Claude, 2026-11-17. This is a working plan; the archive has not been built yet. Everything below is derived from the repository state at the time of writing.
+Claude, 2026-11-17. Everything below is derived from the repository state at the time of writing.
+
+**Status (2026-11-17).** An anonymised review archive has been built with `reproduce/build_archive.py --anonymize`. It is at `<DATA_ROOT>/R1_replication/R1_anon_49f92e2/` (368 MB, local NTFS volume) and has not been deposited yet.
+- Scans: 0 secret-pattern files, 0 author-identity files, 0 licence problems.
+- `reproduce_scores.sh`, run inside it: 15/15 outputs identical.
+- `check_freezes.py`, run inside it: 0 unexplained mismatches. Three task files (T48–T50) are anonymised, and the large pools are regenerable.
+- Before deposit: rebuild after the human spot-check is added, then upload to an anonymous host (for example, Zenodo with the record restricted until acceptance, or anonymous.4open.science).
 
 ## 1. What a reader must be able to do
 1. **Re-score every confirmatory hypothesis from the frozen data.**
