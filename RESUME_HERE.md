@@ -1,4 +1,4 @@
-# RESUME HERE: work paused by the user, 2026-11-17 ~20:45 (+06)
+# RESUME HERE: work paused by the user, 2026-11-17 ~20:45 (+06); updated 23:15 after a reboot
 All background jobs are stopped: no Codex run, no build. Nothing is half-written. Claude + Codex access runs until 2026-11-24.
 To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
 
@@ -31,12 +31,13 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
   - Last attempt: failed at the package scan, before F5 and the improved error message were in place. The re-run with the informative error (`Package scan failed; kinds=...`) was stopped by the pause. **Run it again first.**
   - If a scan kind appears, fix it mechanically, log it as F6 in `R3_DEVIATIONS.md`, re-run `test_t53.py --synthetic-only`, and rebuild.
 - **After the build:**
-  1. Run the scratchpad `r3_prepare.py`, which builds the `r3_kb*` Claude batches of at most 15 items (the scratchpad may be gone; the logic is described in it).
-  2. Write the package freeze: `plan/r3_packages_freeze.sha256` (trees + items.csv + TASK copies + key + scorer).
+  0. **First, the drive must be mounted.** The machine rebooted at 23:05, and "Shared Data" (`/dev/nvme0n1p4`, holding the clones and the archive) was not mounted afterwards. Claude does not enter passwords. The user mounts it by clicking "Shared Data" in the file manager.
+1. Run `R3_silent_breaking/collab/scripts/r3_prepare.py` to build the `r3_kb*` Claude batches (at most 15 items each).
+  2. Run `collab/scripts/r3_freeze_packages.sh`, which writes `plan/r3_packages_freeze.sha256`.
   3. Commit and push.
   4. Start coding:
-     - **G1/G2 (Codex, blind):** `codex exec -s workspace-write -m gpt-6.1-sol -c model_reasoning_effort=high -C packages/r3_blind`, with the prompt "You are blind coder Gx … cat TASK_R3.md …".
-     - **H1/H2 (Claude sonnet subagents, fresh context):** one per `r3_kb*` batch.
+     - **G1/G2 (Codex, blind):** `collab/scripts/r3_launch_gpt.sh`. To resume after a usage limit: `r3_launch_gpt.sh resume K G1 G2`.
+     - **H1/H2 (Claude sonnet subagents, fresh context):** one per `r3_kb*` batch, with the prompt in `collab/scripts/r3_claude_prompt.txt` (replace @ID@ and @B@).
   5. Audit, write the output freeze, and score once: `/usr/bin/python3 -I -B plan/score_r3.py --out plan/r3_scores.csv`.
   6. Write the results into `paper/R3_draft.md`.
 - **Rules:**
