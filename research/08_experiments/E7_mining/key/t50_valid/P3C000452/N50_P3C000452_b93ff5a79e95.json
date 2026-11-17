@@ -1,0 +1,41 @@
+{
+  "repo": "fess",
+  "fix_commit": "157bc97f66513171d3af7746255b6a419b16d6e1",
+  "parent_commit": "51237cee1fcc7c2fadc7b2572351ff32efff33b4",
+  "date": "2026-10-09",
+  "message_excerpt": "docs(api): align the v2 OpenAPI document with what the API returns (#3599)",
+  "stars": "1151",
+  "changes": [
+    [
+      "M",
+      "src/main/config/openapi/v2/openapi-user.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/config/openapi/v2/openapi-user.yaml"
+  ],
+  "path_roles": {
+    "src/main/config/openapi/v2/openapi-user.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C000452",
+  "rank": 1,
+  "item_id": "N50_P3C000452_b93ff5a79e95",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "DELETE /api/v2/tags/{tagId}",
+  "proposition": "DELETE /api/v2/tags/{tagId}: contract says the listed deletion responses omit 409 Conflict; implementation does exhausted concurrent deletion retries return 409 Conflict",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "status",
+  "fix_family": "status.tag_delete_conflict",
+  "proposition_check": "{\"contract\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/config/openapi/v2/openapi-user.yaml:1209\"],\"implementation\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/handlers/TagsHandler.java:191\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/handlers/TagsHandler.java:236\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/handlers/TagsHandler.java:244\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java:41\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java:221\"],\"route\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:346\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:350\"]}",
+  "evidence": "{\"parent\": {\"src/main/config/openapi/v2/openapi-user.yaml\": {\"parent_lines\": [1209], \"parent_numbered_excerpt\": \"1204:       summary: Delete a tag\\n1205:       description: |-\\n1206:         Deletes a tag of the caller. The documents lose its value when the tag\\n1207:         queue is next processed. The shared tag of another user is `forbidden`\\n1208:         (403) and a tag the caller cannot see is `not_found` (404).\\n1209:       operationId: tagsDeleteV2\\n1210:       parameters:\\n1211:         - { $ref: '#/components/parameters/CsrfHeader' }\\n1212:       responses:\\n1213:         '200':\\n1214:           description: Tag deleted.\"}, \"src/main/java/org/codelibs/fess/api/v2/handlers/TagsHandler.java\": {\"parent_lines\": [191, 236, 244], \"parent_numbered_excerpt\": \"186:                 throw new TagRequestException(V2ErrorCode.CONFLICT, \\\"a tag with the name already exists\\\");\\n187:             }\\n188:             if (!replaced) {\\n189:                 if (attempt >= MAX_UPDATE_ATTEMPTS) {\\n190:                     logger.warn(\\\"Failed to rename the tag after {} attempts: id={}\\\", attempt, read.getId());\\n191:                     throw new TagRequestException(V2ErrorCode.CONFLICT, \\\"the tag was changed concurrently; try again\\\");\\n192:                 }\\n193:                 if (logger.isDebugEnabled()) {\\n194:                     logger.debug(\\\"The tag was changed concurrently; retrying the rename: id={}, attempt={}\\\", read.getId(), attempt);\\n195:                 }\\n196:                 continue;\\n231:             list.addAll(sharingList);\\n232:         }\\n233:         return list.toArray(String[]::new);\\n234:     }\\n235: \\n236:     private Map<String, Object> deleteTag(final String tagId, final String userId) throws TagRequestException {\\n237:         for (int attempt = 1;; attempt++) {\\n238:             final TagType tagType = getOwnTagType(tagId, userId);\\n239:             try {\\n240:                 getTagTypeService().delete(tagType);\\n241:             } catch (final TagTypeConflictException e) {\\n242:                 if (attempt >= MAX_UPDATE_ATTEMPTS) {\\n243:                     logger.warn(\\\"Failed to delete the tag after {} attempts: id={}\\\", attempt, tagId, e);\\n244:                     throw new TagRequestException(V2ErrorCode.CONFLICT, \\\"the tag was changed concurrently; try again\\\");\\n245:                 }\\n246:                 continue;\\n247:             }\\n248:             enqueue(TagChange.delete(tagType.getTagValue()));\\n249:             break;\"}, \"src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java\": {\"parent_lines\": [41], \"parent_numbered_excerpt\": \"36: \\n37:     /** The requested resource or endpoint does not exist. */\\n38:     NOT_FOUND(\\\"not_found\\\", 404),\\n39: \\n40:     /** The request conflicts with the current state of the resource (e.g., duplicate-key insert). */\\n41:     CONFLICT(\\\"conflict\\\", 409),\\n42: \\n43:     /** The HTTP method is not supported for this endpoint. */\\n44:     METHOD_NOT_ALLOWED(\\\"method_not_allowed\\\", 405),\\n45: \\n46:     /** The caller has exceeded a rate or quota threshold. */\"}, \"src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java\": {\"parent_lines\": [221], \"parent_numbered_excerpt\": \"216:         }\\n217:         // Discard any partial body a streaming handler may have buffered (NDJSON / SSE)\\n218:         // before failing — otherwise the wire frame becomes a hybrid of pre-error bytes\\n219:         // and the JSON envelope. Safe to call on an uncommitted response per servlet spec.\\n220:         res.resetBuffer();\\n221:         res.setStatus(code.defaultHttpStatus());\\n222:         res.setCharacterEncoding(\\\"UTF-8\\\");\\n223:         res.setContentType(CONTENT_TYPE);\\n224:         // Override any Cache-Control that may have been set by an SSE/NDJSON handler before\\n225:         // it errored out. The SSE prelude uses `no-cache` which permits revalidation; for\\n226:         // an error envelope `no-store` is semantically correct (and equally correct for the\"}, \"src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java\": {\"parent_lines\": [346, 350], \"parent_numbered_excerpt\": \"341:                 ComponentUtil.getV2EnvelopeWriter().writeError(response, V2ErrorCode.NOT_FOUND, \\\"unknown action on document: \\\" + sub);\\n342:                 return;\\n343:             }\\n344:             // \\\"/tags\\\" and \\\"/tags/{tagId}\\\": the tag id is one non-empty segment.\\n345:             if (\\\"/tags\\\".equals(sub)) {\\n346:                 tagsHandler.handle(request, response, null);\\n347:                 return;\\n348:             }\\n349:             if (sub.startsWith(\\\"/tags/\\\") && sub.indexOf('/', \\\"/tags/\\\".length()) < 0) {\\n350:                 tagsHandler.handle(request, response, sub.substring(\\\"/tags/\\\".length()));\\n351:                 return;\\n352:             }\\n353:             switch (sub) {\\n354:             case \\\"/health\\\" -> healthHandler.handle(request, response);\\n355:             case \\\"/search\\\" -> searchHandler.handle(request, response);\"}}, \"patch\": \"key/t50_evidence/P3C000452.diff\", \"patch_sha256\": \"68e32169306dc98754268d23e1b28a671903bfe729a45d74e4ae918309ea9582\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

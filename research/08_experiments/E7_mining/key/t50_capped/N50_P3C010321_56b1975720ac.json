@@ -1,0 +1,107 @@
+{
+  "repo": "photoprism",
+  "fix_commit": "79b3f569a85412b9937a3ed43e587325515e7f92",
+  "parent_commit": "be98c04d0d8d651bcd20b55edebcbd544670e4b3",
+  "date": "2026-04-15",
+  "message_excerpt": "API: Fix incorrect Swagger response schemas and \"Fore more\" typos",
+  "stars": "40456",
+  "changes": [
+    [
+      "M",
+      "internal/api/labels_search.go"
+    ],
+    [
+      "M",
+      "internal/api/links.go"
+    ],
+    [
+      "M",
+      "internal/api/moments_time.go"
+    ],
+    [
+      "M",
+      "internal/api/photos_search.go"
+    ],
+    [
+      "M",
+      "internal/api/services.go"
+    ],
+    [
+      "M",
+      "internal/api/swagger.json"
+    ],
+    [
+      "M",
+      "internal/api/thumbnails.go"
+    ],
+    [
+      "M",
+      "internal/api/video.go"
+    ]
+  ],
+  "surface_paths": [
+    "internal/api/labels_search.go",
+    "internal/api/links.go",
+    "internal/api/moments_time.go",
+    "internal/api/photos_search.go",
+    "internal/api/services.go",
+    "internal/api/swagger.json",
+    "internal/api/thumbnails.go",
+    "internal/api/video.go"
+  ],
+  "path_roles": {
+    "internal/api/labels_search.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/links.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/moments_time.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/photos_search.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/services.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/swagger.json": [
+      "openapi_root"
+    ],
+    "internal/api/thumbnails.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/video.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C010321",
+  "rank": 2,
+  "item_id": "N50_P3C010321_56b1975720ac",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v1/moments/time",
+  "proposition": "GET /api/v1/moments/time: contract says a single entity.Album object; implementation does a JSON array of monthly query.Moment results",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "schema",
+  "fix_family": "schema.response_shape",
+  "proposition_check": "{\"contract\":[\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/swagger.json:8616\"],\"implementation\":[\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/moments_time.go:40\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/entity/query/moments.go:195\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/entity/query/moments.go:198\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"internal/api/swagger.json\": {\"parent_lines\": [8616], \"parent_numbered_excerpt\": \"8611:                 ]\\n8612:             }\\n8613:         },\\n8614:         \\\"/api/v1/moments/time\\\": {\\n8615:             \\\"get\\\": {\\n8616:                 \\\"operationId\\\": \\\"GetMomentsTime\\\",\\n8617:                 \\\"produces\\\": [\\n8618:                     \\\"application/json\\\"\\n8619:                 ],\\n8620:                 \\\"responses\\\": {\\n8621:                     \\\"200\\\": {\"}, \"internal/api/moments_time.go\": {\"parent_lines\": [40], \"parent_numbered_excerpt\": \"35: \\t\\tif err != nil {\\n36: \\t\\t\\tc.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{\\\"error\\\": txt.UpperFirst(err.Error())})\\n37: \\t\\t\\treturn\\n38: \\t\\t}\\n39: \\n40: \\t\\tc.JSON(http.StatusOK, result)\\n41: \\t})\\n42: }\"}, \"internal/entity/query/moments.go\": {\"parent_lines\": [195, 198], \"parent_numbered_excerpt\": \"190: \\n191: \\treturn m.CountryName()\\n192: }\\n193: \\n194: // Moments represents a list of moments.\\n195: type Moments []Moment\\n196: \\n197: // MomentsTime counts photos by month and year.\\n198: func MomentsTime(threshold int, public bool) (results Moments, err error) {\\n199: \\tstmt := UnscopedDb().Table(\\\"photos\\\").\\n200: \\t\\tSelect(\\\"photos.photo_year AS year, photos.photo_month AS month, COUNT(*) AS photo_count\\\").\\n201: \\t\\tWhere(\\\"photos.photo_quality >= 3 AND deleted_at IS NULL AND photos.photo_year > 0 AND photos.photo_month > 0\\\")\\n202: \\n203: \\t// Ignore private pictures?\"}}, \"patch\": \"key/t50_evidence/P3C010321.diff\", \"patch_sha256\": \"7d8c4a074e79731d9e72719de4169797a973a827183c64d37761316f0cd193a7\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "AGPL-3.0",
+  "review_status": "accepted_capped",
+  "reason_code": "FIX_CAP",
+  "reason": "Valid operation excluded by the direction-neutral byte-order item cap."
+}

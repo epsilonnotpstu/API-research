@@ -1,0 +1,77 @@
+{
+  "repo": "keto",
+  "fix_commit": "a1b20c7b5ba0e1ad986a1788900e4fece5d44792",
+  "parent_commit": "169d63e89c17a770da9aa32c8ca8c95856c42515",
+  "date": "2022-01-21",
+  "message_excerpt": "fix: openapi spec and internal SDK (#819)",
+  "stars": "5424",
+  "changes": [
+    [
+      "M",
+      "internal/e2e/sdk_client_test.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/client/write/delete_relation_tuples_parameters.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/expand_tree.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/get_relation_tuples_response.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/internal_relation_tuple.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/patch_delta.go"
+    ],
+    [
+      "M",
+      "internal/httpclient/models/relation_query.go"
+    ],
+    [
+      "M",
+      "internal/relationtuple/transact_server.go"
+    ],
+    [
+      "M",
+      "spec/api.json"
+    ]
+  ],
+  "surface_paths": [
+    "internal/relationtuple/transact_server.go",
+    "spec/api.json"
+  ],
+  "path_roles": {
+    "spec/api.json": [
+      "openapi_root"
+    ],
+    "internal/relationtuple/transact_server.go": [
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 20,
+  "candidate_id": "P3C010658",
+  "rank": 40,
+  "item_id": "N50_P3C010658_1d071dd80500",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "DELETE /relation-tuples",
+  "proposition": "DELETE /relation-tuples: contract says the delete operation declares no query parameters; implementation does the handler reads namespace, object, relation and subject filters from the query and uses them for deletion",
+  "truth_direction": "SPEC",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "request",
+  "fix_family": "request.delete_filter_documentation",
+  "proposition_check": "{\"contract\":[\"169d63e89c17a770da9aa32c8ca8c95856c42515:spec/api.json:770\"],\"implementation\":[\"169d63e89c17a770da9aa32c8ca8c95856c42515:internal/relationtuple/transact_server.go:187\",\"169d63e89c17a770da9aa32c8ca8c95856c42515:internal/relationtuple/transact_server.go:201\",\"169d63e89c17a770da9aa32c8ca8c95856c42515:internal/relationtuple/definitions.go:457\",\"169d63e89c17a770da9aa32c8ca8c95856c42515:internal/relationtuple/definitions.go:489\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"spec/api.json\": {\"parent_lines\": [770], \"parent_numbered_excerpt\": \"765:         ],\\n766:         \\\"tags\\\": [\\n767:           \\\"write\\\"\\n768:         ],\\n769:         \\\"summary\\\": \\\"Delete Relation Tuples\\\",\\n770:         \\\"operationId\\\": \\\"deleteRelationTuples\\\",\\n771:         \\\"responses\\\": {\\n772:           \\\"204\\\": {\\n773:             \\\"description\\\": \\\"Empty responses are sent when, for example, resources are deleted. The HTTP status code for empty responses is typically 201.\\\"\\n774:           },\\n775:           \\\"400\\\": {\"}, \"internal/relationtuple/transact_server.go\": {\"parent_lines\": [187, 201], \"parent_numbered_excerpt\": \"182: //\\n183: //     Responses:\\n184: //       204: emptyResponse\\n185: //       400: genericError\\n186: //       500: genericError\\n187: func (h *handler) deleteRelations(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {\\n188: \\tq := r.URL.Query()\\n189: \\tquery, err := (&RelationQuery{}).FromURLQuery(q)\\n190: \\tif err != nil {\\n191: \\t\\th.d.Writer().WriteError(w, r, herodot.ErrBadRequest.WithError(err.Error()))\\n192: \\t\\treturn\\n196: \\tfor k := range q {\\n197: \\t\\tl = l.WithField(k, q.Get(k))\\n198: \\t}\\n199: \\tl.Debug(\\\"deleting relation tuples\\\")\\n200: \\n201: \\tif err := h.d.RelationTupleManager().DeleteAllRelationTuples(r.Context(), query); err != nil {\\n202: \\t\\tl.WithError(err).Errorf(\\\"got an error while deleting relation tuples\\\")\\n203: \\t\\th.d.Writer().WriteError(w, r, herodot.ErrInternalServerError.WithError(err.Error()))\\n204: \\t\\treturn\\n205: \\t}\\n206: \"}, \"internal/relationtuple/definitions.go\": {\"parent_lines\": [457, 489], \"parent_numbered_excerpt\": \"452: \\tsubjectSetNamespaceKey = \\\"subject_set.namespace\\\"\\n453: \\tsubjectSetObjectKey    = \\\"subject_set.object\\\"\\n454: \\tsubjectSetRelationKey  = \\\"subject_set.relation\\\"\\n455: )\\n456: \\n457: func (q *RelationQuery) FromURLQuery(query url.Values) (*RelationQuery, error) {\\n458: \\tif q == nil {\\n459: \\t\\tq = &RelationQuery{}\\n460: \\t}\\n461: \\n462: \\tif query.Has(\\\"subject\\\") {\\n484: \\t\\treturn nil, errors.WithStack(ErrIncompleteSubject)\\n485: \\t}\\n486: \\n487: \\tq.Object = query.Get(\\\"object\\\")\\n488: \\tq.Relation = query.Get(\\\"relation\\\")\\n489: \\tq.Namespace = query.Get(\\\"namespace\\\")\\n490: \\n491: \\treturn q, nil\\n492: }\\n493: \\n494: func (q *RelationQuery) ToURLQuery() url.Values {\"}}, \"patch\": \"key/t50_evidence/P3C010658.diff\", \"patch_sha256\": \"2c5fc5860255e38871cb2fa1d6c79189d80aa41a63623615baaac73ae1620a8b\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

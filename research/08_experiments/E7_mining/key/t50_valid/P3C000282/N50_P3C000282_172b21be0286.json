@@ -1,0 +1,45 @@
+{
+  "repo": "flagr",
+  "fix_commit": "30fec0c4f5024372932412bd2cb5edd39bef7c5c",
+  "parent_commit": "f55c28c42c2f448bb49ed945d9a9449f0f2cd303",
+  "date": "2026-07-03",
+  "message_excerpt": "fix(api): add ownership validation for segments, constraints, distributions (#733)",
+  "stars": "2615",
+  "changes": [
+    [
+      "M",
+      "pkg/handler/crud.go"
+    ],
+    [
+      "M",
+      "pkg/handler/crud_test.go"
+    ]
+  ],
+  "surface_paths": [
+    "pkg/handler/crud.go"
+  ],
+  "path_roles": {
+    "pkg/handler/crud.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C000282",
+  "rank": 8,
+  "item_id": "N50_P3C000282_172b21be0286",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "PUT /api/v1/flags/{flagID}/segments/{segmentID}/constraints/{constraintID}",
+  "proposition": "PUT /api/v1/flags/{flagID}/segments/{segmentID}/constraints/{constraintID}: contract says the mutation is nested under a required flagID path parameter; implementation does child records are selected or deleted without constraining their membership to that flag",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "scope",
+  "fix_family": "scope.flag_child_membership",
+  "proposition_check": "{\"contract\":[\"f55c28c42c2f448bb49ed945d9a9449f0f2cd303:docs/api_docs/bundle.yaml:678\"],\"implementation\":[\"f55c28c42c2f448bb49ed945d9a9449f0f2cd303:pkg/handler/crud.go:630\",\"f55c28c42c2f448bb49ed945d9a9449f0f2cd303:pkg/handler/crud.go:849\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/api_docs/bundle.yaml\": {\"parent_lines\": [678], \"parent_numbered_excerpt\": \"673:             $ref: '#/definitions/error'\\n674:   /flags/{flagID}/segments/{segmentID}/constraints/{constraintID}:\\n675:     put:\\n676:       tags:\\n677:         - constraint\\n678:       operationId: putConstraint\\n679:       parameters:\\n680:         - in: path\\n681:           name: flagID\\n682:           description: numeric ID of the flag\\n683:           required: true\"}, \"pkg/handler/crud.go\": {\"parent_lines\": [630, 849], \"parent_numbered_excerpt\": \"625: \\tresp := constraint.NewFindConstraintsOK()\\n626: \\tresp.SetPayload(e2r.MapConstraints(cs))\\n627: \\treturn resp\\n628: }\\n629: \\n630: func (c *crud) PutConstraint(params constraint.PutConstraintParams) middleware.Responder {\\n631: \\tflagID := util.SafeUint(params.FlagID)\\n632: \\tconstraintID := util.SafeUint(params.ConstraintID)\\n633: \\tsubject := getSubjectFromRequest(params.HTTPRequest)\\n634: \\tcons := &entity.Constraint{}\\n635: \\n844: \\tComponentKey string\\n845: }\\n846: \\n847: // commitFlagMutation runs mutate in one transaction, writes a flag snapshot on the same tx, commits, then notifies.\\n848: // snapshotFlagID is the flag whose history row is updated (use 0 when the new flag ID is assigned inside mutate).\\n849: func commitFlagMutation(\\n850: \\tsnapshotFlagID uint,\\n851: \\tsubject string,\\n852: \\toperation notification.Operation,\\n853: \\tcomponentType notification.ComponentType,\\n854: \\tmutate func(tx *gorm.DB) (uint, mutationNotify, error),\"}}, \"patch\": \"key/t50_evidence/P3C000282.diff\", \"patch_sha256\": \"5447fe73fac7f5aa0b8452fb537c08f93b4b49426658744cbedfb54a752168cb\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Required parent membership inferred from the nested operation path and required flagID; SQL lacks that scope; no runtime execution.",
+  "licence_at_parent": "Apache-2.0"
+}

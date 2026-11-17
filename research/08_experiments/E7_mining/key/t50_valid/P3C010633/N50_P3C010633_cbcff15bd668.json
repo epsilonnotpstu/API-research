@@ -1,0 +1,146 @@
+{
+  "repo": "keto",
+  "fix_commit": "698e161989331ca5a3a0769301d9694ef805a876",
+  "parent_commit": "fc1ced63bd39c9fbf437e419dfc384343e36e0ee",
+  "date": "2019-02-27",
+  "message_excerpt": "swagger: Fix remove member from role (#87)",
+  "stars": "5424",
+  "changes": [
+    [
+      "M",
+      "docs/api.swagger.json"
+    ],
+    [
+      "M",
+      "engine/ladon/doc.go"
+    ],
+    [
+      "M",
+      "engine/ladon/handler.go"
+    ],
+    [
+      "M",
+      "sdk/go/keto/sdk.go"
+    ],
+    [
+      "M",
+      "sdk/go/keto/swagger/README.md"
+    ],
+    [
+      "M",
+      "sdk/go/keto/swagger/docs/EnginesApi.md"
+    ],
+    [
+      "M",
+      "sdk/go/keto/swagger/docs/RemoveOryAccessControlPolicyRoleMembers.md"
+    ],
+    [
+      "D",
+      "sdk/go/keto/swagger/docs/RemoveOryAccessControlPolicyRoleMembersBody.md"
+    ],
+    [
+      "M",
+      "sdk/go/keto/swagger/engines_api.go"
+    ],
+    [
+      "M",
+      "sdk/go/keto/swagger/remove_ory_access_control_policy_role_members.go"
+    ],
+    [
+      "D",
+      "sdk/go/keto/swagger/remove_ory_access_control_policy_role_members_body.go"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/README.md"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/docs/EnginesApi.md"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/docs/RemoveOryAccessControlPolicyRoleMembers.md"
+    ],
+    [
+      "D",
+      "sdk/js/swagger/docs/RemoveOryAccessControlPolicyRoleMembersBody.md"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/src/api/EnginesApi.js"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/src/index.js"
+    ],
+    [
+      "M",
+      "sdk/js/swagger/src/model/RemoveOryAccessControlPolicyRoleMembers.js"
+    ],
+    [
+      "D",
+      "sdk/js/swagger/src/model/RemoveOryAccessControlPolicyRoleMembersBody.js"
+    ],
+    [
+      "M",
+      "sdk/php/swagger/README.md"
+    ],
+    [
+      "M",
+      "sdk/php/swagger/docs/Api/EnginesApi.md"
+    ],
+    [
+      "M",
+      "sdk/php/swagger/docs/Model/RemoveOryAccessControlPolicyRoleMembers.md"
+    ],
+    [
+      "D",
+      "sdk/php/swagger/docs/Model/RemoveOryAccessControlPolicyRoleMembersBody.md"
+    ],
+    [
+      "M",
+      "sdk/php/swagger/lib/Api/EnginesApi.php"
+    ],
+    [
+      "M",
+      "sdk/php/swagger/lib/Model/RemoveOryAccessControlPolicyRoleMembers.php"
+    ],
+    [
+      "D",
+      "sdk/php/swagger/lib/Model/RemoveOryAccessControlPolicyRoleMembersBody.php"
+    ]
+  ],
+  "surface_paths": [
+    "docs/api.swagger.json",
+    "engine/ladon/handler.go"
+  ],
+  "path_roles": {
+    "docs/api.swagger.json": [
+      "openapi_root"
+    ],
+    "engine/ladon/handler.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C010633",
+  "rank": 15,
+  "item_id": "N50_P3C010633_cbcff15bd668",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "DELETE /engines/acp/ory/{flavor}/roles/{id}/members/{member}",
+  "proposition": "DELETE /engines/acp/ory/{flavor}/roles/{id}/members/{member}: contract says member removal uses the role members collection path with members supplied in a request body; implementation does the router requires an additional member path segment and the handler reads that path parameter",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "route",
+  "fix_family": "route.member_path",
+  "proposition_check": "{\"contract\":[\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:docs/api.swagger.json:539\",\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:docs/api.swagger.json:1017\",\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:docs/api.swagger.json:1032\",\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:engine/ladon/handler.go:266\"],\"implementation\":[\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:engine/ladon/handler.go:285\",\"fc1ced63bd39c9fbf437e419dfc384343e36e0ee:engine/ladon/handler.go:392\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/api.swagger.json\": {\"parent_lines\": [539, 1017, 1032], \"parent_numbered_excerpt\": \"534:           },\\n535:           {\\n536:             \\\"name\\\": \\\"Body\\\",\\n537:             \\\"in\\\": \\\"body\\\",\\n538:             \\\"schema\\\": {\\n539:               \\\"$ref\\\": \\\"#/definitions/removeOryAccessControlPolicyRoleMembersBody\\\"\\n540:             }\\n541:           }\\n542:         ],\\n543:         \\\"responses\\\": {\\n544:           \\\"201\\\": {\\n1012:         \\\"flavor\\\",\\n1013:         \\\"id\\\"\\n1014:       ],\\n1015:       \\\"properties\\\": {\\n1016:         \\\"Body\\\": {\\n1017:           \\\"$ref\\\": \\\"#/definitions/removeOryAccessControlPolicyRoleMembersBody\\\"\\n1018:         },\\n1019:         \\\"flavor\\\": {\\n1020:           \\\"description\\\": \\\"The ORY Access Control Policy flavor. Can be \\\\\\\"regex\\\\\\\", \\\\\\\"glob\\\\\\\", and \\\\\\\"exact\\\\\\\".\\\\n\\\\nin: path\\\",\\n1021:           \\\"type\\\": \\\"string\\\",\\n1022:           \\\"x-go-name\\\": \\\"Flavor\\\"\\n1027:           \\\"x-go-name\\\": \\\"ID\\\"\\n1028:         }\\n1029:       },\\n1030:       \\\"x-go-package\\\": \\\"github.com/ory/keto/engine/ladon\\\"\\n1031:     },\\n1032:     \\\"removeOryAccessControlPolicyRoleMembersBody\\\": {\\n1033:       \\\"type\\\": \\\"object\\\",\\n1034:       \\\"properties\\\": {\\n1035:         \\\"members\\\": {\\n1036:           \\\"description\\\": \\\"The members to be removed.\\\",\\n1037:           \\\"type\\\": \\\"array\\\",\"}, \"engine/ladon/handler.go\": {\"parent_lines\": [285, 392], \"parent_numbered_excerpt\": \"280: \\t//     Schemes: http, https\\n281: \\t//\\n282: \\t//     Responses:\\n283: \\t//       201: emptyResponse\\n284: \\t//       500: genericError\\n285: \\tr.DELETE(BasePath+\\\"/roles/:id/members/:member\\\", e.sh.Upsert(e.rolesMembersRemove))\\n286: }\\n287: \\n288: func (e *Engine) rolesList(ctx context.Context, r *http.Request, ps httprouter.Params) (*kstorage.ListRequest, error) {\\n289: \\tvar p Roles\\n290: \\n387: \\tif err := e.s.Get(ctx, roleCollection(f), ps.ByName(\\\"id\\\"), &ro); err != nil {\\n388: \\t\\treturn nil, err\\n389: \\t}\\n390: \\n391: \\tro.Members = stringslice.Filter(ro.Members, func(s string) bool {\\n392: \\t\\treturn s == ps.ByName(\\\"member\\\")\\n393: \\t})\\n394: \\n395: \\treturn &kstorage.UpsertRequest{\\n396: \\t\\tCollection: roleCollection(f),\\n397: \\t\\tKey:        ro.ID,\"}}, \"patch\": \"key/t50_evidence/P3C010633.diff\", \"patch_sha256\": \"340fa56867fef1434c127e450d3361bcab9258b4c779b5512a419ac2f61dd167\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

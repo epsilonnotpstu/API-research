@@ -1,0 +1,41 @@
+{
+  "repo": "authelia",
+  "fix_commit": "c62dbd43d6e69ae81530e7c4f8763857f8ff1dda",
+  "parent_commit": "a56cffa129a0fedb830971855ab695a95cf96312",
+  "date": "2021-05-21",
+  "message_excerpt": "fix(handlers): align response status codes for the verify endpoint (#2016)",
+  "stars": "29663",
+  "changes": [
+    [
+      "M",
+      "internal/handlers/handler_verify.go"
+    ]
+  ],
+  "surface_paths": [
+    "internal/handlers/handler_verify.go"
+  ],
+  "path_roles": {
+    "internal/handlers/handler_verify.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C005195",
+  "rank": 12,
+  "item_id": "N50_P3C005195_4108d3315e96",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "HEAD /api/verify",
+  "proposition": "HEAD /api/verify: contract says HTTP 200 denotes successful permission verification and HTTP 401 denotes unauthorized access; implementation does a malformed original URL invokes an error reply without setting a non-success HTTP status",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "verify",
+  "fix_family": "verify.parse_error_status",
+  "proposition_check": "{\"contract\":[\"a56cffa129a0fedb830971855ab695a95cf96312:api/openapi.yml:75\"],\"implementation\":[\"a56cffa129a0fedb830971855ab695a95cf96312:internal/handlers/handler_verify.go:431\",\"a56cffa129a0fedb830971855ab695a95cf96312:internal/middlewares/authelia_context.go:56\"],\"route\":[\"a56cffa129a0fedb830971855ab695a95cf96312:internal/server/server.go:63\"]}",
+  "evidence": "{\"parent\": {\"api/openapi.yml\": {\"parent_lines\": [75], \"parent_numbered_excerpt\": \"70:           description: Successful Operation\\n71:           content:\\n72:             application/json:\\n73:               schema:\\n74:                 $ref: '#/components/schemas/handlers.StateResponse'\\n75:   /api/verify:\\n76:     get:\\n77:       tags:\\n78:         - Authentication\\n79:       summary: Verification\\n80:       description: >\"}, \"internal/handlers/handler_verify.go\": {\"parent_lines\": [431], \"parent_numbered_excerpt\": \"426: \\treturn func(ctx *middlewares.AutheliaCtx) {\\n427: \\t\\tctx.Logger.Tracef(\\\"Headers=%s\\\", ctx.Request.Header.String())\\n428: \\t\\ttargetURL, err := ctx.GetOriginalURL()\\n429: \\n430: \\t\\tif err != nil {\\n431: \\t\\t\\tctx.Error(fmt.Errorf(\\\"Unable to parse target URL: %s\\\", err), operationFailedMessage)\\n432: \\t\\t\\treturn\\n433: \\t\\t}\\n434: \\n435: \\t\\tif !isSchemeHTTPS(targetURL) && !isSchemeWSS(targetURL) {\\n436: \\t\\t\\tctx.Logger.Error(fmt.Errorf(\\\"Scheme of target URL %s must be secure since cookies are \\\"+\"}, \"internal/middlewares/authelia_context.go\": {\"parent_lines\": [56], \"parent_numbered_excerpt\": \"51: \\t\\t}\\n52: \\t}\\n53: }\\n54: \\n55: // Error reply with an error and display the stack trace in the logs.\\n56: func (c *AutheliaCtx) Error(err error, message string) {\\n57: \\tb, marshalErr := json.Marshal(ErrorResponse{Status: \\\"KO\\\", Message: message})\\n58: \\n59: \\tif marshalErr != nil {\\n60: \\t\\tc.Logger.Error(marshalErr)\\n61: \\t}\"}, \"internal/server/server.go\": {\"parent_lines\": [63], \"parent_numbered_excerpt\": \"58: \\n59: \\tr.GET(\\\"/api/configuration\\\", autheliaMiddleware(\\n60: \\t\\tmiddlewares.RequireFirstFactor(handlers.ConfigurationGet)))\\n61: \\n62: \\tr.GET(\\\"/api/verify\\\", autheliaMiddleware(handlers.VerifyGet(configuration.AuthenticationBackend)))\\n63: \\tr.HEAD(\\\"/api/verify\\\", autheliaMiddleware(handlers.VerifyGet(configuration.AuthenticationBackend)))\\n64: \\n65: \\tr.POST(\\\"/api/firstfactor\\\", autheliaMiddleware(handlers.FirstFactorPost(1000, true)))\\n66: \\tr.POST(\\\"/api/logout\\\", autheliaMiddleware(handlers.LogoutPost))\\n67: \\n68: \\t// Only register endpoints if forgot password is not disabled.\"}}, \"patch\": \"key/t50_evidence/P3C005195.diff\", \"patch_sha256\": \"088e1873637bd32a7d01b16810d092f1d0851cbda7aa42cc83491a2e1cd2759b\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

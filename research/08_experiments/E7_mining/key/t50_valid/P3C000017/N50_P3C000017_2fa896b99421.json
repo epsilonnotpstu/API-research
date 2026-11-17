@@ -1,0 +1,41 @@
+{
+  "repo": "traccar",
+  "fix_commit": "0ba89aa35180f965e8c8ca85560d7ee7a1849b3c",
+  "parent_commit": "fed6597faa141ba3ee8b11bff2c987ac981fd91b",
+  "date": "2022-05-24",
+  "message_excerpt": "Fix login issue",
+  "stars": "8137",
+  "changes": [
+    [
+      "M",
+      "src/main/java/org/traccar/api/resource/SessionResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/java/org/traccar/api/resource/SessionResource.java"
+  ],
+  "path_roles": {
+    "src/main/java/org/traccar/api/resource/SessionResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C000017",
+  "rank": 17,
+  "item_id": "N50_P3C000017_2fa896b99421",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /api/session",
+  "proposition": "POST /api/session: contract says a successful request creates a new session; implementation does successful login returns the user without storing the user identifier in the HTTP session",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "session",
+  "fix_family": "session.login_state",
+  "proposition_check": "{\"contract\":[\"fed6597faa141ba3ee8b11bff2c987ac981fd91b:swagger.json:962\"],\"implementation\":[\"fed6597faa141ba3ee8b11bff2c987ac981fd91b:src/main/java/org/traccar/api/resource/SessionResource.java:109\",\"fed6597faa141ba3ee8b11bff2c987ac981fd91b:src/main/java/org/traccar/api/resource/SessionResource.java:113\",\"fed6597faa141ba3ee8b11bff2c987ac981fd91b:src/main/java/org/traccar/api/resource/SessionResource.java:124\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"swagger.json\": {\"parent_lines\": [962], \"parent_numbered_excerpt\": \"957:             \\\"content\\\": {}\\n958:           }\\n959:         }\\n960:       },\\n961:       \\\"post\\\": {\\n962:         \\\"summary\\\": \\\"Create a new Session\\\",\\n963:         \\\"tags\\\": [\\n964:           \\\"Session\\\"\\n965:         ],\\n966:         \\\"requestBody\\\": {\\n967:           \\\"content\\\": {\"}, \"src/main/java/org/traccar/api/resource/SessionResource.java\": {\"parent_lines\": [109, 113, 124], \"parent_numbered_excerpt\": \"104:         throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND).build());\\n105:     }\\n106: \\n107:     @PermitAll\\n108:     @POST\\n109:     public User add(\\n110:             @FormParam(\\\"email\\\") String email, @FormParam(\\\"password\\\") String password) throws StorageException {\\n111:         User user = Context.getPermissionsManager().login(email, password);\\n112:         if (user != null) {\\n113:             LogAction.login(user.getId(), ServletHelper.retrieveRemoteAddress(request));\\n114:             return user;\\n115:         } else {\\n116:             LogAction.failedLogin(ServletHelper.retrieveRemoteAddress(request));\\n117:             throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).build());\\n118:         }\\n119:     }\\n120: \\n121:     @DELETE\\n122:     public Response remove() {\\n123:         LogAction.logout(getUserId(), ServletHelper.retrieveRemoteAddress(request));\\n124:         request.getSession().removeAttribute(USER_ID_KEY);\\n125:         return Response.noContent().build();\\n126:     }\\n127: \\n128: }\"}}, \"patch\": \"key/t50_evidence/P3C000017.diff\", \"patch_sha256\": \"7c768ff7526ee2f2308973565e6acd024350dff78a4f226ecfb9d4108aae2d50\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

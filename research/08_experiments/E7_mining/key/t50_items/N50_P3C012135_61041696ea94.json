@@ -1,0 +1,45 @@
+{
+  "repo": "nifi",
+  "fix_commit": "28e9f774192c072e5b30aa0819925a98331c3fb9",
+  "parent_commit": "263c08b00ddf6c4a36bb973b82219fa8984ebcf8",
+  "date": "2026-07-29",
+  "message_excerpt": "NIFI-16154 Aligned Asset Owner ID checking in Delete and Get methods (#11485)",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java"
+    ],
+    [
+      "M",
+      "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/test/java/org/apache/nifi/web/StandardNiFiServiceFacadeTest.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java"
+  ],
+  "path_roles": {
+    "nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 30,
+  "candidate_id": "P3C012135",
+  "rank": 46,
+  "item_id": "N50_P3C012135_61041696ea94",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "DELETE /parameter-contexts/{contextId}/assets/{assetId}",
+  "proposition": "DELETE /parameter-contexts/{contextId}/assets/{assetId}: contract says the operation deletes an asset from the given parameter context; implementation does verification checks references in the given context but deletion uses the asset ID alone without verifying its owner context",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "jvm_annotation",
+  "mismatch_type": "request",
+  "fix_family": "request.asset_owner_scope",
+  "proposition_check": "{\"contract\":[\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:559\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:610\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:612\"],\"implementation\":[\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java:8501\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java:8525\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java:8527\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:675\",\"263c08b00ddf6c4a36bb973b82219fa8984ebcf8:nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java:678\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ParameterContextResource.java\": {\"parent_lines\": [675, 678], \"parent_numbered_excerpt\": \"670:                 lookup -> {\\n671:                     // Deletion of an asset will only be allowed when it is not referenced by any parameters, so we only need to\\n672:                     // authorize that the user has access to modify the context which is READ and WRITE on the context itself\\n673:                     authorizeReadWriteParameterContext(contextEntity.getId());\\n674:                 },\\n675:                 () -> serviceFacade.verifyDeleteAsset(contextEntity.getId(), assetId),\\n676:                 requestEntity -> {\\n677:                     final String requestAssetId = requestEntity.getAsset().getId();\\n678:                     final AssetEntity deletedAsset = serviceFacade.deleteAsset(contextEntity.getId(), requestAssetId);\\n679:                     return generateOkResponse(deletedAsset).build();\\n680:                 }\\n681:         );\\n682:     }\\n683: \"}, \"nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/StandardNiFiServiceFacade.java\": {\"parent_lines\": [8501, 8525, 8527], \"parent_numbered_excerpt\": \"8496:         final NarSummaryDTO narSummaryDTO = dtoFactory.createNarSummaryDto(narNode);\\n8497:         return entityFactory.createNarSummaryEntity(narSummaryDTO);\\n8498:     }\\n8499: \\n8500:     @Override\\n8501:     public void verifyDeleteAsset(final String parameterContextId, final String assetId) {\\n8502:         final ParameterContext parameterContext = parameterContextDAO.getParameterContext(parameterContextId);\\n8503:         final Set<String> referencingParameterNames = getReferencingParameterNames(parameterContext, assetId);\\n8504:         if (!referencingParameterNames.isEmpty()) {\\n8505:             final String joinedParametersNames = String.join(\\\", \\\", referencingParameterNames);\\n8506:             throw new IllegalStateException(\\\"Unable to delete Asset [%s] because it is currently references by Parameters [%s]\\\".formatted(assetId, joinedParametersNames));\\n8520:         }\\n8521:         return referencingParameterNames;\\n8522:     }\\n8523: \\n8524:     @Override\\n8525:     public AssetEntity deleteAsset(final String parameterContextId, final String assetId) {\\n8526:         verifyDeleteAsset(parameterContextId, assetId);\\n8527:         final Asset deletedAsset = assetManager.deleteAsset(assetId)\\n8528:                 .orElseThrow(() -> new ResourceNotFoundException(\\\"Asset does not exist with id [%s]\\\".formatted(assetId)));\\n8529:         return dtoFactory.createAssetEntity(deletedAsset);\\n8530:     }\\n8531: \\n8532:     private PermissionsDTO createPermissionDto(\"}}, \"patch\": \"key/t50_evidence/P3C012135.diff\", \"patch_sha256\": \"59a19b5e3e1e6c9dd23ad2905baff0c41e918c3da03e03a588992519eeef0afc\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

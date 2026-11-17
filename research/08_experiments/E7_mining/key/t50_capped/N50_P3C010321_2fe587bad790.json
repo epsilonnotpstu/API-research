@@ -1,0 +1,107 @@
+{
+  "repo": "photoprism",
+  "fix_commit": "79b3f569a85412b9937a3ed43e587325515e7f92",
+  "parent_commit": "be98c04d0d8d651bcd20b55edebcbd544670e4b3",
+  "date": "2026-04-15",
+  "message_excerpt": "API: Fix incorrect Swagger response schemas and \"Fore more\" typos",
+  "stars": "40456",
+  "changes": [
+    [
+      "M",
+      "internal/api/labels_search.go"
+    ],
+    [
+      "M",
+      "internal/api/links.go"
+    ],
+    [
+      "M",
+      "internal/api/moments_time.go"
+    ],
+    [
+      "M",
+      "internal/api/photos_search.go"
+    ],
+    [
+      "M",
+      "internal/api/services.go"
+    ],
+    [
+      "M",
+      "internal/api/swagger.json"
+    ],
+    [
+      "M",
+      "internal/api/thumbnails.go"
+    ],
+    [
+      "M",
+      "internal/api/video.go"
+    ]
+  ],
+  "surface_paths": [
+    "internal/api/labels_search.go",
+    "internal/api/links.go",
+    "internal/api/moments_time.go",
+    "internal/api/photos_search.go",
+    "internal/api/services.go",
+    "internal/api/swagger.json",
+    "internal/api/thumbnails.go",
+    "internal/api/video.go"
+  ],
+  "path_roles": {
+    "internal/api/labels_search.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/links.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/moments_time.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/photos_search.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/services.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/swagger.json": [
+      "openapi_root"
+    ],
+    "internal/api/thumbnails.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "internal/api/video.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C010321",
+  "rank": 2,
+  "item_id": "N50_P3C010321_2fe587bad790",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v1/photos/view",
+  "proposition": "GET /api/v1/photos/view: contract says an array described as search.Photo objects; implementation does an array of viewer.Result objects containing resolved viewer fields",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "schema",
+  "fix_family": "schema.response_shape",
+  "proposition_check": "{\"contract\":[\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/swagger.json:9046\"],\"implementation\":[\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/photos_search.go:99\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/photos_search.go:137\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/api/photos_search.go:152\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/entity/search/photos_viewer.go:21\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/entity/search/viewer/result.go:10\",\"be98c04d0d8d651bcd20b55edebcbd544670e4b3:internal/entity/search/viewer/result.go:32\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"internal/api/swagger.json\": {\"parent_lines\": [9046], \"parent_numbered_excerpt\": \"9041:             }\\n9042:         },\\n9043:         \\\"/api/v1/photos/view\\\": {\\n9044:             \\\"get\\\": {\\n9045:                 \\\"description\\\": \\\"Returns search results formatted for the photo viewer (lightbox) in the web UI,\\\\nincluding resolved content URLs and preview/download tokens.\\\\nFor more information see:\\\\n- https://docs.photoprism.app/developer-guide/api/search/#get-apiv1photos\\\",\\n9046:                 \\\"operationId\\\": \\\"SearchPhotosView\\\",\\n9047:                 \\\"parameters\\\": [\\n9048:                     {\\n9049:                         \\\"description\\\": \\\"maximum number of files\\\",\\n9050:                         \\\"in\\\": \\\"query\\\",\\n9051:                         \\\"maximum\\\": 100000,\"}, \"internal/api/photos_search.go\": {\"parent_lines\": [99, 137, 152], \"parent_numbered_excerpt\": \"94: \\t\\tAddLimitHeader(c, f.Count)\\n95: \\t\\tAddOffsetHeader(c, f.Offset)\\n96: \\t\\tAddTokenHeaders(c, s)\\n97: \\n98: \\t\\t// Return as JSON.\\n99: \\t\\tc.JSON(http.StatusOK, result)\\n100: \\t})\\n101: }\\n102: \\n103: // SearchPhotosView finds pictures and returns a viewer-formatted JSON result for the lightbox.\\n104: //\\n132: \\t\\t\\treturn\\n133: \\t\\t}\\n134: \\n135: \\t\\tconf := get.Config()\\n136: \\n137: \\t\\tresult, count, err := search.UserPhotosViewerResults(f, s, conf.ContentUri(), conf.ApiUri(), s.PreviewToken, s.DownloadToken)\\n138: \\n139: \\t\\tif err != nil {\\n140: \\t\\t\\tevent.AuditWarn([]string{ClientIP(c), \\\"session %s\\\", string(acl.ResourcePhotos), \\\"view\\\", status.Error(err)}, s.RefID)\\n141: \\t\\t\\tAbortBadRequest(c, err)\\n142: \\t\\t\\treturn\\n147: \\t\\tAddLimitHeader(c, f.Count)\\n148: \\t\\tAddOffsetHeader(c, f.Offset)\\n149: \\t\\tAddTokenHeaders(c, s)\\n150: \\n151: \\t\\t// Return as JSON.\\n152: \\t\\tc.JSON(http.StatusOK, result)\\n153: \\t})\\n154: }\"}, \"internal/entity/search/photos_viewer.go\": {\"parent_lines\": [21], \"parent_numbered_excerpt\": \"16: }\\n17: \\n18: // UserPhotosViewerResults behaves like PhotosViewerResults but also applies the\\n19: // permissions encoded in the session (for example shared albums and private\\n20: // visibility) before returning viewer-formatted results.\\n21: func UserPhotosViewerResults(frm form.SearchPhotos, sess *entity.Session, contentUri, apiUri, previewToken, downloadToken string) (viewer.Results, int, error) {\\n22: \\tif results, count, err := searchPhotos(frm, sess, PhotosColsView); err != nil {\\n23: \\t\\treturn viewer.Results{}, count, err\\n24: \\t} else {\\n25: \\t\\treturn results.ViewerResults(contentUri, apiUri, previewToken, downloadToken), count, err\\n26: \\t}\"}, \"internal/entity/search/viewer/result.go\": {\"parent_lines\": [10, 32], \"parent_numbered_excerpt\": \"5: \\n6: \\t\\\"github.com/photoprism/photoprism/internal/thumb\\\"\\n7: )\\n8: \\n9: // Result represents a photo viewer result.\\n10: type Result struct {\\n11: \\tUID          string        `json:\\\"UID\\\"`\\n12: \\tType         string        `json:\\\"Type,omitempty\\\"`\\n13: \\tTitle        string        `json:\\\"Title,omitempty\\\"`\\n14: \\tCaption      string        `json:\\\"Caption,omitempty\\\"`\\n15: \\tLat          float64       `json:\\\"Lat,omitempty\\\"`\\n27: \\tThumbs       *thumb.Viewer `json:\\\"Thumbs,omitempty\\\"`\\n28: \\tDownloadUrl  string        `json:\\\"DownloadUrl,omitempty\\\"`\\n29: }\\n30: \\n31: // Results represents a list of viewer search results.\\n32: type Results []Result\"}}, \"patch\": \"key/t50_evidence/P3C010321.diff\", \"patch_sha256\": \"7d8c4a074e79731d9e72719de4169797a973a827183c64d37761316f0cd193a7\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "AGPL-3.0",
+  "review_status": "accepted_capped",
+  "reason_code": "FIX_CAP",
+  "reason": "Valid operation excluded by the direction-neutral byte-order item cap."
+}

@@ -1,0 +1,73 @@
+{
+  "repo": "datarhei-core",
+  "fix_commit": "5bd04817cc0b4a59cae55ba34e95426875fa7617",
+  "parent_commit": "1ab09adc690d63ceea1b8acccfaf7a97f4b0f20f",
+  "date": "2022-08-18",
+  "message_excerpt": "Fix wrong path for swagger definition",
+  "stars": "282",
+  "changes": [
+    [
+      "M",
+      "docs/docs.go"
+    ],
+    [
+      "M",
+      "docs/swagger.json"
+    ],
+    [
+      "M",
+      "docs/swagger.yaml"
+    ],
+    [
+      "M",
+      "http/handler/api/diskfs.go"
+    ],
+    [
+      "M",
+      "http/handler/api/memfs.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.json",
+    "docs/swagger.yaml",
+    "http/handler/api/diskfs.go",
+    "http/handler/api/memfs.go"
+  ],
+  "path_roles": {
+    "docs/swagger.json": [
+      "openapi_root"
+    ],
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ],
+    "http/handler/api/diskfs.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "http/handler/api/memfs.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C000318",
+  "rank": 3,
+  "item_id": "N50_P3C000318_8585df8aaf52",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /api/v3/fs/disk",
+  "proposition": "GET /api/v3/fs/disk: contract says the listing operation path ends in a trailing slash; implementation does the listing handler is registered without that slash, with slash-suffixed paths routed to GetFile",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "route",
+  "fix_family": "route.filesystem_listing_slash",
+  "proposition_check": "{\"contract\":[\"1ab09adc690d63ceea1b8acccfaf7a97f4b0f20f:docs/swagger.json:297\"],\"implementation\":[\"1ab09adc690d63ceea1b8acccfaf7a97f4b0f20f:http/server.go:601\",\"1ab09adc690d63ceea1b8acccfaf7a97f4b0f20f:http/server.go:602\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"docs/swagger.json\": {\"parent_lines\": [297], \"parent_numbered_excerpt\": \"292:                         }\\n293:                     }\\n294:                 }\\n295:             }\\n296:         },\\n297:         \\\"/api/v3/fs/disk/\\\": {\\n298:             \\\"get\\\": {\\n299:                 \\\"security\\\": [\\n300:                     {\\n301:                         \\\"ApiKeyAuth\\\": []\\n302:                     }\"}, \"http/server.go\": {\"parent_lines\": [601, 602], \"parent_numbered_excerpt\": \"596: \\t\\t\\tv3.PATCH(\\\"/fs/mem/*\\\", s.v3handler.memfs.PatchFile)\\n597: \\t\\t}\\n598: \\t}\\n599: \\n600: \\t// v3 Disk FS\\n601: \\tv3.GET(\\\"/fs/disk\\\", s.v3handler.diskfs.ListFiles)\\n602: \\tv3.GET(\\\"/fs/disk/*\\\", s.v3handler.diskfs.GetFile, mwmime.NewWithConfig(mwmime.Config{\\n603: \\t\\tMimeTypesFile:      s.mimeTypesFile,\\n604: \\t\\tDefaultContentType: \\\"application/data\\\",\\n605: \\t}))\\n606: \\tv3.HEAD(\\\"/fs/disk/*\\\", s.v3handler.diskfs.GetFile, mwmime.NewWithConfig(mwmime.Config{\\n607: \\t\\tMimeTypesFile:      s.mimeTypesFile,\"}}, \"patch\": \"key/t50_evidence/P3C000318.diff\", \"patch_sha256\": \"d6098da72208bc5ba2a7e22179c1c1a5620f07026520be8724ed91f5ece7e05f\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "http/handler/api/diskfs.go"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

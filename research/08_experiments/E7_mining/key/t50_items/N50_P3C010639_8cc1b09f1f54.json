@@ -1,0 +1,54 @@
+{
+  "repo": "keto",
+  "fix_commit": "84f028dc35665174542e103c0aefc635bb6d3e52",
+  "parent_commit": "c671f73171f53f8306e087a2cd4475140ccc8698",
+  "date": "2020-10-03",
+  "message_excerpt": "fix: use make() to initialize slices (#250)",
+  "stars": "5424",
+  "changes": [
+    [
+      "M",
+      "engine/ladon/handler.go"
+    ],
+    [
+      "M",
+      "storage/filter_helper_test.go"
+    ],
+    [
+      "M",
+      "storage/handler.go"
+    ]
+  ],
+  "surface_paths": [
+    "engine/ladon/handler.go",
+    "storage/handler.go"
+  ],
+  "path_roles": {
+    "engine/ladon/handler.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "storage/handler.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C010639",
+  "rank": 21,
+  "item_id": "N50_P3C010639_8cc1b09f1f54",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /engines/acp/ory/{flavor}/roles",
+  "proposition": "GET /engines/acp/ory/{flavor}/roles: contract says the successful response is a JSON array; implementation does empty filtered results remain nil slices passed to the JSON response writer, yielding null instead of an empty array",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "response",
+  "fix_family": "response.empty_list_null",
+  "proposition_check": "{\"contract\":[\"c671f73171f53f8306e087a2cd4475140ccc8698:.schema/api.swagger.json:495\"],\"implementation\":[\"c671f73171f53f8306e087a2cd4475140ccc8698:storage/handler.go:88\",\"c671f73171f53f8306e087a2cd4475140ccc8698:storage/handler.go:126\",\"c671f73171f53f8306e087a2cd4475140ccc8698:engine/ladon/handler.go:293\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\".schema/api.swagger.json\": {\"parent_lines\": [495], \"parent_numbered_excerpt\": \"490:             \\\"in\\\": \\\"query\\\"\\n491:           }\\n492:         ],\\n493:         \\\"responses\\\": {\\n494:           \\\"200\\\": {\\n495:             \\\"description\\\": \\\"Roles is an array of roles.\\\",\\n496:             \\\"schema\\\": {\\n497:               \\\"type\\\": \\\"array\\\",\\n498:               \\\"items\\\": {\\n499:                 \\\"$ref\\\": \\\"#/definitions/oryAccessControlPolicyRole\\\"\\n500:               }\"}, \"storage/handler.go\": {\"parent_lines\": [88, 126], \"parent_numbered_excerpt\": \"83: }\\n84: \\n85: func ListByQuery(l *ListRequest, m map[string][]string) {\\n86: \\tswitch val := l.Value.(type) {\\n87: \\tcase *Roles:\\n88: \\t\\tvar res Roles\\n89: \\t\\tfor _, role := range *val {\\n90: \\t\\t\\tfilteredRole := role.withMembers(m[\\\"member\\\"]).withIDs(m[\\\"id\\\"])\\n91: \\t\\t\\tif filteredRole != nil {\\n92: \\t\\t\\t\\tres = append(res, *filteredRole)\\n93: \\t\\t\\t}\\n121: \\t\\t\\th.h.WriteError(w, r, err)\\n122: \\t\\t\\treturn\\n123: \\t\\t}\\n124: \\n125: \\t\\tm := r.URL.Query()\\n126: \\t\\th.h.Write(w, r, l.Filter(m).Value)\\n127: \\t}\\n128: }\\n129: \\n130: type UpsertRequest struct {\\n131: \\tCollection string\"}, \"engine/ladon/handler.go\": {\"parent_lines\": [293], \"parent_numbered_excerpt\": \"288: \\t//       500: genericError\\n289: \\tr.DELETE(BasePath+\\\"/roles/:id/members/:member\\\", e.sh.Upsert(e.rolesMembersRemove))\\n290: }\\n291: \\n292: func (e *Engine) rolesList(ctx context.Context, r *http.Request, ps httprouter.Params) (*kstorage.ListRequest, error) {\\n293: \\tvar p kstorage.Roles\\n294: \\n295: \\tf, err := flavor(ps)\\n296: \\tif err != nil {\\n297: \\t\\treturn nil, err\\n298: \\t}\"}}, \"patch\": \"key/t50_evidence/P3C010639.diff\", \"patch_sha256\": \"ee6ba402fa4be332c4b022efa913429640f24a08b06fb87d73b4175c3fb3a681\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

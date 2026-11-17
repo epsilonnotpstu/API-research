@@ -1,0 +1,62 @@
+{
+  "repo": "answer",
+  "fix_commit": "10c91f96a3ecf482fe937e2f1211263b52ae9124",
+  "parent_commit": "3283e09c9a14fa399b04ac8477cf697843617354",
+  "date": "2023-07-11",
+  "message_excerpt": "fix(admin): modify the router url",
+  "stars": "15712",
+  "changes": [
+    [
+      "M",
+      "docs/docs.go"
+    ],
+    [
+      "M",
+      "docs/swagger.json"
+    ],
+    [
+      "M",
+      "docs/swagger.yaml"
+    ],
+    [
+      "M",
+      "internal/controller_admin/user_backyard_controller.go"
+    ]
+  ],
+  "surface_paths": [
+    "docs/swagger.json",
+    "docs/swagger.yaml",
+    "internal/controller_admin/user_backyard_controller.go"
+  ],
+  "path_roles": {
+    "docs/swagger.json": [
+      "openapi_root"
+    ],
+    "docs/swagger.yaml": [
+      "openapi_root"
+    ],
+    "internal/controller_admin/user_backyard_controller.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C010449",
+  "rank": 40,
+  "item_id": "N50_P3C010449_23a0e56c1f2d",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /answer/admin/api/users/activation",
+  "proposition": "GET /answer/admin/api/users/activation: contract says user activation is retrieved at the plural users/activation route; implementation does the router binds this handler to singular user/activation under the admin API prefix",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "request",
+  "fix_family": "request.activation_route",
+  "proposition_check": "{\"contract\":[\"3283e09c9a14fa399b04ac8477cf697843617354:docs/swagger.yaml:3307\"],\"implementation\":[\"3283e09c9a14fa399b04ac8477cf697843617354:internal/router/answer_api_router.go:260\"],\"route\":[\"3283e09c9a14fa399b04ac8477cf697843617354:internal/base/server/http.go:63\",\"3283e09c9a14fa399b04ac8477cf697843617354:internal/base/server/http.go:72\",\"3283e09c9a14fa399b04ac8477cf697843617354:internal/base/server/http.go:77\"]}",
+  "evidence": "{\"parent\": {\"docs/swagger.yaml\": {\"parent_lines\": [3307], \"parent_numbered_excerpt\": \"3302:       security:\\n3303:       - ApiKeyAuth: []\\n3304:       summary: update user\\n3305:       tags:\\n3306:       - admin\\n3307:   /answer/admin/api/users/activation:\\n3308:     get:\\n3309:       description: get user activation\\n3310:       parameters:\\n3311:       - description: user id\\n3312:         in: query\"}, \"internal/router/answer_api_router.go\": {\"parent_lines\": [260], \"parent_numbered_excerpt\": \"255: \\n256: \\t// user\\n257: \\tr.GET(\\\"/users/page\\\", a.adminUserController.GetUserPage)\\n258: \\tr.PUT(\\\"/user/status\\\", a.adminUserController.UpdateUserStatus)\\n259: \\tr.PUT(\\\"/user/role\\\", a.adminUserController.UpdateUserRole)\\n260: \\tr.GET(\\\"/user/activation\\\", a.adminUserController.GetUserActivation)\\n261: \\tr.POST(\\\"/user/activation\\\", a.adminUserController.SendUserActivation)\\n262: \\tr.POST(\\\"/user\\\", a.adminUserController.AddUser)\\n263: \\tr.PUT(\\\"/user/password\\\", a.adminUserController.UpdateUserPassword)\\n264: \\n265: \\t// reason\"}, \"internal/base/server/http.go\": {\"parent_lines\": [63, 72, 77], \"parent_numbered_excerpt\": \"58: \\t// register api that must be authenticated\\n59: \\tauthV1 := r.Group(\\\"/answer/api/v1\\\")\\n60: \\tauthV1.Use(authUserMiddleware.MustAuth())\\n61: \\tanswerRouter.RegisterAnswerAPIRouter(authV1)\\n62: \\n63: \\tadminauthV1 := r.Group(\\\"/answer/admin/api\\\")\\n64: \\tadminauthV1.Use(authUserMiddleware.AdminAuth())\\n65: \\tanswerRouter.RegisterAnswerAdminAPIRouter(adminauthV1)\\n66: \\n67: \\ttemplateRouter.RegisterTemplateRouter(rootGroup)\\n68: \\n69: \\t// plugin routes\\n70: \\tpluginAPIRouter.RegisterUnAuthConnectorRouter(mustUnAuthV1)\\n71: \\tpluginAPIRouter.RegisterAuthUserConnectorRouter(authV1)\\n72: \\tpluginAPIRouter.RegisterAuthAdminConnectorRouter(adminauthV1)\\n73: \\n74: \\t_ = plugin.CallAgent(func(agent plugin.Agent) error {\\n75: \\t\\tagent.RegisterUnAuthRouter(mustUnAuthV1)\\n76: \\t\\tagent.RegisterAuthUserRouter(authV1)\\n77: \\t\\tagent.RegisterAuthAdminRouter(adminauthV1)\\n78: \\t\\treturn nil\\n79: \\t})\\n80: \\treturn r\\n81: }\"}}, \"patch\": \"key/t50_evidence/P3C010449.diff\", \"patch_sha256\": \"3704cfb0a3763764ee11c81f3d096753bf0774ddbfed9b5361047b166cd7f162\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

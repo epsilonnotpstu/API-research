@@ -1,0 +1,44 @@
+{
+  "repo": "fess",
+  "fix_commit": "157bc97f66513171d3af7746255b6a419b16d6e1",
+  "parent_commit": "51237cee1fcc7c2fadc7b2572351ff32efff33b4",
+  "date": "2026-10-09",
+  "message_excerpt": "docs(api): align the v2 OpenAPI document with what the API returns (#3599)",
+  "stars": "1151",
+  "changes": [
+    [
+      "M",
+      "src/main/config/openapi/v2/openapi-user.yaml"
+    ]
+  ],
+  "surface_paths": [
+    "src/main/config/openapi/v2/openapi-user.yaml"
+  ],
+  "path_roles": {
+    "src/main/config/openapi/v2/openapi-user.yaml": [
+      "openapi_root"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C000452",
+  "rank": 1,
+  "item_id": "N50_P3C000452_65caa8011291",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "POST /api/v2/auth/login",
+  "proposition": "POST /api/v2/auth/login: contract says the listed login responses omit 403 Forbidden; implementation does the baseline cross-site origin check returns 403 before login dispatch",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "openapi",
+  "mismatch_type": "status",
+  "fix_family": "status.login_origin_forbidden",
+  "proposition_check": "{\"contract\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/config/openapi/v2/openapi-user.yaml:677\"],\"implementation\":[\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java:264\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java:35\",\"51237cee1fcc7c2fadc7b2572351ff32efff33b4:src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java:221\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"src/main/config/openapi/v2/openapi-user.yaml\": {\"parent_lines\": [677], \"parent_numbered_excerpt\": \"672:         should treat any 4xx body as a client error and inspect\\n673:         `error.code`). The other endpoints emit distinct `413` and `415`\\n674:         statuses.\\n675: \\n676:         This endpoint is exempt from CSRF (no token exists prior to login).\\n677:       operationId: authLoginV2\\n678:       requestBody:\\n679:         required: true\\n680:         content:\\n681:           application/json:\\n682:             schema:\"}, \"src/main/java/org/codelibs/fess/api/v2/SearchApiV2Manager.java\": {\"parent_lines\": [264], \"parent_numbered_excerpt\": \"259:         // Layer 1: baseline Origin check (always applied). Rejects browser-driven\\n260:         // cross-site state-changing requests before any handler runs. A missing\\n261:         // Origin/Referer is allowed (non-browser API client compatibility); see\\n262:         // OriginValidator.\\n263:         if (CsrfRequirement.isUnsafeMethod(request.getMethod()) && !originValidator.isAllowed(request)) {\\n264:             ComponentUtil.getV2EnvelopeWriter().writeError(response, V2ErrorCode.FORBIDDEN, \\\"cross-site request blocked\\\");\\n265:             return;\\n266:         }\\n267: \\n268:         // Layer 2: session-bound CSRF token verification (always applied).\\n269:         if (ComponentUtil.getV2CsrfRequirement().requiresCsrf(sub, request.getMethod())) {\"}, \"src/main/java/org/codelibs/fess/api/v2/V2ErrorCode.java\": {\"parent_lines\": [35], \"parent_numbered_excerpt\": \"30: \\n31:     /** The endpoint requires authentication and none was supplied. */\\n32:     AUTH_REQUIRED(\\\"auth_required\\\", 401),\\n33: \\n34:     /** The caller is authenticated but not permitted to perform the action. */\\n35:     FORBIDDEN(\\\"forbidden\\\", 403),\\n36: \\n37:     /** The requested resource or endpoint does not exist. */\\n38:     NOT_FOUND(\\\"not_found\\\", 404),\\n39: \\n40:     /** The request conflicts with the current state of the resource (e.g., duplicate-key insert). */\"}, \"src/main/java/org/codelibs/fess/api/v2/V2EnvelopeWriter.java\": {\"parent_lines\": [221], \"parent_numbered_excerpt\": \"216:         }\\n217:         // Discard any partial body a streaming handler may have buffered (NDJSON / SSE)\\n218:         // before failing — otherwise the wire frame becomes a hybrid of pre-error bytes\\n219:         // and the JSON envelope. Safe to call on an uncommitted response per servlet spec.\\n220:         res.resetBuffer();\\n221:         res.setStatus(code.defaultHttpStatus());\\n222:         res.setCharacterEncoding(\\\"UTF-8\\\");\\n223:         res.setContentType(CONTENT_TYPE);\\n224:         // Override any Cache-Control that may have been set by an SSE/NDJSON handler before\\n225:         // it errored out. The SSE prelude uses `no-cache` which permits revalidation; for\\n226:         // an error envelope `no-store` is semantically correct (and equally correct for the\"}}, \"patch\": \"key/t50_evidence/P3C000452.diff\", \"patch_sha256\": \"68e32169306dc98754268d23e1b28a671903bfe729a45d74e4ae918309ea9582\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "src/main/java/org/codelibs/fess/api/v2/handlers/OriginValidator.java",
+    "src/main/java/org/codelibs/fess/api/v2/handlers/CsrfRequirement.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

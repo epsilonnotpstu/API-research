@@ -1,0 +1,99 @@
+{
+  "repo": "nifi",
+  "fix_commit": "78fbb8f2ee70d264787856e4a6337217bcfeba79",
+  "parent_commit": "87e062ff557d18aa3f1f7e2906357c81236f0328",
+  "date": "2017-07-10",
+  "message_excerpt": "NIFI-3939: Reviewed and corrected all incorrect nifi-web-api resource response types. This closes #1999",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+  ],
+  "path_roles": {
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C012112",
+  "rank": 23,
+  "item_id": "N50_P3C012112_0c1bb3d02e2e",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /reporting-tasks/{id}/state",
+  "proposition": "GET /reporting-tasks/{id}/state: contract says the successful response is documented using ComponentStateDTO; implementation does the resource returns the structurally different ComponentStateEntity envelope",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "schema",
+  "fix_family": "schema.resource_response_type",
+  "proposition_check": "{\"contract\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java:258\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java:313\"],\"implementation\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java:293\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java:355\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java\": {\"parent_lines\": [293, 355], \"parent_numbered_excerpt\": \"288: \\n289:         // get the component state\\n290:         final ComponentStateDTO state = serviceFacade.getReportingTaskState(id);\\n291: \\n292:         // generate the response entity\\n293:         final ComponentStateEntity entity = new ComponentStateEntity();\\n294:         entity.setComponentState(state);\\n295: \\n296:         // generate the response\\n297:         return generateOkResponse(entity).build();\\n298:     }\\n350:                 (reportingTaskEntity) -> {\\n351:                     // get the component state\\n352:                     serviceFacade.clearReportingTaskState(reportingTaskEntity.getId());\\n353: \\n354:                     // generate the response entity\\n355:                     final ComponentStateEntity entity = new ComponentStateEntity();\\n356: \\n357:                     // generate the response\\n358:                     return generateOkResponse(entity).build();\\n359:                 }\\n360:         );\"}}, \"patch\": \"key/t50_evidence/P3C012112.diff\", \"patch_sha256\": \"3f54b2c10e5b01e565e51b15c2a36238051fccec53b367002811fb3988de40a8\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/ComponentStateEntity.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}

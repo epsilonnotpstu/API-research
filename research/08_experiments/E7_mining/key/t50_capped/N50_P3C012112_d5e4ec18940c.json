@@ -1,0 +1,102 @@
+{
+  "repo": "nifi",
+  "fix_commit": "78fbb8f2ee70d264787856e4a6337217bcfeba79",
+  "parent_commit": "87e062ff557d18aa3f1f7e2906357c81236f0328",
+  "date": "2017-07-10",
+  "message_excerpt": "NIFI-3939: Reviewed and corrected all incorrect nifi-web-api resource response types. This closes #1999",
+  "stars": "6322",
+  "changes": [
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java"
+    ],
+    [
+      "M",
+      "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+    ]
+  ],
+  "surface_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java",
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java"
+  ],
+  "path_roles": {
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ControllerServiceResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowFileQueueResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessGroupResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProcessorResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ProvenanceEventResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/ReportingTaskResource.java": [
+      "production_behaviour"
+    ],
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/TemplateResource.java": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 31,
+  "candidate_id": "P3C012112",
+  "rank": 23,
+  "item_id": "N50_P3C012112_d5e4ec18940c",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /flow/remote-process-groups/{id}/status",
+  "proposition": "GET /flow/remote-process-groups/{id}/status: contract says the successful response is documented using ProcessorStatusEntity; implementation does the resource returns the structurally different RemoteProcessGroupStatusEntity envelope",
+  "truth_direction": "SPEC",
+  "confidence": 3,
+  "contract_kind": "jvm_annotations",
+  "mismatch_type": "schema",
+  "fix_family": "schema.resource_response_type",
+  "proposition_check": "{\"contract\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:1331\",\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:1550\"],\"implementation\":[\"87e062ff557d18aa3f1f7e2906357c81236f0328:nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java:1606\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\"nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-web/nifi-web-api/src/main/java/org/apache/nifi/web/api/FlowResource.java\": {\"parent_lines\": [1606], \"parent_numbered_excerpt\": \"1601:                 return replicate(HttpMethod.GET, clusterNodeId);\\n1602:             }\\n1603:         }\\n1604: \\n1605:         // get the specified remote process group status\\n1606:         final RemoteProcessGroupStatusEntity entity = serviceFacade.getRemoteProcessGroupStatus(id);\\n1607:         return generateOkResponse(entity).build();\\n1608:     }\\n1609: \\n1610:     /**\\n1611:      * Retrieves the status report for this NiFi.\"}}, \"patch\": \"key/t50_evidence/P3C012112.diff\", \"patch_sha256\": \"3f54b2c10e5b01e565e51b15c2a36238051fccec53b367002811fb3988de40a8\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [
+    "nifi-nar-bundles/nifi-framework-bundle/nifi-framework/nifi-client-dto/src/main/java/org/apache/nifi/web/api/entity/RemoteProcessGroupStatusEntity.java"
+  ],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0",
+  "review_status": "accepted_capped",
+  "reason_code": "FIX_CAP",
+  "reason": "Valid operation excluded by the direction-neutral byte-order item cap."
+}

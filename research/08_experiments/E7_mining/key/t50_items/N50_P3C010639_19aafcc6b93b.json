@@ -1,0 +1,54 @@
+{
+  "repo": "keto",
+  "fix_commit": "84f028dc35665174542e103c0aefc635bb6d3e52",
+  "parent_commit": "c671f73171f53f8306e087a2cd4475140ccc8698",
+  "date": "2020-10-03",
+  "message_excerpt": "fix: use make() to initialize slices (#250)",
+  "stars": "5424",
+  "changes": [
+    [
+      "M",
+      "engine/ladon/handler.go"
+    ],
+    [
+      "M",
+      "storage/filter_helper_test.go"
+    ],
+    [
+      "M",
+      "storage/handler.go"
+    ]
+  ],
+  "surface_paths": [
+    "engine/ladon/handler.go",
+    "storage/handler.go"
+  ],
+  "path_roles": {
+    "engine/ladon/handler.go": [
+      "production_behaviour",
+      "go_swagger_annotations"
+    ],
+    "storage/handler.go": [
+      "production_behaviour"
+    ]
+  },
+  "ref_evidence": {},
+  "score": 21,
+  "candidate_id": "P3C010639",
+  "rank": 21,
+  "item_id": "N50_P3C010639_19aafcc6b93b",
+  "set": "new",
+  "source_task": "T50",
+  "operation": "GET /engines/acp/ory/{flavor}/policies",
+  "proposition": "GET /engines/acp/ory/{flavor}/policies: contract says the successful response is a JSON array; implementation does empty filtered results remain nil slices passed to the JSON response writer, yielding null instead of an empty array",
+  "truth_direction": "IMPL",
+  "confidence": 2,
+  "contract_kind": "openapi",
+  "mismatch_type": "response",
+  "fix_family": "response.empty_list_null",
+  "proposition_check": "{\"contract\":[\"c671f73171f53f8306e087a2cd4475140ccc8698:.schema/api.swagger.json:167\"],\"implementation\":[\"c671f73171f53f8306e087a2cd4475140ccc8698:storage/handler.go:97\",\"c671f73171f53f8306e087a2cd4475140ccc8698:storage/handler.go:126\",\"c671f73171f53f8306e087a2cd4475140ccc8698:engine/ladon/handler.go:431\"],\"route\":[]}",
+  "evidence": "{\"parent\": {\".schema/api.swagger.json\": {\"parent_lines\": [167], \"parent_numbered_excerpt\": \"162:             \\\"in\\\": \\\"query\\\"\\n163:           }\\n164:         ],\\n165:         \\\"responses\\\": {\\n166:           \\\"200\\\": {\\n167:             \\\"description\\\": \\\"Policies is an array of policies.\\\",\\n168:             \\\"schema\\\": {\\n169:               \\\"type\\\": \\\"array\\\",\\n170:               \\\"items\\\": {\\n171:                 \\\"$ref\\\": \\\"#/definitions/oryAccessControlPolicy\\\"\\n172:               }\"}, \"storage/handler.go\": {\"parent_lines\": [97, 126], \"parent_numbered_excerpt\": \"92: \\t\\t\\t\\tres = append(res, *filteredRole)\\n93: \\t\\t\\t}\\n94: \\t\\t}\\n95: \\t\\tl.Value = &res\\n96: \\tcase *Policies:\\n97: \\t\\tvar res Policies\\n98: \\t\\tfor _, policy := range *val {\\n99: \\t\\t\\tfilteredPolicy := policy.withSubjects(m[\\\"subject\\\"]).withResources(m[\\\"resource\\\"]).withActions(m[\\\"action\\\"]).withIDs(m[\\\"id\\\"])\\n100: \\t\\t\\tif filteredPolicy != nil {\\n101: \\t\\t\\t\\tres = append(res, *filteredPolicy)\\n102: \\t\\t\\t}\\n121: \\t\\t\\th.h.WriteError(w, r, err)\\n122: \\t\\t\\treturn\\n123: \\t\\t}\\n124: \\n125: \\t\\tm := r.URL.Query()\\n126: \\t\\th.h.Write(w, r, l.Filter(m).Value)\\n127: \\t}\\n128: }\\n129: \\n130: type UpsertRequest struct {\\n131: \\tCollection string\"}, \"engine/ladon/handler.go\": {\"parent_lines\": [431], \"parent_numbered_excerpt\": \"426: \\t\\tValue:      &p,\\n427: \\t}, nil\\n428: }\\n429: \\n430: func (e *Engine) policiesList(ctx context.Context, r *http.Request, ps httprouter.Params) (*kstorage.ListRequest, error) {\\n431: \\tvar p kstorage.Policies\\n432: \\n433: \\tf, err := flavor(ps)\\n434: \\tif err != nil {\\n435: \\t\\treturn nil, err\\n436: \\t}\"}}, \"patch\": \"key/t50_evidence/P3C010639.diff\", \"patch_sha256\": \"ee6ba402fa4be332c4b022efa913429640f24a08b06fb87d73b4175c3fb3a681\", \"gate\": \"Explicit static parent comparison and resolving patch; no runtime execution.\"}",
+  "helper_paths": [],
+  "inference_notes": "⚠️ Dispatch, validation and serialization inferred statically; no upstream execution.",
+  "licence_at_parent": "Apache-2.0"
+}
