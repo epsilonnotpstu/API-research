@@ -2,6 +2,7 @@
 \documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{graphicx}
+\graphicspath{{../figures/}{figures/}{./}}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{amssymb}
@@ -13,60 +14,43 @@
 \author{\IEEEauthorblockN{Anonymous Author(s)}\IEEEauthorblockA{Under double-anonymous review}}
 \maketitle
 \begin{abstract}
-Spec-diff tools warn API clients only about changes visible in an OpenAPI document. We ask how often REST services change observable behaviour while leaving their contract untouched.
-
-\textbf{Method.}
-\begin{itemize}
-\item From 54 open-source Java, Kotlin and Go services, we froze a pool of 18,590 commits since 2023 that modify behaviour code but no checked-in contract.
-\item We drew a seeded sample of 136 commits from 47 repositories.
-\item Two GPT-family and two Claude-family LLM coders classified each commit blind to its message and history, under a pre-registered, hash-frozen protocol.
-\end{itemize}
-
-\textbf{Results.}
-\begin{itemize}
-\item 44\% of the commits (60/136; 95\% CI 36--53\%) change what some client can observe.
-\item Depending on the coding model family, 9--24\% are client-breaking. The two families agree on observable change ($\kappa$ 0.94) but not on breaking impact.
-\item Of the breaking changes, 91\% (29/32) edit no contract annotation, so even contract generation from code, as in AutoGuard, would not reveal them (p = $1.3 \times 10^{-6}$).
-\item The changed behaviour was specified by the prior contract in only 1 of 60 cases.
-\end{itemize}
-
-Silent behavioural change is therefore common, and it lives in the contract's blind spots. API change detection needs behavioural evidence, not only document diffs.
+Spec-diff tools warn API clients only about changes visible in an OpenAPI document. We ask how often REST services change observable behaviour while leaving their contract files untouched. From a corpus of 54 open-source Java, Kotlin and Go services, we froze a pool of 18,590 commits since 2023 that modify behaviour-path code but no contract document. We drew a seeded sample of 136 commits from 47 repositories. Two GPT-family and two Claude-family LLM coders classified each commit blind to its message and history, under a pre-registered, hash-frozen protocol. By the primary (GPT) codes, 44\% of the sampled commits (60/136; 95\% CI 36--53\%) change what some client can observe; 26 more remain unresolved. Depending on the coding model family, 9--24\% are client-breaking: the two families agree on observable change ($\kappa$ 0.94 on the 102 commits both decided) but not on breaking impact. Of the 32 breaking changes, 29 (91\%; p = $1.3 \times 10^{-6}$) edit no contract annotation, so by our annotation proxy even contract generation from code, as in AutoGuard, would likely miss them. Only 1 of the 60 changes concerned behaviour that the delivered parent-contract context specified. Silent behavioural change is common, and it falls mostly where contracts say nothing. API change detection therefore needs behavioural evidence, not only document diffs.
 \end{abstract}
 
 \section{Introduction}
-REST services evolve continuously, and their clients depend on behaviour they cannot see in the code. The usual safeguard is to diff the service's OpenAPI contract between versions. oasdiff and openapi-diff do this, and so does AutoGuard, which first generates the contract from code. Any change that alters what an operation does but leaves the contract text unchanged is invisible to all of them.
+REST services evolve continuously, and their clients depend on behaviour they cannot see in the code. The usual safeguard is to diff the service's OpenAPI contract between versions. oasdiff and openapi-diff do this, and so does AutoGuard, which first generates the contract from code~\cite{lercher2025autoguard}. A change that alters what an operation does but leaves the contract text unchanged is invisible to a document diff.
 
 Practitioners know the problem only partly:
 \begin{itemize}
 \item In an interview study, all 17 participants treated structural changes as breaking, but only 5 of 17 saw behavioural changes as harmful~\cite{lercher2024evolution}.
 \item The same participants noted that ``the OpenAPI specification only describes the API structure, not the API behavior''.
-\item A 2026 systematic review of 97 breaking-change studies concludes that ``the main remaining gap is behavioral breaking changes that preserve syntactic interfaces''~\cite{chen2026slr}.
+\item A 2026 systematic review of 97 breaking-change studies concludes that ``The main remaining gap is behavioral breaking changes that preserve syntactic interfaces''~\cite{chen2026slr}.
 \end{itemize}
 
-For libraries, behavioural breaking changes have been measured: about 2.3\% of Maven dependency updates broke client tests~\cite{jayasuriya2024behavioral}. For REST services, where the contract is the main means of communication with clients, no such measurement exists.
+For libraries, behavioural breaking changes have been measured: 2.30\% of Maven dependency updates had behavioural breaking changes that affected client tests~\cite{jayasuriya2024behavioral}. For REST services, where the contract is the main means of communication with clients, we know of no such measurement.
 
 We therefore ask how often REST services change observable behaviour without touching their contract, and what kind of changes these are.
 
 \begin{itemize}
-\item \textbf{RQ1 (prevalence).} Of the commits that change operation-implementing production code but not the checked-in contract, what share change observable API behaviour? What share do so in a client-breaking way?
-\item \textbf{RQ2 (kinds).} What kinds of observable change occur?
-\item \textbf{RQ3 (visibility).} How many breaking silent changes would stay invisible even to a contract generated from source annotations?
-\item \textbf{RQ4 (documentation lag).} How often is the contract updated within 90 days of such a change?
+\item \textbf{RQ1 (prevalence).} Of the commits that change operation-implementing production code but no checked-in contract document, what share change observable API behaviour? What share do so in a client-breaking way?
+\item \textbf{RQ2 (kinds).} What kinds of observable change occur, and which kinds break clients?
+\item \textbf{RQ3 (visibility).} How many breaking silent changes edit no contract annotation, and so would likely stay invisible even to a contract generated from source annotations?
+\item \textbf{RQ4 (documentation lag).} When a breaking change alters behaviour the contract specified, is the contract updated within 90 days?
 \end{itemize}
 
 \textbf{Contributions.}
 \begin{enumerate}
-\item The first measurement of silent behavioural changes in REST service histories, from a frozen random sample of commits from 54 open-source services.
+\item A measurement of silent behavioural changes in REST service histories, from a frozen random sample of 136 commits from 47 repositories of a 54-service corpus.
 \item A closed taxonomy of silent change kinds, together with their client impact.
-\item Evidence on how much code-level contract generation, as in AutoGuard, would recover.
-\item A pre-registered, blind, two-model-family coding protocol and a replication package.
+\item Evidence, through an annotation proxy, on how much code-level contract generation could recover.
+\item A pre-registered, blind, two-model-family coding protocol and a replication package that re-scores every number byte for byte.
 \end{enumerate}
 
 \section{Background and Related Work}
 \textbf{Spec-based change detection.}
 \begin{itemize}
-\item oasdiff and openapi-diff compare two OpenAPI documents and report breaking changes such as removed operations, new required parameters and changed types.
-\item Yasmin et al. used such a diff (SwaggerDiff) on 2,224 specifications of 1,368 APIs from APIs.guru. They found that ``87.3\% of RESTful API versions that introduced breaking changes do not provide any deprecation information in the previous version''~\cite{yasmin2020deprecation}.
+\item oasdiff and openapi-diff compare two OpenAPI documents and report the differences, flagging those they classify as breaking.
+\item Yasmin et al. compared 2,224 specifications of 1,368 APIs from APIs.guru with such a diff tool (SwaggerDiff). They found that ``87.3\% of RESTful API versions that introduced breaking changes do not provide any deprecation information in the previous version''~\cite{yasmin2020deprecation}.
 \item These approaches see only what the document states.
 \end{itemize}
 
@@ -79,82 +63,142 @@ We therefore ask how often REST services change observable behaviour without tou
 
 \textbf{Behavioural breaking changes.}
 \begin{itemize}
-\item Jayasuriya et al. updated 30,548 Maven dependencies and ran client test suites. 2.30\% of updates had behavioural breaking changes that affected clients, mostly in non-major releases~\cite{jayasuriya2024behavioral}.
-\item The 2026 review finds that ``detection of syntactic breaks is comparatively mature, while behavioral breaks remain difficult to detect automatically''~\cite{chen2026slr}.
+\item Jayasuriya et al. updated 30,548 Maven dependencies and ran client test suites. 2.30\% of updates had behavioural breaking changes that affected client tests, mostly in non-major releases~\cite{jayasuriya2024behavioral}.
+\item The 2026 review finds that ``Detection of syntactic breaks is comparatively mature, while behavioral breaks remain difficult to detect automatically''~\cite{chen2026slr}.
 \item Neither study measures web APIs from service histories.
 \end{itemize}
 
-\textbf{Practitioner view.} Lercher et al. report that providers ``miss tools for automatically extracting API changes from changes in their implementation''. They also report that dynamic API designs improve structural compatibility but ``often shift the problem, i.e., create semantic breaking changes instead''~\cite{lercher2024evolution}.
+\textbf{Practitioner view.} Lercher et al. report that providers ``miss tools for automatically extracting API changes from changes in their implementation''. They also observe that ``A dynamic API design improves structural backward compatibility but often shifts the problem, i.e., creates semantic breaking changes instead''~\cite{lercher2024evolution}.
 
-\textbf{Contract--implementation divergence.}
-\begin{itemize}
-\item Our earlier study (R1, anonymised) examined how such divergences are \emph{repaired} once noticed.
-\item Here we study how they \emph{arise}, and how many affect clients without any visible contract change.
-\end{itemize}
+\textbf{Contract--implementation divergence.} A separate study of the same corpus (under review; omitted for anonymity) examines how divergences between a service and its contract are \emph{repaired} once noticed. Here we study how such divergences \emph{arise}, and how many affect clients without any contract-file change.
 
 \section{Study Design}
-\emph{(Summarised from the frozen plan; see \texttt{plan/\allowbreak{}R3\_PLAN.md}.)}
+\emph{(Summarised from the frozen plan \texttt{plan/\allowbreak{}R3\_PLAN.md}; deviations in \texttt{plan/\allowbreak{}R3\_DEVIATIONS.md}.)}
 
 \subsection{Corpus}
-54 open-source REST services (Java, Kotlin, Go), each with a checked-in OpenAPI/Swagger document. They were selected for an earlier study of contract--implementation divergence; 20 of them were chosen by metadata criteria alone. The sampled commits are Java 85, Go 48 and Kotlin 3.
-
-\subsection{Candidate commits and sampling}
-A \textbf{candidate} is a non-merge commit since 2023-01-01 that meets all of the following:
+The corpus has 54 open-source REST services in Java, Kotlin and Go:
 \begin{itemize}
-\item it modifies production behaviour-path code (handlers, controllers, DTOs, validators, serializers, error mapping);
-\item it modifies no checked-in contract document;
-\item it has at most 400 changed lines in at most 8 files;
-\item it is not formatting-only;
-\item it is not authored by a bot.
+\item 34 come from an earlier mining study.
+\item 20 were added using repository metadata only, without reading any commit content. The criteria were:
+\begin{itemize}
+\item a checked-in OpenAPI or Swagger document at HEAD, outside test and example paths;
+\item Java, Kotlin or Go as the primary language;
+\item at least 300 commits;
+\item not archived and not a fork;
+\item an OSI-approved licence.
+\end{itemize}
 \end{itemize}
 
-The candidate pool was hash-frozen before any commit was read. Three candidates per repository were then drawn with a fixed seed. The pool held 18,590 candidates. Seven repositories had none and two had fewer than three, so the sample has 136 commits from 47 repositories. All 136 were packaged.
+Every service has a contract document \emph{at its recorded HEAD}. Older parent commits may predate it: 29 of the 136 sampled commits have no checked-in contract document at their parent. These commits are kept. For them, ``contract unchanged'' means only that no contract file was modified.
+
+The sampled commits are Java 85, Go 48 and Kotlin 3.
+
+\subsection{Candidate commits and sampling}
+A \textbf{candidate} is a commit that meets all of the following:
+\begin{itemize}
+\item It is a non-merge commit on the default branch's first-parent history, up to the recorded HEAD.
+\item Its committer date (UTC) is on or after 2023-01-01.
+\item After whitespace-only and content-unchanged rename files are dropped, at least one production behaviour-path file remains: handlers, controllers, DTOs, validators, serializers or error mapping.
+\item Those retained files have at most 400 added plus deleted lines, in at most 8 files.
+\item It modifies no detected contract document.
+\item Its author does not match the predefined bot patterns.
+\end{itemize}
+
+\textbf{Freezes and sampling.}
+\begin{itemize}
+\item The pool was hash-frozen before any candidate patch was inspected for a behavioural judgement. Discovery read files mechanically only, for classification.
+\item Up to three candidates per repository were then drawn with a fixed seed, and the sample was frozen.
+\item Packages were then built and frozen before any coder ran.
+\end{itemize}
+
+\textbf{Resulting sample.}
+\begin{itemize}
+\item The pool holds 18,590 candidates.
+\item Seven repositories had no candidates.
+\item Three had fewer than three: two had one each and one had two.
+\item The sample therefore has 44 $\times$ 3 + 1 + 1 + 2 = 136 commits from 47 repositories, and all 136 were packaged.
+\end{itemize}
 
 \subsection{Packages and blinding}
-Each sampled commit becomes a package. The package contains:
+Each sampled commit becomes a package. A package contains:
 \begin{itemize}
 \item the diff;
 \item the full before and after versions of the touched files;
-\item the parent contract, projected to the affected operations.
+\item the contract context at the parent commit.
 \end{itemize}
 
-Coders do not see the commit message, author, date, or later history.
+The contract context takes one of five forms (Table 1).
+
+\begin{table}[t]
+\caption{Contract context delivered with each package (136 commits).}
+\footnotesize
+\begin{tabularx}{\linewidth}{Xl}
+\toprule
+Contract context & Commits \\
+\midrule
+Projected to the affected operations & 3 \\
+Bounded document prefix & 6 \\
+Whole document & 5 \\
+Raw fallback: the first 2,000 redacted lines of the root contract documents, used when projection failed & 93 \\
+No contract document at the parent & 29 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Blinding.}
+\begin{itemize}
+\item Coders never see the commit message, author, date or later history.
+\item Distinctive message fragments, identities and credentials are redacted from all delivered text.
+\end{itemize}
 
 \subsection{Coding}
 Two GPT-family coders and two Claude-family coders code each item independently, using the same task text. Per item they record:
 \begin{itemize}
-\item whether the commit changes observable API behaviour;
-\item if so, the primary change kind (11 categories);
-\item the client impact (breaking or compatible);
-\item whether the parent contract specified the changed behaviour.
+\item whether the commit changes observable API behaviour (YES, NO or UNCLEAR);
+\item if it does, the primary change kind, from 11 categories;
+\item the client impact (BREAKING, COMPATIBLE or UNCLEAR);
+\item whether the parent contract context specified the changed behaviour.
 \end{itemize}
 
-A final code is the agreement of the two coders of one family; disagreement becomes UNCLEAR. The GPT final codes are primary, and the Claude final codes serve as a cross-family check.
+A family's final code is the agreement of its two coders; disagreement becomes UNCLEAR. UNCLEAR items stay in the denominator. The GPT final codes are primary, and the Claude final codes serve as a cross-family check.
 
 \subsection{Mechanical measures}
 \begin{itemize}
-\item \textbf{\texttt{annotation\_touched}:} the diff edits a JVM contract annotation or a Go swagger comment. If it does not, a contract generated from code would not change either.
-\item \textbf{\texttt{spec\_updated\_90d}:} some contract document of the repository changes within 90 days after the commit.
+\item \textbf{\texttt{annotation\_touched}:} the diff edits a JVM contract annotation, such as OpenAPI or Swagger annotations, or a Go swagger comment. This is our proxy for visibility to contract generation from code. If no annotation is edited, an annotation-driven generator is unlikely to produce a different document. We did not run a generator.
+\item \textbf{\texttt{spec\_updated\_90d}:} some contract document of the repository changes within 90 days after the commit, observed up to the recorded HEAD.
 \end{itemize}
 
 \subsection{Hypotheses and analysis}
-Pre-registered:
+All four were pre-registered:
 \begin{itemize}
-\item \textbf{E-R3-1:} shares with Wilson and repository-cluster bootstrap CIs.
-\item \textbf{H-R3-1:} most breaking silent changes edit no contract annotation (one-sided binomial test).
-\item \textbf{H-R3-2:} most breaking changes to specified behaviour see no contract update within 90 days.
-\item \textbf{H-R3-3:} cross-family $\kappa$ $\geq$ 0.6.
+\item \textbf{E-R3-1:} shares, with Wilson and repository-cluster bootstrap 95\% CIs (2,000 resamples).
+\item \textbf{H-R3-1:} most breaking silent changes edit no contract annotation. Tested with a one-sided binomial test against 0.5.
+\item \textbf{H-R3-2:} among breaking changes to behaviour the parent contract \emph{specified}, most see no repository-level contract update within 90 days. This needs at least 8 such changes. The plan's operation-level refinement of RQ4 is descriptive only.
+\item \textbf{H-R3-3:} cross-family $\kappa$ on observable change is at least 0.6 on items both families decided, with at least 30 such items.
 \end{itemize}
 
-The scorer and its self-test were frozen before mining.
+The scorer and its self-test were frozen before mining. Scoring ran once.
+
+\subsection{Process deviation}
+The GPT agent that wrote the mining scripts reached its usage limit midway. The supervising agent, which knew the hypotheses, completed mining with the same scripts. Before any coder ran, it made mechanical fixes:
+\begin{itemize}
+\item submodule handling;
+\item redaction thresholds;
+\item a raw contract fallback;
+\item path-scan rules;
+\item idempotent redaction.
+\end{itemize}
+
+No sampled commit was replaced, and no judgement step was involved. The GPT agent then reviewed the fixes and added tests. Superseded package builds were never opened by coders.
 
 \section{Results}
-\emph{All numbers are from \texttt{plan/\allowbreak{}R3\_RESULTS.md}, scored once.}
+\emph{All numbers come from the single scoring run (\texttt{plan/\allowbreak{}r3\_score\_output.txt}). An independent recomputation (\texttt{collab/\allowbreak{}reports/\allowbreak{}T55\_report.md}) reproduced them.}
 
 \subsection{RQ1: prevalence}
 \begin{table}[t]
+\caption{Shares of the 136 sampled commits, with Wilson 95\% CIs for the primary codes.}
 \footnotesize
-\begin{tabularx}{\linewidth}{lXX}
+\begin{tabularx}{\linewidth}{Xll}
 \toprule
 Measure & GPT final codes & Claude final codes \\
 \midrule
@@ -165,37 +209,101 @@ Client-breaking change & 32/136 = 0.24 [0.17, 0.31] & 12/136 = 0.09 \\
 \end{table}
 
 \begin{itemize}
+\item \textbf{Label distribution.} The GPT final codes for observable change are YES 60, NO 50 and UNCLEAR 26.
 \item \textbf{Reliability.}
 \begin{itemize}
 \item Within-family $\kappa$ for observable change is 0.90 (GPT) and 0.82 (Claude).
-\item Across families, $\kappa$ is 0.94 on the 102 items where both families decided (H-R3-3 PASS).
+\item Across families, the two agree on 99 of the 102 items both decided: $\kappa$ 0.94, so H-R3-3 passes.
 \end{itemize}
-\item \textbf{Robustness of the estimates.}
+\item \textbf{Robustness.}
 \begin{itemize}
-\item Repository-cluster bootstrap CIs are close to the Wilson CIs.
+\item The repository-cluster bootstrap CIs, [0.35, 0.53] and [0.16, 0.31], are close to the Wilson CIs.
 \item Leaving one repository out moves the breaking share by less than 0.01.
 \end{itemize}
 \end{itemize}
 
 \subsection{RQ2: kinds}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_kind_impact.pdf}
+\caption{Change kind and client impact of the 60 observable changes (GPT final codes). ``Kind unclear'' and ``Impact unclear'' mark coder disagreement.}
+\label{fig:kind}
+\end{figure}
+
 \begin{itemize}
-\item \textbf{Most frequent kinds:} response content, status or error mapping, response shape, side effects, and input validation.
-\item \textbf{Mostly breaking:} stricter input (6/6), changed response content (7/9) and changed status or error mapping (7/9).
-\item \textbf{Always compatible:} added response fields (response shape, 8/8) and looser input (5/5).
+\item \textbf{Most frequent kinds:} response content (9), status or error mapping (9), response shape (8), side effects (7), and stricter input (6).
+\item \textbf{Kinds coded mostly or always as breaking:} stricter input (6/6), changed response content (7/9) and changed status or error mapping (7/9).
+\item \textbf{Kinds coded as always compatible:} all eight response-shape changes, which mainly add fields, and all five looser-input changes.
 \end{itemize}
 
 \subsection{RQ3: visibility to contract generation}
-\textbf{H-R3-1 PASSES.} 29 of the 32 breaking changes edit no contract annotation or swagger comment (p = $1.3 \times 10^{-6}$). Across all 60 observable changes, only 8 touched an annotation.
+\textbf{H-R3-1 passes.} 29 of the 32 breaking changes edit no contract annotation or swagger comment (p = $1.3 \times 10^{-6}$). Across all 60 observable changes, only 8 touched an annotation.
+
+By our proxy, an annotation-driven generator such as AutoGuard would most likely report nothing for these 29 commits. We did not run a generator, so this is an estimate of its blind spot, not a measured recall.
 
 \subsection{RQ4: documentation lag}
-\textbf{H-R3-2 is INSUFFICIENT.} Only 1 breaking change concerned behaviour the prior contract specified. Of the 60 changes, 56 altered behaviour the contract was silent about.
+\textbf{H-R3-2 is INSUFFICIENT.} Only 1 breaking change concerned behaviour that the delivered parent-contract context specified; the plan requires at least 8. That one case did see a contract update within 90 days, so the no-update count is 0/1. Operation-level documentation lag could not be determined.
+
+The reason lies in coverage. Of the 60 observable changes, the coders judged:
+\begin{itemize}
+\item 1 as specified;
+\item 56 as unspecified;
+\item 3 as unclear.
+\end{itemize}
+
+The changed behaviour was almost always behaviour the contract did not describe.
+
+\subsection{Illustrative cases}
+Three commits that both model families coded as breaking. The descriptions were checked against the diffs.
+\begin{itemize}
+\item \textbf{Stricter input (ReportPortal service-api, Java).} Project creation now trims the name, then rejects it if it is shorter than the minimum length. A rename request now stores the trimmed name.
+\begin{itemize}
+\item A client that sent a short name padded with spaces now gets a validation error instead of a created project.
+\item No contract annotation changed. The parent commit had no checked-in contract.
+\end{itemize}
+\item \textbf{Status mapping (Microcks, Java).} A repository-import endpoint used to answer 201 Created for every request: for an empty file, for a non-JSON upload, and even after it had caught an import exception.
+\begin{itemize}
+\item It now answers 400, 415 and 500 in those cases.
+\item A client that relied on 201 now sees errors.
+\item No contract annotation changed. The coders judged these responses unspecified in the delivered contract context.
+\end{itemize}
+\item \textbf{Default value (Traccar, Java).} Two video endpoints declared the \texttt{channel} query parameter as a primitive \texttt{int}, so it silently defaulted to 0 when absent. It now defaults to 1 through \texttt{@DefaultValue("1")}.
+\begin{itemize}
+\item Clients that omitted the parameter now receive a different channel's stream.
+\item This is one of the three breaking changes that \emph{did} touch an annotation, so a generator could expose it as a changed default value.
+\end{itemize}
+\end{itemize}
+
+\subsection{Where the model families disagree on impact (exploratory)}
+\emph{Not pre-registered; computed by \texttt{paper/\allowbreak{}exploratory\_r3.py} from the frozen codes.} 50 commits were coded as an observable change by both families. On these, the families' client-impact codes cross as follows (Table 3).
+
+\begin{table}[t]
+\caption{Final client-impact codes of the two model families on the 50 commits both coded as an observable change (exploratory).}
+\footnotesize
+\begin{tabularx}{\linewidth}{Xlll}
+\toprule
+GPT impact & Claude: breaking & Claude: compatible & Claude: unclear \\
+\midrule
+Breaking (30) & 11 & 7 & 12 \\
+Compatible (16) & 0 & 15 & 1 \\
+Unclear (4) & 0 & 2 & 2 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{itemize}
+\item \textbf{Claude is the more conservative family.} It never coded as breaking a commit that GPT coded as compatible.
+\item \textbf{Most of the gap comes from Claude's own disagreement.} For 12 of the 30 GPT-breaking commits, Claude's two coders disagreed, so the final code is UNCLEAR. For 7 more, both Claude coders said compatible.
+\item \textbf{Reading.} The 9--24\% range therefore mixes two things: genuine disagreement about what counts as breaking, and lower within-family reliability of Claude on impact ($\kappa$ 0.74 vs 0.85).
+\end{itemize}
 
 \section{Discussion}
 \begin{itemize}
-\item \textbf{Silent change is the norm, not the exception.} Roughly two in five behaviour-touching commits that leave the contract unchanged change observable behaviour.
-\item \textbf{These changes are invisible to document-based tooling.} That covers spec diff, and also contract generation from code: 91\% of breaking changes touch no annotation.
-\item \textbf{The changes fall into what contracts do not say.} Error mapping, response values, validation and side effects are rarely specified. Contract-diff tools therefore cannot even in principle flag a conflict. Better contracts would shrink this blind spot. Behavioural evidence such as differential tests or recorded traffic is needed to cover it.
-\item \textbf{``Breaking'' is a judgement.} Two LLM families agreed almost perfectly on \emph{whether} behaviour changed, but differed by a factor of 2.7 on \emph{how many} changes break clients. Tools that triage breaking impact automatically should expect this variance, and studies should validate impact labels with humans.
+\item \textbf{Silent observable change is common.} In 44\% of the sampled commits (40\% by the Claude codes), behaviour-path changes that modify no contract file change what a client can observe. That is a little over two in five.
+\item \textbf{Document-based tooling cannot see most of these changes.} Spec diff cannot, by construction. Contract generation from code would also miss them, by our proxy, because 91\% of the breaking changes touch no annotation.
+\item \textbf{The changes fall where contracts are silent.} Error mapping, response values, validation and side effects were almost never specified in the contract context the coders saw. A contract-diff tool therefore has nothing to compare against. Richer contracts would shrink this blind spot. Behavioural evidence, such as differential tests or recorded traffic, is needed to cover it.
+\item \textbf{``Breaking'' is a judgement.} Two LLM families agreed almost perfectly on \emph{whether} behaviour changed. But they differed by a factor of 2.7 on \emph{how many} changes break clients. The difference is one-directional (\S{}4.6): Claude's breaking labels are almost a subset of GPT's. Tools that triage breaking impact automatically should expect this variance, and studies should validate impact labels with humans.
+\item \textbf{Implications for API providers.} Silent changes cluster in a few kinds: stricter validation, changed status or error mapping, and changed response values. Review checklists and contract-coverage goals can target these kinds first, for example by documenting error responses and validation rules in the contract.
 \end{itemize}
 
 \section{Threats to Validity}
@@ -204,17 +312,32 @@ Client-breaking change & 32/136 = 0.24 [0.17, 0.31] & 12/136 = 0.09 \\
 \begin{itemize}
 \item ``Observable'' is judged from code, not by executing the service.
 \item Some changes are observable only under rare inputs.
-\item Coders may over- or under-estimate reachability from HTTP operations.
+\item Coders may over- or under-estimate whether code is reachable from HTTP operations.
+\item 26 of the 136 commits remain unresolved (UNCLEAR) by the primary codes.
+\end{itemize}
+\item \textbf{Contract context.}
+\begin{itemize}
+\item 93 items received the raw-fallback contract text instead of a projection, and 29 had no contract document at the parent.
+\item Redaction sometimes removes whole lines, and truncation can cut context.
+\item Judgements of \texttt{contract\_specified} are therefore approximate. Coverage results describe the delivered contract context, not the full contract.
 \end{itemize}
 \item \textbf{LLM coders.}
 \begin{itemize}
-\item Both coder families are LLMs. The cross-family $\kappa$ is reported, and a human spot-check of 20 items is planned.
+\item All coders are LLMs.
+\item Each Claude batch of 10--14 items took 31--67 s, so those coders may have read mostly the diffs (an audit inference, not an observation).
+\item We report the cross-family $\kappa$. A human spot-check of 20 items, stratified by GPT breaking impact, is prepared and will be reported separately.
+\end{itemize}
+\item \textbf{Blinding.}
+\begin{itemize}
+\item The audit found no reads outside the packages.
+\item Very short commit-message fragments are not redacted. If such a fragment also appears in the source, it could hint at intent.
 \end{itemize}
 \item \textbf{Sampling.}
 \begin{itemize}
-\item Three commits per repository weight repositories equally, not by commit volume.
-\item Only services with a checked-in OpenAPI document are included.
+\item Up to three commits per repository reduces the dominance of high-volume repositories. Three repositories contributed fewer.
+\item Only services with a contract document at HEAD are included.
 \item The window starts in 2023.
+\item Pure-submodule commits that look like behaviour changes could have entered the pool, but none was sampled.
 \end{itemize}
 \item \textbf{Visibility proxy.}
 \begin{itemize}
@@ -222,15 +345,39 @@ Client-breaking change & 32/136 = 0.24 [0.17, 0.31] & 12/136 = 0.09 \\
 \end{itemize}
 \item \textbf{Documentation lag.}
 \begin{itemize}
-\item \texttt{spec\_updated\_90d} is measured at repository level. It over-counts updates, which makes H-R3-2 conservative.
+\item \texttt{spec\_updated\_90d} is measured at repository level, which over-counts updates.
+\item It is right-censored at the recorded HEAD. In a post-hoc check (\texttt{paper/\allowbreak{}exploratory\_r3.py}), 15 commits had less than 90 days of follow-up, and for 5 of them the field is false. H-R3-2's verdict does not depend on these commits.
 \end{itemize}
+\item \textbf{Process.} Mining was completed by the hypothesis-aware supervising agent, using mechanical fixes only (\S{}3.7).
 \end{itemize}
 
 \section{Conclusion}
-In 54 REST services, 44\% of behaviour-changing commits that leave the OpenAPI document unchanged alter observable behaviour. 9--24\% break clients, depending on the coder family. Almost none of these changes are visible to spec-diff tools or to contract generation from code, because they concern behaviour the contract never described. Detecting API breakage requires behavioural evidence.
+We sampled 136 commits from 47 REST services in which behaviour-path code changes but no contract file does. In 44\% of them, observable behaviour changes. Depending on the coding model family, 9--24\% of all sampled commits break clients. Almost none of these changes would show up in a spec diff. By an annotation proxy, most would also escape contract generation from code, because they concern behaviour the contract did not describe. Detecting API breakage requires behavioural evidence.
 
 \section*{Data availability}
-The plan, scorer, task text, mining scripts, frozen pool hashes, sample, keys, codes and packages will be released in an anonymous archive. Upstream excerpts will carry their licences.
+An anonymised replication archive accompanies this submission ([anonymous link to be added]). It contains:
+\begin{itemize}
+\item the frozen plan, the scorer and its self-test;
+\item the coder task text;
+\item the mining scripts;
+\item the frozen pool and sample hashes;
+\item the key;
+\item all blind packages with the upstream licence of every excerpt;
+\item all codes;
+\item one script that verifies the three freezes and re-scores every number byte for byte.
+\end{itemize}
+
+\section*{Disclosure of AI use}
+\begin{itemize}
+\item \textbf{LLMs as instruments.} The study uses LLMs as measurement instruments. The GPT-family coders were \texttt{gpt-6.1-sol} via the Codex CLI, at high reasoning effort. The Claude-family coders were Claude Sonnet subagents. Their role, prompts and outputs are part of the method (\S{}3.4) and of the archive.
+\item \textbf{LLM assistants.} The authors also used LLM assistants (Claude and Codex) to:
+\begin{itemize}
+\item write mining and analysis scripts;
+\item check the paper's numbers against the scorer output;
+\item draft and edit text.
+\end{itemize}
+\item \textbf{Author responsibility.} The authors reviewed all generated content and take responsibility for it.
+\end{itemize}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

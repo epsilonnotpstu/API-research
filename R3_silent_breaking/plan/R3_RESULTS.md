@@ -1,9 +1,10 @@
 # R3 results: silent behavioural changes in REST APIs
+*Corrections after the independent review `collab/reports/T55_report.md` (2026-11-18) are marked inline. No number from the scorer changed.*
 Claude (supervisor-delegated), 2026-11-18. The analysis was scored once with the frozen `plan/score_r3.py` (`r3_plan_freeze.sha256`). The packages were frozen in `r3_packages_freeze.sha256` and the outputs in `r3_outputs_freeze.sha256`. Raw output: `r3_score_output.txt`. Rows: `r3_scores.csv`. Deviations: `R3_DEVIATIONS.md` (D1: mining completed by Claude with Codex's scripts; mechanical fixes F1–F6d before any coder). Audit: `R3_AUDIT.md`. The scorer was not changed.
 
 ## Sample
 - The frozen pool has 18,590 candidate commits from 54 repositories, all made since 2023-01-01. Each candidate touches behaviour code and leaves the checked-in OpenAPI document unchanged.
-- The seeded sample has 3 commits per repository. That gives 136 commits from 47 repositories: 7 repositories had no candidates, and 2 had fewer than 3.
+- The seeded sample has up to 3 commits per repository. That gives 136 commits from 47 repositories: 7 repositories had no candidates, and 3 had fewer than 3 (two with 1, one with 2; 44 × 3 + 1 + 1 + 2 = 136). *[Corrected after T55: the original text said 2.]*
 - By language: Java 85, Go 48, Kotlin 3.
 - All 136 commits were packaged.
 - Coders: two GPT coders (κ: observable_change 0.90, change_kind 0.88, client_impact 0.85, contract_specified 0.87) and two Claude coders (0.82, 0.83, 0.74, 0.85).
@@ -59,7 +60,7 @@ So client impact is a judgement call that depends on the coding model. The pre-r
 
 ## Interpretation
 1. **Silent behavioural change is common.** About two in five behaviour-touching commits that leave the OpenAPI document unchanged still change what a client observes.
-2. **Spec-diff tools miss these by construction, and so does contract generation from code.** Of the GPT-coded breaking changes, 29/32 touch no contract annotation. Even a tool such as AutoGuard, which generates the contract from code, would report nothing for them.
+2. **Spec-diff tools miss these by construction, and so does contract generation from code.** Of the GPT-coded breaking changes, 29/32 touch no contract annotation. By this annotation proxy, even a tool such as AutoGuard, which generates the contract from code, would likely report nothing for them. No generator was run. *[Wording corrected after T55: it was a categorical claim.]*
 3. **Contracts rarely specify the behaviour that changes.** Only 1 of 60 changes concerned specified behaviour. Silent changes therefore mostly fall into the contract's blind spots, not into conflicts with what it states. This is also why H-R3-2 could not be tested.
 4. **What is breaking is model-dependent.** Claims about breaking prevalence need human validation. The planned human spot-check (20 items) should focus on `client_impact`.
 

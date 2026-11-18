@@ -24,3 +24,12 @@ These entries are now verified from full text: arXiv HTML, or a local pdftotext 
   - **Unverified:** the "9 of 21" count (from a model summary). Do not cite it.
 
 **Conclusion.** The gap stands, and the 2026 SLR states it directly. No primary study measures behavioural changes in REST services that leave the contract unchanged.
+
+## Addendum after review T55 (2026-11-18)
+- **AutoGuard** (Lercher, Bauer, Macho, Pinzger, 2025; tool demonstration paper; read in full, local text `lit/autoguard/Lercher2025-AutoGuard.txt`).
+  - Title: lines 1–2 of the local text.
+  - Quote "do not capture semantic changes": lines 342–344 ("reports changes based on OpenAPI descriptions, which do not capture semantic changes, e.g., changed parameter dependencies").
+  - Mechanism: it generates OpenAPI from Spring Boot source (AutoOAS) for two versions and diffs them with OpenAPI-diff in CI.
+- **Lercher et al., JSS 2024.** The full title "Microservice API Evolution in Practice: A Study on Strategies and Challenges" was confirmed from the arXiv API record of 2311.08175 on 2026-11-18.
+- **Chen et al. 2026.** Full author names (Juntao Chen, Tingting Bi, Yanlin Wang, Patanamon Thongtanunam) were confirmed from the arXiv API record of 2605.24397 on 2026-11-18.
+- **Quotes in the paper.** Corrected to verbatim case and verb forms: "The main remaining gap …", "Detection of syntactic breaks …", and "… often shifts the problem, i.e., creates …".
