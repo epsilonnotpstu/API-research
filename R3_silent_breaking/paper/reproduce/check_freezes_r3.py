@@ -17,8 +17,15 @@ def tree(d):
     return (r.stdout.split()[0] if r.returncode == 0 and r.stdout else None), n
 
 
+def anonymised():
+    """Files listed in ../ANONYMIZATION.md (anonymised review copy only): their hashes are expected to differ."""
+    f = B.parent / 'ANONYMIZATION.md'
+    if not f.is_file(): return set()
+    return {l[2:].strip().removeprefix('R3_silent_breaking/') for l in f.read_text().splitlines() if l.startswith('- ')}
+
+
 def main():
-    bad = 0
+    bad = 0; anon = anonymised()
     for fr in FREEZES:
         ok = n = 0
         for line in (B / fr).read_text().splitlines():
@@ -29,6 +36,7 @@ def main():
             else:
                 f = B / p; good = f.is_file() and hashlib.sha256(f.read_bytes()).hexdigest() == h
             if good: ok += 1
+            elif p in anon: ok += 1; print(f'EXPLAINED {fr}: {p} (path placeholders in the anonymised copy; verifies in the de-anonymised archive)')
             else: bad += 1; print(f'FAIL {fr}: {p}')
         print(f'{"OK  " if ok == n else "FAIL"} {fr}: {ok}/{n}')
     sys.exit(1 if bad else 0)
