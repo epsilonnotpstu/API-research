@@ -66,4 +66,4 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
   - PDF compilation;
   - archive upload;
   - AI disclosure.
-- **End of sprint (the user asked for this on 2026-11-23):** rewrite the history to strip every `Co-Authored-By: Claude` trailer, then force-push. See memory `feedback-no-coauthor`. New commits carry no co-author line.
+- **History rewrite: DONE (2026-11-23).** Every `Co-Authored-By: Claude` trailer was removed from all commits, and the result was force-pushed. Commit hashes quoted in documents before this date are old values; translate them with `COMMIT_HASH_MAP.txt`. The pre-rewrite backup bundle is on the Shared Data drive. New commits carry no co-author line.
