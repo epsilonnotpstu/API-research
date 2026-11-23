@@ -43,3 +43,20 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
   - Blind roles (G1/G2, H1/H2) are never done by Claude itself.
   - If Codex hits its limit, resume the same session after the reset.
   - Report to the user in Bengali.
+
+## R4 ("Real access-control vulnerabilities vs contract-driven black-box testing"), `R4_access_control/`: coding running (2026-11-23 20:12)
+- **Order.** The user gave the order on 2026-11-23: pick a new cluster and take it to a paper by 2026-11-24 17:00, with Codex in parallel. See memory `next-cluster-sprint`.
+- **Cluster.** T3 security, gap G5.
+- **Plan.** Frozen at `10133ce` (`plan/r4_plan_freeze.sha256`).
+- **Pipeline.**
+  - Claude's `mining/claude/r4p.py` is primary; Codex T56b (`mining/r4_*.py`) is an independent implementation. The D1 comparison found an identical pool (176) and sample (138).
+  - Fixes F1–F4 were made before any coder ran (`plan/R4_DEVIATIONS.md`).
+  - Packages frozen: `plan/r4_packages_freeze.sha256` (LC_ALL=C).
+- **Coders.**
+  - GPT: G1 and G2 via `collab/scripts/r4_launch_gpt.sh`. After a usage limit, run `r4_launch_gpt.sh resume K G1 G2`.
+  - Claude: H1 and H2 on 9 batches `r4_kb1`–`r4_kb9`; agent ids in `collab/scripts/r4_claude_runs.txt`.
+- **Next steps.**
+  1. Audit: `collab/scripts/r4_audit.py --tasks <dir>`.
+  2. Output freeze: `collab/scripts/r4_freeze_outputs.sh`.
+  3. Score once: `/usr/bin/python3 -I -B plan/score_r4.py --out plan/r4_scores.csv > plan/r4_score_output.txt`.
+  4. Write `R4_RESULTS.md` and the paper (`paper/R4_draft.md`), then a Codex numeric review, the LaTeX and the archive.
