@@ -1,0 +1,2 @@
+# H2 report (kb2)
+All 16 items opened. Hard cases: A029 (UNCLEAR: admission-webhook validation bug, not clearly an access decision); A020 (copy filter bypass coded OTHER; copy op absent from admin contract); A028, A030 (coded NO: credential validation / library header filter); A021 and A027 (contract truncated, operation not visible, coded ABSENT); A018 (stale session roles, coded FUNCTION_LEVEL).

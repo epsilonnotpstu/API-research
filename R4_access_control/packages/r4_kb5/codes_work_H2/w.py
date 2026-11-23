@@ -1,0 +1,25 @@
+import csv
+H="item_id,ac_relevant,ac_kind,principals_needed,observable_via_http,contract_operation,contract_security,policy_in_contract,fix_location,confidence,locators,rationale".split(",")
+NA=lambda i,r,loc,rat,c=3:[i,"NO"]+["NA"]*7+[str(c),loc,rat]
+R=[
+["A065","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","ABSENT","NA","NO","HANDLER","3","diff.patch:109; after UserResourceImpl.java","Any authenticated user of one realm could call the disconnect-session operation and terminate another realm's MQTT session; realm path parameter was ignored and no role or realm check existed."],
+["A066","YES","MISSING_AUTHENTICATION","NONE","YES","ABSENT","NA","NO","HANDLER","3","diff.patch:7-13; contract/api__swagger.yml:14 (global security, no usage-report path)","Usage-report summary endpoint returned aggregate counts to anonymous callers; fix adds an authenticated-user check in the handler."],
+NA("A067","","advisory text; diff.patch","Kubernetes NetworkPolicy deployment flaw in infrastructure code; not an HTTP operation access decision."),
+["A068","YES","FUNCTION_LEVEL","TWO_ROLES","YES","UNCLEAR","NA","NO","MIDDLEWARE_FILTER","2","diff.patch:4-10 (AdminAuth nil userInfo)","AdminAuth middleware let requests proceed when admin lookup returned no user, so a non-admin token holder could reach admin-only routes. Affected operation not named in material."],
+["A069","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","UNCLEAR","NA","NO","SERVICE_LOGIC","3","diff.patch:6-14","Authenticated user could duplicate a readable project under any parent project without write access to that parent; PUT duplicate route not visible in truncated contract."],
+["A070","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","SERVICE_LOGIC","2","diff.patch websocket.go; terminal.go:228","A user whose exec permission was revoked kept an open web terminal websocket and could still send commands, as RBAC was checked only at session start."],
+["A071","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER","2","diff.patch:30-37","Users lacking Execute Code permission could configure a controller service enabling script execution, since the component lacked the Restricted annotation; contract is a stub without the operation."],
+["A072","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER","1","advisory; diff.patch (x/bonds ante disabled)","Chain transactions let one account spend funds from another's address via DID verification methods, as payer was not checked against signer. Blockchain tx interface only loosely an HTTP service."],
+["A073","NO","NA","NA","NA","NA","NA","NA","NA","3","diff.patch SalesforceEndpointConfig.java","Header-name constants in an integration library; no HTTP operation of a service involved."] ,
+["A074","YES","OBJECT_LEVEL","NONE","YES","ABSENT","NA","NO","HANDLER","3","diff.patch:19-40","GET attachment by UUID returned files of private repositories to anonymous or unauthorised users; fix adds repository access check."],
+["A075","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","ABSENT","NA","NO","SERVICE_LOGIC","3","advisory; diff.patch (service_authz.go)","Caller with update permission scoped to one component could update a workflow run of another project by supplying own labels in the body; authorization used body labels, not stored ones."],
+NA("A076","","advisory text","Generated pg_hba.conf trust entries for local database access; not reachable through the service's HTTP API."),
+NA("A077","","advisory text; diff.patch","Network policy parsing in a CNI datapath; traffic filtering, not an HTTP operation access decision."),
+["A078","YES","FUNCTION_LEVEL","ONE","YES","UNCLEAR","NA","NO","HANDLER","2","diff.patch:30-45 upgradeaware.go","Failed proxied upgrade requests let a client keep the connection and send arbitrary requests to the backend using the API server's credentials; fix checks backend status code."],
+NA("A079","","advisory text; diff.patch","Network policy egress derivation in a CNI; not an HTTP operation access decision."),
+["A080","YES","MISSING_AUTHENTICATION","NONE","YES","PRESENT","NOT_DECLARED","NO","OTHER","2","contract/internal__swagger__swagger.yaml:1018; diff.patch unrelated (OAuth redirect)","PUT like endpoint was registered publicly so anonymous callers could increment like counts. Provided diff addresses OAuth redirect validation, not this route."],
+]
+R[8]=NA("A073","","diff.patch SalesforceEndpointConfig.java","Header-name constants in an integration library; no HTTP operation of a service involved.")
+ids=[r["item_id"] for r in csv.DictReader(open("items.csv"))]
+assert ids==[r[0] for r in R],ids
+w=csv.writer(open("codes_H2.csv","w",newline=""));w.writerow(H);w.writerows(R)

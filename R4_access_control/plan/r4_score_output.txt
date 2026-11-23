@@ -1,0 +1,33 @@
+== R4: n=138 items; repos 70; ecosystems {'go': 118, 'maven': 20}
+   kappa ac_relevant: GPT 0.944  Claude 0.827
+   kappa ac_kind: GPT 0.912  Claude 0.859
+   kappa principals_needed: GPT 0.892  Claude 0.701
+   kappa observable_via_http: GPT 0.943  Claude 0.802
+   kappa contract_operation: GPT 0.730  Claude 0.762
+   kappa contract_security: GPT 0.734  Claude 0.848
+   kappa policy_in_contract: GPT 0.619  Claude 0.700
+   kappa fix_location: GPT 0.909  Claude 0.798
+   GPT final ac_relevant YES/NO/UNCLEAR = 102/32/4
+   E-R4-1 AC-relevant share: 102/138 = 0.739 Wilson [0.660, 0.805] cluster-boot [0.640, 0.830]
+   E-R4-1 ac_kind (AC-relevant, n=102): FUNCTION_LEVEL 25 (0.25), TENANT_ISOLATION 19 (0.19), MISSING_AUTHENTICATION 17 (0.17), OBJECT_LEVEL 17 (0.17), PROPERTY_LEVEL 13 (0.13), UNCLEAR 8 (0.08), OTHER 3 (0.03)
+   E-R4-1 principals_needed (AC-relevant, n=102): TWO_SAME_ROLE 27 (0.26), TWO_ROLES 22 (0.22), NONE 21 (0.21), ONE 19 (0.19), UNCLEAR 13 (0.13)
+   E-R4-1 observable_via_http (AC-relevant, n=102): YES 101 (0.99), UNCLEAR 1 (0.01)
+   E-R4-1 contract_operation (AC-relevant, n=102): PRESENT 41 (0.40), ABSENT 29 (0.28), UNCLEAR 27 (0.26), NO_CONTRACT 5 (0.05)
+   E-R4-1 contract_security (AC-relevant, n=102): NA 61 (0.60), UNCLEAR 23 (0.23), DECLARED 10 (0.10), NOT_DECLARED 8 (0.08)
+   E-R4-1 policy_in_contract (AC-relevant, n=102): NO 69 (0.68), UNCLEAR 28 (0.27), YES 5 (0.05)
+   E-R4-1 fix_location (AC-relevant, n=102): SERVICE_LOGIC 30 (0.29), MIDDLEWARE_FILTER 27 (0.26), HANDLER 25 (0.25), UNCLEAR 8 (0.08), OTHER 5 (0.05), MODEL_BINDING 4 (0.04), DATA_QUERY 3 (0.03)
+   fix_silent among AC-relevant: 93/102 = 0.912 Wilson [0.841, 0.953]; test_in_fix: 70/102 = 0.686 Wilson [0.591, 0.768]
+   H-R4-1: 49/89 = 0.551 Wilson [0.447, 0.650] cluster-boot [0.439, 0.663]; one-sided binomial vs 0.5 p=0.198 -> FAIL
+      Claude-final: 40/80 = 0.500 Wilson [0.393, 0.607]; leave-one-repo-out: min 0.529 (without apache/nifi), max 0.570 (without argoproj/argo-workflows)
+   H-R4-2: 93/102 = 0.912 Wilson [0.841, 0.953] cluster-boot [0.840, 0.969]; one-sided binomial vs 0.5 p=4.99e-19 -> PASS
+      Claude-final: 96/105 = 0.914 Wilson [0.845, 0.954]; leave-one-repo-out: min 0.908 (without argoproj/argo-cd), max 0.929 (without kubev2v/migration-planner)
+   H-R4-3: 33/38 = 0.868 Wilson [0.727, 0.942] cluster-boot [0.735, 0.969]; one-sided binomial vs 0.5 p=2.13e-06 -> PASS
+      Claude-final: 35/39 = 0.897 Wilson [0.764, 0.959]; leave-one-repo-out: min 0.857 (without argoproj/argo-cd), max 0.892 (without sipcapture/homer)
+   H-R4-4 cross-family ac_kind: agree 72/83, kappa 0.832 -> PASS
+   cross-family ac_relevant (both decided n=126): kappa 0.855
+   Claude final ac_relevant YES/NO/UNCLEAR = 105/25/8
+   EXPLORATORY principals x contract_security: {('NONE', 'DECLARED'): 2, ('NONE', 'NA'): 13, ('NONE', 'NOT_DECLARED'): 2, ('NONE', 'UNCLEAR'): 4, ('ONE', 'DECLARED'): 4, ('ONE', 'NA'): 11, ('ONE', 'UNCLEAR'): 4, ('TWO_ROLES', 'DECLARED'): 3, ('TWO_ROLES', 'NA'): 15, ('TWO_ROLES', 'NOT_DECLARED'): 1, ('TWO_ROLES', 'UNCLEAR'): 3, ('TWO_SAME_ROLE', 'DECLARED'): 1, ('TWO_SAME_ROLE', 'NA'): 17, ('TWO_SAME_ROLE', 'NOT_DECLARED'): 3, ('TWO_SAME_ROLE', 'UNCLEAR'): 6, ('UNCLEAR', 'NA'): 5, ('UNCLEAR', 'NOT_DECLARED'): 2, ('UNCLEAR', 'UNCLEAR'): 6}
+   EXPLORATORY ac_kind x fix_location: {('FUNCTION_LEVEL', 'HANDLER'): 3, ('FUNCTION_LEVEL', 'MIDDLEWARE_FILTER'): 9, ('FUNCTION_LEVEL', 'OTHER'): 2, ('FUNCTION_LEVEL', 'SERVICE_LOGIC'): 9, ('FUNCTION_LEVEL', 'UNCLEAR'): 2, ('MISSING_AUTHENTICATION', 'HANDLER'): 4, ('MISSING_AUTHENTICATION', 'MIDDLEWARE_FILTER'): 11, ('MISSING_AUTHENTICATION', 'OTHER'): 1, ('MISSING_AUTHENTICATION', 'SERVICE_LOGIC'): 1, ('OBJECT_LEVEL', 'DATA_QUERY'): 1, ('OBJECT_LEVEL', 'HANDLER'): 8, ('OBJECT_LEVEL', 'OTHER'): 1, ('OBJECT_LEVEL', 'SERVICE_LOGIC'): 6, ('OBJECT_LEVEL', 'UNCLEAR'): 1, ('OTHER', 'MIDDLEWARE_FILTER'): 2, ('OTHER', 'SERVICE_LOGIC'): 1, ('PROPERTY_LEVEL', 'HANDLER'): 3, ('PROPERTY_LEVEL', 'MIDDLEWARE_FILTER'): 1, ('PROPERTY_LEVEL', 'MODEL_BINDING'): 4, ('PROPERTY_LEVEL', 'SERVICE_LOGIC'): 5, ('TENANT_ISOLATION', 'DATA_QUERY'): 2, ('TENANT_ISOLATION', 'HANDLER'): 6, ('TENANT_ISOLATION', 'MIDDLEWARE_FILTER'): 3, ('TENANT_ISOLATION', 'SERVICE_LOGIC'): 5, ('TENANT_ISOLATION', 'UNCLEAR'): 3, ('UNCLEAR', 'HANDLER'): 1, ('UNCLEAR', 'MIDDLEWARE_FILTER'): 1, ('UNCLEAR', 'OTHER'): 1, ('UNCLEAR', 'SERVICE_LOGIC'): 3, ('UNCLEAR', 'UNCLEAR'): 2}
+   EXPLORATORY ac_kind x principals: {('FUNCTION_LEVEL', 'ONE'): 2, ('FUNCTION_LEVEL', 'TWO_ROLES'): 18, ('FUNCTION_LEVEL', 'UNCLEAR'): 5, ('MISSING_AUTHENTICATION', 'NONE'): 17, ('OBJECT_LEVEL', 'NONE'): 2, ('OBJECT_LEVEL', 'ONE'): 2, ('OBJECT_LEVEL', 'TWO_SAME_ROLE'): 12, ('OBJECT_LEVEL', 'UNCLEAR'): 1, ('OTHER', 'ONE'): 1, ('OTHER', 'UNCLEAR'): 2, ('PROPERTY_LEVEL', 'ONE'): 11, ('PROPERTY_LEVEL', 'TWO_ROLES'): 1, ('PROPERTY_LEVEL', 'UNCLEAR'): 1, ('TENANT_ISOLATION', 'ONE'): 3, ('TENANT_ISOLATION', 'TWO_SAME_ROLE'): 15, ('TENANT_ISOLATION', 'UNCLEAR'): 1, ('UNCLEAR', 'NONE'): 2, ('UNCLEAR', 'TWO_ROLES'): 3, ('UNCLEAR', 'UNCLEAR'): 3}
+   EXPLORATORY eco go: n=118 AC 89 silent 85 multi-principal 40
+   EXPLORATORY eco maven: n=20 AC 13 silent 8 multi-principal 9

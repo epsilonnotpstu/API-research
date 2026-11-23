@@ -1,0 +1,25 @@
+import csv
+H="item_id,ac_relevant,ac_kind,principals_needed,observable_via_http,contract_operation,contract_security,policy_in_contract,fix_location,confidence,locators,rationale".split(",")
+NA=["NA"]*7
+def no(i,l,r,c=2): return [i,"NO"]+NA+[str(c),l,r]
+R=[
+["A097","YES","MISSING_AUTHENTICATION","NONE","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER","2","diff.patch:12-30","Anonymous caller could set X-Forwarded-Proto despite trust being disabled, selecting the other-scheme access rule and bypassing the rule meant for the real scheme."],
+["A098","YES","PROPERTY_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","SERVICE_LOGIC","3","diff.patch (api_provisioning.go:184, ngalert.go, contactpoints.go)","Editor without the protected-write permission could change protected webhook URL fields of a contact point via the provisioning API; admin comparison needed."],
+no("A099","diff.patch:5-20","Flaw is in the legacy WebRTC data channel input path, not an HTTP operation; the HTTP/WebSocket control path was unaffected.",2),
+["A100","YES","FUNCTION_LEVEL","UNCLEAR","YES","ABSENT","NA","NO","OTHER","1","diff.patch:1-60","JSON web service was invoked as a plain class so Service Access Policies were not enforced; callers could use comment operations outside policy. Exact test setup unclear."],
+["A101","YES","FUNCTION_LEVEL","TWO_ROLES","YES","PRESENT","NOT_DECLARED","NO","MIDDLEWARE_FILTER","2","diff.patch:19-50; contract api__swagger.yaml (any endpoint)","With an AuthZ plugin inspecting bodies, an oversized request body was forwarded without body, so a user could perform an operation the plugin would deny."],
+["A102","YES","FUNCTION_LEVEL","TWO_ROLES","YES","PRESENT","NOT_DECLARED","NO","SERVICE_LOGIC","3","diff.patch (sync_cm.go checkConfigMapPermission); contract api/v1/sync/{namespace}","Any authenticated caller, even with a fake token, could create, read, update and delete sync-limit ConfigMaps without the Kubernetes permission check."],
+["A103","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","OTHER","2","diff.patch (only test util shown); item.md","Authenticated user lacking delete permission could delete objects through the S3 gateway delete-objects request. Fix not visible in diff."],
+["A104","YES","FUNCTION_LEVEL","ONE","YES","ABSENT","NA","NO","SERVICE_LOGIC","3","diff.patch:tokenFromCache/tokenToCache","With introspection caching on, a token cached for one scope was accepted for endpoints requiring another scope it was not granted."],
+["A105","YES","FUNCTION_LEVEL","ONE","YES","PRESENT","DECLARED","NO","SERVICE_LOGIC","3","diff.patch:401-407; contract v2beta1 /apis/v2beta1/pipelines/upload","Low-privilege user could upload shared pipelines with empty namespace, skipping the authorization review, in multi-user mode."],
+["A106","YES","MISSING_AUTHENTICATION","NONE","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER","2","item.md; diff.patch (configserver.go dummy directives, CORS)","Local dev configserver GraphQL API had no-op auth directives and open CORS; any caller could read and write secrets. Component belongs to CLI dev tooling."],
+["A107","YES","TENANT_ISOLATION","ONE","UNCLEAR","UNCLEAR","NA","NO","SERVICE_LOGIC","2","diff.patch:controller/hook.go executeHooks","User able to push to the repo could make delete-time hooks create resources in namespaces or kinds the AppProject forbids; effect arises when the Application is deleted."],
+["A108","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","PRESENT","DECLARED","NO","HANDLER","3","diff.patch:blocks.go:573,684; contract /boards/{boardID}/blocks/{blockID} patch","A board member could modify comment blocks created by other users via the block patch endpoints without the others-comments permission."],
+["A109","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","ABSENT","NA","NO","SERVICE_LOGIC","3","item.md; diff.patch (installation ownership verifier)","Tenant could bind another tenant's GitHub App installation_id to its own workspace via connect/complete and read that tenant's repositories."],
+no("A110","diff.patch","Container runtime supplementary-group setup inside containers; not an access decision on an HTTP operation.",3),
+no("A111","item.md; diff.patch (JiraConstants)","Flaw is in a Camel component header naming in integration routes, not a REST service operation; depends on route design.",2),
+["A112","YES","MISSING_AUTHENTICATION","NONE","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER","2","diff.patch:middleware.go:54-66; item.md","Backend API endpoints such as secret and service listings could be called without credentials, exposing cluster data; fix enforces auth middleware."],
+]
+ids=[r["item_id"] for r in csv.DictReader(open("items.csv"))]
+assert ids==[r[0] for r in R],ids
+w=csv.writer(open("codes_H1.csv","w",newline=""));w.writerow(H);w.writerows(R)

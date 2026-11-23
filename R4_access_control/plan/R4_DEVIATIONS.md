@@ -58,3 +58,8 @@ The comparison used Codex's patched scratch run and Claude's F4 run (`collab/rep
   - `language`: Codex computes it only at build time, so it is absent from Codex's pool.
   - Exclusion accounting: Claude's 945 `NO_COMMIT` + 1 `FETCH_ERROR` + 831 `NO_CONTRACT_AT_PARENT` against Codex's 947 `NO_COMMIT` + 830 `NO_CONTRACT_AT_PARENT`. One advisory is labelled differently; pool membership is unaffected.
 - **Packages.** Built by Claude's implementation, as primary.
+
+## P1 (2026-11-23 20:24): G1 session interrupted by model capacity; resumed
+- **What happened.** The GPT coder G1 stopped with "Selected model is at capacity" before writing any output. No usage limit was involved.
+- **Action.** The same session was resumed with `collab/scripts/r4_launch_gpt.sh resume 1 G1` (log `collab/logs/R4_G1_resume1.log`), under the same task and package.
+- **Unaffected.** G2 and all 18 Claude batches had completed. Their audit was clean, and no output had been inspected.

@@ -1,0 +1,27 @@
+import csv
+R=[
+("A017","NO","NA","NA","NA","NA","NA","NA","NA",3,"A017/diff.patch;server/sso/validate.go","SAML assertion validation flaw: forged assertions authenticate; this is signature/login-flow validation, not an authorization decision."),
+("A018","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","SERVICE_LOGIC",2,"A018/diff.patch:session.go UpdateSessionsIsGuest","After an admin demoted a user to guest, the user's existing session kept old roles, so the guest could still rename groups until re-login."),
+("A019","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","ABSENT","NA","NO","DATA_QUERY",3,"A019/diff.patch:server.go:133-143,644-654","A token of tenant X could upsert labels of or unsubscribe a worker of tenant Y by UUID; worker was not checked against caller tenant. gRPC ops not in REST contract."),
+("A020","YES","OTHER","ONE","YES","ABSENT","NA","NO","SERVICE_LOGIC",2,"A020/diff.patch:connection.go:645-670","A user with copy permission could copy a file denied by filter patterns to an allowed name and read it; only destination was checked. Copy op not in provided contract."),
+("A021","YES","PROPERTY_LEVEL","ONE","YES","ABSENT","NA","NO","MODEL_BINDING",2,"A021/diff.patch:operator.go:4283-4295; merge sanitize","A workflow submitter could set hostNetwork, serviceAccountName and securityContext in the Workflow spec despite strict template referencing; these were merged into pods."),
+("A022","YES","PROPERTY_LEVEL","ONE","YES","ABSENT","NA","NO","SERVICE_LOGIC",2,"A022/diff.patch:team.go:1932-1950","Team admin without Add Members permission received team invite_id in /users/me/teams responses; sanitize wrongly kept it for managers."),
+("A023","NO","NA","NA","NA","NA","NA","NA","NA",2,"A023/item.md","Excess Kubernetes RBAC of a CSI service account on a compromised node; not an HTTP operation of the service."),
+("A024","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","ABSENT","NA","NO","HANDLER",3,"A024/diff.patch:run_log_server.go; resource_manager.go readRunLogFromPod","Caller could read logs of another user's run (or any pod in namespace) via the run log endpoint; no authorization check against the run. Endpoint not in contract."),
+("A025","NO","NA","NA","NA","NA","NA","NA","NA",2,"A025/diff.patch:gateway.go:312","Namespaced HTTPRoute mirror bypasses ReferenceGrant via Kubernetes resources in the operator; not an HTTP operation of a REST service."),
+("A026","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER",3,"A026/diff.patch:debug_handler.go:42","Any authenticated user, including Observer, could call debug/pprof endpoints reserved for admins; middleware now requires global admin role."),
+("A027","YES","OBJECT_LEVEL","ONE","YES","ABSENT","NA","NO","HANDLER",2,"A027/diff.patch:endpoint_yjs.go authorizeYjsRoom","Any authenticated user could read and write file-column content of any row, including admin-only tables, via generic /yjs/:documentName websocket without row permission check."),
+("A028","NO","NA","NA","NA","NA","NA","NA","NA",2,"A028/diff.patch:auth/store.go","Client-certificate CN matched to RBAC username allowed impersonation via gateway; authentication/credential validation flaw rather than an authorization rule."),
+("A029","UNCLEAR","NA","NA","NA","NA","NA","NA","NA",1,"A029/diff.patch:validation.go","Update validation mutated objects so validating admission webhooks saw old values; whether it is an access-control decision of the API is unclear."),
+("A030","NO","NA","NA","NA","NA","NA","NA","NA",2,"A030/diff.patch:ElasticSearchRestClientConstant.java","Library component header names bypassed Camel inbound header filter in user-defined routes; no fixed HTTP operation of a service."),
+("A031","YES","FUNCTION_LEVEL","TWO_ROLES","YES","PRESENT","DECLARED","YES","MIDDLEWARE_FILTER",3,"A031/diff.patch:SecurityConfiguration.java:93-98; contract/api__microcks-openapi-v1.10.yaml:759-812","Misaligned security matchers let non-admin users call POST /import and /export, which require admin scope per contract."),
+("A032","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","HANDLER",2,"A032/diff.patch:AttributesRestHandlder.go","Any authenticated low-privilege user could read the global API token signing key via the attributes endpoint; authorization check was missing."),
+]
+ids=[r['item_id'] for r in csv.DictReader(open('items.csv'))]
+assert ids==[r[0] for r in R]
+w=csv.writer(open('codes_H2.csv','w',newline=''))
+w.writerow("item_id,ac_relevant,ac_kind,principals_needed,observable_via_http,contract_operation,contract_security,policy_in_contract,fix_location,confidence,locators,rationale".split(','))
+for r in R:
+    if r[1]=="YES": r=list(r)
+    else: r=[r[0],r[1]]+["NA"]*7+[r[9],r[10],r[11]]
+    w.writerow(r)

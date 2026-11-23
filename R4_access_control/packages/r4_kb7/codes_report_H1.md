@@ -1,0 +1,2 @@
+# H1 report (kb7)
+All 16 items opened. Hard cases: A099 (legacy WebRTC, coded NO as not HTTP), A100 (Liferay JSONWS, low confidence), A103 (diff shows only test util, fix not visible), A106 (CLI-bundled configserver, coded YES), A107 (controller hook path; HTTP observability and operation unclear), A111 (library header handling, NO). A109 contract lists route auth in an x- extension but not under paths, coded ABSENT. Contract paths for A098 not found in the truncated document.

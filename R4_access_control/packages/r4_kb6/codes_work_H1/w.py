@@ -1,0 +1,27 @@
+import csv
+NA=["NA"]*7
+rows=[
+("A081","YES","FUNCTION_LEVEL","ONE","YES","UNCLEAR","NA","NO","MIDDLEWARE_FILTER",2,"diff.patch:489-496","A node identity could patch its own Node ownerReferences, causing garbage-collection deletion of itself; NodeRestriction admission did not forbid ownerReferences changes. Contract truncated, node PATCH not visible."),
+("A082","NO")+tuple(NA)+(3,"diff.patch","JWT signature verification skip flag/JWKS handling; token validation issue, not an operation-level access decision."),
+("A083","YES","MISSING_AUTHENTICATION","NONE","YES","PRESENT","DECLARED","YES","MIDDLEWARE_FILTER",3,"diff.patch coordinator.go:329-390; contract src__coordinator__docs__openapi.yaml:32 (global bearerAuth), /users","With default empty JWT secret the auth middleware was skipped, so anonymous requests could call protected /api/v1,v3,v4 endpoints (list/create users) that the contract declares as bearer-protected."),
+("A084","YES","TENANT_ISOLATION","ONE","YES","UNCLEAR","NA","UNCLEAR","SERVICE_LOGIC",3,"diff.patch:62-77 (internal/sources/impl.go)","Authenticated caller with access to one project could GET another project's source by ID through own project URL, getting broker credentials; lookup ignored projectID. Contract truncated, sources path not visible."),
+("A085","NO")+tuple(NA)+(2,"item.md","Flaw is in blockchain VM built-in function authorization (CallerAddr vs RecipientAddr), not an HTTP operation of the service."),
+("A086","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","PRESENT","NOT_DECLARED","NO","MIDDLEWARE_FILTER",3,"diff.patch routers/authz_filter.go:111-122, authz/authz.go:146; contract swagger/swagger.json:976,1609","An administrator of one organization could update or delete applications, syncers, tokens and webhooks of other organizations via request body organization/ID; authz filter checked the wrong owner."),
+("A087","YES","FUNCTION_LEVEL","TWO_ROLES","YES","PRESENT","DECLARED","NO","MIDDLEWARE_FILTER",3,"diff.patch authorization_middleware.go; contract internal/api/server/openapi.yaml:1848","NetworkManager role was permitted backup and restore; it could POST /api/v1/restore with a tampered database and escalate to Admin, an operation reserved for higher roles."),
+("A088","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","ABSENT","NA","NA","SERVICE_LOGIC",3,"diff.patch certificate_templates.go GetCertificateTemplatesByIdsAndTeam; server/service/certificates.go","A team admin could batch-delete certificate templates of other teams: authorization used the supplied team id but template IDs were not checked to belong to that team."),
+("A089","YES","MISSING_AUTHENTICATION","NONE","YES","PRESENT","DECLARED","YES","MIDDLEWARE_FILTER",3,"diff.patch internal/router/user.go; contract internal__swagger__swagger.json:211-217","GET /api/allusers was registered on the public router group, so anonymous callers received the user list although the contract declares ApiKeyAuth and states authentication is required."),
+("A090","YES","FUNCTION_LEVEL","ONE","YES","PRESENT","NOT_DECLARED","NO","MIDDLEWARE_FILTER",3,"diff.patch pkg/api/authn.go:604-616; contract swagger__swagger.json:691 (DELETE manifests)","A bearer token with only pull/push scopes could DELETE manifests and blobs because DELETE was mapped to push and the fine-grained authz was bypassed for bearer auth."),
+("A091","NO")+tuple(NA)+(3,"diff.patch timewindow.go","Missing proposal timestamp window check (replay) in peer endorser gRPC filter; not an access-control decision over an HTTP operation."),
+("A092","YES","PROPERTY_LEVEL","ONE","YES","PRESENT","DECLARED","NO","HANDLER",3,"diff.patch user.go:324-332; contract docs__swagger.yaml:706 POST /users","A non-admin could call POST /api/users with the admin-role flag set and create an admin account; handler did not restrict that property to admins. Contract only states admin needed when self-registration is off."),
+("A093","YES","OBJECT_LEVEL","TWO_ROLES","YES","PRESENT","NOT_DECLARED","NO","HANDLER",3,"diff.patch routes.go canMount and CheckBlob; contract swagger__swagger.json:545","A user with read access to one repository could obtain blobs of a repository denied by access control via dedupe cache (HEAD blob / mount) when knowing the digest."),
+("A094","NO")+tuple(NA)+(3,"diff.patch","Container network isolation default allowing MCP containers to reach host services; network/containment issue, not an access decision of an HTTP operation."),
+("A095","YES","TENANT_ISOLATION","ONE","YES","PRESENT","NOT_DECLARED","NO","HANDLER",2,"diff.patch workflow_template_server.go, cluster_workflow_template_server.go (CanI); contract swagger.json:2951","Any client with an arbitrary bearer token could GET WorkflowTemplates/ClusterWorkflowTemplates, read via server privileges; handlers lacked the per-user permission (CanI) check."),
+("A096","NO")+tuple(NA)+(3,"diff.patch IdentityBrokerService.java","Disabled SAML identity provider still accepted in IdP-initiated broker login; login-flow/IdP configuration logic, not operation-level access control."),
+]
+h="item_id,ac_relevant,ac_kind,principals_needed,observable_via_http,contract_operation,contract_security,policy_in_contract,fix_location,confidence,locators,rationale".split(",")
+
+ids=[l.split(",")[0] for l in open("items.csv").read().split("\n")[1:] if l]
+d={r[0]:r for r in rows}
+assert ids==[r[0] for r in rows] and all(len(r)==12 for r in rows),[len(r) for r in rows]
+with open("codes_H1.csv","w",newline="") as f:
+    w=csv.writer(f); w.writerow(h); [w.writerow(d[i]) for i in ids]

@@ -1,0 +1,25 @@
+import csv
+H="item_id,ac_relevant,ac_kind,principals_needed,observable_via_http,contract_operation,contract_security,policy_in_contract,fix_location,confidence,locators,rationale".split(",")
+NA=["NA"]*7
+def r(i,rel,kind,pr,obs,co,cs,pol,fx,c,loc,rat): return [i,rel,kind,pr,obs,co,cs,pol,fx,c,loc,rat]
+R=[
+r("A001","YES","PROPERTY_LEVEL","ONE","YES","PRESENT","DECLARED","NO","HANDLER",3,"A001/diff.patch:8-25; contract server/openapi.yaml /api/profile","Any authenticated non-admin could post the full profile to /api/profile, including is_admin, and grant themselves admin rights."),
+r("A002","NO","NA","NA","NA","NA","NA","NA","NA",2,"A002/diff.patch:8-12","Password-recovery response returned the reset code to the caller; this is password-reset flow logic, not an object or role decision."),
+r("A003","YES","TENANT_ISOLATION","TWO_ROLES","YES","ABSENT","NA","NO","HANDLER",3,"A003/diff.patch:20-45,100-120","User with exec or wirelogs grant on one project could exec into or read logs of components owned by another project by naming own project in query."),
+r("A004","YES","FUNCTION_LEVEL","ONE","YES","ABSENT","NA","NO","SERVICE_LOGIC",1,"A004/diff.patch (Organizations.isEnabled, TokenManager, AccountRestService)","Org members still received organization data in tokens and account API after admin disabled Organizations feature; disabled feature not enforced."),
+r("A005","YES","OTHER","ONE","YES","PRESENT","NOT_DECLARED","NO","SERVICE_LOGIC",1,"A005/diff.patch:8-24; contract api/openapi.yml /api/authz/*","Case-differing host in forwarded-auth request could skip a restrictive domain access rule and match a more permissive later rule, in narrow configurations."),
+r("A006","YES","OTHER","ONE","YES","ABSENT","NA","NO","OTHER",1,"A006/diff.patch:8-18","SCIM client could provision a user with numeric externalId colliding with internal user ids, enabling impersonation or privilege escalation; fix is a uid prefix migration."),
+r("A007","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","ABSENT","NA","NO","SERVICE_LOGIC",2,"A007/diff.patch tx.go FundVestingAccount hunk","Caller could fund a vesting account using a third-party funder address without that funder's permission, spending another account's funds via the precompile."),
+r("A008","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","PRESENT","NOT_DECLARED","NO","HANDLER",3,"A008/diff.patch agent.go hunks; contract agent/openapi.yaml /api/v1/sources/{id}/status","Agent with valid token for its own source could update inventory or status of another tenant's source because token source_id was not compared to path id."),
+r("A009","YES","MISSING_AUTHENTICATION","NONE","YES","PRESENT","NOT_DECLARED","NO","MIDDLEWARE_FILTER",3,"A009/diff.patch:669-720,796-812,982 (RolesAllowed added)","CometVisu REST endpoints (config, fs, read, write, move) were callable anonymously, exposing and modifying data; fix adds role annotations."),
+r("A010","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","PRESENT","NOT_DECLARED","NO","DATA_QUERY",3,"A010/diff.patch handlers_repositories.go, repositories.sql.go; contract minder.swagger.json:1585","Any authenticated user could get or delete another project's repository, and read artifacts, by owner/name because lookup was not scoped by project."),
+r("A011","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","ABSENT","NA","NO","HANDLER",2,"A011/diff.patch _checkCompanyAdmin","Admin of one virtual instance could view audit events of another instance by supplying its auditEventId; company id was not compared."),
+r("A012","YES","FUNCTION_LEVEL","ONE","YES","ABSENT","NA","NO","MIDDLEWARE_FILTER",3,"A012/diff.patch CanDoAPIRoute in pkg/models/api_routes.go","API token scoped only to projects.background could send DELETE on the project background, which needs background_delete; method was not checked."),
+r("A013","YES","FUNCTION_LEVEL","TWO_ROLES","YES","ABSENT","NA","NO","HANDLER",3,"A013/diff.patch:requireView","Admin with only view-clients could call evaluate-scopes with any userId and obtain user data without view-users permission."),
+r("A014","YES","TENANT_ISOLATION","TWO_SAME_ROLE","YES","PRESENT","DECLARED","NO","MIDDLEWARE_FILTER",3,"A014/diff.patch populator.go hunk, route path change; contract api-contracts openapi.yaml:54","Any authenticated user could read another tenant's durable task event log by durable-task UUID because the route lacked tenant binding and authorization."),
+r("A015","YES","OBJECT_LEVEL","TWO_SAME_ROLE","YES","PRESENT","DECLARED","NO","HANDLER",3,"A015/diff.patch source.go hunk; contract api/v1alpha1/openapi.yaml:310","Authenticated user could obtain presigned download URL for another user's source image by id; no ownership check was applied."),
+r("A016","YES","MISSING_AUTHENTICATION","NONE","YES","ABSENT","NA","NO","OTHER",3,"A016/diff.patch server.go publicMux/internalMux split","Cluster-gateway management /api endpoints on externally reachable listener required no authentication; anyone reaching it could proxy to data plane and exec."),
+]
+for x in R:
+    if x[1]=="NO": pass
+w=csv.writer(open("codes_H1.csv","w",newline=""));w.writerow(H);w.writerows(R)
