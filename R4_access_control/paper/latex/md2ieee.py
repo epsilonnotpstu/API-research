@@ -8,7 +8,7 @@ from pathlib import Path
 
 H = Path(__file__).resolve().parent
 SRC = H.parent / 'R4_draft.md'; OUT = H / 'main.tex'
-CITE = {'Huang et al. 2024': 'huang2024bola', 'Lercher et al. 2024': 'lercher2024evolution', 'Atlidakis et al. 2019': 'atlidakis2019restler'}
+CITE = {'Huang et al. 2024': 'huang2024bola', 'Arcuri et al. 2025': 'arcuri2025access', 'Lercher et al. 2024': 'lercher2024evolution', 'Atlidakis et al. 2019': 'atlidakis2019restler'}
 STAR = {'data availability', 'disclosure of ai use', 'ai use disclosure'}
 
 SUP = str.maketrans('⁰¹²³⁴⁵⁶⁷⁸⁹⁻', '0123456789-')
