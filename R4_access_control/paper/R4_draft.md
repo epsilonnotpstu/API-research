@@ -1,18 +1,18 @@
 # What Would a Black-Box Tester Need? Real Access-Control Vulnerabilities in OpenAPI-Described REST Services
 
-*Working draft v0.2 (2026-11-23), target ASE 2027 (see `paper/VENUE.md`). Design: frozen plan `plan/R4_PLAN.md`. Results: single scoring run (`plan/R4_RESULTS.md`).*
+*Working draft v0.3 (2026-11-23; applies Codex review T58: 10 ERROR, 7 MINOR), target ASE 2027 (see `paper/VENUE.md`). Design: frozen plan `plan/R4_PLAN.md`. Results: single scoring run (`plan/R4_RESULTS.md`).*
 
 ---
 
 ## Abstract
-Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, but are evaluated on seeded faults. We ask what such a tester would need to expose *real* access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74%) are access-control flaws reachable over HTTP. Only about half (49/89, 55%) need two principals to expose: object-level and tenant-isolation flaws need two users of the same role and function-level flaws two roles, while missing authentication yields to an anonymous request and property-level flaws to a single user. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87%; p = 2.1 × 10⁻⁶); fixes leave the contract untouched in 93 of 102 (91%). The two model families agree on vulnerability kind (κ 0.83). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for half of real cases.
+Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, yet their positive findings of missed authorization checks come mostly from seeded or example services. We ask what such a tester would need to expose *real* access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74%) are access-control flaws reachable over HTTP. Of the 89 with a decided setup, only about half (49, 55%) need two principals to expose: object-level and tenant-isolation flaws mostly need two users of the same role and function-level flaws mostly two roles, while all missing-authentication flaws yield to an anonymous request and most property-level flaws to a single user (40 of 89); 13 remain undecided. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87%; p = 2.1 × 10⁻⁶); fixes leave the contract untouched in 93 of 102 (91%). The two model families agree on vulnerability kind (κ 0.83). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for about half of real cases.
 
 ## 1. Introduction
 Broken access control is the most critical class of API vulnerability: object-level authorization ranks first in the OWASP API Security Top 10. Automated REST testers mostly work black-box:
 - Schemathesis, RESTler and EvoMaster take an OpenAPI document and credentials, generate requests, and judge responses with oracles.
 - Recent tools add access-policy oracles that compare the responses of different users.
 
-These tools are evaluated almost exclusively on seeded faults or vulnerable-by-design services. Arcuri et al. add three access-policy oracles to EvoMaster that need only the OpenAPI document and the logins of at least two users; their missed-check oracle found faults in a service with injected faults, but none in real APIs [Arcuri et al. 2025]. Recent fuzzing work names the core obstacle directly: broken access control "is underexplored in automated testing due to key challenges: the lack of reliable oracles and the difficulty of generating semantically valid attack requests" (arXiv 2507.15984).
+Their evaluations combine seeded faults, vulnerable-by-design services and real APIs, but positive findings for missed authorization checks come from the former. For example, Arcuri et al. add three access-policy oracles to EvoMaster that need only the OpenAPI document and the logins of at least two users; their missed-check oracle found faults in a service with injected faults, but none in real APIs [Arcuri et al. 2025]. Recent fuzzing work names the core obstacle directly: broken access control "is underexplored in automated testing due to key challenges: the lack of reliable oracles and the difficulty of generating semantically valid attack requests" (arXiv 2507.15984).
 
 The usual answer to the oracle problem is the contract: the OpenAPI document says which operations exist and which security schemes protect them. But does the contract carry the information needed to recognise a real access-control violation? And what test setup would a black-box tester need to provoke one at all? We answer both questions on real, published, fixed vulnerabilities in open-source REST services that ship an OpenAPI document:
 
@@ -31,11 +31,11 @@ The usual answer to the oracle problem is the contract: the OpenAPI document say
 **Black-box REST testing and security oracles.**
 - Black-box testers generate requests from an OpenAPI document. Their default oracles detect crashes (5xx) and schema violations.
 - Access-policy oracles go further and compare responses across principals.
-- Evaluations rely on seeded faults or vulnerable-by-design services such as Juice Shop.
+- Evaluations use seeded faults, vulnerable-by-design services such as Juice Shop, and real APIs. On real APIs, the missed-check oracle of Arcuri et al. found no faults [Arcuri et al. 2025].
 
 **Real access-control vulnerabilities.**
-- Huang et al. detect BOLA in database-backed applications statically [Huang et al. 2024].
-- BACFuzz fuzzes PHP web apps for BOLA and BFLA with LLM-guided parameter selection and runtime feedback (arXiv 2507.15984).
+- Huang et al. detect BOLA vulnerabilities in database-backed applications [Huang et al. 2024].
+- BACFuzz is a gray-box fuzzer for BOLA and BFLA in PHP web applications (arXiv 2507.15984).
 - BOLAZ analyses the data flow of resource identifiers in RESTful APIs to prevent horizontal privilege escalation (arXiv 2507.02309).
 - IDORacle mediates SQL sinks at runtime in Java (arXiv 2609.12426).
 - A taxonomy of 107 HackerOne reports finds that 84 were confirmed BOLA, of which 11.9% are vertical privilege failures (arXiv 2605.25865).
@@ -43,7 +43,7 @@ The usual answer to the oracle problem is the contract: the OpenAPI document say
 
 None of these works asks what a contract-driven black-box tester would need for real vulnerabilities, or whether the contract carries the violated rule.
 
-**Contracts and silent change.** A companion study (under review; omitted for anonymity) finds that behavioural changes in REST services mostly leave the contract untouched. Here we ask the same question for security fixes.
+**Contracts and silent change.** A companion study (under review; omitted for anonymity) sampled 136 commits that change behaviour-path code but no contract file, in 47 REST services. It found that 44% of them change observable API behaviour, and that 91% of the client-breaking ones touch no contract annotation. Here we ask the same question for security fixes.
 
 ## 3. Study Design
 *(Summarised from the frozen plan `plan/R4_PLAN.md`.)*
@@ -55,7 +55,7 @@ For each advisory, we take as the fix the first commit reference that resolves. 
 
 ### 3.2 Eligibility, pool and sample
 An advisory is eligible if all of the following hold:
-- **Contract present.** The repository has a checked-in OpenAPI/Swagger document at the vulnerable version, outside test and example paths.
+- **Contract present.** At the vulnerable version, the repository has a checked-in file whose name contains `openapi` or `swagger`, with a `.yaml`, `.yml` or `.json` extension, outside test, example, mock and vendor paths.
 - **Source change.** The fix changes non-test Java, Kotlin or Go source.
 - **Size.** The fix has at most 2,000 changed source lines.
 
@@ -76,10 +76,10 @@ Advisories that share a fix commit are merged. The pool is hash-frozen before an
 Each item package contains:
 - the advisory summary and description, with links and reporter credits removed;
 - the fix diff;
-- the touched files before and after the fix;
-- the contract documents at the vulnerable version, truncated to 3,000 lines each.
+- up to 20 touched non-test source files, before and after the fix;
+- up to the three largest contract documents at the vulnerable version, each truncated to 3,000 lines, with an index of all of them.
 
-Coders do not see the commit message, the author, dates, or later history. The task text does not state the hypotheses.
+Commit messages, commit metadata, dates, later history, reporter credits and links are withheld or redacted. Two residual name collisions are documented: a repository owner name in import paths, and an ordinary word. The task text does not state the hypotheses.
 
 ### 3.4 Coding
 Two GPT-family coders and two Claude-family coders code every item independently with the same task text. The coding scheme is closed:
@@ -101,14 +101,14 @@ A family's final code is the agreement of its two coders; disagreement becomes U
 - **Test in fix:** the fix adds or modifies a test.
 
 ### 3.6 Hypotheses
-All four are pre-registered with one-sided binomial tests against 0.5 and a minimum of 20 items:
+All four were pre-registered. H-R4-1 to H-R4-3 use one-sided binomial tests against 0.5, with a minimum of 20 items each. H-R4-4 uses a κ threshold with a minimum of 30 items.
 - **H-R4-1:** most vulnerabilities need at least two principals to expose.
 - **H-R4-2:** most fixes are silent.
 - **H-R4-3:** when the contract describes the operation, it usually does not state the violated rule.
 - **H-R4-4:** cross-family κ on the vulnerability kind is at least 0.6, on at least 30 items.
 
 ## 4. Results
-*All numbers come from the single scoring run (`plan/r4_score_output.txt`). They are GPT final codes unless stated otherwise.*
+*Coding results come from the single scoring run (`plan/r4_score_output.txt`) and are GPT final codes unless stated otherwise. Funnel counts come from `mining/pool_inventory.json` and `mining/resolved.json`.*
 
 ### 4.1 Sample and reliability
 **Funnel.**
@@ -129,6 +129,7 @@ All four are pre-registered with one-sided binomial tests against 0.5 and a mini
   - setup (0.89, 0.70);
   - fix location (0.91, 0.80).
 - It is lowest for whether the contract states the violated rule (0.62, 0.70).
+- Within-family κ is computed over all 138 items. In dependent fields, NA (not access-control relevant) counts as a category.
 - Across families, κ on kind is 0.83 on the 83 items both decided (H-R4-4 passes), and κ on relevance is 0.86.
 
 ### 4.2 RQ1: kinds
@@ -176,9 +177,11 @@ The setup follows the kind closely:
 - middleware or filter: 27;
 - handlers: 25;
 - model binding: 4;
-- data queries: 3.
+- data queries: 3;
+- other: 5;
+- unclear: 8.
 
-Missing authentication is mostly fixed in middleware (11/17). Property-level flaws are fixed in service logic or model binding. 70 fixes (69%) add or modify a test.
+Missing authentication is mostly fixed in middleware (11/17). Most property-level flaws (9/13) are fixed in service logic or model binding. 70 fixes (69%) add or modify a test.
 
 ### 4.6 Illustrative cases
 These three items are ones on which both model families agree on kind and setup.
@@ -196,9 +199,10 @@ These three items are ones on which both model families agree on kind and setup.
   - **Contract:** this is one of the rare cases where both model families judged that the contract states the rule (administrator only). A two-role oracle could therefore check it directly.
 
 ## 5. Discussion
-- **Half of real access-control flaws are within reach of today's testers, half are not.**
-  - Missing authentication and many property-level flaws need no more than the credentials testers already use.
-  - The other half need a deliberate multi-principal setup: two users who own different objects, or users of different roles or tenants.
+- **About half of real access-control flaws need a multi-principal setup.**
+  - Of the 89 decided cases, 40 can in principle be provoked with no principal or one principal: missing authentication, and most property-level flaws.
+  - The other 49 need a deliberate multi-principal setup: two users who own different objects, or users of different roles or tenants.
+  - ⚠️ This is an inference: a single-credential test configuration cannot satisfy the coded setup of those 49. We did not measure whether existing tools detect the other 40.
   - Arcuri et al.'s oracles already assume two logins [Arcuri et al. 2025]. Our data suggest that tenant boundaries and role pairs must be configured too.
 - **The contract is the wrong place to look for the policy.**
   - Even when the vulnerable operation is documented, its contract almost never states who may do what.
@@ -206,7 +210,7 @@ These three items are ones on which both model families agree on kind and setup.
   - Contract-driven oracles must therefore infer the policy, for example from cross-user response comparisons or from consistency across operations [Arcuri et al. 2025].
   - Contract authors could close part of the gap by documenting roles, scopes, ownership and read-only properties.
 - **Security fixes are silent to contract consumers.**
-  - 91% of fixes leave the contract unchanged, which mirrors behavioural changes in general (companion study).
+  - 91% of fixes leave the contract unchanged. This is consistent with the companion study's finding for behavioural changes, where 91% of client-breaking silent changes touched no contract annotation.
   - Clients and gateways that rely on the contract cannot tell that an operation's access rules changed.
 - **A seed for benchmarks.**
   - Our frozen sample has 138 advisories, each with its fix commit, the contract at the vulnerable version, and codes from two model families. It can seed a real-vulnerability benchmark.
@@ -226,15 +230,17 @@ These three items are ones on which both model families agree on kind and setup.
   - A human spot-check of 20 items is prepared and will be reported separately.
 - **Sampling.**
   - Only reviewed GitHub advisories in two ecosystems with a resolvable fix commit are included, and Go dominates.
-  - 831 fixes were excluded because their project had no checked-in contract, so contract-first projects are over-represented.
+  - 831 fixes were excluded because no contract matching our detection rule existed at the vulnerable version, so contract-first projects are over-represented.
 - **Process.**
-  - The mining pipeline was implemented twice, independently by two agents. The two implementations agree exactly on pool and sample.
+  - The mining pipeline was implemented twice, independently by two agents.
+  - After a one-line query fix to the second implementation, the two agree exactly on pool membership, SHAs, mechanical fields and sample.
+  - They differ only in when the language field is computed, and in how one advisory is counted among the exclusions.
   - Four mechanical fixes were made before any coder saw a package.
   - One GPT coder was resumed after a capacity error.
 
 ## 7. Conclusion
 We studied 102 real access-control vulnerabilities in OpenAPI-described REST services:
-- About half can be exposed with no principal or one principal; the other half need two users or two roles.
+- Of the 89 with a decided setup, 40 can be exposed with no principal or one principal, and 49 need two users or two roles.
 - Almost all are observable over HTTP.
 - The contract rarely documents the vulnerable operation, and almost never the violated rule.
 - Fixes leave the contract unchanged.
@@ -248,7 +254,7 @@ An anonymised replication archive accompanies this submission ([anonymous link t
 - the key;
 - all blind packages, each with the upstream licence of every excerpt;
 - all codes;
-- a script that verifies the freezes and re-scores every number.
+- a script that verifies the freezes and re-scores every coding result byte for byte.
 
 ## Disclosure of AI use
 - **LLMs as instruments.** The study uses LLMs as measurement instruments. The GPT-family coders were `gpt-6.1-sol` via the Codex CLI, at high reasoning effort. The Claude-family coders were Claude Sonnet subagents with fresh context.

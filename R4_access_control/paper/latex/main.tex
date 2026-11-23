@@ -14,7 +14,7 @@
 \author{\IEEEauthorblockN{Anonymous Author(s)}\IEEEauthorblockA{Under double-anonymous review}}
 \maketitle
 \begin{abstract}
-Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, but are evaluated on seeded faults. We ask what such a tester would need to expose \emph{real} access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74\%) are access-control flaws reachable over HTTP. Only about half (49/89, 55\%) need two principals to expose: object-level and tenant-isolation flaws need two users of the same role and function-level flaws two roles, while missing authentication yields to an anonymous request and property-level flaws to a single user. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87\%; p = $2.1 \times 10^{-6}$); fixes leave the contract untouched in 93 of 102 (91\%). The two model families agree on vulnerability kind ($\kappa$ 0.83). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for half of real cases.
+Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, yet their positive findings of missed authorization checks come mostly from seeded or example services. We ask what such a tester would need to expose \emph{real} access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74\%) are access-control flaws reachable over HTTP. Of the 89 with a decided setup, only about half (49, 55\%) need two principals to expose: object-level and tenant-isolation flaws mostly need two users of the same role and function-level flaws mostly two roles, while all missing-authentication flaws yield to an anonymous request and most property-level flaws to a single user (40 of 89); 13 remain undecided. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87\%; p = $2.1 \times 10^{-6}$); fixes leave the contract untouched in 93 of 102 (91\%). The two model families agree on vulnerability kind ($\kappa$ 0.83). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for about half of real cases.
 \end{abstract}
 
 \section{Introduction}
@@ -24,7 +24,7 @@ Broken access control is the most critical class of API vulnerability: object-le
 \item Recent tools add access-policy oracles that compare the responses of different users.
 \end{itemize}
 
-These tools are evaluated almost exclusively on seeded faults or vulnerable-by-design services. Arcuri et al. add three access-policy oracles to EvoMaster that need only the OpenAPI document and the logins of at least two users; their missed-check oracle found faults in a service with injected faults, but none in real APIs~\cite{arcuri2025access}. Recent fuzzing work names the core obstacle directly: broken access control ``is underexplored in automated testing due to key challenges: the lack of reliable oracles and the difficulty of generating semantically valid attack requests'' ~\cite{arXiv2507_15984}.
+Their evaluations combine seeded faults, vulnerable-by-design services and real APIs, but positive findings for missed authorization checks come from the former. For example, Arcuri et al. add three access-policy oracles to EvoMaster that need only the OpenAPI document and the logins of at least two users; their missed-check oracle found faults in a service with injected faults, but none in real APIs~\cite{arcuri2025access}. Recent fuzzing work names the core obstacle directly: broken access control ``is underexplored in automated testing due to key challenges: the lack of reliable oracles and the difficulty of generating semantically valid attack requests'' ~\cite{arXiv2507_15984}.
 
 The usual answer to the oracle problem is the contract: the OpenAPI document says which operations exist and which security schemes protect them. But does the contract carry the information needed to recognise a real access-control violation? And what test setup would a black-box tester need to provoke one at all? We answer both questions on real, published, fixed vulnerabilities in open-source REST services that ship an OpenAPI document:
 
@@ -48,13 +48,13 @@ The usual answer to the oracle problem is the contract: the OpenAPI document say
 \begin{itemize}
 \item Black-box testers generate requests from an OpenAPI document. Their default oracles detect crashes (5xx) and schema violations.
 \item Access-policy oracles go further and compare responses across principals.
-\item Evaluations rely on seeded faults or vulnerable-by-design services such as Juice Shop.
+\item Evaluations use seeded faults, vulnerable-by-design services such as Juice Shop, and real APIs. On real APIs, the missed-check oracle of Arcuri et al. found no faults~\cite{arcuri2025access}.
 \end{itemize}
 
 \textbf{Real access-control vulnerabilities.}
 \begin{itemize}
-\item Huang et al. detect BOLA in database-backed applications statically~\cite{huang2024bola}.
-\item BACFuzz fuzzes PHP web apps for BOLA and BFLA with LLM-guided parameter selection and runtime feedback ~\cite{arXiv2507_15984}.
+\item Huang et al. detect BOLA vulnerabilities in database-backed applications~\cite{huang2024bola}.
+\item BACFuzz is a gray-box fuzzer for BOLA and BFLA in PHP web applications ~\cite{arXiv2507_15984}.
 \item BOLAZ analyses the data flow of resource identifiers in RESTful APIs to prevent horizontal privilege escalation ~\cite{arXiv2507_02309}.
 \item IDORacle mediates SQL sinks at runtime in Java ~\cite{arXiv2609_12426}.
 \item A taxonomy of 107 HackerOne reports finds that 84 were confirmed BOLA, of which 11.9\% are vertical privilege failures ~\cite{arXiv2605_25865}.
@@ -63,7 +63,7 @@ The usual answer to the oracle problem is the contract: the OpenAPI document say
 
 None of these works asks what a contract-driven black-box tester would need for real vulnerabilities, or whether the contract carries the violated rule.
 
-\textbf{Contracts and silent change.} A companion study (under review; omitted for anonymity) finds that behavioural changes in REST services mostly leave the contract untouched. Here we ask the same question for security fixes.
+\textbf{Contracts and silent change.} A companion study (under review; omitted for anonymity) sampled 136 commits that change behaviour-path code but no contract file, in 47 REST services. It found that 44\% of them change observable API behaviour, and that 91\% of the client-breaking ones touch no contract annotation. Here we ask the same question for security fixes.
 
 \section{Study Design}
 \emph{(Summarised from the frozen plan \texttt{plan/\allowbreak{}R4\_PLAN.md}.)}
@@ -76,7 +76,7 @@ For each advisory, we take as the fix the first commit reference that resolves. 
 \subsection{Eligibility, pool and sample}
 An advisory is eligible if all of the following hold:
 \begin{itemize}
-\item \textbf{Contract present.} The repository has a checked-in OpenAPI/Swagger document at the vulnerable version, outside test and example paths.
+\item \textbf{Contract present.} At the vulnerable version, the repository has a checked-in file whose name contains \texttt{openapi} or \texttt{swagger}, with a \texttt{.yaml}, \texttt{.yml} or \texttt{.json} extension, outside test, example, mock and vendor paths.
 \item \textbf{Source change.} The fix changes non-test Java, Kotlin or Go source.
 \item \textbf{Size.} The fix has at most 2,000 changed source lines.
 \end{itemize}
@@ -103,11 +103,11 @@ Each item package contains:
 \begin{itemize}
 \item the advisory summary and description, with links and reporter credits removed;
 \item the fix diff;
-\item the touched files before and after the fix;
-\item the contract documents at the vulnerable version, truncated to 3,000 lines each.
+\item up to 20 touched non-test source files, before and after the fix;
+\item up to the three largest contract documents at the vulnerable version, each truncated to 3,000 lines, with an index of all of them.
 \end{itemize}
 
-Coders do not see the commit message, the author, dates, or later history. The task text does not state the hypotheses.
+Commit messages, commit metadata, dates, later history, reporter credits and links are withheld or redacted. Two residual name collisions are documented: a repository owner name in import paths, and an ordinary word. The task text does not state the hypotheses.
 
 \subsection{Coding}
 Two GPT-family coders and two Claude-family coders code every item independently with the same task text. The coding scheme is closed:
@@ -133,7 +133,7 @@ A family's final code is the agreement of its two coders; disagreement becomes U
 \end{itemize}
 
 \subsection{Hypotheses}
-All four are pre-registered with one-sided binomial tests against 0.5 and a minimum of 20 items:
+All four were pre-registered. H-R4-1 to H-R4-3 use one-sided binomial tests against 0.5, with a minimum of 20 items each. H-R4-4 uses a $\kappa$ threshold with a minimum of 30 items.
 \begin{itemize}
 \item \textbf{H-R4-1:} most vulnerabilities need at least two principals to expose.
 \item \textbf{H-R4-2:} most fixes are silent.
@@ -142,7 +142,7 @@ All four are pre-registered with one-sided binomial tests against 0.5 and a mini
 \end{itemize}
 
 \section{Results}
-\emph{All numbers come from the single scoring run (\texttt{plan/\allowbreak{}r4\_score\_output.txt}). They are GPT final codes unless stated otherwise.}
+\emph{Coding results come from the single scoring run (\texttt{plan/\allowbreak{}r4\_score\_output.txt}) and are GPT final codes unless stated otherwise. Funnel counts come from \texttt{mining/\allowbreak{}pool\_inventory.json} and \texttt{mining/\allowbreak{}resolved.json}.}
 
 \subsection{Sample and reliability}
 \textbf{Funnel.}
@@ -170,6 +170,7 @@ All four are pre-registered with one-sided binomial tests against 0.5 and a mini
 \item fix location (0.91, 0.80).
 \end{itemize}
 \item It is lowest for whether the contract states the violated rule (0.62, 0.70).
+\item Within-family $\kappa$ is computed over all 138 items. In dependent fields, NA (not access-control relevant) counts as a category.
 \item Across families, $\kappa$ on kind is 0.83 on the 83 items both decided (H-R4-4 passes), and $\kappa$ on relevance is 0.86.
 \end{itemize}
 
@@ -230,10 +231,12 @@ The setup follows the kind closely:
 \item middleware or filter: 27;
 \item handlers: 25;
 \item model binding: 4;
-\item data queries: 3.
+\item data queries: 3;
+\item other: 5;
+\item unclear: 8.
 \end{itemize}
 
-Missing authentication is mostly fixed in middleware (11/17). Property-level flaws are fixed in service logic or model binding. 70 fixes (69\%) add or modify a test.
+Missing authentication is mostly fixed in middleware (11/17). Most property-level flaws (9/13) are fixed in service logic or model binding. 70 fixes (69\%) add or modify a test.
 
 \subsection{Illustrative cases}
 These three items are ones on which both model families agree on kind and setup.
@@ -260,10 +263,11 @@ These three items are ones on which both model families agree on kind and setup.
 
 \section{Discussion}
 \begin{itemize}
-\item \textbf{Half of real access-control flaws are within reach of today's testers, half are not.}
+\item \textbf{About half of real access-control flaws need a multi-principal setup.}
 \begin{itemize}
-\item Missing authentication and many property-level flaws need no more than the credentials testers already use.
-\item The other half need a deliberate multi-principal setup: two users who own different objects, or users of different roles or tenants.
+\item Of the 89 decided cases, 40 can in principle be provoked with no principal or one principal: missing authentication, and most property-level flaws.
+\item The other 49 need a deliberate multi-principal setup: two users who own different objects, or users of different roles or tenants.
+\item \inferred{} This is an inference: a single-credential test configuration cannot satisfy the coded setup of those 49. We did not measure whether existing tools detect the other 40.
 \item Arcuri et al.'s oracles already assume two logins~\cite{arcuri2025access}. Our data suggest that tenant boundaries and role pairs must be configured too.
 \end{itemize}
 \item \textbf{The contract is the wrong place to look for the policy.}
@@ -275,7 +279,7 @@ These three items are ones on which both model families agree on kind and setup.
 \end{itemize}
 \item \textbf{Security fixes are silent to contract consumers.}
 \begin{itemize}
-\item 91\% of fixes leave the contract unchanged, which mirrors behavioural changes in general (companion study).
+\item 91\% of fixes leave the contract unchanged. This is consistent with the companion study's finding for behavioural changes, where 91\% of client-breaking silent changes touched no contract annotation.
 \item Clients and gateways that rely on the contract cannot tell that an operation's access rules changed.
 \end{itemize}
 \item \textbf{A seed for benchmarks.}
@@ -307,11 +311,13 @@ These three items are ones on which both model families agree on kind and setup.
 \item \textbf{Sampling.}
 \begin{itemize}
 \item Only reviewed GitHub advisories in two ecosystems with a resolvable fix commit are included, and Go dominates.
-\item 831 fixes were excluded because their project had no checked-in contract, so contract-first projects are over-represented.
+\item 831 fixes were excluded because no contract matching our detection rule existed at the vulnerable version, so contract-first projects are over-represented.
 \end{itemize}
 \item \textbf{Process.}
 \begin{itemize}
-\item The mining pipeline was implemented twice, independently by two agents. The two implementations agree exactly on pool and sample.
+\item The mining pipeline was implemented twice, independently by two agents.
+\item After a one-line query fix to the second implementation, the two agree exactly on pool membership, SHAs, mechanical fields and sample.
+\item They differ only in when the language field is computed, and in how one advisory is counted among the exclusions.
 \item Four mechanical fixes were made before any coder saw a package.
 \item One GPT coder was resumed after a capacity error.
 \end{itemize}
@@ -320,7 +326,7 @@ These three items are ones on which both model families agree on kind and setup.
 \section{Conclusion}
 We studied 102 real access-control vulnerabilities in OpenAPI-described REST services:
 \begin{itemize}
-\item About half can be exposed with no principal or one principal; the other half need two users or two roles.
+\item Of the 89 with a decided setup, 40 can be exposed with no principal or one principal, and 49 need two users or two roles.
 \item Almost all are observable over HTTP.
 \item The contract rarely documents the vulnerable operation, and almost never the violated rule.
 \item Fixes leave the contract unchanged.
@@ -336,7 +342,7 @@ An anonymised replication archive accompanies this submission ([anonymous link t
 \item the key;
 \item all blind packages, each with the upstream licence of every excerpt;
 \item all codes;
-\item a script that verifies the freezes and re-scores every number.
+\item a script that verifies the freezes and re-scores every coding result byte for byte.
 \end{itemize}
 
 \section*{Disclosure of AI use}
