@@ -18,7 +18,17 @@ sys.path.insert(0, str(REPO / 'research/10_paper/reproduce')); sys.path.insert(0
 from build_archive import STUDY_ID, anonymize, classify, git_dir, secret_hit, show  # noqa: E402
 from licence_at_parent import NAMES as R1_NAMES  # noqa: E402
 
-NAMES = R1_NAMES + ('license.txt', 'License.txt', 'LICENSE.rst')
+NAMES = R1_NAMES + ('license.txt', 'License.txt', 'LICENSE.rst', 'LICENSING.markdown')
+EXTRA_RULES = [('server side public license', 'RESTRICTIVE'), ('lesser general public license', 'LGPL'), ('the postgresql license', 'PostgreSQL')]
+
+
+def classify4(text, name):
+    head = text[:4000].decode('utf-8', 'replace').lower()
+    for pat, lab in EXTRA_RULES:
+        if pat in head: return lab
+    c = classify(text)
+    if c == 'UNKNOWN' and 'all rights reserved' in head: return 'RESTRICTIVE'   # proprietary EULA
+    return c
 EXTRA_ID = [b'epsilonnotpstu']          # repository owner name (identity) -- must not appear in the anonymised copy
 EXCLUDE_PARTS = ('__pycache__',)
 
@@ -40,11 +50,10 @@ def main():
             wb, ab = w_.read_bytes(), a_.read_bytes()
             if wb != ab and wb.replace(b'\r\n', b'\n') == ab: a_.write_bytes(wb); crlf += 1   # freezes hash working-tree bytes
     key = {r['item_id']: r for r in csv.DictReader(open(R3 / 'mining/key/r4_key.csv', newline='', encoding='utf-8'))}
-    lic, cache = {}, {}
+    lic, cache, withheld = {}, {}, set()
     for pkg in sorted(p for p in (R3 / 'packages').iterdir() if p.is_dir()):
         for it in sorted(p for p in pkg.iterdir() if p.is_dir() and p.name.startswith('A')):
             dst = out / 'R4_access_control/packages' / pkg.name / it.name
-            shutil.copytree(it, dst)
             r = key.get(it.name)
             if not r: problems.append(f'no key row for {pkg.name}/{it.name}'); continue
             rk = (r['repo'], r['parent_sha'])
@@ -56,8 +65,21 @@ def main():
                 cache[rk] = (found, show(gd, r['parent_sha'], 'NOTICE') if gd else None, gd is not None)
             found, notice, have = cache[rk]
             if not found: problems.append(f'no licence at parent: {pkg.name}/{it.name} ({r["repo"]}; clone {"found" if have else "MISSING"})'); continue
-            name, text = found; cls = classify(text)
-            if cls in ('RESTRICTIVE', 'UNKNOWN'): problems.append(f'{pkg.name}/{it.name}: licence class {cls} ({r["repo"]})')
+            name, text = found; cls = classify4(text, name)
+            if name == 'LICENSING.markdown':                     # Liferay dual licence: ship the LGPL text alongside
+                lg = show(gd, r['parent_sha'], 'LICENSES/LGPL-2.1-or-later.txt')
+                if lg: text += b'\n\n----- LICENSES/LGPL-2.1-or-later.txt -----\n' + lg
+            if cls == 'UNKNOWN': problems.append(f'{pkg.name}/{it.name}: licence class UNKNOWN ({r["repo"]})')
+            if cls == 'RESTRICTIVE':
+                # withhold upstream excerpts; keep item.md (advisory text, GitHub Advisory Database, CC-BY-4.0) and record original hashes
+                dst.mkdir(parents=True)
+                shutil.copy2(it / 'item.md', dst / 'item.md')
+                with open(dst.parent / 'WITHHELD.sha256', 'a') as wf:
+                    for f in sorted((x for x in it.rglob('*') if x.is_file() and x.name != 'item.md'), key=lambda x: x.relative_to(it.parent).as_posix().encode()):
+                        wf.write(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(it.parent).as_posix()}\n')
+                withheld.add(it.name)
+            else:
+                shutil.copytree(it, dst)
             ld = dst.parent / 'UPSTREAM_LICENSES'; ld.mkdir(exist_ok=True)
             (ld / f'{it.name}.txt').write_bytes(f'Upstream: {r["repo"]} at parent commit {r["parent_sha"]} (file {name}); licence class: {cls}\n\n'.encode() + text
                                                 + ((b'\n\n----- NOTICE -----\n' + notice) if notice else b''))
@@ -86,7 +108,7 @@ def main():
         if secret_hit(t): hits.append(str(p.relative_to(out)))
         if STUDY_ID.search(t) or any(s in b for s in EXTRA_ID): idhits.append(str(p.relative_to(out)))
     classes = {c: sum(r['licence_class'] == c for r in lic.values()) for c in sorted({r['licence_class'] for r in lic.values()})}
-    rep = [f'files scanned: {nfiles}', f'CRLF working-tree restorations: {crlf}', f'items with licence: {len(lic)} / {len(key)}',
+    rep = [f'files scanned: {nfiles}', f'CRLF working-tree restorations: {crlf}', f'items with licence: {len(lic)} / {len(key)}', f'items with upstream excerpts withheld (restrictive licence): {sorted(withheld)}',
            f'secret-pattern files: {len(hits)}', *[f'  {h}' for h in hits],
            f'author-identity files: {len(idhits)}' + ('' if a.anonymize else ' (expected in the de-anonymised archive)'), *([f'  {h}' for h in idhits] if a.anonymize else []),
            'licence classes: ' + json.dumps(classes), f'problems: {len(problems)}', *[f'  {p}' for p in problems]]
