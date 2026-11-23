@@ -61,6 +61,17 @@ An advisory is eligible if all of the following hold:
 
 Advisories that share a fix commit are merged. The pool is hash-frozen before any package is built. We take all items, up to 160, with at most four per repository by a seeded draw.
 
+**Resulting counts.**
+- **Query.** It returned 2,025 advisories; 53 were withdrawn.
+- **Fix commits.** 945 advisories cite no fix commit, and one commit could not be fetched. 1,026 resolved to a fix commit.
+- **Pool.**
+  - 831 fixes had no checked-in contract at the vulnerable version.
+  - 9 touched no non-test Java/Kotlin/Go source.
+  - 1 exceeded 2,000 changed lines.
+  - 9 duplicates were merged.
+  - The eligible pool holds 176 items from 70 repositories (Go 136, Maven 40).
+- **Sample.** The per-repository cap gives 138 items from 70 repositories.
+
 ### 3.3 Packages and blinding
 Each item package contains:
 - the advisory summary and description, with links and reporter credits removed;
