@@ -9,7 +9,7 @@ Layout:
   LICENSES/item_licences.csv, SCAN_REPORT.txt, MANIFEST.sha256, README.md (+ ANONYMIZATION.md with --anonymize)
 Exits non-zero if an item has no licence at its parent, a licence is restrictive/unknown, or a scan finds a secret or (anonymised) identity string.
 Secret / anonymisation helpers are shared with the R1 builder (research/10_paper/reproduce/build_archive.py)."""
-import argparse, csv, hashlib, io, json, shutil, subprocess, sys, tarfile
+import argparse, csv, hashlib, io, json, re, shutil, subprocess, sys, tarfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -19,7 +19,7 @@ from build_archive import STUDY_ID, anonymize, classify, git_dir, secret_hit, sh
 from licence_at_parent import NAMES as R1_NAMES  # noqa: E402
 
 NAMES = R1_NAMES + ('license.txt', 'License.txt', 'LICENSE.rst', 'LICENSING.markdown')
-EXTRA_RULES = [('server side public license', 'RESTRICTIVE'), ('lesser general public license', 'LGPL'), ('the postgresql license', 'PostgreSQL')]
+EXTRA_RULES = [('server side public license', 'RESTRICTIVE'), ('non-commercial license', 'RESTRICTIVE'), ('lesser general public license', 'LGPL'), ('the postgresql license', 'PostgreSQL')]
 
 
 def classify4(text, name):
@@ -49,6 +49,15 @@ def main():
         if w_.is_file():
             wb, ab = w_.read_bytes(), a_.read_bytes()
             if wb != ab and wb.replace(b'\r\n', b'\n') == ab: a_.write_bytes(wb); crlf += 1   # freezes hash working-tree bytes
+    # public advisory text: PoC example tokens (Authorization headers, AWS example keys, PEM blocks) redacted in the archive copy;
+    # the original is re-downloadable from GitHub and its sha256 is recorded in mining/pool_freeze.json
+    adv = out / 'R4_access_control/mining/advisories.json'
+    if adv.is_file():
+        t = adv.read_text(encoding='utf-8')
+        t = re.sub(r'([Aa]uthorization: *(?:Bearer|Basic) +)[A-Za-z0-9+/=._-]{8,}', r'\1[REDACTED]', t)
+        t = re.sub(r'(?:AKIA|ASIA)[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20}', '[REDACTED]', t)
+        t = re.sub(r'-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----', '[REDACTED PEM]', t, flags=re.S)
+        adv.write_text(t, encoding='utf-8')
     key = {r['item_id']: r for r in csv.DictReader(open(R3 / 'mining/key/r4_key.csv', newline='', encoding='utf-8'))}
     lic, cache, withheld = {}, {}, set()
     for pkg in sorted(p for p in (R3 / 'packages').iterdir() if p.is_dir()):
@@ -166,6 +175,9 @@ The mining needs network access, `gh` and git. Run `mining/claude/r4p.py collect
 
 ## Licences
 Upstream excerpts remain under their upstream licences, as listed per item. Study code and data written by the authors fall under the repository licence.
+
+## Advisory text
+`mining/advisories.json` is GitHub Advisory Database content (CC-BY-4.0). In this archive copy, example credentials from the advisories' own proofs of concept are replaced by `[REDACTED]`: Authorization header values, AWS example keys and PEM blocks. The original file can be re-downloaded from GitHub, and its sha256 is in `mining/pool_freeze.json`.
 
 ## Not included
 - the git caches of the upstream repositories;
