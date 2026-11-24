@@ -51,7 +51,7 @@
 | Paper | ফাইল | আকার |
 |---|---|---|
 | R1 | `R1_replication/R1_anon_23ef64d.tar.gz` | ৫৯ MB (পুরোনো `R1_anon_49f92e2` বাতিল) |
-| R3 | `R3_replication/R3_anon_8e282f7.tar.gz` | ১১ MB (interim; `r3b_finish.sh` চালালে R3b-সহ চূড়ান্ত archive নিজে থেকেই তৈরি হবে) |
+| R3 (R3b-সহ) | `R3_replication/R3_anon_a857c05.tar.gz` | ১১ MB (পুরোনো `R3_anon_acda551` বাতিল) |
 | R4 (R4b-সহ) | `R4_replication/R4_anon_525e970.tar.gz` | ৩৮ MB (পুরোনো `R4_anon_93c6a5f` বাতিল) |
 
 **কীভাবে:**
@@ -101,13 +101,13 @@
   - দুই model family-র মিল: κ = 1.00।
   - Paper v0.4-এর §4.7-এ যোগ করা হয়েছে।
 
-**R3b (follow-up, অর্ধেক শেষ):**
-- R3-এর "পরিবর্তিত আচরণ contract-এ লেখা ছিল না" দাবিটা পূর্ণ contract দিয়ে আবার যাচাই করা হচ্ছে।
-- Claude coder-রা কাজ শেষ করেছে, কিন্তু GPT coder (G5, G6) Codex-এর limit-এ আটকে গেছে।
-- **রাত ১০:০৯-এর পর একটি command চালালেই R3b পুরো শেষ হবে:**
-  `bash "R3_silent_breaking/collab/scripts/r3b_finish.sh"`
-  এটা coder চালানো, audit, freeze, একবারের scoring আর commit, সবই নিজে করবে।
-- এরপর ফলটা R3 paper-এ (§4.4 আর §6) যোগ করতে হবে।
+**R3b (follow-up, pre-registered, সম্পন্ন):**
+- পূর্ণ contract দিয়ে আবার যাচাই করা হয়েছে, প্রতিটি "লেখা আছে" উত্তরের সাথে contract থেকে হুবহু উদ্ধৃতি বাধ্যতামূলক ছিল।
+- পরিবর্তিত আচরণ contract-এ লেখা ছিল: মাত্র **২/৬০**।
+- **H-R3-4 PASS:** ৯৭% পরিবর্তন contract-এ লেখা নেই।
+- সব উদ্ধৃতি contract-এ হুবহু আছে।
+- **সতর্কতা:** Codex-এর limit থাকায় GPT coder-এর জায়গায় Claude Opus ব্যবহার করা হয়েছে, তাই দুই coder pair-ই Claude family-র। এটা paper-এ লেখা আছে।
+- R3 paper v0.4-এর §4.7-এ যোগ করা হয়েছে। রাতে কোনো command চালানোর দরকার নেই।
 
 ## ৫. কোথায় কী
 - Resume-এর বিস্তারিত তথ্য: `RESUME_HERE.md`।

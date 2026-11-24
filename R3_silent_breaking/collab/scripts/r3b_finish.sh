@@ -1,4 +1,6 @@
 #!/bin/bash
+# OBSOLETE (2026-11-24): R3b was completed with Claude Opus substitutes for G5/G6 (P-R3b-2) and scored. Do not run.
+exit 0
 # R3b-এর বাকি কাজ এক command-এ শেষ করে (Codex-এর usage limit reset হওয়ার পর চালাবেন, ২০২৬-১১-২৪ রাত ১০:০৯-এর পরে)।
 # ব্যবহার:  bash "R3_silent_breaking/collab/scripts/r3b_finish.sh"
 # ধাপ:

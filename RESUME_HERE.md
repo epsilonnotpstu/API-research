@@ -79,16 +79,17 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
 - Paper v0.4 §4.7.
 - Archive: `R4_replication/R4_anon_525e970`.
 
-**R3b (follow-up, full contracts): HALF DONE.**
-- The Claude coders H5 and H6 are complete. The GPT coders G5 and G6 are blocked by the Codex usage limit, which resets at 22:09 on 2026-11-24.
-- To finish, run `bash R3_silent_breaking/collab/scripts/r3b_finish.sh`. It resumes the coders, audits, freezes, scores once, commits and rebuilds the R3 archive.
-- Then add the result to R3 paper §4.4 and §6.
+**R3b (follow-up, full contracts): DONE.**
+- At the user's request, Claude Opus subagents substituted for the GPT coders (P-R3b-2).
+- Result: 2/60 specified; H-R3-4 PASS 58/60; quotes 100% valid.
+- R3 paper v0.4 §4.7.
+- Archive: `R3_replication/R3_anon_a857c05`. `r3b_finish.sh` is now obsolete.
 
 **Codex T59 (anonymity and consistency review):** fixed, with anonymous companion cross-references across R1, R3 and R4. R1 has an AI-disclosure section, a figure path fix and a heading fix.
 
 **Archives (Shared Data):**
 - R1: `R1_anon_23ef64d`.
-- R3: `R3_anon_8e282f7` (interim).
+- R3: `R3_anon_a857c05`.
 - R4: `R4_anon_525e970`.
 - Each also exists as `.tar.gz`. Older archive folders are superseded.
 
