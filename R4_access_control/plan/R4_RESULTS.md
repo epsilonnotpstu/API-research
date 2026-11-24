@@ -1,4 +1,5 @@
 # R4 results: real access-control vulnerabilities vs contract-driven black-box testing
+*See also the pre-registered follow-up with full contracts: `plan/R4b_RESULTS.md`. It confirms H-R4-3 (81%) and adds H-R4-5 (37.5% of documented vulnerable operations declare no security).*
 Claude (supervisor-delegated), 2026-11-23, about 20:40.
 
 **Scoring and freezes.**

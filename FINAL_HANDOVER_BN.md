@@ -52,7 +52,7 @@
 |---|---|---|
 | R1 | `R1_replication/R1_anon_49f92e2.tar.gz` | ৫৯ MB |
 | R3 | `R3_replication/R3_anon_acda551.tar.gz` | ৬.৩ MB |
-| R4 | `R4_replication/R4_anon_<সর্বশেষ>.tar.gz` | ১৭ MB+ (R4b যোগ হলে নতুন build হবে) |
+| R4 (R4b-সহ) | `R4_replication/R4_anon_525e970.tar.gz` | ৩৮ MB (পুরোনো `R4_anon_93c6a5f` বাতিল) |
 
 **কীভাবে:**
 1. Zenodo-তে upload করুন। Review-এর সময় "restricted" রাখুন, অথবা anonymous view link দেওয়া যায় এমন কোথাও রাখুন (যেমন OSF-এর anonymous view-only link)।
@@ -94,7 +94,20 @@
 - এর প্রায় অর্ধেক ধরতে ২ জন user লাগে: যে ৮৯টিতে সিদ্ধান্ত হয়েছে, তার মধ্যে ৪৯টি।
 - Fix করার সময় contract বদলায় না: ৯১%।
 - যে নিয়মটা ভাঙা হয়েছে, তা contract-এ লেখা থাকে না: ৮৭%।
-- **R4b (follow-up):** পূর্ণ contract দিয়ে একই প্রশ্ন আবার যাচাই করা হচ্ছে। ফল আসলে এখানে যোগ হবে।
+- **R4b (follow-up, pre-registered, সম্পন্ন):** পূর্ণ contract দিয়ে আবার যাচাই করা হয়েছে, আর প্রতিটি উত্তরের সাথে contract-এর লাইন উল্লেখ বাধ্যতামূলক ছিল। এতে মূল দাবি আরও শক্ত হয়েছে:
+  - vulnerable operation contract-এ আছে: ৫৬/১০২;
+  - ভাঙা নিয়ম contract-এ লেখা নেই: ৮১% (৪৪/৫৪);
+  - **নতুন ফল:** ৩৭.৫% documented vulnerable operation-এ কোনো security requirement-ই ঘোষিত নেই;
+  - দুই model family-র মিল: κ = 1.00।
+  - Paper v0.4-এর §4.7-এ যোগ করা হয়েছে।
+
+**R3b (follow-up, অর্ধেক শেষ):**
+- R3-এর "পরিবর্তিত আচরণ contract-এ লেখা ছিল না" দাবিটা পূর্ণ contract দিয়ে আবার যাচাই করা হচ্ছে।
+- Claude coder-রা কাজ শেষ করেছে, কিন্তু GPT coder (G5, G6) Codex-এর limit-এ আটকে গেছে।
+- **রাত ১০:০৯-এর পর একটি command চালালেই R3b পুরো শেষ হবে:**
+  `bash "R3_silent_breaking/collab/scripts/r3b_finish.sh"`
+  এটা coder চালানো, audit, freeze, একবারের scoring আর commit, সবই নিজে করবে।
+- এরপর ফলটা R3 paper-এ (§4.4 আর §6) যোগ করতে হবে।
 
 ## ৫. কোথায় কী
 - Resume-এর বিস্তারিত তথ্য: `RESUME_HERE.md`।

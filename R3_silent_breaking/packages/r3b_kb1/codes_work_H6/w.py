@@ -1,0 +1,22 @@
+import csv
+N="NO_CONTRACT"
+R=[
+("D001","VariantAnnotation response model gains an errorMessage field.","UNKNOWN",N,"","UNSPECIFIED","",2,"Model field added; no contract checked in; operation not visible in diff."),
+("D002","Flag evaluation result reports segmentID only for the segment that matched a variant, rather than the last evaluated segment.","POST /api/v1/evaluation",N,"","UNSPECIFIED","",2,"No contract checked in; operation inferred from flagr eval handler."),
+("D003","Pushes to a branch that has a merge queue are no longer rejected by the pre-receive rule check.","UNKNOWN","UNCLEAR","","UNSPECIFIED","",1,"Git pre-receive hook, not a REST route; merge queue absent from contract."),
+("D004","Hook resources created during sync get tracking metadata per the configured tracking method (annotation/label) with label truncation to 63 chars.","UNKNOWN","UNCLEAR","","UNSPECIFIED","",1,"Controller internals; no direct HTTP operation identifiable; swagger silent on hook tracking."),
+("D005","Bridge representation gains a websocketConfiguration field, and port/keepAlive/sessionExpiry/cleanStart etc. no longer need to be non-null.","GET /api/v1/management/bridges; POST /api/v1/management/bridges; PUT /api/v1/management/bridges/{bridgeId}","PRESENT","contract/ext__hivemq-edge-openapi-2024.6.yaml:3047","UNSPECIFIED","",2,"Bridge schema has no websocketConfiguration property."),
+("D006","The channel query parameter now defaults to 1 instead of 0 when omitted.","GET /{uniqueId}/live.m3u8; GET /{uniqueId}/{index}.ts","ABSENT","","UNSPECIFIED","",2,"Video stream endpoints not in openapi.yaml."),
+("D007","Maximum length of path and build in the generate request raised from 20 to 120 characters.","UNKNOWN",N,"","UNSPECIFIED","",2,"No contract; endpoint not shown in diff."),
+("D008","Saved commands list is now sorted by description.","GET /commands/send","PRESENT","contract/openapi.yaml:300","UNSPECIFIED","",2,"Contract describes the list but says nothing about ordering."),
+("D009","GET levels accepts an include-aliases boolean query parameter (default false) that adds aliases to the location levels response.","GET /levels",N,"","UNSPECIFIED","",3,"No contract checked in."),
+("D010","Target objects' namespace normalization now re-applies app instance tracking metadata when the namespace is modified.","UNKNOWN","UNCLEAR","","UNSPECIFIED","",1,"Internal controller state comparison; no specific HTTP route."),
+("D011","Wallet response POST now accepts JARM (direct_post.jwt) responses and verifies their signature; default response mode becomes direct_post.jwt.","POST /wallet/direct_post",N,"","UNSPECIFIED","",2,"No contract checked in."),
+("D012","Accept header is no longer treated as a header to be forwarded/exposed in responses.","UNKNOWN","ABSENT","","UNSPECIFIED","",1,"Only swagger-ui deployment files in contract; no API operations."),
+("D013","The comment_id query parameter is now decoded from short ID to internal ID.","GET /answer/api/v1/comment/page","PRESENT","contract/docs__swagger.yaml:4886","UNSPECIFIED","",2,"Documented params exclude comment_id; ID format not described."),
+("D014","Deleting a branch via the GitHub webhook now unpublishes a published workflow that is left with no versions and updates the index otherwise.","DELETE /workflows/github","PRESENT","contract/dockstore-webservice__src__main__resources__openapi3__openapi.yaml:5662","UNSPECIFIED","",2,"Description covers only deleting matching versions, not unpublishing."),
+("D015","OAuth authorize, userinfo and OIDC login placeholder endpoints now return 405 with failed status instead of 200 success.","GET /api/v1/oauth/authorize; GET /api/v1/oauth/userinfo; GET /api/v1/oidc/login",N,"","UNSPECIFIED","",3,"No contract checked in."),
+]
+with open("codes_H6.csv","w",newline="") as f:
+    w=csv.writer(f);w.writerow("item_id,changed_behaviour,affected_operation,contract_operation,op_locator,contract_specified,spec_quote,confidence,rationale".split(","));w.writerows(R)
+open("codes_report_H6.md","w").write("# H6 report\n\nHard cases: D003, D004, D010 are internal/git-hook changes with no identifiable REST operation (UNKNOWN/UNCLEAR). D012 header definition change has no API operation; contract has only swagger-ui deployment files. D006 stream endpoints absent from openapi.yaml. D005 and D008 operations present but contract silent on the changed field/order. Items with no contract documents coded NO_CONTRACT/UNSPECIFIED.\n")
