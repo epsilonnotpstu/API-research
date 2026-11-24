@@ -4,16 +4,19 @@ import hashlib, os, subprocess, sys
 from pathlib import Path
 
 B = Path(__file__).resolve().parents[2]
-FREEZES = ['plan/r3_plan_freeze.sha256', 'plan/r3_packages_freeze.sha256', 'plan/r3_outputs_freeze.sha256']
+FREEZES = ['plan/r3_plan_freeze.sha256', 'plan/r3_packages_freeze.sha256', 'plan/r3_outputs_freeze.sha256',
+           'plan/r3b_plan_freeze.sha256', 'plan/r3b_packages_freeze.sha256', 'plan/r3b_outputs_freeze.sha256']
+PENDING_OK = {'plan/r3b_outputs_freeze.sha256'}   # R3b GPT coders pending (P-R3b-1) until scored
 
 
-def tree(d):
+def tree(d, letter='B'):
     """= (cd d && find B* -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum), exactly as r3_freeze_packages.sh ran it.
     NOTE: the freeze was made under LANG=en_US.UTF-8, and `sort -z` collates by locale (not byte order), so the same locale
     is forced here; under LC_ALL=C the TREE hashes differ although no file differs."""
-    cmd = 'find B* -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum'
-    r = subprocess.run(['bash', '-c', cmd], cwd=d, capture_output=True, text=True, env={**os.environ, 'LC_ALL': 'en_US.UTF-8'})
-    n = sum(1 for p in d.glob('B*/**/*') if p.is_file())
+    cmd = f'find {letter}* -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum'
+    loc = 'en_US.UTF-8' if letter == 'B' else 'C'   # R3 trees were frozen under en_US.UTF-8, R3b trees under C
+    r = subprocess.run(['bash', '-c', cmd], cwd=d, capture_output=True, text=True, env={**os.environ, 'LC_ALL': loc})
+    n = sum(1 for p in d.glob(letter + '*/**/*') if p.is_file())
     return (r.stdout.split()[0] if r.returncode == 0 and r.stdout else None), n
 
 
@@ -28,10 +31,13 @@ def main():
     bad = 0; anon = anonymised()
     for fr in FREEZES:
         ok = n = 0
+        if not (B / fr).is_file():
+            if fr in PENDING_OK: print(f'PENDING {fr}: R3b not yet scored (P-R3b-1)'); continue
+            bad += 1; print(f'FAIL missing {fr}'); continue
         for line in (B / fr).read_text().splitlines():
             h, p = line.split('  ', 1); n += 1
             if p.startswith('TREE:'):
-                d = B / p[5:].removesuffix('/B*'); got, k = tree(d) if d.is_dir() else (None, 0)
+                letter = p[-2]; d = B / p[5:-3]; got, k = tree(d, letter) if d.is_dir() else (None, 0)
                 good = got == h and k > 0
             else:
                 f = B / p; good = f.is_file() and hashlib.sha256(f.read_bytes()).hexdigest() == h

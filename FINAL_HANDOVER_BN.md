@@ -50,7 +50,7 @@
 
 | Paper | ফাইল | আকার |
 |---|---|---|
-| R1 | `R1_replication/R1_anon_49f92e2.tar.gz` | ৫৯ MB |
+| R1 | `R1_replication/R1_anon_23ef64d.tar.gz` | ৫৯ MB (পুরোনো `R1_anon_49f92e2` বাতিল) |
 | R3 | `R3_replication/R3_anon_acda551.tar.gz` | ৬.৩ MB |
 | R4 (R4b-সহ) | `R4_replication/R4_anon_525e970.tar.gz` | ৩৮ MB (পুরোনো `R4_anon_93c6a5f` বাতিল) |
 

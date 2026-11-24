@@ -40,9 +40,11 @@ def main():
             wb, ab = w_.read_bytes(), a_.read_bytes()
             if wb != ab and wb.replace(b'\r\n', b'\n') == ab: a_.write_bytes(wb); crlf += 1   # freezes hash working-tree bytes
     key = {r['item_id']: r for r in csv.DictReader(open(R3 / 'mining/key/r3_key.csv', newline='', encoding='utf-8'))}
+    if (R3 / 'mining/key/r3b_key.csv').is_file():          # R3b follow-up items D### -> R3 item -> repo/parent
+        for r in csv.DictReader(open(R3 / 'mining/key/r3b_key.csv', newline='', encoding='utf-8')): key[r['r3b_id']] = key[r['r3_id']]
     lic, cache = {}, {}
     for pkg in sorted(p for p in (R3 / 'packages').iterdir() if p.is_dir()):
-        for it in sorted(p for p in pkg.iterdir() if p.is_dir() and p.name.startswith('B')):
+        for it in sorted(p for p in pkg.iterdir() if p.is_dir() and p.name[:1] in ('B', 'D') and p.name[1:].isdigit()):
             dst = out / 'R3_silent_breaking/packages' / pkg.name / it.name
             shutil.copytree(it, dst)
             r = key.get(it.name)
