@@ -48,4 +48,8 @@ echo "== 5. commit"
 cd "$B/.." && git add R3_silent_breaking/packages R3_silent_breaking/plan R3_silent_breaking/collab/scripts && \
   git commit -q -m "R3b scored once (full-contract specification coding): see plan/r3b_score_output.txt" && git push -q origin main && \
   git log -1 --format='commit %h by %an'
+echo "== 6. R3 archive (anonymised) rebuild"
+cd "$B" && sha=$(git rev-parse --short HEAD) && O="/run/media/afridi/Shared Data/R3_replication/R3_anon_$sha" && \
+  /usr/bin/python3 -I -B paper/reproduce/build_archive_r3.py --out "$O" --anonymize | tail -4 && \
+  (cd "$(dirname "$O")" && tar -czf "R3_anon_$sha.tar.gz" "R3_anon_$sha" && ls -la "R3_anon_$sha.tar.gz")
 echo "R3b সম্পূর্ণ। এবার plan/r3b_score_output.txt-এর ফল R3 paper-এ (§4.4 আর §6) যোগ করতে হবে।"
