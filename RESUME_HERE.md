@@ -67,3 +67,34 @@ To resume, tell Claude: "RESUME_HERE.md dekhe kaj abar suru koro."
   - archive upload;
   - AI disclosure.
 - **History rewrite: DONE (2026-11-23).** Every `Co-Authored-By: Claude` trailer was removed from all commits, and the result was force-pushed. Commit hashes quoted in documents before this date are old values; translate them with `COMMIT_HASH_MAP.txt`. The pre-rewrite backup bundle is on the Shared Data drive. New commits carry no co-author line.
+
+## 2026-11-24 state (end of the Claude + Codex sprint)
+**Main document:** `FINAL_HANDOVER_BN.md` (Bengali). It lists every user task, the archive paths and the deadlines.
+
+**R4b (follow-up, full contracts): DONE.**
+- Pre-registered, with 102 items and 4 coders.
+- H-R4-3b PASS: 44/54 violated rules not in the contract.
+- H-R4-5 PASS: 21/56 documented vulnerable operations declare no security.
+- Cross-family κ 1.00.
+- Paper v0.4 §4.7.
+- Archive: `R4_replication/R4_anon_525e970`.
+
+**R3b (follow-up, full contracts): HALF DONE.**
+- The Claude coders H5 and H6 are complete. The GPT coders G5 and G6 are blocked by the Codex usage limit, which resets at 22:09 on 2026-11-24.
+- To finish, run `bash R3_silent_breaking/collab/scripts/r3b_finish.sh`. It resumes the coders, audits, freezes, scores once, commits and rebuilds the R3 archive.
+- Then add the result to R3 paper §4.4 and §6.
+
+**Codex T59 (anonymity and consistency review):** fixed, with anonymous companion cross-references across R1, R3 and R4. R1 has an AI-disclosure section, a figure path fix and a heading fix.
+
+**Archives (Shared Data):**
+- R1: `R1_anon_23ef64d`.
+- R3: `R3_anon_8e282f7` (interim).
+- R4: `R4_anon_525e970`.
+- Each also exists as `.tar.gz`. Older archive folders are superseded.
+
+**Still for the user:**
+1. The three human spot-checks.
+2. Compiling the PDFs on Overleaf; the Tectonic download was denied by the permission classifier.
+3. Uploading the archives.
+4. Checking each venue's call for papers.
+5. The `930ba0a` credential-prefix decision.

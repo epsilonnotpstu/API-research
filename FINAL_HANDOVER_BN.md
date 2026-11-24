@@ -51,7 +51,7 @@
 | Paper | ফাইল | আকার |
 |---|---|---|
 | R1 | `R1_replication/R1_anon_23ef64d.tar.gz` | ৫৯ MB (পুরোনো `R1_anon_49f92e2` বাতিল) |
-| R3 | `R3_replication/R3_anon_acda551.tar.gz` | ৬.৩ MB |
+| R3 | `R3_replication/R3_anon_8e282f7.tar.gz` | ১১ MB (interim; `r3b_finish.sh` চালালে R3b-সহ চূড়ান্ত archive নিজে থেকেই তৈরি হবে) |
 | R4 (R4b-সহ) | `R4_replication/R4_anon_525e970.tar.gz` | ৩৮ MB (পুরোনো `R4_anon_93c6a5f` বাতিল) |
 
 **কীভাবে:**
