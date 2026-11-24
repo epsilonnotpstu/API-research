@@ -1,0 +1,23 @@
+import csv
+P="contract/"
+R=[
+("C035","GET /dav/projects/{project}/{uid}.ics; REPORT /dav/projects/{project}","ABSENT","","NA","","NA","",3,"Swagger documents only REST API and caldav token endpoints; CalDAV resource routes not described."),
+("C036","POST /v1beta1/resources; PUT /v1beta1/resources","PRESENT",P+"swagger.yaml:2262","DECLARED",P+"swagger.yaml:2309","NO","",3,"Batch create/update documented with BearerAuth; no statement about project-scoped resource authorization."),
+("C037","POST /v3/watch","PRESENT",P+"Documentation__dev-guide__apispec__swagger__rpc.swagger.json:1474","DECLARED",P+"Documentation__dev-guide__apispec__swagger__rpc.swagger.json:3114","NO","",3,"Watch documented with global ApiKey; no per-key permission or range read rule stated."),
+("C038","GET /api/v1/stable/durable-tasks/{durable-task}","PRESENT",P+"api-contracts__openapi__openapi.yaml:54","DECLARED",P+"api-contracts__openapi__openapi.yaml:8","NO","",2,"Path is a $ref to unseen file; global bearer/cookie security; no tenant binding visible."),
+("C039","GET /exec/namespaces/{namespace}/components/{component}; GET /api/v1/namespaces/{namespace}/environments/{environment}/wirelogs","ABSENT","","NA","","NA","",3,"Only agent openapi files present; exec and wirelogs endpoints not described."),
+("C040","POST /api/v1/restore","PRESENT",P+"internal__api__server__openapi.yaml:1848","DECLARED",P+"internal__api__server__openapi.yaml:44","NO","",3,"Restore documented with global BearerAuth; no role requirement stated for backup/restore."),
+("C041","GET /log","ABSENT","","NA","","NA","",3,"No /log path in node swagger documents."),
+("C042","DELETE /api/v1/sources","PRESENT",P+"api__v1alpha1__openapi.yaml:11","NOT_DECLARED","","NO","",3,"deleteSources documented without any security requirement or ownership filtering statement."),
+("C043","PATCH /api/v1/nodes/{name}; PUT /api/v1/nodes/{name}","PRESENT",P+"api__openapi-spec__swagger.json:29987","DECLARED",P+"api__openapi-spec__swagger.json:82168","NO","",2,"Node update documented with global BearerToken; no ownerReference or node self-restriction rule."),
+("C044","HEAD /v2/{name}/blobs/{digest}; POST /v2/{name}/blobs/uploads","PRESENT",P+"swagger__swagger.json:545","NOT_DECLARED","","NO","",2,"Blob operations documented without security section; no cross-repository read restriction stated."),
+("C045","POST /api/v1/fleet/android_enterprise/pubsub","ABSENT","","NA","","NA","",2,"Contracts cover nanomdm, nanodep and terraform teams only; Android pubsub endpoint not described. Route inferred."),
+("C046","POST /v1/workspaces/{workspace_id}/projects/{project_id}/github/connect/complete","PRESENT",P+"docs__openapi-v1.yaml:6167","DECLARED",P+"docs__openapi-v1.yaml:21","NO","",3,"Operation documented with global auth; installation_id described as plain client input, no ownership binding stated."),
+("C047","GET /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}; POST /api/datasources/proxy/uid/{uid}/{datasource_proxy_route}","PRESENT",P+"public__openapi3.json:16646","DECLARED",P+"public__openapi3.json:25452","NO","",2,"Proxy documented with global basic/api_key; no per-datasource plugin action requirement stated."),
+("C048","PUT /api/v1/nodes/{name}","PRESENT",P+"api__openapi-spec__swagger.json:31805","DECLARED",P+"api__openapi-spec__swagger.json:110593","NO","",2,"Node replace documented with global BearerToken; admission validation behaviour not described."),
+("C049","POST /api/v2/user/file-actions/copy","PRESENT",P+"openapi__openapi.yaml:4265","DECLARED",P+"openapi__openapi.yaml:41","NO","",2,"Copy documented with global auth; pattern filter schema says denied files cannot be downloaded but copy source rule not stated."),
+("C050","GET /attachments/{uuid}","ABSENT","","NA","","NA","",3,"Attachment download route not in the API reference openapi."),
+("C051","PUT /api/v1/provisioning/contact-points/{UID}","PRESENT",P+"public__openapi3.json:26515","DECLARED",P+"public__openapi3.json:27747","NO","",3,"Documented with global basic/api_key; no protected-field write permission mentioned."),
+]
+with open("codes_H4.csv","w",newline="") as f:
+    w=csv.writer(f);w.writerow("item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale".split(","));w.writerows(R)

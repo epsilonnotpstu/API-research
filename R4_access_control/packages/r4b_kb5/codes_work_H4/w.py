@@ -1,0 +1,35 @@
+import csv
+R=[
+("C069","POST /api/v1/projects/{id}; DELETE /api/v1/projects/{id}","PRESENT","contract/pkg__swagger__swagger.json:2321","DECLARED","contract/pkg__swagger__swagger.json:2370","NO","","2","Project ops declared with JWT; contract describes permission levels only generically, not child-share down-restriction precedence."),
+("C070","ANY /kubepi/api/v1/system/*","ABSENT","","NA","","NO","","1","Fix moves system routes behind auth; swagger lists no system paths. Exact system route not visible in provided files."),
+("C071","PUT /nifi-api/process-groups/{id}/flow-contents; POST /nifi-api/process-groups/{id}/replace-requests","NO_CONTRACT","","NA","","NO","","3","Both openapi documents contain no paths, only info and security scheme stubs."),
+("C072","POST /mutate (cache webhook)","ABSENT","","NA","","NO","","2","Cache-server mutating webhook not described in the pipelines API swagger documents."),
+("C073","PUT /repositories/{repository}/refs/dump; PUT /repositories/{repository}/refs/restore; PUT /{repository}/{branch}/{key} (S3 gateway copy)","PRESENT","contract/api__swagger.yml:1716","DECLARED","contract/api__swagger.yml:12","NO","","2","Refs dump/restore listed with global auth; contract states no per-action permission requirements. Gateway copy not documented."),
+("C074","POST /api/users","PRESENT","contract/docs__swagger.yaml:661","DECLARED","contract/docs__swagger.yaml:19","NO","","2","Contract only says registration is admin-only when self-registration off; no rule against non-admin creating admin accounts."),
+("C075","GET /debug/pprof/profile; GET /debug/pprof/cmdline; GET /debug/pprof/symbol; GET /debug/pprof/trace","ABSENT","","NA","","NO","","3","Provided documents cover nanomdm, nanodep and terraform teams API only; no debug endpoints."),
+("C076","POST /api/update-application; POST /api/update-syncer; POST /api/update-token; POST /api/update-webhook","PRESENT","contract/swagger__swagger.yml:3173","NOT_DECLARED","","NO","","2","Update endpoints have no security requirement; no role or ownership rule stated."),
+("C077","UNKNOWN","UNCLEAR","","NA","","NO","","1","Flaw is excessive RBAC rules in registration code; no HTTP operation identifiable; swagger lacks CSR resources."),
+("C078","GET /api/authz/forward-auth","PRESENT","contract/api__openapi.yml:129","DECLARED","contract/api__openapi.yml:391","NO","","2","Templated Go-template spec generates ForwardAuth path; cookie scheme declared; access control rules are configuration, not contract."),
+("C079","POST /v1beta1/projects/{project}/freight/{freight}/approve; POST /v1beta1/projects/{project}/stages/{stage}/promotions; POST /v1beta1/projects/{project}/stages/{stage}/promotions/downstream","PRESENT","contract/swagger.yaml:1056","DECLARED","contract/swagger.yaml:1081","NO","","3","Operations have BearerAuth; contract never mentions the promote verb requirement."),
+("C080","POST /api/v1/sync/{namespace}; GET /api/v1/sync/{namespace}/{key}; PUT /api/v1/sync/{namespace}/{key}; DELETE /api/v1/sync/{namespace}/{key}","PRESENT","contract/api__openapi-spec__swagger.json:2321","DECLARED","contract/api__openapi-spec__swagger.json:16093","NO","","3","Global BearerToken declared; contract states no Kubernetes RBAC check requirement."),
+("C081","POST /api/v2/users/{user}/keys; POST /api/v2/users/{user}/keys/tokens","PRESENT","contract/coderd__apidoc__swagger.json:6368","DECLARED","contract/coderd__apidoc__swagger.json:6370","NO","","2","Key creation declared with session token; contract does not state system users are barred from creating keys."),
+("C082","PATCH /repos/{owner}/{repo}/issue-tracker; PATCH /repos/{owner}/{repo}/wiki; POST /repos/{owner}/{repo}/mirror-sync","PRESENT","contract/docs__api-reference__openapi.json:515","DECLARED","contract/docs__api-reference__openapi.json:13","NO","","3","Global AccessToken applies; no repo-admin requirement stated for these operations."),
+("C083","GET /api/v4/users (all protected endpoints)","PRESENT","contract/src__coordinator__docs__openapi.yaml:160","DECLARED","contract/src__coordinator__docs__openapi.yaml:32","YES","bearerAuth: []","2","Flaw is missing authentication when JWT secret empty; contract declares global bearer JWT requirement for protected operations."),
+("C084","DELETE /api/v1/reactions/{reaction}","PRESENT","contract/proto__gen__openapi.yaml:997","NOT_DECLARED","","NO","","3","No security or ownership rule documented for reaction deletion."),
+("C085","GET /yjs/{documentName}","ABSENT","","NA","","NO","","3","Large openapi lacks any yjs path."),
+]
+w=csv.writer(open("codes_H4.csv","w",newline=""))
+w.writerow("item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale".split(","))
+for r in R:
+    assert len(r[9].split())<=30,r[0]
+    w.writerow(r)
+open("codes_report_H4.md","w").write("""# H4 report (kb5)
+All 17 items opened. No boundary incident.
+Hard cases:
+- C070: exact system route not in provided files; operation given as wildcard, low confidence.
+- C071: openapi documents have no paths (NO_CONTRACT).
+- C077: no HTTP operation (RBAC configuration flaw); UNCLEAR.
+- C078: contract is a Go-template; path key is templated, treated as PRESENT with moderate confidence.
+- C073: several operations in the advisory; refs dump/restore chosen as documented ones.
+- C083: bypass applies to all protected endpoints; representative operation chosen; policy YES because flaw is missing authentication.
+""")

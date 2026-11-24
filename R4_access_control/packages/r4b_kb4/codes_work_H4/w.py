@@ -1,0 +1,23 @@
+import csv
+H="item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale".split(",")
+R=[
+("C052","GET /v2/{name}/manifests/{reference}","PRESENT","contract/swagger__swagger.json:654","NOT_DECLARED","","NO","",1,"Group-based repository access after IdP revocation; no specific endpoint named; contract has no security or group rule."),
+("C053","POST /api/serviceaccounts/{serviceAccountId}/tokens","PRESENT","contract/public__openapi3.json:23696","DECLARED","contract/public__openapi3.json:27760","YES","action: `serviceaccounts:write` scope: `serviceaccounts:id:1` (single service account)",2,"Token creation requires serviceaccounts:write permission, stated in operation description; flaw is stale permission after revocation."),
+("C054","GET /api/v1/applications/{name}/events","PRESENT","contract/assets__swagger.json:626","NOT_DECLARED","","NO","",2,"Events of arbitrary resources readable; contract lists operation without security or resource-scoping rule."),
+("C055","GET /api/v1/repository/provider/{provider}/name/{name}; DELETE /api/v1/repository/provider/{provider}/name/{name}; GET /api/v1/artifact/name/{name}","PRESENT","contract/pkg__api__openapi__minder__v1__minder.swagger.json:1587","NOT_DECLARED","","NO","",3,"Any authenticated user reaches other owners' repos; contract has no security definitions or ownership rule."),
+("C056","DELETE /api/latest/fleet/certificates","ABSENT","","NA","","NA","",2,"Contract docs cover nanodep, nanomdm and terraform teams only; no certificate template deletion path."),
+("C057","DELETE /api/v1/applications/{name}","PRESENT","contract/assets__swagger.json:609","NOT_DECLARED","","NO","",2,"Hooks run on application deletion bypass AppProject restrictions; operation inferred; contract states no project restriction rule."),
+("C058","DELETE /v2/{name}/manifests/{reference}; DELETE /v2/{name}/blobs/{digest}","PRESENT","contract/swagger__swagger.json:691","NOT_DECLARED","","NO","",3,"Bearer token with push scope can delete; contract declares no security or delete-scope rule."),
+("C059","DELETE /realms/{realm}/account/credentials/{credentialId}","ABSENT","","NA","","NA","",2,"Only admin client openapi present; account REST credential deletion not described."),
+("C060","PUT /api/v1/sources/{id}/status; PUT /api/v1/agents/{id}/status","PRESENT","contract/api__v1alpha1__agent__openapi.yaml:11","NOT_DECLARED","","NO","",3,"Token source_id claim not matched to path id; contract has no security scheme or binding statement."),
+("C061","GET /answer/admin/api/dashboard","PRESENT","contract/docs__swagger.json:126","DECLARED","contract/docs__swagger.json:129","YES","\"ApiKeyAuth\": []",1,"Admin auth middleware passed with nil user; specific admin route unspecified; contract marks admin operations as requiring ApiKeyAuth."),
+("C062","ANY /api/proxy/; ANY /api/exec/; ANY /api/wirelogs/","ABSENT","","NA","","NA","",3,"Contract docs describe finops and rca agents only; gateway internal proxy paths not present."),
+("C063","PUT /nifi-api/controller-services/{id}","NO_CONTRACT","","NA","","NA","",2,"Contract file contains only info and security fragment with no paths; operation inferred from controller service configuration."),
+("C064","PUT /api/users/{username}","ABSENT","","NA","","NA","",3,"Swagger has no users paths."),
+("C065","GET /api/v1/projects/{projectID}/sources/{sourceID}","PRESENT","contract/docs__swagger.json:6967","DECLARED","contract/docs__swagger.json:6969","NO","",3,"ApiKeyAuth declared; contract does not state that source must belong to the project."),
+("C066","DELETE /api/v1/projects/{project}/background","PRESENT","contract/pkg__swagger__swagger.yaml:3057","DECLARED","contract/pkg__swagger__swagger.yaml:3087","NO","",3,"JWTKeyAuth declared; contract does not state token scope required for deletion."),
+("C067","GET /api/v1/clusters/kubeconfig/{name}","ABSENT","","NA","","NA","",3,"Swagger has no kubeconfig download path."),
+("C068","GET /api/v1/jobs; POST /api/v1/jobs; GET /api/v1/jobs/{id}; PATCH /api/v1/jobs/{id}; DELETE /api/v1/jobs/{id}","PRESENT","contract/api__manager__swagger.json:735","NOT_DECLARED","","NO","",3,"Job routes lack auth in code; contract declares no security for them."),
+]
+with open("codes_H4.csv","w",newline="") as f:
+    w=csv.writer(f);w.writerow(H);w.writerows(R)

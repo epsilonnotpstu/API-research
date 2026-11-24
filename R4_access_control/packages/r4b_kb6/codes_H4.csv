@@ -1,0 +1,18 @@
+item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale
+C086,GET /api/v1/sources/{id}/image-url,PRESENT,contract/api__v1alpha1__openapi.yaml:310,NOT_DECLARED,,NO,,3,Operation documented with 401/404 responses but no security requirement or ownership rule stated.
+C087,GET /orchestrator/attributes,NO_CONTRACT,,NA,,NA,,2,"Only Argo CD swagger files present, not a Devtron API description."
+C088,POST /api/v1/workflows/{namespace},PRESENT,contract/api__openapi-spec__swagger.json:3112,DECLARED,contract/api__openapi-spec__swagger.json:16093,NO,,2,Global BearerToken applies; podSpecPatch fields described without any restriction under strict template referencing.
+C089,PUT /api/v1/user/by-id/{id},PRESENT,contract/internal__app__api__core__assets__doc__v1_swagger.yaml:1471,DECLARED,contract/internal__app__api__core__assets__doc__v1_swagger.yaml:1591,YES,Only admins can update existing records.,2,PUT states admin-only update; IsAdmin self-grant by non-admin violates it. Rule stated in contract.
+C090,POST /api/v1/namespaces/{namespace}/pods/{name}/exec,PRESENT,contract/api__openapi-spec__swagger.json:4591,DECLARED,contract/api__openapi-spec__swagger.json:96062,NO,,2,Exec path documented with global BearerToken; contract silent on backend proxy upgrade handling.
+C091,GET /api/v1/secret,PRESENT,contract/cmd__kubernetes-dashboard-api__schema__swagger.json:7915,NOT_DECLARED,,NO,,2,"Path in dashboard swagger has no security definitions or requirement; flaw is missing authentication, not stated."
+C092,GET /admin/realms/{realm}/clients/{client-uuid}/evaluate-scopes/generate-example-userinfo; GET /admin/realms/{realm}/clients/{client-uuid}/evaluate-scopes/protocol-mappers,ABSENT,,NA,,NA,,3,"Admin client openapi lists only /admin/api clients paths, no evaluate-scopes."
+C093,GET /api/v1/terminal,ABSENT,,NA,,NA,,2,Swagger has no terminal websocket endpoint.
+C094,GET /apis/v1alpha1/runs/{run_id}/nodes/{node_id}/log,ABSENT,,NA,,NA,,2,No node log path found in v1beta1/v2beta1 swagger files.
+C095,GET /api/v4/users/me/teams,ABSENT,,NA,,NA,,2,Only Boards API (/api/v2) swagger present; no Mattermost v4 users/teams.
+C096,GET /realms/{realm}/account/organizations; POST /realms/{realm}/protocol/openid-connect/token,ABSENT,,NA,,NA,,2,Admin client openapi has no account or token endpoints.
+C097,POST /api/v1/webhook-subscriptions; PATCH /api/v1/webhook-subscriptions/{id},PRESENT,contract/api__openapi.yaml:201,DECLARED,contract/api__openapi.yaml:24,NO,,3,Global bearerAuth applies; allow_private is plain boolean with no admin-only statement.
+C098,POST /v3alpha/kv/range; POST /v3alpha/kv/put,PRESENT,contract/Documentation__dev-guide__apispec__swagger__rpc.swagger.json:693,NOT_DECLARED,,NO,,2,All gateway endpoints affected; swagger has no security definitions or RBAC statement. Operation choice is representative.
+C099,GET /api/allusers,PRESENT,contract/internal__swagger__swagger.yaml:775,UNCLEAR,contract/internal__swagger__swagger.yaml:787,YES,获取系统中所有用户的详细信息，接口需要认证,2,"Operation lists ApiKeyAuth and says authentication required, but no securityDefinitions exist in file. Flaw is missing authentication."
+C100,POST /api/scim/v2/Users,ABSENT,,NA,,NA,,1,No SCIM paths in openapi3.json; endpoint inferred from advisory.
+C101,POST /answer/api/v1/question,PRESENT,contract/docs__swagger.yaml:4425,DECLARED,contract/docs__swagger.yaml:4468,NO,,1,Default tag-add rank privilege was too low; operation guessed. Contract states no rank requirement for adding question or tags.
+C102,POST /scim/Users,ABSENT,,NA,,NA,,2,Swagger has no SCIM paths.

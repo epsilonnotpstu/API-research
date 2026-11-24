@@ -1,0 +1,24 @@
+import csv
+P="contract/"
+rows=[
+("C018","POST /{bucket}?delete","ABSENT","","NA","","NA","",2,"S3 gateway multi-object delete; contract documents only the REST API, not the S3 gateway."),
+("C019","PUT /api/v1/namespaces/{namespace}/workflowruns/{runName}","ABSENT","","NA","","NA","",2,"Contracts are for separate agent services; no workflowrun operation present."),
+("C020","POST /answer/api/v1/answer/acceptance","PRESENT",P+"docs__swagger.yaml:3003","DECLARED",P+"docs__swagger.yaml:3022","NO","",3,"Accept-answer operation described with ApiKeyAuth; rule that author cannot accept own answer not stated."),
+("C021","UNKNOWN","UNCLEAR","","NA","","NA","",1,"Dynamic API Builder endpoints defined at runtime; no concrete route identifiable from provided files."),
+("C022","GET /decisions","PRESENT",P+".schema__api.swagger.json:81","NOT_DECLARED","","NO","",2,"Decision API documented without scope rules or security; scope-cache flaw lies in authenticator config."),
+("C023","PUT /cometvisu/rest/fs; GET /cometvisu/rest/config/hidden","PRESENT",P+"bundles__org.openhab.ui.cometvisu__src__main__resources__openapi.yaml:61","NOT_DECLARED","","NO","",2,"Fs and config paths documented with 403 responses only; no security or role statement."),
+("C024","UNKNOWN","UNCLEAR","","NA","","NA","",1,"Any Docker API request with oversized body passed to AuthZ plugin; no single operation identified."),
+("C025","ANY /api/proxy/","NO_CONTRACT","","NA","","NA","",2,"Cluster-gateway management API; only an unrelated agent OpenAPI document exists."),
+("C026","GET /sse; POST /message","ABSENT","","NA","","NA","",2,"MCP SSE listener separate from documented REST API; swagger covers REST routes only."),
+("C027","POST /{owner}/{repo}.git/git-receive-pack","ABSENT","","NA","","NA","",3,"Git smart HTTP endpoint not in the API reference document."),
+("C028","PUT /nifi-api/processors/{id}; PUT /nifi-api/controller-services/{id}; PUT /nifi-api/reporting-tasks/{id}","NO_CONTRACT","","NA","","NA","",2,"Provided NiFi document has only info and security schemes, no paths."),
+("C029","POST /webrtc/source-offer","PRESENT",P+"server__openapi.yaml:1495","NOT_DECLARED","","NO","",3,"Operation documented without any security requirement; flaw is missing authentication, not stated as required."),
+("C030","POST /api/v1/namespaces/{namespace}/pods","PRESENT",P+"api__openapi-spec__swagger.json:2868","DECLARED",P+"api__openapi-spec__swagger.json:38875","NO","",2,"Pod create in spec with global BearerToken; PodSecurityPolicy authorization rule not described."),
+("C031","PUT /api/v4/channels/{channel_id}/patch","ABSENT","","NA","","NA","",1,"Route inferred from advisory; only Boards swagger provided, not the core API."),
+("C032","POST /nifi-api/processors/{id}/config/verification-requests; POST /nifi-api/controller-services/{id}/config/verification-requests","NO_CONTRACT","","NA","","NA","",2,"Provided NiFi document has only info and security schemes, no paths."),
+("C033","POST /api/v1/applications/{name}/resource","PRESENT",P+"assets__swagger.json:1164","NOT_DECLARED","","NO","",1,"Representative application endpoint; no security or project sourceNamespaces rule in swagger."),
+("C034","POST /apis/v2beta1/pipelines/upload; POST /apis/v2beta1/pipelines/upload_version","PRESENT",P+"backend__api__v2beta1__swagger__pipeline.upload.swagger.json:9","DECLARED",P+"backend__api__v2beta1__swagger__pipeline.upload.swagger.json:297","NO","",3,"Upload documented with global Bearer; namespace authorization for shared pipelines not stated."),
+]
+w=csv.writer(open("codes_H3.csv","w",newline=""))
+w.writerow("item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale".split(","))
+w.writerows(rows)

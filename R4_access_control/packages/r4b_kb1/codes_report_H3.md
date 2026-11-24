@@ -1,0 +1,2 @@
+# H3 report (kb1)
+All 17 items opened. Hard cases: C007 and C015 (no single operation, coded UNKNOWN/UNCLEAR); C005, C009, C011, C014 (route inferred from description/code, contract has no match; C005 contract is a Boards plugin API only); C008 (export documented as GET, import matches; contract set includes a v1.10 file); C003 (entry point inferred from controller-side fix); C010 (missing-authentication flaw, coded YES via global security).

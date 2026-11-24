@@ -1,0 +1,18 @@
+item_id,operation,contract_operation,op_locator,contract_security,sec_locator,policy_in_contract,policy_quote,confidence,rationale
+C018,POST /{repository}?delete (S3 gateway DeleteObjects),ABSENT,,NA,,NO,,2,S3 gateway multi-delete is not in the REST swagger; contract covers only lakeFS REST API.
+C019,PUT /api/v1/namespaces/{namespace}/workflowruns/{runName},ABSENT,,NA,,NO,,2,Only RCA agent specs present; no workflowrun paths.
+C020,POST /answer/api/v1/answer/acceptance,PRESENT,contract/docs__swagger.yaml:3003,DECLARED,contract/docs__swagger.yaml:3022,NO,,2,Accept endpoint documented with ApiKeyAuth; rank threshold rule for accepting is not stated.
+C021,GET /o/{apiApplicationBasePath}/{endpoint} (API Builder dynamic endpoint),ABSENT,,NA,,NO,,1,API Builder endpoints are user-defined at runtime; static specs do not describe them.
+C022,GET /decisions,PRESENT,contract/.schema__api.swagger.json:81,NOT_DECLARED,,NO,,1,"Decision API documented, no security; scope-per-rule behavior and cache not described. Operation mapping approximate."
+C023,PUT /config/hidden/{section}/{key}; GET /config/hidden; POST /fs; GET /proxy,PRESENT,contract/bundles__org.openhab.ui.cometvisu__src__main__resources__openapi.yaml:215,NOT_DECLARED,,NO,,2,Endpoints lacked auth; contract has no security or role statements.
+C024,UNKNOWN,UNCLEAR,,NA,,NO,,1,Flaw affects any Docker API request with large body to AuthZ plugin; no single operation.
+C025,POST /api/v1/planes/notify; GET /api/proxy/{planeType}/{planeID}/{namespace}/{crName}/{target}/{path},ABSENT,,NA,,NO,,2,Cluster-gateway management APIs not in contract; only rca-agent spec present.
+C026,GET /sse; POST /message (MCP SSE listener),ABSENT,,NA,,NO,,2,MCP SSE transport is separate from documented REST API.
+C027,POST /{owner}/{repo}.git/git-receive-pack,ABSENT,,NA,,NO,,2,Git smart HTTP not described in the API reference.
+C028,PUT /nifi-api/processors/{id}; PUT /nifi-api/controller-services/{id}; PUT /nifi-api/reporting-tasks/{id},NO_CONTRACT,,NA,,NO,,2,Only 41-line template stub without paths; not a usable API description.
+C029,POST /webrtc/source-offer,PRESENT,contract/server__openapi.yaml:1495,NOT_DECLARED,,NO,,3,Operation documented without security entry; no source-auth rule stated.
+C030,POST /api/v1/namespaces/{namespace}/pods,PRESENT,contract/api__openapi-spec__swagger.json:2868,DECLARED,contract/api__openapi-spec__swagger.json:38875,NO,,2,Pod create documented with global security; PSP authorization rule not stated.
+C031,PUT /api/v4/channels/{channel_id}/patch,ABSENT,,NA,,NO,,2,Only boards swagger present; no channel endpoints.
+C032,POST /nifi-api/processors/{id}/config/verification-requests; POST /nifi-api/controller-services/{id}/config/verification-requests,NO_CONTRACT,,NA,,NO,,2,Only 41-line template stub without paths; not a usable API description.
+C033,POST /api/v1/applications/{name}/resource,PRESENT,contract/assets__swagger.json:1164,NOT_DECLARED,,NO,,2,PatchResource documented without security or sourceNamespaces rule.
+C034,POST /apis/v2beta1/pipelines/upload; POST /apis/v2beta1/pipelines/upload_version,PRESENT,contract/backend__api__v2beta1__swagger__kfp_api_single_file.swagger.json:937,DECLARED,contract/backend__api__v2beta1__swagger__kfp_api_single_file.swagger.json:2858,NO,,3,Upload documented with global Bearer; no namespace authorization rule for shared pipelines.
