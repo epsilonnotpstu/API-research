@@ -1,11 +1,11 @@
 # Silent by Design? How Often REST Services Change Observable Behaviour Without Changing Their Contract
 
-*Working draft v0.3 (2026-11-18), target ICSME 2027 (see `paper/VENUE.md`). Design: frozen plan `plan/R3_PLAN.md`. Results: single scoring run (`plan/R3_RESULTS.md`). v0.3 applies the independent numeric and claim review `collab/reports/T55_report.md` (9 ERROR, 21 MINOR, all addressed).*
+*Working draft v0.4 (2026-11-24; adds the pre-registered follow-up R3b §4.7; applies Codex review T59), target ICSME 2027 (see `paper/VENUE.md`). Design: frozen plan `plan/R3_PLAN.md`. Results: single scoring run (`plan/R3_RESULTS.md`). v0.3 applies the independent numeric and claim review `collab/reports/T55_report.md` (9 ERROR, 21 MINOR, all addressed).*
 
 ---
 
 ## Abstract
-Spec-diff tools warn API clients only about changes visible in an OpenAPI document. We ask how often REST services change observable behaviour while leaving their contract files untouched. From a corpus of 54 open-source Java, Kotlin and Go services, we froze a pool of 18,590 commits since 2023 that modify behaviour-path code but no contract document. We drew a seeded sample of 136 commits from 47 repositories. Two GPT-family and two Claude-family LLM coders classified each commit blind to its message and history, under a pre-registered, hash-frozen protocol. By the primary (GPT) codes, 44% of the sampled commits (60/136; 95% CI 36–53%) change what some client can observe; 26 more remain unresolved. Depending on the coding model family, 9–24% are client-breaking: the two families agree on observable change (κ 0.94 on the 102 commits both decided) but not on breaking impact. Of the 32 breaking changes, 29 (91%; p = 1.3 × 10⁻⁶) edit no contract annotation, so by our annotation proxy even contract generation from code, as in AutoGuard, would likely miss them. Only 1 of the 60 changes concerned behaviour that the delivered parent-contract context specified. Silent behavioural change is common, and it falls mostly where contracts say nothing. API change detection therefore needs behavioural evidence, not only document diffs.
+Spec-diff tools warn API clients only about changes visible in an OpenAPI document. We ask how often REST services change observable behaviour while leaving their contract files untouched. From a corpus of 54 open-source Java, Kotlin and Go services, we froze a pool of 18,590 commits since 2023 that modify behaviour-path code but no contract document. We drew a seeded sample of 136 commits from 47 repositories. Two GPT-family and two Claude-family LLM coders classified each commit blind to its message and history, under a pre-registered, hash-frozen protocol. By the primary (GPT) codes, 44% of the sampled commits (60/136; 95% CI 36–53%) change what some client can observe; 26 more remain unresolved. Depending on the coding model family, 9–24% are client-breaking: the two families agree on observable change (κ 0.94 on the 102 commits both decided) but not on breaking impact. Of the 32 breaking changes, 29 (91%; p = 1.3 × 10⁻⁶) edit no contract annotation, so by our annotation proxy even contract generation from code, as in AutoGuard, would likely miss them. Only 1 of the 60 changes concerned behaviour that the delivered parent-contract context specified. A pre-registered follow-up with full, untruncated contracts and quoted evidence confirms this: 2 of 60. Silent behavioural change is common, and it falls mostly where contracts say nothing. API change detection therefore needs behavioural evidence, not only document diffs.
 
 ## 1. Introduction
 REST services evolve continuously, and their clients depend on behaviour they cannot see in the code. The usual safeguard is to diff the service's OpenAPI contract between versions. oasdiff and openapi-diff do this, and so does AutoGuard, which first generates the contract from code [Lercher et al. 2025]. A change that alters what an operation does but leaves the contract text unchanged is invisible to a document diff.
@@ -207,6 +207,20 @@ Three commits that both model families coded as breaking. The descriptions were 
 - **Most of the gap comes from Claude's own disagreement.** For 12 of the 30 GPT-breaking commits, Claude's two coders disagreed, so the final code is UNCLEAR. For 7 more, both Claude coders said compatible.
 - **Reading.** The 9–24% range therefore mixes two things: genuine disagreement about what counts as breaking, and lower within-family reliability of Claude on impact (κ 0.74 vs 0.85).
 
+### 4.7 Follow-up with full contracts (pre-registered)
+The coverage result rests on limited contract context: raw fallback for 93 items, and no document for 29. A pre-registered follow-up (`plan/R3b_PLAN.md`) therefore re-coded the 60 observable changes.
+
+**Design of the follow-up.**
+- **Material.** All contract files at the parent commit, untruncated: 149 documents.
+- **Task.** Coders had to name the affected operation and decide whether the changed behaviour is specified. Every "specified" judgement needed a verbatim contract quote.
+- **Coders.** The GPT-family coders were unavailable (usage limit), so both pairs are from the Claude family: Opus and Sonnet.
+
+**Results.**
+- **Coverage.** The affected operation is described in 30 of 60 cases, and 25 changes have no contract file at the parent.
+- **H-R3-4.** The changed behaviour is specified in only 2 of 60 changes. 58 of 60 are unspecified (97%; CI 89–99%; p = 1.6 × 10⁻¹⁵; Sonnet pair 47/48). This confirms the 1-of-60 result.
+- **Evidence.** All quotes occur verbatim in the contracts.
+- **Agreement.** The two pairs agree on 47 of the 48 items both decided. κ is uninformative at this prevalence (the κ paradox).
+
 ## 5. Discussion
 - **Silent observable change is common.** In 44% of the sampled commits (40% by the Claude codes), behaviour-path changes that modify no contract file change what a client can observe. That is a little over two in five.
 - **Document-based tooling cannot see most of these changes.** Spec diff cannot, by construction. Contract generation from code would also miss them, by our proxy, because 91% of the breaking changes touch no annotation.
@@ -223,7 +237,8 @@ Three commits that both model families coded as breaking. The descriptions were 
 - **Contract context.**
   - 93 items received the raw-fallback contract text instead of a projection, and 29 had no contract document at the parent.
   - Redaction sometimes removes whole lines, and truncation can cut context.
-  - Judgements of `contract_specified` are therefore approximate. Coverage results describe the delivered contract context, not the full contract.
+  - Judgements of `contract_specified` in the main coding are therefore approximate.
+  - The pre-registered follow-up with full contracts and quoted evidence (§4.7) confirms the coverage result: 2/60 specified. Its coders all come from one model family.
 - **LLM coders.**
   - All coders are LLMs.
   - Each Claude batch of 10–14 items took 31–67 s, so those coders may have read mostly the diffs (an audit inference, not an observation).
