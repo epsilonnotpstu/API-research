@@ -24,4 +24,4 @@ for f in sorted(B.glob('packages/r4b_*/codes_[GH]?.csv')):
 print(f'D1 normalisation: policy_in_contract NA/empty -> UNCLEAR in {n} rows', file=sys.stderr)
 PY
 cd "$S" && /usr/bin/python3 -I -B plan/score_r4b.py --root "$S" --out "$S/r4b_scores.csv"
-cp "$S/r4b_scores.csv" "$B/plan/r4b_scores.csv"
+cp "$S/r4b_scores.csv" "${1:-$B/plan}/r4b_scores.csv"
