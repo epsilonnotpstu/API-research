@@ -59,9 +59,12 @@ def main():
         t = re.sub(r'-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----', '[REDACTED PEM]', t, flags=re.S)
         adv.write_text(t, encoding='utf-8')
     key = {r['item_id']: r for r in csv.DictReader(open(R3 / 'mining/key/r4_key.csv', newline='', encoding='utf-8'))}
+    kb4b = R3 / 'mining/key/r4b_key.csv'                     # R4b follow-up items C### -> R4 item -> repo/parent
+    if kb4b.is_file():
+        for r in csv.DictReader(open(kb4b, newline='', encoding='utf-8')): key[r['r4b_id']] = key[r['r4_id']]
     lic, cache, withheld = {}, {}, set()
     for pkg in sorted(p for p in (R3 / 'packages').iterdir() if p.is_dir()):
-        for it in sorted(p for p in pkg.iterdir() if p.is_dir() and p.name.startswith('A')):
+        for it in sorted(p for p in pkg.iterdir() if p.is_dir() and p.name[:1] in ('A', 'C') and p.name[1:].isdigit()):
             dst = out / 'R4_access_control/packages' / pkg.name / it.name
             r = key.get(it.name)
             if not r: problems.append(f'no key row for {pkg.name}/{it.name}'); continue
@@ -117,7 +120,7 @@ def main():
         if secret_hit(t): hits.append(str(p.relative_to(out)))
         if STUDY_ID.search(t) or any(s in b for s in EXTRA_ID): idhits.append(str(p.relative_to(out)))
     classes = {c: sum(r['licence_class'] == c for r in lic.values()) for c in sorted({r['licence_class'] for r in lic.values()})}
-    rep = [f'files scanned: {nfiles}', f'CRLF working-tree restorations: {crlf}', f'items with licence: {len(lic)} / {len(key)}', f'items with upstream excerpts withheld (restrictive licence): {sorted(withheld)}',
+    rep = [f'files scanned: {nfiles}', f'CRLF working-tree restorations: {crlf}', f'items with licence: {len(lic)} (R4 {sum(i.startswith("A") for i in lic)}, R4b {sum(i.startswith("C") for i in lic)})', f'items with upstream excerpts withheld (restrictive licence): {sorted(withheld)}',
            f'secret-pattern files: {len(hits)}', *[f'  {h}' for h in hits],
            f'author-identity files: {len(idhits)}' + ('' if a.anonymize else ' (expected in the de-anonymised archive)'), *([f'  {h}' for h in idhits] if a.anonymize else []),
            'licence classes: ' + json.dumps(classes), f'problems: {len(problems)}', *[f'  {p}' for p in problems]]

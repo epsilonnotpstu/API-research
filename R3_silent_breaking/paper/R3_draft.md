@@ -48,7 +48,7 @@ We therefore ask how often REST services change observable behaviour without tou
 
 **Practitioner view.** Lercher et al. report that providers "miss tools for automatically extracting API changes from changes in their implementation". They also observe that "A dynamic API design improves structural backward compatibility but often shifts the problem, i.e., creates semantic breaking changes instead" [Lercher et al. 2024].
 
-**Contract–implementation divergence.** A separate study of the same corpus (under review; omitted for anonymity) examines how divergences between a service and its contract are *repaired* once noticed. Here we study how such divergences *arise*, and how many affect clients without any contract-file change.
+**Contract–implementation divergence.** A companion study (under review; omitted for anonymity), on the same corpus, examines how divergences between a service and its contract are *repaired* once noticed. Here we study how such divergences *arise*, and how many affect clients without any contract-file change. A second companion study (under review; omitted for anonymity) asks the same visibility question for fixes of real access-control vulnerabilities.
 
 ## 3. Study Design
 *(Summarised from the frozen plan `plan/R3_PLAN.md`; deviations in `plan/R3_DEVIATIONS.md`.)*
@@ -260,9 +260,9 @@ An anonymised replication archive accompanies this submission ([anonymous link t
 ## Disclosure of AI use
 - **LLMs as instruments.** The study uses LLMs as measurement instruments. The GPT-family coders were `gpt-6.1-sol` via the Codex CLI, at high reasoning effort. The Claude-family coders were Claude Sonnet subagents. Their role, prompts and outputs are part of the method (§3.4) and of the archive.
 - **LLM assistants.** The authors also used LLM assistants (Claude and Codex) to:
-  - write mining and analysis scripts;
-  - check the paper's numbers against the scorer output;
-  - draft and edit text.
+  - write mining and analysis scripts (§3);
+  - check the paper's numbers against the scorer output (§4);
+  - draft and edit the text of all sections.
 - **Author responsibility.** The authors reviewed all generated content and take responsibility for it.
 
 ## References (verified 2026-11-17/18; see `notes/NOVELTY_VERIFIED.md`)

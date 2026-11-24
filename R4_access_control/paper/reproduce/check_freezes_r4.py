@@ -8,16 +8,18 @@ import hashlib, sys
 from pathlib import Path
 
 B = Path(__file__).resolve().parents[2]
-FREEZES = ['plan/r4_plan_freeze.sha256', 'plan/r4_packages_freeze.sha256', 'plan/r4_outputs_freeze.sha256']
-APPEND_ONLY = {'plan/R4_DEVIATIONS.md': 'plan/R4_DEVIATIONS_at_package_freeze.md'}
+FREEZES = ['plan/r4_plan_freeze.sha256', 'plan/r4_packages_freeze.sha256', 'plan/r4_outputs_freeze.sha256',
+           'plan/r4b_plan_freeze.sha256', 'plan/r4b_packages_freeze.sha256', 'plan/r4b_outputs_freeze.sha256']
+APPEND_ONLY = {'plan/R4_DEVIATIONS.md': 'plan/R4_DEVIATIONS_at_package_freeze.md',
+               'plan/R4b_DEVIATIONS.md': 'plan/R4b_DEVIATIONS_at_package_freeze.md'}
 
 
-def tree(d):
+def tree(d, letter='A'):
     """= (cd d && find A* -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum), in Python (byte-order sort).
     Files of restrictively licensed items are withheld from the archive; their original hashes are in d/WITHHELD.sha256
     and enter the listing exactly as the missing files would."""
     rows = {f.relative_to(d).as_posix(): hashlib.sha256(f.read_bytes()).hexdigest()
-            for f in d.glob('A*/**/*') if f.is_file()}
+            for f in d.glob(letter + '*/**/*') if f.is_file()}
     w = d / 'WITHHELD.sha256'
     if w.is_file():
         for line in w.read_text().splitlines():
@@ -42,10 +44,11 @@ def main():
     bad = 0; anon = anonymised()
     for fr in FREEZES:
         ok = n = 0
+        if not (B / fr).is_file(): bad += 1; print(f'FAIL missing {fr}'); continue
         for line in (B / fr).read_text().splitlines():
             h, p = line.split('  ', 1); n += 1
             if p.startswith('TREE:'):
-                d = B / p[5:].removesuffix('/A*'); good = d.is_dir() and tree(d) == h
+                letter = p[-2]; d = B / p[5:-3]; good = d.is_dir() and tree(d, letter) == h
             else:
                 f = B / p; good = f.is_file() and sha(f) == h
             if good: ok += 1; continue

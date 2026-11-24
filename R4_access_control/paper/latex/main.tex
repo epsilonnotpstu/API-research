@@ -14,7 +14,7 @@
 \author{\IEEEauthorblockN{Anonymous Author(s)}\IEEEauthorblockA{Under double-anonymous review}}
 \maketitle
 \begin{abstract}
-Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, yet their positive findings of missed authorization checks come mostly from seeded or example services. We ask what such a tester would need to expose \emph{real} access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74\%) are access-control flaws reachable over HTTP. Of the 89 with a decided setup, only about half (49, 55\%) need two principals to expose: object-level and tenant-isolation flaws mostly need two users of the same role and function-level flaws mostly two roles, while all missing-authentication flaws yield to an anonymous request and most property-level flaws to a single user (40 of 89); 13 remain undecided. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87\%; p = $2.1 \times 10^{-6}$); fixes leave the contract untouched in 93 of 102 (91\%). The two model families agree on vulnerability kind ($\kappa$ 0.83). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for about half of real cases.
+Black-box REST API testers increasingly hunt for broken access control: they take an OpenAPI document and a few credentials and judge responses with oracles, yet their positive findings of missed authorization checks come mostly from seeded or example services. We ask what such a tester would need to expose \emph{real} access-control vulnerabilities, and whether the contract carries the information an oracle needs. From 2,025 reviewed GitHub security advisories with access-control weaknesses in the Maven and Go ecosystems, we froze a pool of 176 fixed vulnerabilities in services that ship an OpenAPI document and sampled 138 from 70 repositories; two GPT-family and two Claude-family coders classified each advisory and fix blind, under a pre-registered, hash-frozen protocol. 102 (74\%) are access-control flaws reachable over HTTP. Of the 89 with a decided setup, only about half (49, 55\%) need two principals to expose: object-level and tenant-isolation flaws mostly need two users of the same role and function-level flaws mostly two roles, while all missing-authentication flaws yield to an anonymous request and most property-level flaws to a single user (40 of 89); 13 remain undecided. Almost all violations (101/102) are observable in HTTP responses, but the contract rarely helps: the vulnerable operation is clearly described in only 41 cases, and when it is, the violated rule is absent in 33 of 38 (87\%; p = $2.1 \times 10^{-6}$); fixes leave the contract untouched in 93 of 102 (91\%). A pre-registered follow-up with full, untruncated contracts and evidence citation confirms this. 56 operations are documented, the rule is absent in 44 of 54 (81\%), and 21 of the 56 documented vulnerable operations declare no security requirement at all. The two model families agree on vulnerability kind ($\kappa$ 0.83) and, in the follow-up, on contract coverage ($\kappa$ 1.00). Contract-driven oracles must infer access rules rather than read them, and testers need multi-principal setups for about half of real cases.
 \end{abstract}
 
 \section{Introduction}
@@ -63,7 +63,7 @@ The usual answer to the oracle problem is the contract: the OpenAPI document say
 
 None of these works asks what a contract-driven black-box tester would need for real vulnerabilities, or whether the contract carries the violated rule.
 
-\textbf{Contracts and silent change.} A companion study (under review; omitted for anonymity) sampled 136 commits that change behaviour-path code but no contract file, in 47 REST services. It found that 44\% of them change observable API behaviour, and that 91\% of the client-breaking ones touch no contract annotation. Here we ask the same question for security fixes.
+\textbf{Contracts and silent change.} A companion study (under review; omitted for anonymity) sampled 136 commits that change behaviour-path code but no contract file, in 47 REST services. It found that 44\% of them change observable API behaviour, and that 91\% of the client-breaking ones touch no contract annotation. Here we ask the same question for security fixes. Another companion study (under review; omitted for anonymity) shows that the kind of a contract--implementation divergence predicts whether developers repair the contract or the code.
 
 \section{Study Design}
 \emph{(Summarised from the frozen plan \texttt{plan/\allowbreak{}R4\_PLAN.md}.)}
@@ -261,6 +261,44 @@ These three items are ones on which both model families agree on kind and setup.
 \end{itemize}
 \end{itemize}
 
+\subsection{Follow-up with full contracts (pre-registered)}
+Two weaknesses of the main coding motivated a separate, pre-registered follow-up on the 102 access-control vulnerabilities (\texttt{plan/\allowbreak{}R4b\_PLAN.md}):
+\begin{itemize}
+\item contracts were truncated to 3,000 lines;
+\item coders were not asked to cite evidence.
+\end{itemize}
+
+\textbf{Design of the follow-up.}
+\begin{itemize}
+\item \textbf{Coders.} Four new blind coders from the same two model families.
+\item \textbf{Material.} All 504 contract documents at the vulnerable version, untruncated (about 2.0 million lines), with a corrected redaction of the advisory text.
+\item \textbf{Questions.} The coders re-coded only the contract fields.
+\item \textbf{Evidence.} Every ``described'' judgement had to cite the contract line of the path. Every ``rule stated'' judgement had to quote the contract.
+\end{itemize}
+
+\textbf{Results (Table 1).}
+\begin{itemize}
+\item \textbf{Coverage.} With full contracts, the vulnerable operation is described in 56 of 102 cases (55\%), up from 41. The 18 newly found operations were all among R4's unclear cases. No operation previously coded as described was coded absent.
+\item \textbf{Reliability and evidence.} The two families agree perfectly on coverage ($\kappa$ 1.00 on the 76 items both decided). Every cited locator points to a contract line containing the coded path.
+\item \textbf{H-R4-3 replicates (H-R4-3b).} Where the operation is described, the contract does not state the violated rule in 44 of 54 decided cases (81\%; CI 69--90\%; p = $1.7 \times 10^{-6}$; Claude 51/57).
+\item \textbf{No declared security (H-R4-5, new).} 21 of the 56 described vulnerable operations (37.5\%; CI 26--51\%) declare no security requirement at all (Claude 18/56).
+\end{itemize}
+
+\begin{table}[t]
+\caption{Contract information with truncated (R4) and full (R4b) contracts; GPT final codes.}
+\footnotesize
+\begin{tabularx}{\linewidth}{Xll}
+\toprule
+Measure & Truncated contracts (R4) & Full contracts (R4b) \\
+\midrule
+Vulnerable operation described & 41/102 & 56/102 \\
+Coverage unclear & 27/102 & 20/102 \\
+Violated rule not stated, where described & 33/38 (87\%) & 44/54 (81\%) \\
+No security requirement declared, where described & not tested & 21/56 (37.5\%) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \section{Discussion}
 \begin{itemize}
 \item \textbf{About half of real access-control flaws need a multi-principal setup.}
@@ -270,8 +308,9 @@ These three items are ones on which both model families agree on kind and setup.
 \item \inferred{} This is an inference: a single-credential test configuration cannot satisfy the coded setup of those 49. We did not measure whether existing tools detect the other 40.
 \item Arcuri et al.'s oracles already assume two logins~\cite{arcuri2025access}. Our data suggest that tenant boundaries and role pairs must be configured too.
 \end{itemize}
-\item \textbf{The contract is the wrong place to look for the policy.}
+\item \textbf{The contract is the wrong place to look for the policy.} This holds with full contracts and cited evidence (\S{}4.7).
 \begin{itemize}
+\item More than a third of the documented vulnerable operations do not even declare that credentials are required.
 \item Even when the vulnerable operation is documented, its contract almost never states who may do what.
 \item Declared security schemes say \emph{that} credentials are needed, not \emph{whose} objects are reachable.
 \item Contract-driven oracles must therefore infer the policy, for example from cross-user response comparisons or from consistency across operations~\cite{arcuri2025access}.
@@ -298,7 +337,8 @@ These three items are ones on which both model families agree on kind and setup.
 \end{itemize}
 \item \textbf{Contract context.}
 \begin{itemize}
-\item Documents were truncated to 3,000 lines. This likely explains many unclear operation judgements.
+\item In the main coding, documents were truncated to 3,000 lines, which explains most unclear operation judgements.
+\item The pre-registered follow-up with full contracts (\S{}4.7) confirms the contract-rule finding: 81\% vs 87\%.
 \item An over-broad attribution redaction removed 4 of the 138 advisory descriptions entirely, leaving only the summary. It removed parts of 71 more.
 \end{itemize}
 \item \textbf{LLM coders.}
@@ -350,9 +390,9 @@ An anonymised replication archive accompanies this submission ([anonymous link t
 \item \textbf{LLMs as instruments.} The study uses LLMs as measurement instruments. The GPT-family coders were \texttt{gpt-6.1-sol} via the Codex CLI, at high reasoning effort. The Claude-family coders were Claude Sonnet subagents with fresh context.
 \item \textbf{LLM assistants.} The authors also used LLM assistants (Claude and Codex) to:
 \begin{itemize}
-\item implement and review the mining pipeline;
-\item check numbers;
-\item draft text.
+\item implement and review the mining pipeline (\S{}3);
+\item check numbers (\S{}4);
+\item draft and edit the text of all sections.
 \end{itemize}
 \item \textbf{Author responsibility.} The authors reviewed all generated content and take responsibility for it.
 \end{itemize}

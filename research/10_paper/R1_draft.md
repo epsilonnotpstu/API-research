@@ -80,7 +80,11 @@ We found no work that:
 2. evaluates such a prediction against real developer fixes;
 3. identifies an observable property of the divergence that predicts the repair direction.
 
-This paper addresses all three.
+This paper addresses all three. Two companion studies (under review; omitted for anonymity) examine related questions:
+- how often REST services change observable behaviour without touching their contract;
+- whether real access-control vulnerabilities are visible in, or fixed through, the contract.
+
+The present study is the only one of the three that concerns the repair direction of divergences.
 
 ## 3. Study Design
 
@@ -423,7 +427,7 @@ Testing tools should therefore not assume that the implementation is wrong. They
 ## Data availability
 Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's parent commit. Excerpts are released under their upstream licences: Apache-2.0, MIT, EPL-2.0, MPL-2.0, GPL-3.0, AGPL-3.0 and CC BY-NC 4.0, with per-directory licence texts for the copyleft ones. One repository later adopted a restrictive licence. Every excerpt from it comes from earlier versions under MIT, Apache-2.0 or CC BY-NC 4.0. As a robustness check, the headline results do not change without the three items closest to the restrictive period: E8b pooled 37/46 vs 0/10, p = 2.6e-6.
 
-**Replication package** (plan: `REPLICATION_PACKAGE_PLAN.md`). It will be released as an anonymous archive for review. It will contain:
+**Replication package** (plan: `REPLICATION_PACKAGE_PLAN.md`). An anonymised archive accompanies this submission ([anonymous link to be added]). It contains:
 - the plans and freezes;
 - the scorers and keys;
 - all blind codes and labels;
@@ -431,3 +435,13 @@ Upstream licences are documented in `LICENSE_REVIEW.md`, checked at each item's 
 - the item excerpts, under per-repository licences.
 
 `reproduce/reproduce_scores.sh` re-runs the frozen E6–E13 scorers and reproduces their 15 committed outputs byte for byte. The pilot, E4/E5 and the exploratory specificity analysis have their own scripts. `reproduce/check_freezes.py` checks every file hash in the freeze manifests; package-tree hashes were verified separately before each run. The two post-freeze file changes it reports are both disclosed. Transcripts that echo upstream patches or attribution are withheld.
+
+## Disclosure of AI use
+**LLMs as instruments.** The study uses LLMs as measurement instruments: blind labellers and coders from the GPT family (Codex CLI) and the Claude family. Their roles, prompts and outputs are part of the method (§3) and of the archive.
+
+**LLM assistants.** LLM assistants (Claude and Codex) were used for:
+- writing the mining, packaging and scoring scripts (§3);
+- independent numeric and claim reviews of this manuscript;
+- drafting and editing the text of all sections.
+
+**Author responsibility.** The authors reviewed all generated content and take responsibility for it.
